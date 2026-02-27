@@ -5,6 +5,7 @@ import '../../ui/components/ui_app_bar.dart';
 import '../../ui/components/ui_button.dart';
 import '../../ui/components/ui_text_field.dart';
 import '../../ui/tokens/color_tokens.dart';
+import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/spacing_tokens.dart';
 
 class FeedbackScreen extends StatefulWidget {
@@ -62,12 +63,12 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       appBar: const UiAppBar(title: 'Feedback'),
       backgroundColor: ColorTokens.backgroundPrimary,
       body: ListView(
-        padding: const EdgeInsets.all(SpacingTokens.lg),
+        padding: EdgeInsets.all(LayoutTokens.gr4),
         children: [
           const Center(
             child: Text('🛡️', style: TextStyle(fontSize: 48)),
           ),
-          const SizedBox(height: SpacingTokens.md),
+          SizedBox(height: LayoutTokens.gr4),
           Text(
             'Help us improve',
             style: Theme.of(context).textTheme.headlineLarge?.copyWith(
@@ -76,13 +77,13 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: SpacingTokens.xs),
+          SizedBox(height: LayoutTokens.gr1),
           Text(
             'Found a bug? Have a feature idea? We read every message.',
             style: Theme.of(context).textTheme.bodyMedium,
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: SpacingTokens.xl),
+          SizedBox(height: LayoutTokens.gr5),
           UiTextField(
             controller: _messageController,
             labelText: 'Your message',
@@ -90,32 +91,32 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             maxLines: 6,
             maxLength: 500,
           ),
-          const SizedBox(height: SpacingTokens.md),
+          SizedBox(height: LayoutTokens.gr4),
           UiButton(
             label: 'Send Feedback',
             icon: _sending ? null : const Icon(Icons.send_outlined, size: 20),
             loading: _sending,
             onPressed: _sendFeedback,
           ),
-          const SizedBox(height: SpacingTokens.xl),
+          SizedBox(height: LayoutTokens.gr5),
           Row(
             children: [
               const Expanded(child: Divider(color: ColorTokens.borderSubtle)),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: SpacingTokens.sm),
+                padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr2),
                 child: Text('or', style: Theme.of(context).textTheme.bodyMedium),
               ),
               const Expanded(child: Divider(color: ColorTokens.borderSubtle)),
             ],
           ),
-          const SizedBox(height: SpacingTokens.lg),
+          SizedBox(height: LayoutTokens.gr4),
           UiButton(
             label: 'Rate on Play Store',
             variant: UiButtonVariant.secondary,
             icon: const Icon(Icons.star_outline, size: 20),
             onPressed: _openPlayStore,
           ),
-          const SizedBox(height: SpacingTokens.xl),
+          SizedBox(height: LayoutTokens.gr5),
         ],
       ),
     );

@@ -10,6 +10,7 @@ import '../../ui/components/ui_app_bar.dart';
 import '../../ui/components/ui_dialog.dart';
 import '../../ui/components/ui_surface.dart';
 import '../../ui/tokens/color_tokens.dart';
+import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import '../../ui/tokens/spacing_tokens.dart';
 
@@ -40,7 +41,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       appBar: const UiAppBar(title: 'Settings'),
       backgroundColor: ColorTokens.backgroundPrimary,
       body: ListView(
-        padding: const EdgeInsets.all(SpacingTokens.lg),
+        padding: EdgeInsets.all(LayoutTokens.gr4),
         children: [
           _SectionHeader('Gameplay'),
           _SettingTile(
@@ -65,7 +66,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               }
             },
           ),
-          const SizedBox(height: SpacingTokens.md),
+          SizedBox(height: LayoutTokens.gr4),
           _SectionHeader('Misc'),
           _SwitchTile(
             title: 'Keep display awake',
@@ -87,7 +88,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             },
             icon: Icons.fullscreen,
           ),
-          const SizedBox(height: SpacingTokens.md),
+          SizedBox(height: LayoutTokens.gr4),
           _SectionHeader('Appearance'),
           _SwitchTile(
             title: 'Dark theme',
@@ -98,7 +99,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             },
             icon: Icons.dark_mode_outlined,
           ),
-          const SizedBox(height: SpacingTokens.md),
+          SizedBox(height: LayoutTokens.gr4),
           _SectionHeader('Feel'),
           _SwitchTile(
             title: 'Haptic Feedback',
@@ -127,7 +128,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               _save();
             },
           ),
-          const SizedBox(height: SpacingTokens.md),
+          SizedBox(height: LayoutTokens.gr4),
           _SectionHeader('Data'),
           _SwitchTile(
             title: 'Cache Commander Images',
@@ -144,7 +145,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onTap: _clearCache,
             isDestructive: true,
           ),
-          const SizedBox(height: SpacingTokens.md),
+          SizedBox(height: LayoutTokens.gr4),
           _SectionHeader('Help'),
           _SettingTile(
             title: 'Feedback',
@@ -161,7 +162,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               });
             },
           ),
-          const SizedBox(height: SpacingTokens.xl),
+          SizedBox(height: LayoutTokens.gr5),
         ],
       ),
     );
@@ -215,9 +216,9 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(
-        top: SpacingTokens.lg,
-        bottom: SpacingTokens.sm,
+      padding: EdgeInsets.only(
+        top: LayoutTokens.gr4,
+        bottom: LayoutTokens.gr2,
       ),
       child: Text(
         title.toUpperCase(),
@@ -250,7 +251,7 @@ class _SwitchTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: SpacingTokens.sm),
+      padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
       child: UiSurface(
         padding: EdgeInsets.zero,
         borderRadius: RadiusTokens.radiusMd,
@@ -258,14 +259,14 @@ class _SwitchTile extends StatelessWidget {
         secondary: icon != null
             ? Icon(icon, size: 22, color: ColorTokens.textSecondary)
             : null,
-        title: Text(title, style: Theme.of(context).textTheme.bodyLarge),
-        subtitle: Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
+        title: Text(title, style: Theme.of(context).textTheme.bodyLarge, overflow: TextOverflow.ellipsis),
+        subtitle: Text(subtitle, style: Theme.of(context).textTheme.bodyMedium, maxLines: 2, overflow: TextOverflow.ellipsis),
         value: value,
         onChanged: onChanged,
         activeColor: ColorTokens.primaryAccent,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: SpacingTokens.md,
-          vertical: SpacingTokens.xs,
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: LayoutTokens.gr3,
+          vertical: LayoutTokens.gr1,
         ),
       ),
     ),
@@ -290,7 +291,7 @@ class _SettingTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = isDestructive ? ColorTokens.danger : ColorTokens.textSecondary;
     return Padding(
-      padding: const EdgeInsets.only(bottom: SpacingTokens.sm),
+      padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
       child: UiSurface(
         padding: EdgeInsets.zero,
         borderRadius: RadiusTokens.radiusMd,
@@ -300,13 +301,14 @@ class _SettingTile extends StatelessWidget {
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 color: isDestructive ? ColorTokens.danger : null,
               ),
+          overflow: TextOverflow.ellipsis,
         ),
-        subtitle: Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
+        subtitle: Text(subtitle, style: Theme.of(context).textTheme.bodyMedium, maxLines: 2, overflow: TextOverflow.ellipsis),
         trailing: Icon(Icons.chevron_right_rounded, color: color),
         onTap: onTap,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: SpacingTokens.md,
-          vertical: SpacingTokens.xs,
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: LayoutTokens.gr3,
+          vertical: LayoutTokens.gr1,
         ),
       ),
     ),

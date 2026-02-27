@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../ui/tokens/color_tokens.dart';
-import '../../ui/tokens/radius_tokens.dart';
-import '../../ui/tokens/spacing_tokens.dart';
+import '../../ui/tokens/layout_tokens.dart';
 
 /// Persistent bottom navigation — three destinations: Home, Lobby, Settings.
 /// Contained surface, elevated, strong rounded corners.
@@ -26,14 +25,13 @@ class MainBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(SpacingTokens.md, 0, SpacingTokens.md, SpacingTokens.md),
+      width: double.infinity,
       decoration: BoxDecoration(
         color: ColorTokens.surfaceElevated,
-        borderRadius: RadiusTokens.radiusXl,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25),
-            blurRadius: 16,
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 8,
             offset: const Offset(0, -2),
           ),
         ],
@@ -41,9 +39,9 @@ class MainBottomNav extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: SpacingTokens.sm,
-            vertical: SpacingTokens.xs,
+          padding: EdgeInsets.symmetric(
+            horizontal: LayoutTokens.gr1,
+            vertical: LayoutTokens.gr0,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -93,12 +91,12 @@ class _NavItemTile extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: RadiusTokens.radiusLg,
+        borderRadius: BorderRadius.circular(8),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(
-            vertical: SpacingTokens.sm,
-            horizontal: SpacingTokens.xs,
+          padding: EdgeInsets.symmetric(
+            vertical: LayoutTokens.gr1,
+            horizontal: LayoutTokens.gr0,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -106,15 +104,15 @@ class _NavItemTile extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                size: 26,
+                size: 22,
                 color: color,
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 2),
               Text(
                 label,
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
                       color: color,
                     ),
               ),

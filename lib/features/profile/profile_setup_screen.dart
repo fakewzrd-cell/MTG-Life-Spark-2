@@ -6,6 +6,7 @@ import '../../core/models/player_profile.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../shared/utils/app_router.dart';
+import '../../ui/tokens/layout_tokens.dart';
 
 class ProfileSetupScreen extends ConsumerStatefulWidget {
   const ProfileSetupScreen({super.key});
@@ -61,13 +62,13 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
             ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
+                padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr5),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 48),
+                      SizedBox(height: LayoutTokens.gr5),
                       Center(
                         child: Column(
                           children: [
@@ -84,12 +85,12 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                                 color: AppTheme.accent,
                               ),
                             ),
-                            const SizedBox(height: 24),
+                            SizedBox(height: LayoutTokens.gr4),
                             Text(
                               'MGT Life Spark',
                               style: Theme.of(context).textTheme.headlineLarge,
                             ),
-                            const SizedBox(height: 8),
+                            SizedBox(height: LayoutTokens.gr1),
                             Text(
                               'Commander 2.0 — your digital battlefield.',
                               style: Theme.of(context).textTheme.bodyMedium,
@@ -98,17 +99,17 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 48),
+                      SizedBox(height: LayoutTokens.gr5),
                       Text(
                         'Create your profile',
                         style: Theme.of(context).textTheme.headlineMedium,
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: LayoutTokens.gr1),
                       Text(
                         'Choose a name your opponents will fear.',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
-                      const SizedBox(height: 24),
+                      SizedBox(height: LayoutTokens.gr4),
                       TextFormField(
                         controller: _usernameController,
                         decoration: const InputDecoration(
@@ -143,7 +144,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                               : const Text('Enter the Battlefield'),
                         ),
                       ),
-                      const SizedBox(height: 32),
+                      SizedBox(height: LayoutTokens.gr5),
                     ],
                   ),
                 ),

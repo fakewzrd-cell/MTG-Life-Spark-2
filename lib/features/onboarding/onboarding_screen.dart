@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../shared/utils/app_router.dart';
+import '../../ui/tokens/layout_tokens.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -106,7 +107,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               children: List.generate(_slides.length, (i) {
                 return AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  margin: EdgeInsets.symmetric(horizontal: LayoutTokens.gr0),
                   width: _currentPage == i ? 24 : 8,
                   height: 8,
                   decoration: BoxDecoration(
@@ -116,11 +117,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 );
-              }),
+              }).toList(),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: LayoutTokens.gr5),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
+              padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr5),
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -137,7 +138,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: LayoutTokens.gr5),
           ],
         ),
       ),
@@ -165,8 +166,9 @@ class _SlideView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isNarrow = MediaQuery.sizeOf(context).width < 360;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 48),
+      padding: EdgeInsets.symmetric(horizontal: isNarrow ? LayoutTokens.gr4 : LayoutTokens.gr6),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -193,13 +195,13 @@ class _SlideView extends StatelessWidget {
             ),
             child: Icon(slide.icon, size: 52, color: slide.color),
           ),
-          const SizedBox(height: 40),
+          SizedBox(height: LayoutTokens.gr5),
           Text(
             slide.title,
             style: Theme.of(context).textTheme.headlineLarge,
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: LayoutTokens.gr4),
           Text(
             slide.body,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -207,6 +209,8 @@ class _SlideView extends StatelessWidget {
                   height: 1.6,
                 ),
             textAlign: TextAlign.center,
+            maxLines: 6,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

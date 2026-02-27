@@ -340,8 +340,20 @@ class _PersonalView extends ConsumerWidget {
     final activeColor =
         game.playerById(game.activePlayerId)?.playerColor ?? AppTheme.accent;
 
-    return Column(
-      children: [
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isCompact = screenHeight < 700 || screenWidth < 360;
+
+    return SingleChildScrollView(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minHeight: MediaQuery.sizeOf(context).height -
+              MediaQuery.paddingOf(context).vertical -
+              MediaQuery.viewInsetsOf(context).vertical,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
         // ── Commander bar + Cast button (top right) ────────────────────────
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -388,7 +400,8 @@ class _PersonalView extends ConsumerWidget {
         SizedBox(height: _g(_gBase + 2)),
 
         // ── Life counter (center, takes most space) ────────────────────
-        Expanded(
+        SizedBox(
+          height: isCompact ? 140 : 180,
           child: LifeCounterWidget(
             life: local.life,
             playerColor: local.playerColor,
@@ -458,7 +471,9 @@ class _PersonalView extends ConsumerWidget {
         ),
 
         SizedBox(height: _g(_gBase + 2)),
-      ],
+          ],
+        ),
+      ),
     );
   }
 }
@@ -497,9 +512,12 @@ class _BottomBar extends ConsumerWidget {
             ),
           ],
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            mainAxisSize: MainAxisSize.min,
+            children: [
           // Home (quit with confirmation)
           _BarButton(
             icon: Icons.home_rounded,
@@ -553,7 +571,8 @@ class _BottomBar extends ConsumerWidget {
             enabled: !local.isEliminated,
             onTap: () => _showConcedeDialog(context, ref, local.playerId),
           ),
-        ],
+            ],
+          ),
         ),
       ),
     );
@@ -906,6 +925,12 @@ class _BarButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isCompact = MediaQuery.sizeOf(context).width < 380;
+    final iconSize = isCompact ? 22.0 : 28.0;
+    final fontSize = isCompact ? 10.0 : 13.0;
+    final hPad = isCompact ? 8.0 : 14.0;
+    final vPad = isCompact ? 8.0 : 12.0;
+
     final c = enabled ? AppTheme.textSecondary : AppTheme.textSecondary.withValues(alpha: 0.4);
     return Material(
       color: Colors.transparent,
@@ -913,13 +938,13 @@ class _BarButton extends StatelessWidget {
         onTap: enabled ? onTap : null,
         borderRadius: BorderRadius.circular(_g(_gBase)),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 28, color: c),
-              const SizedBox(height: 6),
-              Text(label, style: TextStyle(color: c, fontSize: 13, fontWeight: FontWeight.w600)),
+              Icon(icon, size: iconSize, color: c),
+              SizedBox(height: isCompact ? 4 : 6),
+              Text(label, style: TextStyle(color: c, fontSize: fontSize, fontWeight: FontWeight.w600)),
             ],
           ),
         ),
@@ -1024,28 +1049,40 @@ class _AllianceProposalBanner extends ConsumerWidget {
         border:
             Border.all(color: AppTheme.accentGold.withValues(alpha: 0.6)),
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Icon(Icons.handshake, color: AppTheme.accentGold, size: 18),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              '${from?.username ?? proposal.fromId} proposes an alliance!',
-              style: const TextStyle(
-                  color: AppTheme.accentGold, fontSize: 12),
-            ),
+          Row(
+            children: [
+              const Icon(Icons.handshake, color: AppTheme.accentGold, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '${from?.username ?? proposal.fromId} proposes an alliance!',
+                  style: const TextStyle(
+                      color: AppTheme.accentGold, fontSize: 12),
+                ),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () =>
-                ref.read(gameProvider.notifier).respondToAlliance(local.playerId, true),
-            child: const Text('Accept',
-                style: TextStyle(color: AppTheme.success)),
-          ),
-          TextButton(
-            onPressed: () =>
-                ref.read(gameProvider.notifier).respondToAlliance(local.playerId, false),
-            child: const Text('Decline',
-                style: TextStyle(color: AppTheme.textSecondary)),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () =>
+                    ref.read(gameProvider.notifier).respondToAlliance(local.playerId, true),
+                child: const Text('Accept',
+                    style: TextStyle(color: AppTheme.success)),
+              ),
+              TextButton(
+                onPressed: () =>
+                    ref.read(gameProvider.notifier).respondToAlliance(local.playerId, false),
+                child: const Text('Decline',
+                    style: TextStyle(color: AppTheme.textSecondary)),
+              ),
+            ],
           ),
         ],
       ),

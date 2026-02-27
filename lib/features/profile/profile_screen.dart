@@ -15,6 +15,7 @@ import '../../ui/bento/bento_tile.dart';
 import '../../ui/components/ui_app_bar.dart';
 import '../../ui/components/ui_surface.dart';
 import '../../ui/tokens/color_tokens.dart';
+import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import '../../ui/tokens/spacing_tokens.dart';
 
@@ -61,25 +62,30 @@ class ProfileScreen extends ConsumerWidget {
         ],
       ),
       backgroundColor: ColorTokens.backgroundPrimary,
-      body: ListView(
-        padding: const EdgeInsets.all(SpacingTokens.lg),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = MediaQuery.sizeOf(context).width < 360;
+          return ListView(
+        padding: EdgeInsets.all(isNarrow ? LayoutTokens.gr3 : LayoutTokens.gr4),
         children: [
           _ProfileHeader(profile: profile),
-          const SizedBox(height: SpacingTokens.md),
+          SizedBox(height: LayoutTokens.gr4),
           _XpProgressModule(profile: profile),
-          const SizedBox(height: SpacingTokens.md),
+          SizedBox(height: LayoutTokens.gr4),
           BentoGrid(
             padding: EdgeInsets.zero,
-            crossAxisCount: 2,
+            crossAxisCount: isNarrow ? 1 : 2,
             tileAspectRatio: 2.8,
-            mainAxisSpacing: SpacingTokens.xs,
-            crossAxisSpacing: SpacingTokens.xs,
+            mainAxisSpacing: LayoutTokens.gr2,
+            crossAxisSpacing: LayoutTokens.gr2,
             children: _buildStatsGrid(profile, feedbackRepo),
           ),
-          const SizedBox(height: SpacingTokens.md),
+          SizedBox(height: LayoutTokens.gr4),
           _RecentGamesModule(matches: recentMatches),
-          const SizedBox(height: SpacingTokens.xl),
+          SizedBox(height: LayoutTokens.gr5),
         ],
+      );
+        },
       ),
     );
   }
@@ -108,6 +114,9 @@ class _ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final avatarRadius = (size.width < 360 ? 56.0 : 72.0).clamp(48.0, 72.0);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -125,7 +134,7 @@ class _ProfileHeader extends StatelessWidget {
                   ),
                 ),
                 child: CircleAvatar(
-              radius: 72,
+              radius: avatarRadius,
               backgroundColor: ColorTokens.surface,
               backgroundImage: profile.profileAvatarImageUrl != null &&
                       profile.profileAvatarImageUrl!.isNotEmpty
@@ -147,7 +156,7 @@ class _ProfileHeader extends StatelessWidget {
                 right: 0,
                 bottom: 0,
                 child: Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: EdgeInsets.all(LayoutTokens.gr1),
                   decoration: BoxDecoration(
                     color: ColorTokens.primaryAccent,
                     shape: BoxShape.circle,
@@ -166,7 +175,7 @@ class _ProfileHeader extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: SpacingTokens.md),
+        SizedBox(height: LayoutTokens.gr3),
         Text(
           profile.username,
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -175,12 +184,12 @@ class _ProfileHeader extends StatelessWidget {
               ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: SpacingTokens.xs),
+        SizedBox(height: LayoutTokens.gr1),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             TierBadge(tier: profile.tier),
-            const SizedBox(width: SpacingTokens.xs),
+            SizedBox(width: LayoutTokens.gr1),
             Text(
               'Level ${profile.level}',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -213,7 +222,7 @@ class _XpProgressModule extends StatelessWidget {
     final progress = (xpNeeded > 0) ? (xpInLevel / xpNeeded).clamp(0.0, 1.0) : 0.0;
 
     return UiSurface(
-      padding: const EdgeInsets.all(SpacingTokens.md),
+      padding: EdgeInsets.all(LayoutTokens.gr3),
       borderRadius: RadiusTokens.radiusLg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -225,7 +234,7 @@ class _XpProgressModule extends StatelessWidget {
                   color: ColorTokens.textPrimary,
                 ),
           ),
-          const SizedBox(height: SpacingTokens.sm),
+          SizedBox(height: LayoutTokens.gr2),
           ClipRRect(
             borderRadius: RadiusTokens.radiusSm,
             child: LinearProgressIndicator(
@@ -235,7 +244,7 @@ class _XpProgressModule extends StatelessWidget {
               valueColor: const AlwaysStoppedAnimation<Color>(ColorTokens.primaryAccent),
             ),
           ),
-          const SizedBox(height: SpacingTokens.xs),
+          SizedBox(height: LayoutTokens.gr1),
           Text(
             '$xpInLevel / $xpNeeded XP',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -322,10 +331,10 @@ class _RecentGamesModule extends StatelessWidget {
                 color: ColorTokens.textPrimary,
               ),
         ),
-        const SizedBox(height: SpacingTokens.sm),
+        SizedBox(height: LayoutTokens.gr2),
         if (matches.isEmpty)
           UiSurface(
-            padding: const EdgeInsets.all(SpacingTokens.lg),
+            padding: EdgeInsets.all(LayoutTokens.gr4),
             borderRadius: RadiusTokens.radiusMd,
             child: Center(
               child: Text(
@@ -370,11 +379,11 @@ class _RecentMatchRow extends StatelessWidget {
     final fmt = DateFormat('MMM d');
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: SpacingTokens.sm),
+      padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
       child: UiSurface(
-        padding: const EdgeInsets.symmetric(
-          horizontal: SpacingTokens.md,
-          vertical: SpacingTokens.sm,
+        padding: EdgeInsets.symmetric(
+          horizontal: LayoutTokens.gr3,
+          vertical: LayoutTokens.gr2,
         ),
         borderRadius: RadiusTokens.radiusMd,
         borderColor: _resultColor.withValues(alpha: 0.5),
@@ -391,7 +400,7 @@ class _RecentMatchRow extends StatelessWidget {
                         ),
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: LayoutTokens.gr0),
                   Text(
                     fmt.format(match.date),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -403,9 +412,9 @@ class _RecentMatchRow extends StatelessWidget {
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: SpacingTokens.sm,
-                vertical: SpacingTokens.xxs,
+              padding: EdgeInsets.symmetric(
+                horizontal: LayoutTokens.gr2,
+                vertical: LayoutTokens.gr0,
               ),
               decoration: BoxDecoration(
                 color: _resultColor.withValues(alpha: 0.15),

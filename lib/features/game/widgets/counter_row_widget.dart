@@ -33,9 +33,11 @@ class CounterRowWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: _gr(10), vertical: _gr(8)),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
           _CounterChip(
             iconWidget: GameIcon.poison(size: _gr(14), color: AppTheme.success),
             label: 'Poison',
@@ -112,6 +114,7 @@ class CounterRowWidget extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 

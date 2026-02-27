@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../shared/utils/app_router.dart';
 import '../../ui/tokens/color_tokens.dart';
+import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import '../../ui/tokens/spacing_tokens.dart';
 
@@ -16,7 +17,7 @@ class GameLobbyScreen extends StatelessWidget {
       backgroundColor: ColorTokens.backgroundPrimary,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(SpacingTokens.lg),
+          padding: EdgeInsets.all(LayoutTokens.gr4),
           child: Column(
             children: [
               // Host button — 50% of available space
@@ -28,7 +29,7 @@ class GameLobbyScreen extends StatelessWidget {
                   onTap: () => context.push(AppRoutes.lobbyHost),
                 ),
               ),
-              const SizedBox(height: SpacingTokens.md),
+              SizedBox(height: LayoutTokens.gr4),
               // Join button — 50% of available space
               Expanded(
                 child: _BigActionButton(
@@ -61,6 +62,12 @@ class _BigActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isCompact = MediaQuery.sizeOf(context).width < 360 ||
+        MediaQuery.sizeOf(context).height < 600;
+    final iconSize = isCompact ? 48.0 : 64.0;
+    final padding = isCompact ? LayoutTokens.gr3 : LayoutTokens.gr5;
+    final titleSize = isCompact ? 20.0 : 24.0;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -68,7 +75,7 @@ class _BigActionButton extends StatelessWidget {
         borderRadius: RadiusTokens.radiusXl,
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(SpacingTokens.xl),
+          padding: EdgeInsets.all(padding),
           decoration: BoxDecoration(
             color: ColorTokens.surface,
             borderRadius: RadiusTokens.radiusXl,
@@ -89,18 +96,18 @@ class _BigActionButton extends StatelessWidget {
               Icon(
                 icon,
                 color: ColorTokens.primaryAccent,
-                size: 64,
+                size: iconSize,
               ),
-              const SizedBox(height: SpacingTokens.md),
+              SizedBox(height: LayoutTokens.gr4),
               Text(
                 label,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontSize: 24,
+                      fontSize: titleSize,
                       fontWeight: FontWeight.w800,
                     ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: SpacingTokens.xs),
+              SizedBox(height: LayoutTokens.gr1),
               Text(
                 subtitle,
                 style: Theme.of(context).textTheme.bodyMedium,

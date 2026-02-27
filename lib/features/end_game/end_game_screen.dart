@@ -13,6 +13,7 @@ import '../../core/models/game_feedback.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../shared/utils/achievement_definitions.dart';
 import '../../shared/utils/app_router.dart';
+import '../../ui/tokens/layout_tokens.dart';
 
 class EndGameScreen extends ConsumerStatefulWidget {
   const EndGameScreen({super.key});
@@ -97,7 +98,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     CircularProgressIndicator(color: AppTheme.accent),
-                    SizedBox(height: 16),
+                    SizedBox(height: LayoutTokens.gr3),
                     Text(
                       'Saving match results…',
                       style: TextStyle(color: AppTheme.textSecondary),
@@ -108,7 +109,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
             : SingleChildScrollView(
                 child: Column(
                   children: [
-                    const SizedBox(height: 24),
+                    SizedBox(height: LayoutTokens.gr4),
 
                     // ── Winner spotlight ──────────────────────────────────
                     _WinnerBanner(
@@ -116,7 +117,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
                       isLocalWinner: isWinner,
                     ),
 
-                    const SizedBox(height: 24),
+                    SizedBox(height: LayoutTokens.gr4),
 
                     // ── Level-up animation ─────────────────────────────────
                     if (_result != null && _result!.leveledUp)
@@ -134,7 +135,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
                         _result!.newAchievementIds.isNotEmpty)
                       _AchievementsCard(ids: _result!.newAchievementIds),
 
-                    const SizedBox(height: 12),
+                    SizedBox(height: LayoutTokens.gr2),
 
                     // ── Post-game feedback (like/dislike, MVP, Team Player) ─
                     if (_result != null && _result!.matchId.isNotEmpty)
@@ -164,11 +165,11 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
                         onSubmit: () => _submitFeedback(game),
                       ),
 
-                    const SizedBox(height: 12),
+                    SizedBox(height: LayoutTokens.gr2),
 
                     // ── Final standings ────────────────────────────────────
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr3),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -181,7 +182,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
                               letterSpacing: 1,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: LayoutTokens.gr1),
                           ...game.players.map((p) => _FinalPlayerRow(
                                 p: p,
                                 isWinner: p.playerId == game.winnerPlayerId,
@@ -191,7 +192,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 32),
+                    SizedBox(height: LayoutTokens.gr5),
 
                     // ── Actions ────────────────────────────────────────────
                     _ActionButtons(
@@ -201,7 +202,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
                       onRematch: () => _doRematch(context, ref, game),
                     ),
 
-                    const SizedBox(height: 32),
+                    SizedBox(height: LayoutTokens.gr5),
                   ],
                 ),
               ),
@@ -267,7 +268,7 @@ class _WinnerBanner extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: LayoutTokens.gr3),
 
           // Commander art
           if (winner!.commanderImageUrl != null)
@@ -322,7 +323,7 @@ class _WinnerBanner extends StatelessWidget {
               ),
             ),
 
-          const SizedBox(height: 12),
+          SizedBox(height: LayoutTokens.gr2),
           Text(
             winner!.username,
             style: TextStyle(
@@ -353,8 +354,8 @@ class _LevelUpCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.fromLTRB(LayoutTokens.gr3, LayoutTokens.gr1, LayoutTokens.gr3, 0),
+      padding: EdgeInsets.all(LayoutTokens.gr3),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -379,7 +380,7 @@ class _LevelUpCard extends StatelessWidget {
                       size: 48, color: AppTheme.accentGold),
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: LayoutTokens.gr3),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -416,8 +417,8 @@ class _XpCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.fromLTRB(LayoutTokens.gr3, LayoutTokens.gr1, LayoutTokens.gr3, 0),
+      padding: EdgeInsets.all(LayoutTokens.gr3),
       decoration: BoxDecoration(
         color: AppTheme.card,
         borderRadius: BorderRadius.circular(12),
@@ -495,8 +496,8 @@ class _FeedbackCard extends StatelessWidget {
 
     if (feedbackSubmitted) {
       return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16),
-        padding: const EdgeInsets.all(16),
+        margin: EdgeInsets.symmetric(horizontal: LayoutTokens.gr3),
+        padding: EdgeInsets.all(LayoutTokens.gr3),
         decoration: BoxDecoration(
           color: AppTheme.success.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(999),
@@ -541,7 +542,7 @@ class _FeedbackCard extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: LayoutTokens.gr2),
           // Like / Dislike per player
           if (others.isNotEmpty) ...[
             ...others.map((p) => _PlayerFeedbackRow(
@@ -551,7 +552,7 @@ class _FeedbackCard extends StatelessWidget {
                   onLike: () => onLike(p.playerId),
                   onDislike: () => onDislike(p.playerId),
                 )),
-            const SizedBox(height: 12),
+            SizedBox(height: LayoutTokens.gr2),
           ],
           // MVP vote
           _VoteDropdown(
@@ -561,7 +562,7 @@ class _FeedbackCard extends StatelessWidget {
             selectedId: mvpPlayerId,
             onChanged: onMvpChanged,
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: LayoutTokens.gr1),
           // Team Player vote
           _VoteDropdown(
             label: 'Team Player',
@@ -570,7 +571,7 @@ class _FeedbackCard extends StatelessWidget {
             selectedId: teamPlayerId,
             onChanged: onTeamPlayerChanged,
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: LayoutTokens.gr3),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -629,6 +630,7 @@ class _PlayerFeedbackRow extends StatelessWidget {
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           IconButton(
@@ -693,7 +695,7 @@ class _VoteDropdown extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: LayoutTokens.gr0),
         DropdownButtonFormField<String>(
           value: selectedId,
           decoration: InputDecoration(
@@ -735,7 +737,7 @@ class _VoteDropdown extends StatelessWidget {
                           shape: BoxShape.circle,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: LayoutTokens.gr1),
                       Text(
                         p.username,
                         style: const TextStyle(
@@ -771,8 +773,8 @@ class _AchievementsCard extends StatelessWidget {
     if (defs.isEmpty) return const SizedBox.shrink();
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      padding: const EdgeInsets.all(14),
+      margin: EdgeInsets.fromLTRB(LayoutTokens.gr3, LayoutTokens.gr1, LayoutTokens.gr3, 0),
+      padding: EdgeInsets.all(LayoutTokens.gr2),
       decoration: BoxDecoration(
         color: AppTheme.card,
         borderRadius: BorderRadius.circular(14),
@@ -790,14 +792,14 @@ class _AchievementsCard extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: LayoutTokens.gr1),
           ...defs.map((def) => Padding(
-                padding: const EdgeInsets.only(bottom: 4),
+                padding: EdgeInsets.only(bottom: LayoutTokens.gr0),
                 child: Row(
                   children: [
                     Text(def.icon,
                         style: const TextStyle(fontSize: 18)),
-                    const SizedBox(width: 8),
+                    SizedBox(width: LayoutTokens.gr1),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -837,7 +839,7 @@ class _FinalPlayerRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: EdgeInsets.only(bottom: LayoutTokens.gr1),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
         color: isWinner
@@ -853,8 +855,8 @@ class _FinalPlayerRow extends StatelessWidget {
       child: Row(
         children: [
           if (isWinner)
-            const Padding(
-              padding: EdgeInsets.only(right: 6),
+            Padding(
+              padding: EdgeInsets.only(right: LayoutTokens.gr1),
               child: Text('🏆', style: TextStyle(fontSize: 14)),
             ),
           Container(
@@ -869,13 +871,16 @@ class _FinalPlayerRow extends StatelessWidget {
           Expanded(
             child: Row(
               children: [
-                Text(
-                  p.username,
-                  style: TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontWeight:
-                        isLocal ? FontWeight.bold : FontWeight.normal,
-                    fontSize: 13,
+                Flexible(
+                  child: Text(
+                    p.username,
+                    style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontWeight:
+                          isLocal ? FontWeight.bold : FontWeight.normal,
+                      fontSize: 13,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (isLocal)
@@ -886,10 +891,14 @@ class _FinalPlayerRow extends StatelessWidget {
             ),
           ),
           if (p.commanderName != null)
-            Text(
-              p.commanderName!,
-              style: const TextStyle(
-                  color: AppTheme.textSecondary, fontSize: 10),
+            Flexible(
+              child: Text(
+                p.commanderName!,
+                style: const TextStyle(
+                    color: AppTheme.textSecondary, fontSize: 10),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
             ),
           const SizedBox(width: 8),
           Text(
@@ -960,7 +969,7 @@ class _ActionButtons extends StatelessWidget {
                 onPressed: onRematch,
               ),
             ),
-          if (isHost) const SizedBox(height: 12),
+          if (isHost) SizedBox(height: LayoutTokens.gr2),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
@@ -976,7 +985,7 @@ class _ActionButtons extends StatelessWidget {
               onPressed: onProfile,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: LayoutTokens.gr2),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(

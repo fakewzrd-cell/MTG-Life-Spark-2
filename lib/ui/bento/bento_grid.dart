@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../tokens/layout_tokens.dart';
 import '../tokens/spacing_tokens.dart';
 import 'bento_tile.dart';
 
@@ -10,8 +11,8 @@ class BentoGrid extends StatelessWidget {
     super.key,
     required this.children,
     this.crossAxisCount,
-    this.mainAxisSpacing = SpacingTokens.sm,
-    this.crossAxisSpacing = SpacingTokens.sm,
+    this.mainAxisSpacing = LayoutTokens.gr2,
+    this.crossAxisSpacing = LayoutTokens.gr2,
     this.padding,
     this.tileAspectRatio,
   });
@@ -42,7 +43,7 @@ class BentoGrid extends StatelessWidget {
         final maxWidth = constraints.maxWidth.isFinite && constraints.maxWidth > 0
             ? constraints.maxWidth
             : MediaQuery.sizeOf(context).width;
-        final pad = padding ?? const EdgeInsets.all(SpacingTokens.md);
+        final pad = padding ?? EdgeInsets.all(LayoutTokens.gr3);
         final availableWidth = maxWidth - pad.horizontal;
         return SingleChildScrollView(
           padding: pad,

@@ -12,7 +12,7 @@ import '../../core/network/ws_host_service.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../shared/utils/app_router.dart';
-import '../../shared/widgets/game_icon.dart';
+import '../../ui/tokens/layout_tokens.dart';
 
 class LobbyScreen extends ConsumerStatefulWidget {
   const LobbyScreen({super.key});
@@ -66,18 +66,18 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+        padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr4),
         children: [
           _QrHeader(qrData: _qrData, playerCount: lobby.players.length),
-          const SizedBox(height: 20),
+          SizedBox(height: LayoutTokens.gr4),
           ...lobby.players.map((slot) => _PlayerSlotCard(slot: slot)),
           if (lobby.players.length < lobby.config.maxPlayers)
             _EmptySlotCard(
               remaining: lobby.config.maxPlayers - lobby.players.length,
             ),
-          const SizedBox(height: 24),
+          SizedBox(height: LayoutTokens.gr4),
           _ConfigSection(config: lobby.config),
-          const SizedBox(height: 24),
+          SizedBox(height: LayoutTokens.gr4),
           _StartGameButton(
             canStart: lobby.canStart,
             hint: lobby.players.isEmpty
@@ -86,7 +86,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                     ? 'Everyone must be ready'
                     : 'Start Game',
           ),
-          const SizedBox(height: 32),
+          SizedBox(height: LayoutTokens.gr5),
         ],
       ),
     );
@@ -105,22 +105,26 @@ class _QrHeader extends StatelessWidget {
     return Container(
       width: double.infinity,
       color: AppTheme.surface,
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+      padding: EdgeInsets.symmetric(vertical: LayoutTokens.gr4, horizontal: LayoutTokens.gr4),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(Icons.qr_code, color: AppTheme.accent, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                'Players joined: $playerCount  •  Scan QR to join',
-                style: const TextStyle(
-                    color: AppTheme.textSecondary, fontSize: 13),
+              SizedBox(width: LayoutTokens.gr1),
+              Flexible(
+                child: Text(
+                  'Players joined: $playerCount  •  Scan QR to join',
+                  style: const TextStyle(
+                      color: AppTheme.textSecondary, fontSize: 13),
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: LayoutTokens.gr3),
           if (qrData == null)
             const SizedBox(
               height: 160,
@@ -151,7 +155,7 @@ class _QrHeader extends StatelessWidget {
             ),
           if (qrData != null)
             Padding(
-              padding: const EdgeInsets.only(top: 6),
+              padding: EdgeInsets.only(top: LayoutTokens.gr1),
               child: Text(
                 qrData!.replaceFirst('mgtlifespark://', ''),
                 style: const TextStyle(
@@ -182,8 +186,8 @@ class _PlayerSlotCard extends ConsumerWidget {
         : slot.playerColor.withValues(alpha: 0.25);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(18),
+      margin: EdgeInsets.only(bottom: LayoutTokens.gr2),
+      padding: EdgeInsets.all(LayoutTokens.gr3),
       decoration: BoxDecoration(
         color: AppTheme.card,
         borderRadius: BorderRadius.circular(16),
@@ -203,7 +207,7 @@ class _PlayerSlotCard extends ConsumerWidget {
         children: [
           // Commander avatar / color dot
           _CommanderAvatar(slot: slot),
-          const SizedBox(width: 14),
+          SizedBox(width: LayoutTokens.gr2),
           // Player info
           Expanded(
             child: Column(
@@ -219,25 +223,30 @@ class _PlayerSlotCard extends ConsumerWidget {
                         shape: BoxShape.circle,
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      slot.username,
-                      style: const TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
+                    SizedBox(width: LayoutTokens.gr1),
+                    Expanded(
+                      child: Text(
+                        slot.username,
+                        style: const TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     if (slot.isHost) ...[
-                      const SizedBox(width: 6),
+                      SizedBox(width: LayoutTokens.gr1),
                       const Icon(Icons.star,
                           size: 13, color: AppTheme.accentGold),
                     ],
                   ],
                 ),
-                const SizedBox(height: 6),
+                SizedBox(height: LayoutTokens.gr1),
                 Text(
                   slot.commanderName ?? 'No commander selected',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                         color: slot.commanderName != null
                         ? AppTheme.textSecondary
@@ -256,11 +265,12 @@ class _PlayerSlotCard extends ConsumerWidget {
           ),
           // Controls (for own slot: host and clients)
           if (isMe)
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _PartnerChip(slot: slot),
-                const SizedBox(width: 12),
+            Wrap(
+                  spacing: LayoutTokens.gr2,
+                  runSpacing: LayoutTokens.gr2,
+                  alignment: WrapAlignment.end,
+                  children: [
+                    _PartnerChip(slot: slot),
                 OutlinedButton(
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size(95, 40),
@@ -287,7 +297,6 @@ class _PlayerSlotCard extends ConsumerWidget {
                   ),
                   child: const Text('Commander'),
                 ),
-                const SizedBox(width: 12),
                 OutlinedButton(
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size(95, 40),
@@ -308,8 +317,8 @@ class _PlayerSlotCard extends ConsumerWidget {
                   },
                   child: Text(slot.isReady ? 'Ready' : 'Ready?'),
                 ),
-              ],
-            ),
+                  ],
+                ),
         ],
       ),
     );
@@ -395,8 +404,8 @@ class _EmptySlotCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.symmetric(vertical: 24),
+      margin: EdgeInsets.only(bottom: LayoutTokens.gr2),
+      padding: EdgeInsets.symmetric(vertical: LayoutTokens.gr4),
       decoration: BoxDecoration(
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(14),
@@ -427,7 +436,7 @@ class _ConfigSection extends ConsumerWidget {
     final notifier = ref.read(lobbyProvider.notifier);
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(LayoutTokens.gr4),
       decoration: BoxDecoration(
         color: AppTheme.card,
         borderRadius: BorderRadius.circular(14),
@@ -443,12 +452,10 @@ class _ConfigSection extends ConsumerWidget {
               fontSize: 15,
             ),
           ),
-          const SizedBox(height: 18),
+          SizedBox(height: LayoutTokens.gr3),
           // Format
           Row(
             children: [
-              const Icon(Icons.style, size: 16, color: AppTheme.textSecondary),
-              const SizedBox(width: 8),
               const Text('Format',
                   style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
               const Spacer(),
@@ -460,14 +467,14 @@ class _ConfigSection extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: LayoutTokens.gr3),
           // Starting life — quick-select 20, 25, 30, 40, 60, Custom
           _StartingLifeRow(
             value: config.startingLife,
             onChanged: (v) =>
                 notifier.updateConfig(config.copyWith(startingLife: v)),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: LayoutTokens.gr4),
           // Gameplay settings
           const Text(
             'Gameplay',
@@ -477,7 +484,7 @@ class _ConfigSection extends ConsumerWidget {
               fontSize: 14,
             ),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: LayoutTokens.gr2),
           _GameplayToggles(config: config, notifier: notifier),
         ],
       ),
@@ -530,7 +537,7 @@ class _FormatToggle extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(width: 10),
+        SizedBox(width: LayoutTokens.gr2),
         Expanded(
           child: Material(
             color: current == GameFormat.standard
@@ -583,16 +590,14 @@ class _StartingLifeRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const Icon(Icons.favorite, size: 16, color: AppTheme.accent),
-        const SizedBox(width: 8),
         const Text('Starting Life',
             style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
         const Spacer(),
         Expanded(
           child: Wrap(
             alignment: WrapAlignment.end,
-            spacing: 10,
-            runSpacing: 10,
+            spacing: LayoutTokens.gr2,
+            runSpacing: LayoutTokens.gr2,
             children: [
               ..._presets.map((v) => _LifeChip(
                     value: v,
@@ -690,10 +695,13 @@ class _LifeChip extends StatelessWidget {
           ),
         ),
         child: isCustomIcon
-            ? Icon(
-                Icons.add,
-                size: 20,
-                color: AppTheme.textSecondary,
+            ? Text(
+                'Custom',
+                style: TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
               )
             : Text(
                 isCustom ? '$value' : '$value',
@@ -725,20 +733,7 @@ class _GameplayToggles extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.only(bottom: 14),
-          child: Text(
-            'Gameplay',
-            style: TextStyle(
-              color: AppTheme.textSecondary,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ),
         _GameplaySwitchTile(
-          icon: Icons.public,
           title: 'Planechase',
           subtitle: 'Internet required for planar deck',
           value: config.planechaseEnabled,
@@ -746,7 +741,6 @@ class _GameplayToggles extends StatelessWidget {
               notifier.updateConfig(config.copyWith(planechaseEnabled: v)),
         ),
         _GameplaySwitchTile(
-          icon: Icons.shield,
           title: 'Archenemy',
           subtitle: 'Internet required for scheme deck',
           value: config.archenemyEnabled,
@@ -754,7 +748,6 @@ class _GameplayToggles extends StatelessWidget {
               notifier.updateConfig(config.copyWith(archenemyEnabled: v)),
         ),
         _GameplaySwitchTile(
-          iconWidget: GameIcon.bounty(size: 22, color: AppTheme.textSecondary),
           title: 'Bounty',
           subtitle: 'Internet required for bounty deck',
           value: config.bountyEnabled,
@@ -762,7 +755,6 @@ class _GameplayToggles extends StatelessWidget {
               notifier.updateConfig(config.copyWith(bountyEnabled: v)),
         ),
         _GameplaySwitchTile(
-          icon: Icons.cancel_outlined,
           title: 'Auto-KO',
           subtitle: 'From life, poison, or commander damage',
           value: _autoKoAll,
@@ -773,7 +765,6 @@ class _GameplayToggles extends StatelessWidget {
               )),
         ),
         _GameplaySwitchTile(
-          icon: Icons.shield_outlined,
           title: 'Commander damage life loss',
           subtitle: 'Commander damage also reduces life',
           value: config.commanderDamageReducesLife,
@@ -781,7 +772,6 @@ class _GameplayToggles extends StatelessWidget {
               config.copyWith(commanderDamageReducesLife: v)),
         ),
         _GameplaySwitchTile(
-          icon: Icons.schedule,
           title: 'Turn timer',
           subtitle: 'Tracks turn durations',
           value: config.trackTurnDuration,
@@ -795,16 +785,12 @@ class _GameplayToggles extends StatelessWidget {
 }
 
 class _GameplaySwitchTile extends StatelessWidget {
-  final IconData? icon;
-  final Widget? iconWidget;
   final String title;
   final String subtitle;
   final bool value;
   final ValueChanged<bool> onChanged;
 
   const _GameplaySwitchTile({
-    this.icon,
-    this.iconWidget,
     required this.title,
     required this.subtitle,
     required this.value,
@@ -820,7 +806,6 @@ class _GameplaySwitchTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: SwitchListTile(
-        secondary: iconWidget ?? (icon != null ? Icon(icon, size: 22, color: AppTheme.textSecondary) : null),
         title: Text(
           title,
           style: const TextStyle(
@@ -913,8 +898,6 @@ class _TurnTimeLimitTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.timer_outlined, size: 22, color: AppTheme.textSecondary),
-          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -948,7 +931,7 @@ class _TurnTimeLimitTile extends StatelessWidget {
                 onTap: () => notifier.updateConfig(
                     config.copyWith(turnTimeLimitSeconds: null)),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: LayoutTokens.gr1),
               _TimerChip(
                 label: '1m',
                 value: 60,
@@ -956,7 +939,7 @@ class _TurnTimeLimitTile extends StatelessWidget {
                 onTap: () => notifier.updateConfig(
                     config.copyWith(turnTimeLimitSeconds: 60)),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: LayoutTokens.gr1),
               _TimerChip(
                 label: '2m',
                 value: 120,
@@ -964,7 +947,7 @@ class _TurnTimeLimitTile extends StatelessWidget {
                 onTap: () => notifier.updateConfig(
                     config.copyWith(turnTimeLimitSeconds: 120)),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: LayoutTokens.gr1),
               _TimerChip(
                 label: '5m',
                 value: 300,

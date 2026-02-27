@@ -77,8 +77,12 @@ class CommanderInfoBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isCompact = MediaQuery.sizeOf(context).width < 360;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: EdgeInsets.symmetric(
+        horizontal: isCompact ? 12 : 16,
+        vertical: isCompact ? 10 : 14,
+      ),
       child: Row(
         children: [
           // Commander avatar (primary)

@@ -8,6 +8,7 @@ import '../../ui/bento/bento_tile.dart';
 import '../../ui/components/ui_app_bar.dart';
 import '../../ui/components/ui_surface.dart';
 import '../../ui/tokens/color_tokens.dart';
+import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import '../../ui/tokens/spacing_tokens.dart';
 
@@ -25,7 +26,7 @@ class MatchHistoryScreen extends ConsumerWidget {
       appBar: const UiAppBar(title: 'Match History'),
       backgroundColor: ColorTokens.backgroundPrimary,
       body: ListView(
-        padding: const EdgeInsets.all(SpacingTokens.lg),
+        padding: EdgeInsets.all(LayoutTokens.gr4),
         children: [
           if (profile != null) ...[
             BentoTile(
@@ -38,7 +39,7 @@ class MatchHistoryScreen extends ConsumerWidget {
                 games: profile.totalGamesPlayed,
               ),
             ),
-            const SizedBox(height: SpacingTokens.lg),
+            SizedBox(height: LayoutTokens.gr4),
           ],
           Text(
             'Last 30 Days',
@@ -47,15 +48,15 @@ class MatchHistoryScreen extends ConsumerWidget {
                   fontWeight: FontWeight.w800,
                 ),
           ),
-          const SizedBox(height: SpacingTokens.sm),
+          SizedBox(height: LayoutTokens.gr2),
           if (recent.isEmpty)
             _EmptyState(message: 'No matches in the last 30 days.')
           else
             ...recent.map((m) => _MatchCard(match: m)),
           if (all.length > recent.length) ...[
-            const SizedBox(height: SpacingTokens.xs),
+            SizedBox(height: LayoutTokens.gr1),
             UiSurface(
-              padding: const EdgeInsets.all(SpacingTokens.md),
+              padding: EdgeInsets.all(LayoutTokens.gr3),
               borderRadius: RadiusTokens.radiusMd,
               child: Row(
                 children: [
@@ -64,7 +65,7 @@ class MatchHistoryScreen extends ConsumerWidget {
                     color: ColorTokens.textSecondary,
                     size: 18,
                   ),
-                  const SizedBox(width: SpacingTokens.sm),
+                  SizedBox(width: LayoutTokens.gr2),
                   Expanded(
                     child: Text(
                       'Older matches have been rolled into your lifetime stats.',
@@ -75,7 +76,7 @@ class MatchHistoryScreen extends ConsumerWidget {
               ),
             ),
           ],
-          const SizedBox(height: SpacingTokens.xl),
+          SizedBox(height: LayoutTokens.gr5),
         ],
       ),
     );
@@ -96,18 +97,24 @@ class _LifetimeSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rate = games == 0 ? 0.0 : wins / games * 100;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        _SummaryItem(label: 'Games', value: '$games'),
-        _SummaryItem(label: 'Wins', value: '$wins', color: ColorTokens.success),
-        _SummaryItem(label: 'Losses', value: '$losses', color: ColorTokens.primaryAccent),
-        _SummaryItem(
-          label: 'Win %',
-          value: '${rate.toStringAsFixed(0)}%',
-          color: ColorTokens.primaryAccent,
-        ),
-      ],
+    final isNarrow = MediaQuery.sizeOf(context).width < 360;
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _SummaryItem(label: 'Games', value: '$games', compact: isNarrow),
+          _SummaryItem(label: 'Wins', value: '$wins', color: ColorTokens.success, compact: isNarrow),
+          _SummaryItem(label: 'Losses', value: '$losses', color: ColorTokens.primaryAccent, compact: isNarrow),
+          _SummaryItem(
+            label: 'Win %',
+            value: '${rate.toStringAsFixed(0)}%',
+            color: ColorTokens.primaryAccent,
+            compact: isNarrow,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -116,27 +123,35 @@ class _SummaryItem extends StatelessWidget {
   final String label;
   final String value;
   final Color? color;
+  final bool compact;
 
   const _SummaryItem({
     required this.label,
     required this.value,
     this.color,
+    this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: color ?? ColorTokens.textPrimary,
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-              ),
-        ),
-        Text(label, style: Theme.of(context).textTheme.bodyMedium),
-      ],
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr2),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            value,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  color: color ?? ColorTokens.textPrimary,
+                  fontSize: compact ? 18 : 24,
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+          Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            fontSize: compact ? 11 : null,
+          )),
+        ],
+      ),
     );
   }
 }
@@ -160,9 +175,9 @@ class _MatchCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final fmt = DateFormat('MMM d, y');
     return Padding(
-      padding: const EdgeInsets.only(bottom: SpacingTokens.sm),
+      padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
       child: UiSurface(
-        padding: const EdgeInsets.all(SpacingTokens.md),
+        padding: EdgeInsets.all(LayoutTokens.gr3),
         borderRadius: RadiusTokens.radiusMd,
         borderColor: _resultColor.withValues(alpha: 0.5),
         child: Row(
@@ -175,14 +190,14 @@ class _MatchCard extends StatelessWidget {
                     match.commanderName,
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: LayoutTokens.gr0),
                   Text(
                     '${match.format} · ${match.playerCount} players · ${match.durationMinutes}m',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontSize: 12,
                         ),
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: LayoutTokens.gr0),
                   Text(
                     fmt.format(match.date),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -224,7 +239,7 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: SpacingTokens.xl),
+      padding: EdgeInsets.symmetric(vertical: LayoutTokens.gr5),
       child: Center(
         child: Text(
           message,

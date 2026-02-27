@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/game/lobby_state.dart';
 import '../../core/game/scryfall_service.dart';
 import '../../shared/theme/app_theme.dart';
+import '../../ui/tokens/layout_tokens.dart';
 
 class CommanderSelectScreen extends ConsumerStatefulWidget {
   final String playerId;
@@ -157,7 +158,7 @@ class _CommanderSelectScreenState
 
           // Search bar
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            padding: EdgeInsets.fromLTRB(LayoutTokens.gr3, LayoutTokens.gr2, LayoutTokens.gr3, 0),
             child: TextField(
               controller: _searchController,
               autofocus: true,
@@ -218,7 +219,7 @@ class _CommanderSelectScreenState
       );
     }
     return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      padding: EdgeInsets.fromLTRB(LayoutTokens.gr3, 0, LayoutTokens.gr3, LayoutTokens.gr4),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         childAspectRatio: 0.72,
@@ -260,7 +261,7 @@ class _SelectionPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      padding: EdgeInsets.fromLTRB(LayoutTokens.gr3, LayoutTokens.gr2, LayoutTokens.gr3, LayoutTokens.gr1),
       color: AppTheme.surface,
       child: Row(
         children: [
@@ -313,11 +314,14 @@ class _SelectionPreview extends StatelessWidget {
           ],
           const Spacer(),
           if (hasPartner && partner == null)
-            TextButton(
-              onPressed: onPickPartner,
-              child: Text(
-                pickingPartner ? 'Cancel Partner Pick' : 'Add Partner',
-                style: const TextStyle(color: AppTheme.accent, fontSize: 12),
+            Flexible(
+              child: TextButton(
+                onPressed: onPickPartner,
+                child: Text(
+                  pickingPartner ? 'Cancel' : 'Add Partner',
+                  style: const TextStyle(color: AppTheme.accent, fontSize: 12),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ),
         ],

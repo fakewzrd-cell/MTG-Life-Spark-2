@@ -8,6 +8,7 @@ import '../../ui/bento/bento_tile.dart';
 import '../../ui/components/ui_app_bar.dart';
 import '../../ui/components/ui_surface.dart';
 import '../../ui/tokens/color_tokens.dart';
+import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import '../../ui/tokens/spacing_tokens.dart';
 
@@ -28,12 +29,12 @@ class AchievementsScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(SpacingTokens.lg),
         children: [
           UiSurface(
-            padding: const EdgeInsets.all(SpacingTokens.md),
+            padding: EdgeInsets.all(LayoutTokens.gr3),
             borderRadius: RadiusTokens.radiusMd,
             child: Row(
               children: [
                 const Text('🏆', style: TextStyle(fontSize: 28)),
-                const SizedBox(width: SpacingTokens.md),
+                SizedBox(width: LayoutTokens.gr3),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -62,7 +63,7 @@ class AchievementsScreen extends ConsumerWidget {
             ),
           ),
           if (unlocked.isNotEmpty) ...[
-            const SizedBox(height: SpacingTokens.lg),
+            SizedBox(height: LayoutTokens.gr4),
             Text(
               'Unlocked',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -70,10 +71,12 @@ class AchievementsScreen extends ConsumerWidget {
                     fontWeight: FontWeight.w800,
                   ),
             ),
-            const SizedBox(height: SpacingTokens.sm),
+            SizedBox(height: LayoutTokens.gr2),
             BentoGrid(
               padding: EdgeInsets.zero,
               crossAxisCount: 2,
+              mainAxisSpacing: LayoutTokens.gr2,
+              crossAxisSpacing: LayoutTokens.gr2,
               children: unlocked
                   .map((a) => BentoTile(
                         title: a.title,
@@ -89,7 +92,7 @@ class AchievementsScreen extends ConsumerWidget {
             ),
           ],
           if (locked.isNotEmpty) ...[
-            const SizedBox(height: SpacingTokens.lg),
+            SizedBox(height: LayoutTokens.gr4),
             Text(
               'Locked',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -97,10 +100,12 @@ class AchievementsScreen extends ConsumerWidget {
                     fontWeight: FontWeight.w800,
                   ),
             ),
-            const SizedBox(height: SpacingTokens.sm),
+            SizedBox(height: LayoutTokens.gr2),
             BentoGrid(
               padding: EdgeInsets.zero,
               crossAxisCount: 2,
+              mainAxisSpacing: LayoutTokens.gr2,
+              crossAxisSpacing: LayoutTokens.gr2,
               children: locked
                   .map((a) => BentoTile(
                         title: a.title,
@@ -117,7 +122,7 @@ class AchievementsScreen extends ConsumerWidget {
                   .toList(),
             ),
           ],
-          const SizedBox(height: SpacingTokens.xl),
+          SizedBox(height: LayoutTokens.gr5),
         ],
       ),
     );

@@ -129,6 +129,13 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
         final w = constraints.maxWidth;
         final h = constraints.maxHeight;
         final halfW = w * 0.42;
+        // Scale font size for small screens to prevent overflow
+        final baseFontSize = (w < 200 || h < 120)
+            ? 48.0
+            : (w < 280 || h < 150)
+                ? 64.0
+                : (widget.life.abs() >= 100 ? 80.0 : 96.0);
+        final deltaFontSize = (baseFontSize * 0.27).clamp(18.0, 26.0);
 
         return GestureDetector(
           onVerticalDragUpdate: (d) {
@@ -201,7 +208,7 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
                             ? '☠'
                             : '${widget.life}',
                         style: TextStyle(
-                          fontSize: widget.life.abs() >= 100 ? 80 : 96,
+                          fontSize: baseFontSize,
                           fontWeight: FontWeight.w800,
                           color: _lifeColor,
                           letterSpacing: -3,
@@ -233,7 +240,7 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
                                     ? '+$_lastDelta'
                                     : '$_lastDelta',
                                 style: TextStyle(
-                                  fontSize: 26,
+                                  fontSize: deltaFontSize,
                                   fontWeight: FontWeight.bold,
                                   color: _deltaColor,
                                 ),
