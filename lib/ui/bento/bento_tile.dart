@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../debug_log.dart';
 import '../theme/app_color_tokens.dart';
 import '../tokens/radius_tokens.dart';
 import '../tokens/spacing_tokens.dart';
@@ -75,30 +74,7 @@ class BentoTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // #region agent log
     final useInlineSubtitle = compact && title != null && subtitle != null;
-    if (useInlineSubtitle) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (context.mounted) {
-          final box = context.findRenderObject() as RenderBox?;
-          if (box != null && box.hasSize) {
-            debugLog(
-              location: 'bento_tile.dart:build',
-              message: 'BentoTile compact layout constraints',
-              data: {
-                'maxWidth': box.constraints.maxWidth,
-                'maxHeight': box.constraints.maxHeight,
-                'size': '${box.size.width}x${box.size.height}',
-                'subtitle': subtitle,
-              },
-              hypothesisId: 'H1',
-            );
-          }
-        }
-      });
-    }
-    // #endregion
-
     final colors = AppColorTokens.of(context);
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,

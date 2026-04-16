@@ -1,9 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/game_feedback.dart';
 import '../models/match_record.dart';
 import '../persistence/achievement_repository.dart';
 import '../persistence/feedback_repository.dart';
+import '../persistence/deck_repository.dart';
 import '../persistence/match_repository.dart';
 import '../persistence/profile_repository.dart';
 import '../persistence/providers.dart';
@@ -39,16 +42,19 @@ class ProgressionService {
   final AchievementRepository _achievementRepo;
   final MatchRepository _matchRepo;
   final FeedbackRepository _feedbackRepo;
+  final DeckRepository _deckRepo;
 
   ProgressionService({
     required ProfileRepository profileRepo,
     required AchievementRepository achievementRepo,
     required MatchRepository matchRepo,
     required FeedbackRepository feedbackRepo,
+    required DeckRepository deckRepo,
   })  : _profileRepo = profileRepo,
         _achievementRepo = achievementRepo,
         _matchRepo = matchRepo,
-        _feedbackRepo = feedbackRepo;
+        _feedbackRepo = feedbackRepo,
+        _deckRepo = deckRepo;
 
   Future<ProgressResult> recordMatch({
     required GameState finalState,
@@ -82,11 +88,25 @@ class ProgressionService {
     }
 
     // ── Save match record ─────────────────────────────────────────────────
-    final duration = DateTime.now().difference(startTime).inMinutes;
+    final elapsed = DateTime.now().difference(startTime);
+    final durationMinutes = elapsed.inMinutes;
+    final durationSeconds = elapsed.inSeconds;
     final opponentNames = finalState.players
         .where((p) => p.playerId != localId)
         .map((p) => p.username)
         .toList();
+
+    final participantsJson = jsonEncode(
+      finalState.players.map((p) {
+        final team = finalState.teamAssignments[p.playerId] ?? 0;
+        return {
+          'playerId': p.playerId,
+          'username': p.username,
+          'commanderName': p.commanderName,
+          'teamIndex': team,
+        };
+      }).toList(),
+    );
 
     final matchId = DateTime.now().millisecondsSinceEpoch.toString();
     await _matchRepo.saveMatch(MatchRecord(
@@ -100,9 +120,14 @@ class ProgressionService {
       format: lobbyState.config.format == GameFormat.commander
           ? 'Commander'
           : 'Standard',
-      durationMinutes: duration,
+      durationMinutes: durationMinutes,
       startingLifeTotal: lobbyState.config.startingLife,
       playerCount: finalState.players.length,
+      durationSeconds: durationSeconds,
+      participantsJson: participantsJson,
+      podNameSnapshot: lobbyState.podNameSnapshot,
+      locationSnapshot: null,
+      localDeckIdSnapshot: local.selectedDeckId,
     ));
 
     // ── Update profile via repository ─────────────────────────────────────
@@ -111,6 +136,10 @@ class ProgressionService {
       won: won,
       xpGained: xp,
     );
+    final deckId = local.selectedDeckId;
+    if (deckId != null && deckId.isNotEmpty) {
+      await _deckRepo.recordMatchResult(deckId, won);
+    }
 
     // ── Check achievements ────────────────────────────────────────────────
     final updatedProfile = _profileRepo.getProfile()!;
@@ -134,6 +163,13 @@ class ProgressionService {
     final likesCount = feedback.likePlayerIds.length;
     if (likesCount > 0) {
       await _profileRepo.addXp(likesCount * kXpPerLike);
+    }
+    final profile = _profileRepo.getProfile();
+    if (profile != null) {
+      await _profileRepo.recomputeSocialStatsFromFeedback(
+        _feedbackRepo,
+        profile.username,
+      );
     }
   }
 
@@ -186,5 +222,6 @@ final progressionServiceProvider = Provider<ProgressionService>((ref) {
     achievementRepo: ref.read(achievementRepositoryProvider),
     matchRepo: ref.read(matchRepositoryProvider),
     feedbackRepo: ref.read(feedbackRepositoryProvider),
+    deckRepo: ref.read(deckRepositoryProvider),
   );
 });

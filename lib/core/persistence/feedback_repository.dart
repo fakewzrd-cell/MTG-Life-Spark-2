@@ -6,6 +6,7 @@ import '../models/game_feedback.dart';
 
 class FeedbackRepository {
   static const _boxName = 'matchFeedback';
+  static const _keySep = '::';
 
   Future<void> init() async {
     if (!Hive.isBoxOpen(_boxName)) {
@@ -15,66 +16,67 @@ class FeedbackRepository {
 
   Box<String> get _box => Hive.box<String>(_boxName);
 
-  Future<void> saveFeedback(GameFeedback feedback) async {
-    await _box.put(feedback.matchId, jsonEncode(feedback.toJson()));
+  static String _storageKey(String matchId, String voterPlayerId) =>
+      '$matchId$_keySep$voterPlayerId';
+
+  /// All stored feedback entries (legacy single-key + composite keys).
+  Iterable<GameFeedback> allFeedback() sync* {
+    for (final e in _box.toMap().entries) {
+      final f = _parseValue(e.key.toString(), e.value);
+      if (f != null) yield f;
+    }
   }
 
-  GameFeedback? getFeedback(String matchId) {
-    final json = _box.get(matchId);
-    if (json == null) return null;
+  GameFeedback? _parseValue(String key, String json) {
     try {
-      return GameFeedback.fromJson(
-          jsonDecode(json) as Map<String, dynamic>);
+      return GameFeedback.fromJson(jsonDecode(json) as Map<String, dynamic>);
     } catch (_) {
       return null;
     }
   }
 
+  Future<void> saveFeedback(GameFeedback feedback) async {
+    final newKey = _storageKey(feedback.matchId, feedback.voterPlayerId);
+    await _box.put(newKey, jsonEncode(feedback.toJson()));
+    // Migrate away from legacy key (matchId only) for this match.
+    if (_box.containsKey(feedback.matchId)) {
+      await _box.delete(feedback.matchId);
+    }
+  }
+
+  GameFeedback? getFeedback(String matchId) {
+    // Legacy: single key per match (local voter only).
+    final legacy = _box.get(matchId);
+    if (legacy != null) {
+      return _parseValue(matchId, legacy);
+    }
+    return null;
+  }
+
+  /// Feedback for a match from a specific voter (composite key).
+  GameFeedback? getFeedbackForVoter(String matchId, String voterPlayerId) {
+    final v = _box.get(_storageKey(matchId, voterPlayerId));
+    if (v == null) return null;
+    return _parseValue(_storageKey(matchId, voterPlayerId), v);
+  }
+
   /// Total likes given across all matches (for profile stats).
   int get totalLikesGiven =>
-      _box.values.fold<int>(0, (sum, json) {
-        try {
-          final f = GameFeedback.fromJson(
-              jsonDecode(json) as Map<String, dynamic>);
-          return sum + f.likePlayerIds.length;
-        } catch (_) {
-          return sum;
-        }
-      });
+      allFeedback().fold<int>(0, (sum, f) => sum + f.likePlayerIds.length);
 
   /// Total dislikes given across all matches.
   int get totalDislikesGiven =>
-      _box.values.fold<int>(0, (sum, json) {
-        try {
-          final f = GameFeedback.fromJson(
-              jsonDecode(json) as Map<String, dynamic>);
-          return sum + f.dislikePlayerIds.length;
-        } catch (_) {
-          return sum;
-        }
-      });
+      allFeedback().fold<int>(0, (sum, f) => sum + f.dislikePlayerIds.length);
 
-  /// Count of matches where MVP was voted.
-  int get totalMvpVotesGiven =>
-      _box.values.fold<int>(0, (sum, json) {
-        try {
-          final f = GameFeedback.fromJson(
-              jsonDecode(json) as Map<String, dynamic>);
-          return sum + (f.mvpPlayerId != null ? 1 : 0);
-        } catch (_) {
-          return sum;
-        }
-      });
+  /// Count of feedback entries where MVP was chosen.
+  int get totalMvpVotesGiven => allFeedback()
+      .fold<int>(0, (sum, f) => sum + (f.mvpPlayerId != null ? 1 : 0));
 
-  /// Count of matches where Team Player was voted.
-  int get totalTeamPlayerVotesGiven =>
-      _box.values.fold<int>(0, (sum, json) {
-        try {
-          final f = GameFeedback.fromJson(
-              jsonDecode(json) as Map<String, dynamic>);
-          return sum + (f.teamPlayerId != null ? 1 : 0);
-        } catch (_) {
-          return sum;
-        }
-      });
+  /// Count of feedback entries where Team Player was chosen.
+  int get totalTeamPlayerVotesGiven => allFeedback()
+      .fold<int>(0, (sum, f) => sum + (f.teamPlayerId != null ? 1 : 0));
+
+  /// Count of feedback entries where Underdog was chosen.
+  int get totalUnderdogVotesGiven => allFeedback()
+      .fold<int>(0, (sum, f) => sum + (f.underdogPlayerId != null ? 1 : 0));
 }

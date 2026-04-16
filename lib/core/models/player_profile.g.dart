@@ -34,13 +34,19 @@ class PlayerProfileAdapter extends TypeAdapter<PlayerProfile> {
       currentWinStreak: fields[14] as int,
       totalGamesPlayed: fields[15] as int,
       profileAvatarImageUrl: fields[16] as String?,
+      likesReceived: fields[17] as int? ?? 0,
+      dislikesReceived: fields[18] as int? ?? 0,
+      honorsMvpReceived: fields[19] as int? ?? 0,
+      honorsTeamPlayerReceived: fields[20] as int? ?? 0,
+      honorsUnderdogReceived: fields[21] as int? ?? 0,
+      profileBannerImageUrl: fields[22] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, PlayerProfile obj) {
     writer
-      ..writeByte(17)
+      ..writeByte(23)
       ..writeByte(0)
       ..write(obj.username)
       ..writeByte(1)
@@ -74,7 +80,19 @@ class PlayerProfileAdapter extends TypeAdapter<PlayerProfile> {
       ..writeByte(15)
       ..write(obj.totalGamesPlayed)
       ..writeByte(16)
-      ..write(obj.profileAvatarImageUrl);
+      ..write(obj.profileAvatarImageUrl)
+      ..writeByte(17)
+      ..write(obj.likesReceived)
+      ..writeByte(18)
+      ..write(obj.dislikesReceived)
+      ..writeByte(19)
+      ..write(obj.honorsMvpReceived)
+      ..writeByte(20)
+      ..write(obj.honorsTeamPlayerReceived)
+      ..writeByte(21)
+      ..write(obj.honorsUnderdogReceived)
+      ..writeByte(22)
+      ..write(obj.profileBannerImageUrl);
   }
 
   @override

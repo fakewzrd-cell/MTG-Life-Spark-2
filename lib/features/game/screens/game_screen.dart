@@ -626,6 +626,7 @@ class _ConcedeDialogState extends State<_ConcedeDialog> {
   final Set<String> _dislikePlayerIds = {};
   String? _mvpPlayerId;
   String? _teamPlayerId;
+  String? _underdogPlayerId;
 
   void _submit(WidgetRef ref) {
     ref.read(pendingFeedbackProvider.notifier).state = PendingFeedbackData(
@@ -633,6 +634,7 @@ class _ConcedeDialogState extends State<_ConcedeDialog> {
       dislikePlayerIds: _dislikePlayerIds.toList(),
       mvpPlayerId: _mvpPlayerId,
       teamPlayerId: _teamPlayerId,
+      underdogPlayerId: _underdogPlayerId,
     );
     Navigator.pop(context);
     widget.onConcede();
@@ -743,6 +745,14 @@ class _ConcedeDialogState extends State<_ConcedeDialog> {
                   players: allPlayers,
                   selectedId: _teamPlayerId,
                   onChanged: (id) => setState(() => _teamPlayerId = id),
+                ),
+                const SizedBox(height: 8),
+                _ConcedeVoteDropdown(
+                  label: 'Underdog',
+                  hint: 'Best comeback or underdog performance',
+                  players: allPlayers,
+                  selectedId: _underdogPlayerId,
+                  onChanged: (id) => setState(() => _underdogPlayerId = id),
                 ),
                 const SizedBox(height: 20),
                 // Concede button

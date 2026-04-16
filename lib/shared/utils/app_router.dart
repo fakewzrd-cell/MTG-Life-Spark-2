@@ -7,6 +7,9 @@ import '../../features/profile/profile_setup_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/profile/profile_avatar_picker_screen.dart';
+import '../../features/profile/profile_banner_picker_screen.dart';
+import '../../features/profile/pods_manage_screen.dart';
+import '../../features/profile/decks_manage_screen.dart';
 import '../../features/settings/settings_screen.dart';
 import '../../features/feedback/feedback_screen.dart';
 import '../../features/lobby/lobby_screen.dart';
@@ -26,6 +29,9 @@ class AppRoutes {
   static const lobbyJoin = '/lobby/join';
   static const settings = '/settings';
   static const profileAvatar = '/home/avatar';
+  static const profileBanner = '/home/banner';
+  static const profilePods = '/home/pods';
+  static const profileDecks = '/home/decks';
   static const feedback = '/settings/feedback';
   static const commanderSelect = '/commander-select';
   static const game = '/game';
@@ -60,6 +66,19 @@ final routerProvider = Provider<GoRouter>((ref) {
                     builder: (context, state) =>
                         const ProfileAvatarPickerScreen(),
                   ),
+                  GoRoute(
+                    path: 'banner',
+                    builder: (context, state) =>
+                        const ProfileBannerPickerScreen(),
+                  ),
+                  GoRoute(
+                    path: 'pods',
+                    builder: (context, state) => const PodsManageScreen(),
+                  ),
+                  GoRoute(
+                    path: 'decks',
+                    builder: (context, state) => const DecksManageScreen(),
+                  ),
                 ],
               ),
             ],
@@ -79,12 +98,23 @@ final routerProvider = Provider<GoRouter>((ref) {
                         builder: (context, state) {
                           final extra = state.extra;
                           final String playerId;
+                          final String? newDeckDisplayName;
+                          final String? editDeckId;
                           if (extra is Map) {
                             playerId = extra['playerId'] as String? ?? '';
+                            newDeckDisplayName =
+                                extra['newDeckDisplayName'] as String?;
+                            editDeckId = extra['editDeckId'] as String?;
                           } else {
                             playerId = extra as String? ?? '';
+                            newDeckDisplayName = null;
+                            editDeckId = null;
                           }
-                          return CommanderSelectScreen(playerId: playerId);
+                          return CommanderSelectScreen(
+                            playerId: playerId,
+                            newDeckDisplayName: newDeckDisplayName,
+                            editDeckId: editDeckId,
+                          );
                         },
                       ),
                     ],
@@ -118,12 +148,22 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final extra = state.extra;
           final String playerId;
+          final String? newDeckDisplayName;
+          final String? editDeckId;
           if (extra is Map) {
             playerId = extra['playerId'] as String? ?? '';
+            newDeckDisplayName = extra['newDeckDisplayName'] as String?;
+            editDeckId = extra['editDeckId'] as String?;
           } else {
             playerId = extra as String? ?? '';
+            newDeckDisplayName = null;
+            editDeckId = null;
           }
-          return CommanderSelectScreen(playerId: playerId);
+          return CommanderSelectScreen(
+            playerId: playerId,
+            newDeckDisplayName: newDeckDisplayName,
+            editDeckId: editDeckId,
+          );
         },
       ),
       GoRoute(

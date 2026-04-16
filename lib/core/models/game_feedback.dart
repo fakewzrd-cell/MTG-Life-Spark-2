@@ -4,12 +4,14 @@ class PendingFeedbackData {
   final List<String> dislikePlayerIds;
   final String? mvpPlayerId;
   final String? teamPlayerId;
+  final String? underdogPlayerId;
 
   const PendingFeedbackData({
     this.likePlayerIds = const [],
     this.dislikePlayerIds = const [],
     this.mvpPlayerId,
     this.teamPlayerId,
+    this.underdogPlayerId,
   });
 }
 
@@ -21,6 +23,7 @@ class GameFeedback {
   final List<String> dislikePlayerIds;
   final String? mvpPlayerId;
   final String? teamPlayerId;
+  final String? underdogPlayerId;
 
   const GameFeedback({
     required this.matchId,
@@ -29,6 +32,7 @@ class GameFeedback {
     this.dislikePlayerIds = const [],
     this.mvpPlayerId,
     this.teamPlayerId,
+    this.underdogPlayerId,
   });
 
   Map<String, dynamic> toJson() => {
@@ -38,6 +42,7 @@ class GameFeedback {
         'dislikePlayerIds': dislikePlayerIds,
         'mvpPlayerId': mvpPlayerId,
         'teamPlayerId': teamPlayerId,
+        'underdogPlayerId': underdogPlayerId,
       };
 
   factory GameFeedback.fromJson(Map<String, dynamic> json) => GameFeedback(
@@ -53,5 +58,6 @@ class GameFeedback {
             [],
         mvpPlayerId: json['mvpPlayerId'] as String?,
         teamPlayerId: json['teamPlayerId'] as String?,
+        underdogPlayerId: json['underdogPlayerId'] as String?,
       );
 }

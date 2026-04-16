@@ -34,6 +34,9 @@ class PlayerGameState {
   final String? partnerCommanderImageUrl;
   final bool hasPartner;
 
+  /// Saved deck used for this match (local player only); from lobby.
+  final String? selectedDeckId;
+
   // Life & counters
   final int life;
   final int poison;
@@ -70,6 +73,7 @@ class PlayerGameState {
     this.partnerCommanderName,
     this.partnerCommanderImageUrl,
     this.hasPartner = false,
+    this.selectedDeckId,
     required this.life,
     this.poison = 0,
     this.energy = 0,
@@ -93,6 +97,7 @@ class PlayerGameState {
     String? partnerCommanderName,
     String? partnerCommanderImageUrl,
     bool? hasPartner,
+    Object? selectedDeckId = _sentinel,
     int? life,
     int? poison,
     int? energy,
@@ -117,6 +122,9 @@ class PlayerGameState {
       partnerCommanderImageUrl:
           partnerCommanderImageUrl ?? this.partnerCommanderImageUrl,
       hasPartner: hasPartner ?? this.hasPartner,
+      selectedDeckId: identical(selectedDeckId, _sentinel)
+          ? this.selectedDeckId
+          : selectedDeckId as String?,
       life: life ?? this.life,
       poison: poison ?? this.poison,
       energy: energy ?? this.energy,
@@ -152,6 +160,7 @@ class PlayerGameState {
       partnerCommanderName: slot.partnerCommanderName,
       partnerCommanderImageUrl: slot.partnerCommanderImageUrl,
       hasPartner: slot.hasPartner,
+      selectedDeckId: slot.selectedDeckId,
       life: startingLife,
     );
   }
@@ -178,6 +187,7 @@ class PlayerGameState {
         'partnerCommanderName': partnerCommanderName,
         'partnerCommanderImageUrl': partnerCommanderImageUrl,
         'hasPartner': hasPartner,
+        'selectedDeckId': selectedDeckId,
         'life': life,
         'poison': poison,
         'energy': energy,
@@ -203,6 +213,7 @@ class PlayerGameState {
       partnerCommanderName: json['partnerCommanderName'] as String?,
       partnerCommanderImageUrl: json['partnerCommanderImageUrl'] as String?,
       hasPartner: json['hasPartner'] as bool? ?? false,
+      selectedDeckId: json['selectedDeckId'] as String?,
       life: (json['life'] as num).toInt(),
       poison: (json['poison'] as num?)?.toInt() ?? 0,
       energy: (json['energy'] as num?)?.toInt() ?? 0,

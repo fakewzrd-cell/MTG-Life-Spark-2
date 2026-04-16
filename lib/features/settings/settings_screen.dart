@@ -107,7 +107,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SectionHeader('Feel'),
           _SwitchTile(
             title: 'Haptic Feedback',
-            subtitle: 'Vibrate on life changes and level ups',
+            subtitle: 'Vibrate on life changes and rank ups',
             value: _settings.hapticEnabled,
             onChanged: (v) {
               _settings.hapticEnabled = v;
@@ -270,7 +270,12 @@ class _SwitchTile extends StatelessWidget {
         value: value,
         onChanged: onChanged,
         activeTrackColor: colors.primaryAccent.withValues(alpha: 0.5),
-        activeThumbColor: colors.primaryAccent,
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return colors.primaryAccent;
+          }
+          return null;
+        }),
         contentPadding: EdgeInsets.symmetric(
           horizontal: LayoutTokens.gr3,
           vertical: LayoutTokens.gr1,

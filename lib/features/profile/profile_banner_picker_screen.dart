@@ -11,17 +11,17 @@ import '../../ui/components/ui_app_bar.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/color_tokens.dart';
 
-/// Screen to pick an MTG card image as profile avatar.
-class ProfileAvatarPickerScreen extends ConsumerStatefulWidget {
-  const ProfileAvatarPickerScreen({super.key});
+/// Pick MTG card art for the profile header banner.
+class ProfileBannerPickerScreen extends ConsumerStatefulWidget {
+  const ProfileBannerPickerScreen({super.key});
 
   @override
-  ConsumerState<ProfileAvatarPickerScreen> createState() =>
-      _ProfileAvatarPickerScreenState();
+  ConsumerState<ProfileBannerPickerScreen> createState() =>
+      _ProfileBannerPickerScreenState();
 }
 
-class _ProfileAvatarPickerScreenState
-    extends ConsumerState<ProfileAvatarPickerScreen> {
+class _ProfileBannerPickerScreenState
+    extends ConsumerState<ProfileBannerPickerScreen> {
   final _searchController = TextEditingController();
   Timer? _debounce;
 
@@ -64,7 +64,8 @@ class _ProfileAvatarPickerScreenState
       setState(() {
         _results = [];
         _loading = false;
-        _error = 'Unable to search. Check your internet connection and try again.';
+        _error =
+            'Unable to search. Check your internet connection and try again.';
       });
     }
   }
@@ -73,16 +74,16 @@ class _ProfileAvatarPickerScreenState
     if (card.imageUrl == null || card.imageUrl!.isEmpty) return;
     final profile = ref.read(profileRepositoryProvider).getProfile();
     if (profile == null) return;
-    profile.profileAvatarImageUrl = card.imageUrl;
+    profile.profileBannerImageUrl = card.imageUrl;
     await ref.read(profileRepositoryProvider).saveProfile(profile);
     bumpProfileRevision(ref);
     if (mounted) context.pop();
   }
 
-  Future<void> _clearAvatar() async {
+  Future<void> _clearBanner() async {
     final profile = ref.read(profileRepositoryProvider).getProfile();
     if (profile == null) return;
-    profile.profileAvatarImageUrl = null;
+    profile.profileBannerImageUrl = null;
     await ref.read(profileRepositoryProvider).saveProfile(profile);
     bumpProfileRevision(ref);
     if (mounted) context.pop();
@@ -93,10 +94,10 @@ class _ProfileAvatarPickerScreenState
     final colors = AppColorTokens.of(context);
     return Scaffold(
       appBar: UiAppBar(
-        title: 'Profile Picture',
+        title: 'Profile banner',
         actions: [
           TextButton(
-            onPressed: _clearAvatar,
+            onPressed: _clearBanner,
             child: Text(
               'Remove',
               style: TextStyle(
@@ -116,7 +117,7 @@ class _ProfileAvatarPickerScreenState
               controller: _searchController,
               autofocus: true,
               decoration: InputDecoration(
-                hintText: 'Search MTG cards…',
+                hintText: 'Search MTG cards for banner art…',
                 prefixIcon: Icon(
                   Icons.search,
                   color: colors.textSecondary,
@@ -171,7 +172,7 @@ class _ProfileAvatarPickerScreenState
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(
-            'Search for an MTG card to use as your profile picture.',
+            'Search for a card—its art will fill the banner behind your profile.',
             style: TextStyle(color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
@@ -193,7 +194,7 @@ class _ProfileAvatarPickerScreenState
       itemCount: _results.length,
       itemBuilder: (context, i) {
         final card = _results[i];
-        return _AvatarCard(
+        return _BannerCard(
           card: card,
           onTap: () => _onCardTap(card),
         );
@@ -202,11 +203,11 @@ class _ProfileAvatarPickerScreenState
   }
 }
 
-class _AvatarCard extends StatelessWidget {
+class _BannerCard extends StatelessWidget {
   final ScryfallCard card;
   final VoidCallback onTap;
 
-  const _AvatarCard({required this.card, required this.onTap});
+  const _BannerCard({required this.card, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

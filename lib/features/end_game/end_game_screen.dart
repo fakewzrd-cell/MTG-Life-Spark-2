@@ -13,6 +13,7 @@ import '../../core/models/game_feedback.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../shared/utils/achievement_definitions.dart';
 import '../../shared/utils/app_router.dart';
+import '../../shared/utils/wizard_rank_titles.dart';
 import '../../ui/tokens/layout_tokens.dart';
 
 class EndGameScreen extends ConsumerStatefulWidget {
@@ -31,6 +32,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
   final Set<String> _dislikePlayerIds = {};
   String? _mvpPlayerId;
   String? _teamPlayerId;
+  String? _underdogPlayerId;
 
   @override
   void initState() {
@@ -63,6 +65,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
           dislikePlayerIds: pending.dislikePlayerIds,
           mvpPlayerId: pending.mvpPlayerId,
           teamPlayerId: pending.teamPlayerId,
+          underdogPlayerId: pending.underdogPlayerId,
         ));
         ref.read(pendingFeedbackProvider.notifier).state = null;
       }
@@ -146,6 +149,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
                         dislikePlayerIds: _dislikePlayerIds,
                         mvpPlayerId: _mvpPlayerId,
                         teamPlayerId: _teamPlayerId,
+                        underdogPlayerId: _underdogPlayerId,
                         onLike: (pid) => setState(() {
                           _dislikePlayerIds.remove(pid);
                           _likePlayerIds.add(pid);
@@ -158,6 +162,8 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
                             setState(() => _mvpPlayerId = pid),
                         onTeamPlayerChanged: (pid) =>
                             setState(() => _teamPlayerId = pid),
+                        onUnderdogChanged: (pid) =>
+                            setState(() => _underdogPlayerId = pid),
                         onSubmit: () => _submitFeedback(game),
                       ),
 
@@ -221,6 +227,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
       dislikePlayerIds: _dislikePlayerIds.toList(),
       mvpPlayerId: _mvpPlayerId,
       teamPlayerId: _teamPlayerId,
+      underdogPlayerId: _underdogPlayerId,
     );
     await ref.read(progressionServiceProvider).saveFeedback(feedback);
     if (mounted) setState(() => _feedbackSubmitted = true);
@@ -381,7 +388,7 @@ class _LevelUpCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'LEVEL UP!',
+                'RANK UP!',
                 style: TextStyle(
                   color: AppTheme.accentGold,
                   fontSize: 18,
@@ -390,10 +397,17 @@ class _LevelUpCard extends StatelessWidget {
                 ),
               ),
               Text(
-                'Level ${result.oldLevel} → ${result.newLevel}',
+                'Rank ${result.oldLevel} → ${result.newLevel}',
                 style: const TextStyle(
                     color: AppTheme.textPrimary, fontSize: 14),
               ),
+              if (wizardRankTitle(result.oldLevel) !=
+                  wizardRankTitle(result.newLevel))
+                Text(
+                  '${wizardRankTitle(result.oldLevel)} → ${wizardRankTitle(result.newLevel)}',
+                  style: const TextStyle(
+                      color: AppTheme.textSecondary, fontSize: 12),
+                ),
             ],
           ),
         ],
@@ -442,12 +456,24 @@ class _XpCard extends StatelessWidget {
             ],
           ),
           const Spacer(),
-          Text(
-            'Level ${result.newLevel}',
-            style: const TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 16,
-                fontWeight: FontWeight.w600),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                'Rank ${result.newLevel}',
+                style: const TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600),
+              ),
+              Text(
+                wizardRankTitle(result.newLevel),
+                style: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500),
+              ),
+            ],
           ),
         ],
       ),
@@ -464,10 +490,12 @@ class _FeedbackCard extends StatelessWidget {
   final Set<String> dislikePlayerIds;
   final String? mvpPlayerId;
   final String? teamPlayerId;
+  final String? underdogPlayerId;
   final void Function(String) onLike;
   final void Function(String) onDislike;
   final void Function(String?) onMvpChanged;
   final void Function(String?) onTeamPlayerChanged;
+  final void Function(String?) onUnderdogChanged;
   final VoidCallback onSubmit;
 
   const _FeedbackCard({
@@ -477,10 +505,12 @@ class _FeedbackCard extends StatelessWidget {
     required this.dislikePlayerIds,
     required this.mvpPlayerId,
     required this.teamPlayerId,
+    required this.underdogPlayerId,
     required this.onLike,
     required this.onDislike,
     required this.onMvpChanged,
     required this.onTeamPlayerChanged,
+    required this.onUnderdogChanged,
     required this.onSubmit,
   });
 
@@ -565,6 +595,14 @@ class _FeedbackCard extends StatelessWidget {
             players: game.players.where((p) => !p.isEliminated).toList(),
             selectedId: teamPlayerId,
             onChanged: onTeamPlayerChanged,
+          ),
+          SizedBox(height: LayoutTokens.gr1),
+          _VoteDropdown(
+            label: 'Underdog',
+            hint: 'Best comeback or underdog performance',
+            players: game.players.where((p) => !p.isEliminated).toList(),
+            selectedId: underdogPlayerId,
+            onChanged: onUnderdogChanged,
           ),
           SizedBox(height: LayoutTokens.gr3),
           SizedBox(

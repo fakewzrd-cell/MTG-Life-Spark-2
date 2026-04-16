@@ -1,6 +1,7 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/player_profile.dart';
 import '../models/commander_stats.dart';
+import 'feedback_repository.dart';
 
 class ProfileRepository {
   static const _profileBox = 'playerProfile';
@@ -75,6 +76,37 @@ class ProfileRepository {
     profile.xp += amount;
     profile.level = _calculateLevel(profile.xp);
     profile.tier = _calculateTier(profile.level);
+    await profile.save();
+  }
+
+  /// Recompute likes/honors **received** by scanning all stored match feedback.
+  /// Local player is matched by [localPlayerId] (same as in-game `playerId`, typically username).
+  Future<void> recomputeSocialStatsFromFeedback(
+    FeedbackRepository feedbackRepo,
+    String localPlayerId,
+  ) async {
+    final profile = getProfile();
+    if (profile == null) return;
+
+    var likes = 0;
+    var dislikes = 0;
+    var mvp = 0;
+    var team = 0;
+    var under = 0;
+
+    for (final f in feedbackRepo.allFeedback()) {
+      if (f.likePlayerIds.contains(localPlayerId)) likes++;
+      if (f.dislikePlayerIds.contains(localPlayerId)) dislikes++;
+      if (f.mvpPlayerId == localPlayerId) mvp++;
+      if (f.teamPlayerId == localPlayerId) team++;
+      if (f.underdogPlayerId == localPlayerId) under++;
+    }
+
+    profile.likesReceived = likes;
+    profile.dislikesReceived = dislikes;
+    profile.honorsMvpReceived = mvp;
+    profile.honorsTeamPlayerReceived = team;
+    profile.honorsUnderdogReceived = under;
     await profile.save();
   }
 

@@ -55,6 +55,26 @@ class PlayerProfile extends HiveObject {
   @HiveField(16)
   String? profileAvatarImageUrl;
 
+  /// Community: likes received from other players' feedback (aggregated).
+  @HiveField(17)
+  int likesReceived;
+
+  @HiveField(18)
+  int dislikesReceived;
+
+  @HiveField(19)
+  int honorsMvpReceived;
+
+  @HiveField(20)
+  int honorsTeamPlayerReceived;
+
+  @HiveField(21)
+  int honorsUnderdogReceived;
+
+  /// Wide art URL for profile header banner (e.g. Scryfall card art).
+  @HiveField(22)
+  String? profileBannerImageUrl;
+
   PlayerProfile({
     required this.username,
     this.level = 1,
@@ -73,5 +93,11 @@ class PlayerProfile extends HiveObject {
     this.currentWinStreak = 0,
     this.totalGamesPlayed = 0,
     this.profileAvatarImageUrl,
+    this.likesReceived = 0,
+    this.dislikesReceived = 0,
+    this.honorsMvpReceived = 0,
+    this.honorsTeamPlayerReceived = 0,
+    this.honorsUnderdogReceived = 0,
+    this.profileBannerImageUrl,
   });
 }

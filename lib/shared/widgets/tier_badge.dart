@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../../ui/tokens/color_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
+import '../utils/wizard_rank_titles.dart';
 
 class TierBadge extends StatelessWidget {
   final String tier;
-  const TierBadge({super.key, required this.tier});
+  final int level;
+
+  const TierBadge({super.key, required this.tier, required this.level});
 
   Color get _color {
     switch (tier) {
@@ -31,12 +34,17 @@ class TierBadge extends StatelessWidget {
         borderRadius: RadiusTokens.radiusSm,
         border: Border.all(color: _color, width: 1),
       ),
-      child: Text(
-        tier,
-        style: TextStyle(
-          color: _color,
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          wizardRankTitle(level),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: _color,
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );

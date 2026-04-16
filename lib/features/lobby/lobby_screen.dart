@@ -7,10 +7,12 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../../core/bluetooth/ble_providers.dart';
 import '../../core/game/lobby_state.dart';
 import '../../core/models/player_slot.dart';
+import '../../core/models/pod_preset.dart';
 import '../../core/network/local_ip.dart';
 import '../../core/network/ws_host_service.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/utils/app_router.dart';
+import 'deck_picker_sheet.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
@@ -85,6 +87,8 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
               remaining: lobby.config.maxPlayers - lobby.players.length,
             ),
           SizedBox(height: LayoutTokens.gr4),
+          const _PodSection(),
+          SizedBox(height: LayoutTokens.gr4),
           _ConfigSection(config: lobby.config),
           SizedBox(height: LayoutTokens.gr4),
           _StartGameButton(
@@ -98,6 +102,140 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
           SizedBox(height: LayoutTokens.gr5),
         ],
         ),
+      ),
+    );
+  }
+}
+
+final _lobbyPodPresetsProvider = Provider<List<PodPreset>>((ref) {
+  return ref.watch(podRepositoryProvider).getAll();
+});
+
+// ── Match pod (presets) ─────────────────────────────────────────────────
+
+class _PodSection extends ConsumerWidget {
+  const _PodSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lobby = ref.watch(lobbyProvider);
+    final pods = ref.watch(_lobbyPodPresetsProvider);
+    final repo = ref.read(podRepositoryProvider);
+    final notifier = ref.read(lobbyProvider.notifier);
+    final colors = AppColorTokens.of(context);
+    final compact = MediaQuery.sizeOf(context).width < 360;
+
+    String? effectiveId;
+    PodPreset? selectedPreset;
+    if (lobby.selectedPodPresetId != null &&
+        pods.any((p) => p.id == lobby.selectedPodPresetId)) {
+      effectiveId = lobby.selectedPodPresetId;
+      selectedPreset = repo.getById(effectiveId!);
+    }
+
+    return Container(
+      padding: EdgeInsets.all(compact ? LayoutTokens.gr3 : LayoutTokens.gr4),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Match pod',
+            style: TextStyle(
+              color: colors.textPrimary,
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+            ),
+          ),
+          SizedBox(height: LayoutTokens.gr1),
+          Text(
+            'Optional. Pod name is saved with match history. Players listed on the pod are shown below so you know who is in this group.',
+            style: TextStyle(color: colors.textSecondary, fontSize: 12),
+          ),
+          SizedBox(height: LayoutTokens.gr2),
+          DropdownButton<String?>(
+            isExpanded: true,
+            value: effectiveId,
+            hint: Text(
+              'None',
+              style: TextStyle(color: colors.textSecondary),
+            ),
+            dropdownColor: colors.surface,
+            items: [
+              DropdownMenuItem<String?>(
+                value: null,
+                child: Text(
+                  'None',
+                  style: TextStyle(color: colors.textPrimary),
+                ),
+              ),
+              ...pods.map(
+                (p) => DropdownMenuItem(
+                  value: p.id,
+                  child: Text(
+                    p.name,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: colors.textPrimary),
+                  ),
+                ),
+              ),
+            ],
+            onChanged: (id) {
+              if (id == null) {
+                notifier.setMatchPodFromPreset(null);
+              } else {
+                final preset = repo.getById(id);
+                if (preset != null) notifier.setMatchPodFromPreset(preset);
+              }
+            },
+          ),
+          if (selectedPreset != null &&
+              selectedPreset.memberPlayerIds.isNotEmpty) ...[
+            SizedBox(height: LayoutTokens.gr2),
+            Text(
+              'Players in this pod',
+              style: TextStyle(
+                color: colors.textSecondary,
+                fontWeight: FontWeight.w600,
+                fontSize: 11,
+              ),
+            ),
+            SizedBox(height: LayoutTokens.gr1),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: selectedPreset.memberPlayerIds.map((id) {
+                return Chip(
+                  label: Text(
+                    id,
+                    style: TextStyle(color: colors.textPrimary, fontSize: 12),
+                  ),
+                  backgroundColor: colors.backgroundSecondary,
+                  side: BorderSide(
+                    color: colors.textSecondary.withValues(alpha: 0.25),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () => context.push(AppRoutes.profilePods),
+              icon: Icon(Icons.edit_note, color: colors.primaryAccent, size: 20),
+              label: Text(
+                'Manage pods',
+                style: TextStyle(
+                  color: colors.primaryAccent,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -205,6 +343,9 @@ class _PlayerSlotCard extends ConsumerWidget {
       profileRepositoryProvider.select((r) => r.getProfile()?.username),
     );
     final isMe = slot.playerId == isLocalHost;
+    final linkedDeck = isMe && slot.selectedDeckId != null
+        ? ref.read(deckRepositoryProvider).getById(slot.selectedDeckId!)
+        : null;
 
     final borderColor = isMe
         ? (slot.isReady ? ColorTokens.success : colors.primaryAccent)
@@ -284,6 +425,21 @@ class _PlayerSlotCard extends ConsumerWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                if (isMe && slot.selectedDeckId != null) ...[
+                  SizedBox(height: LayoutTokens.gr0),
+                  Text(
+                    linkedDeck != null
+                        ? 'Tracking: ${linkedDeck.displayName}'
+                        : 'Deck (saved list changed)',
+                    style: TextStyle(
+                      color: colors.primaryAccent,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ],
             ),
           ),
@@ -337,6 +493,31 @@ class _PlayerSlotCard extends ConsumerWidget {
                                 style: OutlinedButton.styleFrom(
                                   minimumSize: Size(0, btnH),
                                   padding: EdgeInsets.symmetric(horizontal: btnPadH),
+                                  backgroundColor: slot.selectedDeckId != null
+                                      ? colors.primaryAccent.withValues(alpha: 0.35)
+                                      : Colors.transparent,
+                                  foregroundColor: slot.selectedDeckId != null
+                                      ? colors.textPrimary
+                                      : colors.textSecondary,
+                                  side: BorderSide(
+                                    color: slot.selectedDeckId != null
+                                        ? colors.primaryAccent
+                                        : colors.textSecondary,
+                                  ),
+                                  textStyle: TextStyle(fontSize: FontTokens.body, fontWeight: FontWeight.w600),
+                                ),
+                                onPressed: () => showDeckPickerSheet(
+                                  context,
+                                  ref,
+                                  slot.playerId,
+                                ),
+                                child: const Text('Deck'),
+                              ),
+                              SizedBox(height: LayoutTokens.gr2),
+                              OutlinedButton(
+                                style: OutlinedButton.styleFrom(
+                                  minimumSize: Size(0, btnH),
+                                  padding: EdgeInsets.symmetric(horizontal: btnPadH),
                                   backgroundColor: slot.commanderName != null
                                       ? colors.primaryAccent
                                       : Colors.transparent,
@@ -372,6 +553,31 @@ class _PlayerSlotCard extends ConsumerWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       _PartnerChip(slot: slot, compact: false),
+                      SizedBox(width: LayoutTokens.gr2),
+                      OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: Size(72, btnH),
+                          padding: EdgeInsets.symmetric(horizontal: btnPadH),
+                          backgroundColor: slot.selectedDeckId != null
+                              ? colors.primaryAccent.withValues(alpha: 0.35)
+                              : Colors.transparent,
+                          foregroundColor: slot.selectedDeckId != null
+                              ? colors.textPrimary
+                              : colors.textSecondary,
+                          side: BorderSide(
+                            color: slot.selectedDeckId != null
+                                ? colors.primaryAccent
+                                : colors.textSecondary,
+                          ),
+                          textStyle: TextStyle(fontSize: FontTokens.body, fontWeight: FontWeight.w600),
+                        ),
+                        onPressed: () => showDeckPickerSheet(
+                          context,
+                          ref,
+                          slot.playerId,
+                        ),
+                        child: const Text('Deck'),
+                      ),
                       SizedBox(width: LayoutTokens.gr2),
                       OutlinedButton(
                         style: OutlinedButton.styleFrom(
@@ -965,7 +1171,12 @@ class _GameplaySwitchTile extends StatelessWidget {
         value: value,
         onChanged: onChanged,
         activeTrackColor: colors.primaryAccent.withValues(alpha: 0.5),
-        activeThumbColor: colors.primaryAccent,
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return colors.primaryAccent;
+          }
+          return null;
+        }),
         contentPadding: EdgeInsets.symmetric(
           horizontal: compact ? 12 : 16,
           vertical: 8,

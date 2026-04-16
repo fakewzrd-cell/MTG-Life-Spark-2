@@ -14,6 +14,7 @@ import '../../core/models/player_slot.dart';
 import '../../core/network/ws_client_service.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/utils/app_router.dart';
+import 'deck_picker_sheet.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/color_tokens.dart';
@@ -329,23 +330,39 @@ class _WaitingRoomViewState extends ConsumerState<_WaitingRoomView> {
               const SizedBox(height: 16),
               ...lobby.players.map((slot) => _WaitingSlotRow(slot: slot)),
               const SizedBox(height: 24),
-              OutlinedButton.icon(
-                icon: const Icon(Icons.style),
-                label: const Text('Select Commander'),
-                onPressed: () {
-                  final profile =
-                      ref.read(profileRepositoryProvider).getProfile();
-                  if (profile == null) return;
-                  context.push(AppRoutes.commanderSelect, extra: {
-                    'playerId': profile.username,
-                    'hasPartner': lobby.players
-                        .firstWhere(
-                          (p) => p.playerId == profile.username,
-                          orElse: () => lobby.players.first,
-                        )
-                        .hasPartner,
-                  });
-                },
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 12,
+                runSpacing: 8,
+                children: [
+                  OutlinedButton(
+                    onPressed: () {
+                      final profile =
+                          ref.read(profileRepositoryProvider).getProfile();
+                      if (profile == null) return;
+                      showDeckPickerSheet(context, ref, profile.username);
+                    },
+                    child: const Text('Deck'),
+                  ),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.style),
+                    label: const Text('Commander'),
+                    onPressed: () {
+                      final profile =
+                          ref.read(profileRepositoryProvider).getProfile();
+                      if (profile == null) return;
+                      context.push(AppRoutes.commanderSelect, extra: {
+                        'playerId': profile.username,
+                        'hasPartner': lobby.players
+                            .firstWhere(
+                              (p) => p.playerId == profile.username,
+                              orElse: () => lobby.players.first,
+                            )
+                            .hasPartner,
+                      });
+                    },
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
               IconButton.filled(

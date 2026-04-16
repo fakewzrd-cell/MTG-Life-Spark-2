@@ -7,6 +7,8 @@ import '../bluetooth/ble_protocol.dart';
 import '../bluetooth/ble_providers.dart';
 import '../bluetooth/ble_service.dart';
 import '../models/player_slot.dart';
+import '../models/player_deck.dart';
+import '../models/pod_preset.dart';
 import '../persistence/providers.dart';
 import '../../shared/theme/app_theme.dart';
 
@@ -137,11 +139,21 @@ class LobbyState {
   final bool isHost;
   final bool isGameStarted; // set true when host broadcasts gameStart
 
+  /// Selected pod preset id (host), optional.
+  final String? selectedPodPresetId;
+
+  /// Snapshotted labels for match history (set when host picks a preset or edits).
+  final String? podNameSnapshot;
+  final String? locationLabelSnapshot;
+
   const LobbyState({
     this.players = const [],
     this.config = const LobbyConfig(),
     this.isHost = false,
     this.isGameStarted = false,
+    this.selectedPodPresetId,
+    this.podNameSnapshot,
+    this.locationLabelSnapshot,
   });
 
   LobbyState copyWith({
@@ -149,13 +161,27 @@ class LobbyState {
     LobbyConfig? config,
     bool? isHost,
     bool? isGameStarted,
+    Object? selectedPodPresetId = _sentinelPod,
+    Object? podNameSnapshot = _sentinelPod,
+    Object? locationLabelSnapshot = _sentinelPod,
   }) =>
       LobbyState(
         players: players ?? this.players,
         config: config ?? this.config,
         isHost: isHost ?? this.isHost,
         isGameStarted: isGameStarted ?? this.isGameStarted,
+        selectedPodPresetId: identical(selectedPodPresetId, _sentinelPod)
+            ? this.selectedPodPresetId
+            : selectedPodPresetId as String?,
+        podNameSnapshot: identical(podNameSnapshot, _sentinelPod)
+            ? this.podNameSnapshot
+            : podNameSnapshot as String?,
+        locationLabelSnapshot: identical(locationLabelSnapshot, _sentinelPod)
+            ? this.locationLabelSnapshot
+            : locationLabelSnapshot as String?,
       );
+
+  static const Object _sentinelPod = Object();
 
   /// Host can start when at least 1 player is present and everyone (including
   /// host) has clicked ready.
@@ -218,6 +244,25 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
     _broadcastLobbyUpdate();
   }
 
+  /// Host selects a saved pod preset for match history labels (optional).
+  void setMatchPodFromPreset(PodPreset? preset) {
+    if (!state.isHost) return;
+    if (preset == null) {
+      state = state.copyWith(
+        selectedPodPresetId: null,
+        podNameSnapshot: null,
+        locationLabelSnapshot: null,
+      );
+    } else {
+      state = state.copyWith(
+        selectedPodPresetId: preset.id,
+        podNameSnapshot: preset.name,
+        locationLabelSnapshot: null,
+      );
+    }
+    _broadcastLobbyUpdate();
+  }
+
   void setCommander({
     required String playerId,
     required String commanderName,
@@ -232,7 +277,35 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
         commanderImageUrl: commanderImageUrl,
         partnerCommanderName: partnerCommanderName,
         partnerCommanderImageUrl: partnerCommanderImageUrl,
+        selectedDeckId: null,
       );
+    }).toList();
+    state = state.copyWith(players: players);
+    _broadcastLobbyUpdate();
+  }
+
+  /// Apply a saved deck: fills commanders and tags the slot for win/loss tracking.
+  void applyDeck({required String playerId, required PlayerDeck deck}) {
+    final players = state.players.map((p) {
+      if (p.playerId != playerId) return p;
+      return p.copyWith(
+        commanderName: deck.commanderName,
+        commanderImageUrl: deck.commanderImageUrl,
+        partnerCommanderName: deck.partnerCommanderName,
+        partnerCommanderImageUrl: deck.partnerCommanderImageUrl,
+        hasPartner: deck.hasPartner,
+        selectedDeckId: deck.id,
+      );
+    }).toList();
+    state = state.copyWith(players: players);
+    _broadcastLobbyUpdate();
+  }
+
+  /// Stop attributing results to a registered deck (keeps current commanders).
+  void clearSelectedDeck(String playerId) {
+    final players = state.players.map((p) {
+      if (p.playerId != playerId) return p;
+      return p.copyWith(selectedDeckId: null);
     }).toList();
     state = state.copyWith(players: players);
     _broadcastLobbyUpdate();
@@ -245,6 +318,7 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
         hasPartner: !p.hasPartner,
         partnerCommanderName: null,
         partnerCommanderImageUrl: null,
+        selectedDeckId: null,
       );
     }).toList();
     state = state.copyWith(players: players);
@@ -266,6 +340,9 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
       payload: {
         'config': state.config.toJson(),
         'players': state.players.map((p) => p.toJson()).toList(),
+        'selectedPodPresetId': state.selectedPodPresetId,
+        'podNameSnapshot': state.podNameSnapshot,
+        'locationLabelSnapshot': state.locationLabelSnapshot,
       },
       seqNum: _nextSeq(),
     ));
@@ -354,6 +431,9 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
               .map((e) => PlayerSlot.fromJson(e as Map<String, dynamic>))
               .toList()
           : state.players,
+      selectedPodPresetId: payload['selectedPodPresetId'] as String?,
+      podNameSnapshot: payload['podNameSnapshot'] as String?,
+      locationLabelSnapshot: payload['locationLabelSnapshot'] as String?,
     );
   }
 
@@ -412,6 +492,9 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
       config: config ?? state.config,
       players: players ?? state.players,
       isGameStarted: true,
+      selectedPodPresetId: payload['selectedPodPresetId'] as String?,
+      podNameSnapshot: payload['podNameSnapshot'] as String?,
+      locationLabelSnapshot: payload['locationLabelSnapshot'] as String?,
     );
   }
 
@@ -432,6 +515,9 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
       payload: {
         'config': state.config.toJson(),
         'players': state.players.map((p) => p.toJson()).toList(),
+        'selectedPodPresetId': state.selectedPodPresetId,
+        'podNameSnapshot': state.podNameSnapshot,
+        'locationLabelSnapshot': state.locationLabelSnapshot,
       },
       seqNum: _nextSeq(),
     ));

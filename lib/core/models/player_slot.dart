@@ -14,6 +14,9 @@ class PlayerSlot {
   final bool isHost;
   final bool isReady;
 
+  /// Registered deck id when the player chose a saved deck (local tracking).
+  final String? selectedDeckId;
+
   const PlayerSlot({
     required this.playerId,
     required this.username,
@@ -25,6 +28,7 @@ class PlayerSlot {
     required this.playerColor,
     this.isHost = false,
     this.isReady = false,
+    this.selectedDeckId,
   });
 
   PlayerSlot copyWith({
@@ -35,6 +39,7 @@ class PlayerSlot {
     bool? hasPartner,
     bool? isHost,
     bool? isReady,
+    Object? selectedDeckId = _sentinelDeck,
   }) {
     return PlayerSlot(
       playerId: playerId,
@@ -48,8 +53,13 @@ class PlayerSlot {
       playerColor: playerColor,
       isHost: isHost ?? this.isHost,
       isReady: isReady ?? this.isReady,
+      selectedDeckId: identical(selectedDeckId, _sentinelDeck)
+          ? this.selectedDeckId
+          : selectedDeckId as String?,
     );
   }
+
+  static const Object _sentinelDeck = Object();
 
   Map<String, dynamic> toJson() => {
         'pid': playerId,
@@ -62,6 +72,7 @@ class PlayerSlot {
         'colorValue': playerColor.toARGB32(),
         'isHost': isHost,
         'isReady': isReady,
+        'selectedDeckId': selectedDeckId,
       };
 
   factory PlayerSlot.fromJson(Map<String, dynamic> json) {
@@ -76,6 +87,7 @@ class PlayerSlot {
       playerColor: Color(json['colorValue'] as int),
       isHost: json['isHost'] as bool? ?? false,
       isReady: json['isReady'] as bool? ?? false,
+      selectedDeckId: json['selectedDeckId'] as String?,
     );
   }
 }

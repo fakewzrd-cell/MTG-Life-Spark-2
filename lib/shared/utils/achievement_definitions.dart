@@ -86,19 +86,19 @@ class AchievementDefinitions {
     AchievementDef(
       id: 'reach_silver',
       title: 'Silver Tongue',
-      description: 'Reach Silver tier (Level 11).',
+      description: 'Reach Silver tier (Rank 11).',
       icon: '🥈',
     ),
     AchievementDef(
       id: 'reach_gold',
       title: 'Golden General',
-      description: 'Reach Gold tier (Level 26).',
+      description: 'Reach Gold tier (Rank 26).',
       icon: '🥇',
     ),
     AchievementDef(
       id: 'reach_diamond',
       title: 'Diamond Mind',
-      description: 'Reach Diamond tier (Level 76).',
+      description: 'Reach Diamond tier (Rank 76).',
       icon: '💎',
     ),
   ];

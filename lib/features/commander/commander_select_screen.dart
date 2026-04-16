@@ -7,12 +7,28 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/game/lobby_state.dart';
 import '../../core/game/scryfall_service.dart';
+import '../../core/models/player_deck.dart';
+import '../../core/persistence/providers.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../ui/tokens/layout_tokens.dart';
 
 class CommanderSelectScreen extends ConsumerStatefulWidget {
   final String playerId;
-  const CommanderSelectScreen({super.key, required this.playerId});
+
+  /// When set with [newDeckDisplayName] or [editDeckId], saves a deck instead of the lobby.
+  final String? newDeckDisplayName;
+  final String? editDeckId;
+
+  const CommanderSelectScreen({
+    super.key,
+    required this.playerId,
+    this.newDeckDisplayName,
+    this.editDeckId,
+  });
+
+  bool get _deckMode =>
+      (newDeckDisplayName != null && newDeckDisplayName!.isNotEmpty) ||
+      (editDeckId != null && editDeckId!.isNotEmpty);
 
   @override
   ConsumerState<CommanderSelectScreen> createState() =>
@@ -37,8 +53,36 @@ class _CommanderSelectScreenState
   bool _pickingPartner = false; // true when user is selecting the 2nd card
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.editDeckId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _loadEditDeck());
+    }
+  }
+
+  void _loadEditDeck() {
+    final deck =
+        ref.read(deckRepositoryProvider).getById(widget.editDeckId!);
+    if (deck == null || !mounted) return;
+    setState(() {
+      _hasPartner = deck.hasPartner;
+      _primary = ScryfallCard(
+        name: deck.commanderName,
+        imageUrl: deck.commanderImageUrl,
+      );
+      if (deck.hasPartner && deck.partnerCommanderName != null) {
+        _partner = ScryfallCard(
+          name: deck.partnerCommanderName!,
+          imageUrl: deck.partnerCommanderImageUrl,
+        );
+      }
+    });
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    if (widget._deckMode) return;
     // Resolve hasPartner from lobby state for this player
     final lobbySlots = ref.read(lobbyProvider).players;
     final slot = lobbySlots.where((p) => p.playerId == widget.playerId);
@@ -109,8 +153,36 @@ class _CommanderSelectScreenState
     return true;
   }
 
-  void _confirm() {
+  Future<void> _confirm() async {
     if (!_canConfirm) return;
+    if (widget.newDeckDisplayName != null &&
+        widget.newDeckDisplayName!.trim().isNotEmpty) {
+      final deck = PlayerDeck.create(
+        displayName: widget.newDeckDisplayName!.trim(),
+        commanderName: _primary!.name,
+        commanderImageUrl: _primary!.imageUrl,
+        partnerCommanderName: _hasPartner ? _partner?.name : null,
+        partnerCommanderImageUrl: _hasPartner ? _partner?.imageUrl : null,
+      );
+      await ref.read(deckRepositoryProvider).save(deck);
+      if (mounted) context.pop();
+      return;
+    }
+    if (widget.editDeckId != null) {
+      final repo = ref.read(deckRepositoryProvider);
+      final deck = repo.getById(widget.editDeckId!);
+      if (deck == null) {
+        if (mounted) context.pop();
+        return;
+      }
+      deck.commanderName = _primary!.name;
+      deck.commanderImageUrl = _primary!.imageUrl;
+      deck.partnerCommanderName = _hasPartner ? _partner?.name : null;
+      deck.partnerCommanderImageUrl = _hasPartner ? _partner?.imageUrl : null;
+      await repo.save(deck);
+      if (mounted) context.pop();
+      return;
+    }
     ref.read(lobbyProvider.notifier).setCommander(
           playerId: widget.playerId,
           commanderName: _primary!.name,
@@ -119,17 +191,25 @@ class _CommanderSelectScreenState
           partnerCommanderImageUrl:
               _hasPartner ? (_partner?.imageUrl ?? '') : null,
         );
-    context.pop();
+    if (mounted) context.pop();
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
+
+  String get _title {
+    if (widget._deckMode) {
+      if (widget.editDeckId != null) return 'Edit deck commanders';
+      return 'New deck — pick commander';
+    }
+    return _pickingPartner ? 'Select Partner' : 'Select Commander';
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.primary,
       appBar: AppBar(
-        title: Text(_pickingPartner ? 'Select Partner' : 'Select Commander'),
+        title: Text(_pickingPartner ? 'Select Partner' : _title),
         actions: [
           if (_canConfirm)
             TextButton(
@@ -154,6 +234,31 @@ class _CommanderSelectScreenState
                   ? () => setState(() => _pickingPartner = !_pickingPartner)
                   : null,
               pickingPartner: _pickingPartner,
+            ),
+          if (widget._deckMode)
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                LayoutTokens.gr3,
+                LayoutTokens.gr1,
+                LayoutTokens.gr3,
+                0,
+              ),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: FilterChip(
+                  label: const Text('Partner commander'),
+                  selected: _hasPartner,
+                  onSelected: (v) {
+                    setState(() {
+                      _hasPartner = v;
+                      if (!v) {
+                        _partner = null;
+                        _pickingPartner = false;
+                      }
+                    });
+                  },
+                ),
+              ),
             ),
 
           // Search bar
