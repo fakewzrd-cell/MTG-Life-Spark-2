@@ -53,6 +53,7 @@ class PlayerProfile extends HiveObject {
   int totalGamesPlayed;
 
   @HiveField(16)
+  /// Legacy; profile UI no longer exposes avatar selection (bundled MTG mark instead).
   String? profileAvatarImageUrl;
 
   /// Community: likes received from other players' feedback (aggregated).

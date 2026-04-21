@@ -9,8 +9,14 @@ import '../../core/game/lobby_state.dart';
 import '../../core/game/scryfall_service.dart';
 import '../../core/models/player_deck.dart';
 import '../../core/persistence/providers.dart';
+import '../../shared/mana/mana_symbol_assets.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../ui/tokens/layout_tokens.dart';
+
+String? _hiveManaCost(String? raw) {
+  final n = normalizeScryfallManaCost(raw);
+  return n.isEmpty ? null : n;
+}
 
 class CommanderSelectScreen extends ConsumerStatefulWidget {
   final String playerId;
@@ -69,11 +75,13 @@ class _CommanderSelectScreenState
       _primary = ScryfallCard(
         name: deck.commanderName,
         imageUrl: deck.commanderImageUrl,
+        manaCost: deck.commanderManaCost,
       );
       if (deck.hasPartner && deck.partnerCommanderName != null) {
         _partner = ScryfallCard(
           name: deck.partnerCommanderName!,
           imageUrl: deck.partnerCommanderImageUrl,
+          manaCost: deck.partnerManaCost,
         );
       }
     });
@@ -163,8 +171,11 @@ class _CommanderSelectScreenState
         commanderImageUrl: _primary!.imageUrl,
         partnerCommanderName: _hasPartner ? _partner?.name : null,
         partnerCommanderImageUrl: _hasPartner ? _partner?.imageUrl : null,
+        commanderManaCost: _hiveManaCost(_primary!.manaCost),
+        partnerManaCost: _hasPartner ? _hiveManaCost(_partner?.manaCost) : null,
       );
       await ref.read(deckRepositoryProvider).save(deck);
+      bumpDeckListRevision(ref);
       if (mounted) context.pop();
       return;
     }
@@ -177,9 +188,12 @@ class _CommanderSelectScreenState
       }
       deck.commanderName = _primary!.name;
       deck.commanderImageUrl = _primary!.imageUrl;
+      deck.commanderManaCost = _hiveManaCost(_primary!.manaCost);
       deck.partnerCommanderName = _hasPartner ? _partner?.name : null;
       deck.partnerCommanderImageUrl = _hasPartner ? _partner?.imageUrl : null;
+      deck.partnerManaCost = _hasPartner ? _hiveManaCost(_partner?.manaCost) : null;
       await repo.save(deck);
+      bumpDeckListRevision(ref);
       if (mounted) context.pop();
       return;
     }

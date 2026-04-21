@@ -7,12 +7,15 @@ class ScryfallCard {
   final String name;
   final String? imageUrl; // null = offline / not found
   final String? oracleText;
+  /// Scryfall `mana_cost`, e.g. `{2}{W}{U}`; may be null on some card layouts.
+  final String? manaCost;
   final bool isPartner;
 
   const ScryfallCard({
     required this.name,
     this.imageUrl,
     this.oracleText,
+    this.manaCost,
     this.isPartner = false,
   });
 
@@ -165,11 +168,20 @@ class ScryfallService {
       }
     }
 
+    final faces = card['card_faces'] as List<dynamic>?;
+    final firstFace = faces != null && faces.isNotEmpty
+        ? faces[0] as Map<String, dynamic>
+        : null;
+
     final oracleText = card['oracle_text'] as String? ??
-        ((card['card_faces'] as List?)?.isNotEmpty == true
-            ? ((card['card_faces'] as List)[0]
-                    as Map<String, dynamic>)['oracle_text'] as String?
-            : null);
+        (firstFace != null ? firstFace['oracle_text'] as String? : null);
+
+    var manaCost = card['mana_cost'] as String?;
+    if (manaCost == null || manaCost.isEmpty) {
+      manaCost = firstFace != null
+          ? firstFace['mana_cost'] as String?
+          : null;
+    }
 
     final keywords = List<String>.from(card['keywords'] as List? ?? []);
     final isPartner =
@@ -179,6 +191,7 @@ class ScryfallService {
       name: name,
       imageUrl: imageUrl,
       oracleText: oracleText,
+      manaCost: manaCost,
       isPartner: isPartner,
     );
   }

@@ -6,7 +6,6 @@ import '../../features/game_lobby/game_lobby_screen.dart';
 import '../../features/profile/profile_setup_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/profile/profile_screen.dart';
-import '../../features/profile/profile_avatar_picker_screen.dart';
 import '../../features/profile/profile_banner_picker_screen.dart';
 import '../../features/profile/pods_manage_screen.dart';
 import '../../features/profile/decks_manage_screen.dart';
@@ -28,10 +27,12 @@ class AppRoutes {
   static const lobbyHost = '/lobby/host';
   static const lobbyJoin = '/lobby/join';
   static const settings = '/settings';
-  static const profileAvatar = '/home/avatar';
+  /// Primary route for deck library (shell tab). Prefer over legacy [profileDecks].
+  static const decks = '/decks';
   static const profileBanner = '/home/banner';
   static const profilePods = '/home/pods';
-  static const profileDecks = '/home/decks';
+  /// Legacy path; use [decks]. Kept so old links can redirect if added later.
+  static const profileDecks = '/decks';
   static const feedback = '/settings/feedback';
   static const commanderSelect = '/commander-select';
   static const game = '/game';
@@ -62,11 +63,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) => const ProfileScreen(),
                 routes: [
                   GoRoute(
-                    path: 'avatar',
-                    builder: (context, state) =>
-                        const ProfileAvatarPickerScreen(),
-                  ),
-                  GoRoute(
                     path: 'banner',
                     builder: (context, state) =>
                         const ProfileBannerPickerScreen(),
@@ -74,10 +70,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'pods',
                     builder: (context, state) => const PodsManageScreen(),
-                  ),
-                  GoRoute(
-                    path: 'decks',
-                    builder: (context, state) => const DecksManageScreen(),
                   ),
                 ],
               ),
@@ -124,6 +116,14 @@ final routerProvider = Provider<GoRouter>((ref) {
                     builder: (context, state) => const JoinScanScreen(),
                   ),
                 ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.decks,
+                builder: (context, state) => const DecksManageScreen(),
               ),
             ],
           ),

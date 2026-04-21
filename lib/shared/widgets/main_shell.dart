@@ -17,9 +17,15 @@ class MainShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    final navBottomPad = MainBottomNav.reservedBottomHeight(bottomInset);
     return Scaffold(
+      extendBody: true,
       backgroundColor: colors.backgroundPrimary,
-      body: navigationShell,
+      body: Padding(
+        padding: EdgeInsets.only(bottom: navBottomPad),
+        child: navigationShell,
+      ),
       bottomNavigationBar: MainBottomNav(
         currentIndex: navigationShell.currentIndex,
         onTap: (index) => navigationShell.goBranch(index),
