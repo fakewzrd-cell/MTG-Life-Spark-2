@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../tokens/radius_tokens.dart';
 import '../tokens/spacing_tokens.dart';
-import 'ui_surface.dart';
 
-/// Dialog using UiSurface, rounded 24, proper spacing.
+/// Material 3 [Dialog] — uses [ThemeData.dialogTheme].
 class UiDialog extends StatelessWidget {
   const UiDialog({
     super.key,
@@ -35,20 +33,17 @@ class UiDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final titleStyle = Theme.of(context).dialogTheme.titleTextStyle ??
+        Theme.of(context).textTheme.titleLarge;
     return Dialog(
-      backgroundColor: Colors.transparent,
-      child: UiSurface(
+      child: Padding(
         padding: const EdgeInsets.all(SpacingTokens.lg),
-        borderRadius: RadiusTokens.radiusXl,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (title != null) ...[
-              Text(
-                title!,
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
+              Text(title!, style: titleStyle),
               const SizedBox(height: SpacingTokens.md),
             ],
             content,
@@ -57,10 +52,12 @@ class UiDialog extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: actions!
-                    .map((a) => Padding(
-                          padding: const EdgeInsets.only(left: SpacingTokens.sm),
-                          child: a,
-                        ))
+                    .map(
+                      (a) => Padding(
+                        padding: const EdgeInsets.only(left: SpacingTokens.sm),
+                        child: a,
+                      ),
+                    )
                     .toList(),
               ),
             ],

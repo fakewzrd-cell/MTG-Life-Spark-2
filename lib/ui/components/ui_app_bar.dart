@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_color_tokens.dart';
-
-/// App bar using design tokens.
+/// Material 3 [AppBar] — inherits [ThemeData.appBarTheme] and [TextTheme].
 class UiAppBar extends StatelessWidget implements PreferredSizeWidget {
   const UiAppBar({
     super.key,
@@ -20,20 +18,12 @@ class UiAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = AppColorTokens.of(context);
     return AppBar(
-      backgroundColor: colors.backgroundPrimary,
-      foregroundColor: colors.textPrimary,
-      elevation: 0,
-      centerTitle: true,
       leading: leading,
       title: title != null && title!.isNotEmpty
           ? Text(
-              title!.toUpperCase(),
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.8,
-                  ),
+              title!,
+              style: Theme.of(context).textTheme.titleLarge,
             )
           : null,
       actions: actions,

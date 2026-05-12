@@ -15,13 +15,12 @@ Future<void> showDeckPickerSheet(
   String playerId,
 ) async {
   final decks = ref.read(deckRepositoryProvider).getAll();
-  final colors = AppColorTokens.of(context);
-
   await showModalBottomSheet<void>(
     context: context,
-    backgroundColor: colors.surface,
+    backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
     showDragHandle: true,
     builder: (ctx) {
+      final colors = AppColorTokens.of(ctx);
       return SafeArea(
         child: SingleChildScrollView(
           child: Column(

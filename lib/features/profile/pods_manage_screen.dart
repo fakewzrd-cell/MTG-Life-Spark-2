@@ -6,7 +6,6 @@ import '../../core/persistence/pod_repository.dart';
 import '../../core/persistence/providers.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
-import '../../ui/tokens/radius_tokens.dart';
 
 class PodsManageScreen extends ConsumerStatefulWidget {
   const PodsManageScreen({super.key});
@@ -101,10 +100,8 @@ class _PodsManageScreenState extends ConsumerState<PodsManageScreen> {
     final repo = ref.read(podRepositoryProvider);
 
     return Scaffold(
-      backgroundColor: colors.backgroundPrimary,
       appBar: AppBar(
         title: const Text('My pods'),
-        backgroundColor: colors.backgroundPrimary,
       ),
       body: ListView.builder(
         padding: EdgeInsets.all(LayoutTokens.gr3),
@@ -123,10 +120,6 @@ class _PodsManageScreenState extends ConsumerState<PodsManageScreen> {
           final pod = _pods[i - 1];
           final n = pod.memberPlayerIds.length;
           return Card(
-            color: colors.surface,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(RadiusTokens.md),
-            ),
             child: ExpansionTile(
               title: Text(
                 pod.name,

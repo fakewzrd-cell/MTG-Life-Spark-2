@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../utils/app_router.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
-import '../../ui/tokens/radius_tokens.dart';
 import '../../ui/tokens/spacing_tokens.dart';
 
 /// Navigation bar with Home button.
@@ -20,27 +19,27 @@ class HomeNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = AppColorTokens.of(context);
-    return Container(
-      padding: const EdgeInsets.all(SpacingTokens.md),
-      decoration: BoxDecoration(
-        color: colors.backgroundSecondary,
-      ),
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: scheme.surfaceContainerLow,
       child: SafeArea(
         top: false,
-        child: SizedBox(
-          width: double.infinity,
-          child: TextButton.icon(
-            onPressed: () => showQuitConfirmation
-                ? _showQuitDialog(context)
-                : _goHome(context),
-            icon: Icon(Icons.home_rounded, color: colors.primaryAccent),
-            label: Text(
-              'Home',
-              style: TextStyle(
-                color: colors.primaryAccent,
-                fontWeight: FontWeight.w700,
-                fontSize: FontTokens.bodyLg,
+        child: Padding(
+          padding: const EdgeInsets.all(SpacingTokens.md),
+          child: SizedBox(
+            width: double.infinity,
+            child: TextButton.icon(
+              onPressed: () => showQuitConfirmation
+                  ? _showQuitDialog(context)
+                  : _goHome(context),
+              icon: Icon(Icons.home_rounded, color: scheme.primary),
+              label: Text(
+                'Home',
+                style: TextStyle(
+                  color: scheme.primary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: FontTokens.bodyLg,
+                ),
               ),
             ),
           ),
@@ -55,8 +54,6 @@ class HomeNavBar extends StatelessWidget {
       builder: (ctx) {
         final colors = AppColorTokens.of(ctx);
         return AlertDialog(
-          backgroundColor: colors.surface,
-          shape: RoundedRectangleBorder(borderRadius: RadiusTokens.radiusXl),
           title: Text(
             'Are you sure you want to quit?',
             style: TextStyle(color: colors.textPrimary),
@@ -72,9 +69,6 @@ class HomeNavBar extends StatelessWidget {
             ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              style: FilledButton.styleFrom(
-                backgroundColor: colors.primaryAccent,
-              ),
               child: const Text('Yes'),
             ),
           ],

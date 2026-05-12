@@ -10,7 +10,6 @@ import '../../shared/widgets/deck_tile_visual.dart';
 import '../../shared/widgets/mana_cost_pips.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
-import '../../ui/tokens/radius_tokens.dart';
 
 class DecksManageScreen extends ConsumerStatefulWidget {
   const DecksManageScreen({super.key});
@@ -48,7 +47,6 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
       builder: (ctx) {
         final colors = AppColorTokens.of(ctx);
         return AlertDialog(
-          backgroundColor: colors.surface,
           title: Text('Deck name', style: TextStyle(color: colors.textPrimary)),
           content: TextField(
             controller: controller,
@@ -111,7 +109,6 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
       builder: (ctx) {
         final colors = AppColorTokens.of(ctx);
         return AlertDialog(
-          backgroundColor: colors.surface,
           title: Text('Rename deck', style: TextStyle(color: colors.textPrimary)),
           content: TextField(
             controller: controller,
@@ -175,10 +172,8 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
     final repo = ref.read(deckRepositoryProvider);
 
     return Scaffold(
-      backgroundColor: colors.backgroundPrimary,
       appBar: AppBar(
         title: const Text('My decks'),
-        backgroundColor: colors.backgroundPrimary,
       ),
       body: ListView.builder(
         padding: EdgeInsets.all(LayoutTokens.gr3),
@@ -197,12 +192,7 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
           }
           final deck = _decks[i - 1];
           return Card(
-            color: colors.surface,
             margin: EdgeInsets.only(bottom: LayoutTokens.gr2),
-            shape: RoundedRectangleBorder(
-              borderRadius: RadiusTokens.radiusMd,
-              side: BorderSide(color: colors.borderSubtle.withValues(alpha: 0.5)),
-            ),
             child: Padding(
               padding: EdgeInsets.all(LayoutTokens.gr2),
               child: Column(

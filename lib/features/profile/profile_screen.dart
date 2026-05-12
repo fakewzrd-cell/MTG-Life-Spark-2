@@ -25,6 +25,10 @@ import '../../ui/tokens/radius_tokens.dart';
 /// Profile — bento-style tiles (large radius, layered depth).
 const double _kBentoRadiusPx = 28;
 
+/// Internal padding of every bento card.
+/// Inner element radius = _kBentoRadiusPx − _kBentoCardPaddingPx (nested radius rule).
+const double _kBentoCardPaddingPx = 16;
+
 /// Bundled MTG art when no custom banner is set (from project mana assets).
 const String _kDefaultBannerPlaceholderAsset = 'assets/mana/MYB/fullManaCost.png';
 
@@ -34,9 +38,14 @@ BorderRadius get _kBentoRadius =>
 /// Typical phones (≥360 logical width) use the side‑by‑side level/behaviour row to save height.
 const double _kProfileStatsRowBreakpoint = 360;
 
-/// Upper block (hero + level/behaviour) vs lower (deck + recent) vertical split.
-const int _kProfileUpperFlex = 3;
-const int _kProfileLowerFlex = 2;
+/// Recent-games snap slot height for the vertical list inside the bento.
+const double _kRecentMatchSnapSlotExtent = 132;
+
+/// Title row is painted in a [Stack] overlay; list [ListView] top padding = title + gap (kept in sync).
+const double _kRecentGamesOverlayTopInset = 38;
+
+/// Max width for listing rows (deck + recent games); narrower viewports use full width.
+const double _kBentoListingMaxContentWidth = 520;
 
 int _xpNeededForLevel(int level) {
   const thresholds = [
@@ -52,82 +61,77 @@ int _xpNeededForLevel(int level) {
   return 5000;
 }
 
-Widget _defaultBannerFill(AppColorTokens colors) {
-  return Container(
-    width: double.infinity,
-    height: double.infinity,
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          colors.backgroundSecondary,
-          colors.surface,
-          colors.primaryAccent.withValues(alpha: 0.18),
-        ],
+/// Keeps bento section titles readable when list rows scroll underneath (stacked headers).
+List<Shadow> _profileBentoTitleShadows(AppColorTokens colors) {
+  return [
+    Shadow(
+      color: colors.backgroundPrimary.withValues(alpha: 0.94),
+      blurRadius: 8,
+      offset: const Offset(0, 1),
+    ),
+    Shadow(
+      color: colors.surfaceElevated.withValues(alpha: 0.55),
+      blurRadius: 4,
+    ),
+  ];
+}
+
+Widget _defaultBannerFill(BuildContext context) {
+  final scheme = Theme.of(context).colorScheme;
+  return ColoredBox(
+    color: scheme.surfaceContainer,
+    child: DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            scheme.surfaceContainerLow,
+            scheme.surfaceContainer,
+            Color.lerp(scheme.surfaceContainer, scheme.primary, 0.06)!,
+          ],
+        ),
       ),
     ),
   );
 }
 
-/// Rounded bento surface with optional soft gradient and depth.
+/// Bento section surface — Material 3 [Card] with tiered container color.
 class _BentoCard extends StatelessWidget {
   const _BentoCard({
     required this.child,
-    required this.colors,
     this.gradientColors,
   });
 
   final Widget child;
-  final AppColorTokens colors;
   final List<Color>? gradientColors;
 
   @override
   Widget build(BuildContext context) {
-    final gradient =
-        (gradientColors != null && gradientColors!.length >= 2)
-            ? LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: gradientColors!,
-            )
-            : LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                colors.surfaceElevated,
-                Color.lerp(
-                  colors.surfaceElevated,
-                  colors.backgroundSecondary,
-                  0.35,
-                )!,
-              ],
-            );
+    final scheme = Theme.of(context).colorScheme;
+    final Color cardColor;
+    if (gradientColors != null && gradientColors!.length >= 2) {
+      cardColor = Color.lerp(gradientColors![0], gradientColors![1], 0.5)!;
+    } else {
+      cardColor = scheme.surfaceContainerHigh;
+    }
 
-    return Container(
-      decoration: BoxDecoration(
+    return Card(
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      color: cardColor,
+      elevation: 1,
+      surfaceTintColor: scheme.surfaceTint,
+      shape: RoundedRectangleBorder(
         borderRadius: _kBentoRadius,
-        gradient: gradient,
-        border: Border.all(color: colors.borderSubtle.withValues(alpha: 0.55)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.16),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
-          ),
-          BoxShadow(
-            color: colors.primaryAccent.withValues(alpha: 0.08),
-            blurRadius: 24,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: _kBentoRadius,
-        child: Padding(
-          padding: EdgeInsets.all(LayoutTokens.gr4),
-          child: child,
+        side: BorderSide(
+          color: scheme.outlineVariant.withValues(alpha: 0.65),
+          width: 1,
         ),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(_kBentoCardPaddingPx),
+        child: child,
       ),
     );
   }
@@ -163,83 +167,9 @@ class ProfileScreen extends ConsumerWidget {
             final bodyW =
                 raw.isFinite && raw > 0 ? raw : screenW.clamp(320.0, 2000.0);
             final isNarrow = bodyW < 360;
-            final hPad = isNarrow ? LayoutTokens.gr3 : LayoutTokens.gr4;
-            final sectionGap = LayoutTokens.gr2;
+            final hPad = isNarrow ? LayoutTokens.gr2 : LayoutTokens.gr3;
 
             final maxH = constraints.maxHeight;
-            final useOneScreenLayout = maxH.isFinite && maxH > 200;
-
-            if (useOneScreenLayout) {
-              return Padding(
-                padding: EdgeInsets.fromLTRB(hPad, 0, hPad, LayoutTokens.gr2),
-                child: Column(
-                  key: ValueKey(profileWatch.revision),
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      flex: _kProfileUpperFlex,
-                      child: LayoutBuilder(
-                        builder: (context, upperConstraints) {
-                          final total = upperConstraints.maxHeight;
-                          final g = sectionGap;
-                          final pair = total - g;
-                          final statsCap =
-                              bodyW >= _kProfileStatsRowBreakpoint ? 300.0 : 310.0;
-                          var statsH = (pair * 0.58).clamp(210.0, statsCap);
-                          var heroH = pair - statsH;
-                          if (heroH < 92) {
-                            heroH = 92;
-                            statsH = pair - heroH;
-                          }
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              SizedBox(
-                                height: heroH,
-                                child: _ProfileHeroCard(
-                                  profile: profile,
-                                  colors: colors,
-                                  height: heroH,
-                                ),
-                              ),
-                              SizedBox(height: g),
-                              SizedBox(
-                                height: statsH,
-                                child: _ProfileLevelBehaviourBentoRow(
-                                  profile: profile,
-                                  colors: colors,
-                                  bodyWidth: bodyW,
-                                  rowHeight: statsH,
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                    ),
-                    SizedBox(height: sectionGap),
-                    Expanded(
-                      flex: _kProfileLowerFlex,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(
-                            child: _DeckPerformanceSection(colors: colors),
-                          ),
-                          SizedBox(height: sectionGap),
-                          Expanded(
-                            child: _RecentGamesModule(
-                              matches: allMatches,
-                              colors: colors,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
 
             final scroll = CustomScrollView(
               key: ValueKey(profileWatch.revision),
@@ -253,7 +183,7 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-                SliverToBoxAdapter(child: SizedBox(height: LayoutTokens.gr5)),
+                SliverToBoxAdapter(child: SizedBox(height: LayoutTokens.gr4)),
                 SliverPadding(
                   padding: EdgeInsets.fromLTRB(hPad, 0, hPad, hPad),
                   sliver: SliverList(
@@ -263,22 +193,22 @@ class ProfileScreen extends ConsumerWidget {
                         colors: colors,
                         bodyWidth: bodyW,
                       ),
-                      SizedBox(height: LayoutTokens.gr5),
+                      SizedBox(height: LayoutTokens.gr4),
                       _DeckPerformanceSection(
                         colors: colors,
                         listMaxHeight:
-                            (MediaQuery.sizeOf(context).height * 0.32)
-                                .clamp(200.0, 380.0),
+                            (MediaQuery.sizeOf(context).height * 0.42)
+                                .clamp(280.0, 560.0),
                       ),
-                      SizedBox(height: LayoutTokens.gr5),
+                      SizedBox(height: LayoutTokens.gr4),
                       _RecentGamesModule(
                         matches: allMatches,
                         colors: colors,
                         listMaxHeight:
-                            (MediaQuery.sizeOf(context).height * 0.32)
-                                .clamp(200.0, 380.0),
+                            (MediaQuery.sizeOf(context).height * 0.42)
+                                .clamp(280.0, 560.0),
                       ),
-                      SizedBox(height: LayoutTokens.gr5),
+                      SizedBox(height: LayoutTokens.gr4),
                     ]),
                   ),
                 ),
@@ -307,19 +237,16 @@ class _ProfileHeroCard extends StatelessWidget {
   const _ProfileHeroCard({
     required this.profile,
     required this.colors,
-    this.height,
   });
 
   final PlayerProfile profile;
   final AppColorTokens colors;
-  /// When null (scroll fallback), uses [_defaultCardHeight].
-  final double? height;
 
   static const double _defaultCardHeight = 340;
 
   @override
   Widget build(BuildContext context) {
-    final cardHeight = height ?? _defaultCardHeight;
+    const cardHeight = _defaultCardHeight;
     void onBanner() => context.push(AppRoutes.profileBanner);
 
     Widget background() {
@@ -331,8 +258,8 @@ class _ProfileHeroCard extends StatelessWidget {
           fit: BoxFit.cover,
           width: double.infinity,
           height: cardHeight,
-          placeholder: (_, __) => Container(color: colors.backgroundSecondary),
-          errorWidget: (_, __, ___) => _defaultBannerFill(colors),
+          placeholder: (ctx, _) => _defaultBannerFill(ctx),
+          errorWidget: (ctx, _, __) => _defaultBannerFill(ctx),
         );
       }
       return Image.asset(
@@ -340,7 +267,7 @@ class _ProfileHeroCard extends StatelessWidget {
         fit: BoxFit.cover,
         width: double.infinity,
         height: cardHeight,
-        errorBuilder: (_, __, ___) => _defaultBannerFill(colors),
+        errorBuilder: (ctx, _, __) => _defaultBannerFill(ctx),
       );
     }
 
@@ -460,9 +387,9 @@ class _ProfileHeroIdentityAndStats extends StatelessWidget {
             ],
           ),
         ),
-        SizedBox(height: LayoutTokens.gr1),
+        SizedBox(height: LayoutTokens.gr0),
         Center(child: TierBadge(tier: profile.tier, level: profile.level)),
-        SizedBox(height: LayoutTokens.gr3),
+        SizedBox(height: LayoutTokens.gr2),
         _ProfileFloatingStatsPill(profile: profile),
       ],
     );
@@ -634,17 +561,14 @@ class _ProfileLevelBehaviourBentoRow extends StatelessWidget {
     required this.profile,
     required this.colors,
     required this.bodyWidth,
-    this.rowHeight,
   });
 
   final PlayerProfile profile;
   final AppColorTokens colors;
   final double bodyWidth;
-  /// When set (one-screen profile layout), constrains the row / stacked stats height.
-  final double? rowHeight;
 
-  /// Fixed height for the wide two-column row when [rowHeight] is not passed (scroll layout).
-  static const double _kWideRowHeightFallback = 268;
+  /// Height for the wide two-column row in the scroll layout.
+  static const double _kWideRowHeight = 268;
 
   @override
   Widget build(BuildContext context) {
@@ -656,7 +580,6 @@ class _ProfileLevelBehaviourBentoRow extends StatelessWidget {
     final wide = bodyWidth >= _kProfileStatsRowBreakpoint;
 
     final levelCard = _BentoCard(
-      colors: colors,
       gradientColors: [
         Color.lerp(colors.surfaceElevated, ColorTokens.success, 0.14)!,
         colors.surfaceElevated,
@@ -672,7 +595,6 @@ class _ProfileLevelBehaviourBentoRow extends StatelessWidget {
     );
 
     final behaviourCard = _BentoCard(
-      colors: colors,
       gradientColors: [
         Color.lerp(colors.surfaceElevated, colors.primaryAccent, 0.12)!,
         colors.surfaceElevated,
@@ -684,11 +606,9 @@ class _ProfileLevelBehaviourBentoRow extends StatelessWidget {
       ),
     );
 
-    final wideH = rowHeight ?? _kWideRowHeightFallback;
-
     if (wide) {
       return SizedBox(
-        height: wideH,
+        height: _kWideRowHeight,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -709,18 +629,6 @@ class _ProfileLevelBehaviourBentoRow extends StatelessWidget {
         behaviourCard,
       ],
     );
-    if (rowHeight != null) {
-      return SizedBox(
-        height: rowHeight,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: SingleChildScrollView(
-            physics: const ClampingScrollPhysics(),
-            child: stack,
-          ),
-        ),
-      );
-    }
     return stack;
   }
 }
@@ -732,11 +640,66 @@ double _saltFraction(PlayerProfile profile) {
   return (profile.dislikesReceived / total).clamp(0.0, 1.0);
 }
 
-/// Good / Neutral / Salty thirds — same bands as the spectrum labels.
-int _behaviourSentimentIndex(double salt) {
-  if (salt < 1 / 3) return 0;
-  if (salt < 2 / 3) return 1;
-  return 2;
+/// Gradient spectrum + thumb; [width] must be finite and positive for a visible bar.
+Widget _behaviourSpectrumBar({
+  required PlayerProfile profile,
+  required AppColorTokens colors,
+  required double width,
+}) {
+  final salt = _saltFraction(profile);
+  final w =
+      width.isFinite && width > 0 ? width : 280.0;
+  final thumbX = 16.0 + (w - 32.0) * salt;
+  return SizedBox(
+    width: w,
+    height: 22,
+    child: Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.centerLeft,
+      children: [
+        Container(
+          width: w,
+          height: 14,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: colors.borderSubtle.withValues(alpha: 0.55),
+              width: 1,
+            ),
+            gradient: LinearGradient(
+              colors: [
+                ColorTokens.success,
+                colors.textSecondary,
+                colors.primaryAccent,
+              ],
+            ),
+          ),
+        ),
+        Positioned(
+          left: thumbX.clamp(4.0, w - 12.0) - 7,
+          top: 2,
+          child: Container(
+            width: 18,
+            height: 18,
+            decoration: BoxDecoration(
+              color: colors.textPrimary,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: colors.backgroundPrimary,
+                width: 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.35),
+                  blurRadius: 4,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _LevelDonutCard extends StatelessWidget {
@@ -757,16 +720,18 @@ class _LevelDonutCard extends StatelessWidget {
   /// When true (wide side-by-side row), middle content expands to match sibling card height.
   final bool fillHeight;
 
-  @override
-  Widget build(BuildContext context) {
-    final donutBlock = Column(
+  /// Builds the donut + XP label block at a given [size].
+  /// strokeWidth scales proportionally, clamped to [6, 10].
+  Widget _donutBlock(BuildContext context, double size) {
+    final stroke = (size / 112 * 10).clamp(6.0, 10.0);
+    return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Center(
           child: _AnimatedDonutGauge(
             targetProgress: xpProgress,
-            size: 128,
-            strokeWidth: 11,
+            size: size,
+            strokeWidth: stroke,
             trackColor: colors.backgroundSecondary.withValues(alpha: 0.95),
             progressColor: colors.primaryAccent,
             centerBuilder: (ctx, t) {
@@ -780,6 +745,7 @@ class _LevelDonutCard extends StatelessWidget {
                       fontWeight: FontWeight.w800,
                       color: colors.textPrimary,
                       fontFeatures: const [FontFeature.tabularFigures()],
+                      fontSize: size < 90 ? 16 : null,
                     ),
                   ),
                   Text(
@@ -794,7 +760,7 @@ class _LevelDonutCard extends StatelessWidget {
             },
           ),
         ),
-        SizedBox(height: LayoutTokens.gr2),
+        SizedBox(height: LayoutTokens.gr1),
         Center(
           child: _AnimatedXpInLevelLabel(
             targetXpInLevel: xpInLevel,
@@ -808,6 +774,11 @@ class _LevelDonutCard extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const _kXpLabelH = 20.0; // label (~14px) + gr1 gap (6px)
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -818,6 +789,7 @@ class _LevelDonutCard extends StatelessWidget {
               child: Text(
                 'Level progress',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontSize: 18,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.2,
                   color: colors.textPrimary,
@@ -835,24 +807,24 @@ class _LevelDonutCard extends StatelessWidget {
             ),
           ],
         ),
-        SizedBox(height: LayoutTokens.gr1),
-        Text(
-          'Rank ${profile.level}',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: colors.textSecondary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
         SizedBox(height: LayoutTokens.gr2),
         if (fillHeight)
+          // LayoutBuilder sizes donut to fit; FittedBox scales down any remaining
+          // overflow (e.g. XP label at minimum donut size on very short cards).
           Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [donutBlock],
+            child: LayoutBuilder(
+              builder: (context, c) {
+                final donutSize =
+                    (c.maxHeight - _kXpLabelH).clamp(48.0, 112.0);
+                return FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: _donutBlock(context, donutSize),
+                );
+              },
             ),
           )
         else
-          donutBlock,
+          _donutBlock(context, 112),
       ],
     );
   }
@@ -872,87 +844,14 @@ class _BehaviourBarCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final salt = _saltFraction(profile);
-    final moodIdx = _behaviourSentimentIndex(salt);
-    final moodIcon = switch (moodIdx) {
-      0 => Icons.sentiment_very_satisfied_rounded,
-      1 => Icons.sentiment_neutral_rounded,
-      _ => Icons.sentiment_very_dissatisfied_rounded,
-    };
-    final moodColor = switch (moodIdx) {
-      0 => ColorTokens.success,
-      1 => colors.textSecondary,
-      _ => colors.primaryAccent,
-    };
-
-    final spectrumBlock = Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Center(
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 220),
-            switchInCurve: Curves.easeOut,
-            switchOutCurve: Curves.easeIn,
-            transitionBuilder: (child, anim) =>
-                ScaleTransition(scale: anim, child: child),
-            child: Icon(
-              moodIcon,
-              key: ValueKey<int>(moodIdx),
-              size: 40,
-              color: moodColor,
-            ),
-          ),
-        ),
-        SizedBox(height: LayoutTokens.gr4),
-        LayoutBuilder(
-          builder: (context, c) {
-            final w = c.maxWidth;
-            final thumbX = 16.0 + (w - 32.0) * salt;
-            return Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  height: 12,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(999),
-                    gradient: LinearGradient(
-                      colors: [
-                        ColorTokens.success,
-                        colors.textSecondary,
-                        colors.primaryAccent,
-                      ],
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: thumbX.clamp(4.0, w - 12.0) - 7,
-                  top: -5,
-                  child: Container(
-                    width: 18,
-                    height: 18,
-                    decoration: BoxDecoration(
-                      color: colors.textPrimary,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: colors.backgroundPrimary,
-                        width: 2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.35),
-                          blurRadius: 4,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-      ],
-    );
+    Widget spectrumForConstraints(BoxConstraints c) {
+      final w = c.maxWidth.isFinite && c.maxWidth > 0 ? c.maxWidth : 280.0;
+      return _behaviourSpectrumBar(
+        profile: profile,
+        colors: colors,
+        width: w,
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -963,6 +862,7 @@ class _BehaviourBarCard extends StatelessWidget {
               child: Text(
                 'Player behaviour',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontSize: 18,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.2,
                   color: colors.textPrimary,
@@ -980,59 +880,111 @@ class _BehaviourBarCard extends StatelessWidget {
             ),
           ],
         ),
-        SizedBox(height: fillHeight ? LayoutTokens.gr1 : LayoutTokens.gr2),
+        SizedBox(height: LayoutTokens.gr1),
         if (fillHeight)
           Expanded(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [spectrumBlock],
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, c) {
+                      return Align(
+                        alignment: Alignment.center,
+                        child: spectrumForConstraints(c),
+                      );
+                    },
+                  ),
+                ),
+                SizedBox(height: LayoutTokens.gr0),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Good',
+                      style: TextStyle(
+                        color: colors.textSecondary,
+                        fontSize: FontTokens.sm,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      'Neutral',
+                      style: TextStyle(
+                        color: colors.textSecondary,
+                        fontSize: FontTokens.sm,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      'Salty',
+                      style: TextStyle(
+                        color: colors.textSecondary,
+                        fontSize: FontTokens.sm,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${profile.likesReceived} likes · ${profile.dislikesReceived} dislikes',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colors.textSecondary,
+                    fontSize: FontTokens.caption,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           )
-        else
-          ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 132),
-            child: spectrumBlock,
+        else ...[
+          LayoutBuilder(
+            builder: (context, c) => spectrumForConstraints(c),
           ),
-        SizedBox(height: LayoutTokens.gr3),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Good',
-              style: TextStyle(
-                color: colors.textSecondary,
-                fontSize: FontTokens.sm,
-                fontWeight: FontWeight.w500,
+          SizedBox(height: LayoutTokens.gr1),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Good',
+                style: TextStyle(
+                  color: colors.textSecondary,
+                  fontSize: FontTokens.sm,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
-            Text(
-              'Neutral',
-              style: TextStyle(
-                color: colors.textSecondary,
-                fontSize: FontTokens.sm,
-                fontWeight: FontWeight.w500,
+              Text(
+                'Neutral',
+                style: TextStyle(
+                  color: colors.textSecondary,
+                  fontSize: FontTokens.sm,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
-            Text(
-              'Salty',
-              style: TextStyle(
-                color: colors.textSecondary,
-                fontSize: FontTokens.sm,
-                fontWeight: FontWeight.w500,
+              Text(
+                'Salty',
+                style: TextStyle(
+                  color: colors.textSecondary,
+                  fontSize: FontTokens.sm,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
-          ],
-        ),
-        SizedBox(height: LayoutTokens.gr3),
-        Center(
-          child: Text(
-            '${profile.likesReceived} likes · ${profile.dislikesReceived} dislikes',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
-            textAlign: TextAlign.center,
+            ],
           ),
-        ),
+          SizedBox(height: LayoutTokens.gr1),
+          Center(
+            child: Text(
+              '${profile.likesReceived} likes · ${profile.dislikesReceived} dislikes',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: colors.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -1173,6 +1125,49 @@ class _AnimatedDonutGaugeState extends State<_AnimatedDonutGauge>
   }
 }
 
+/// Snaps scroll to multiples of [itemExtent] on fling/release.
+class _SnapScrollPhysics extends ScrollPhysics {
+  const _SnapScrollPhysics({required this.itemExtent, super.parent});
+
+  final double itemExtent;
+
+  @override
+  _SnapScrollPhysics applyTo(ScrollPhysics? ancestor) =>
+      _SnapScrollPhysics(itemExtent: itemExtent, parent: buildParent(ancestor));
+
+  double _snapTarget(ScrollMetrics pos, double velocity, Tolerance tol) {
+    double item = pos.pixels / itemExtent;
+    if (velocity < -tol.velocity) {
+      item -= 0.5;
+    } else if (velocity > tol.velocity) {
+      item += 0.5;
+    }
+    return (item.roundToDouble() * itemExtent)
+        .clamp(pos.minScrollExtent, pos.maxScrollExtent);
+  }
+
+  @override
+  Simulation? createBallisticSimulation(ScrollMetrics pos, double velocity) {
+    if ((velocity <= 0.0 && pos.pixels <= pos.minScrollExtent) ||
+        (velocity >= 0.0 && pos.pixels >= pos.maxScrollExtent)) {
+      return super.createBallisticSimulation(pos, velocity);
+    }
+    final tol = toleranceFor(pos);
+    final target = _snapTarget(pos, velocity, tol);
+    if ((target - pos.pixels).abs() < tol.distance) return null;
+    return ScrollSpringSimulation(
+      spring,
+      pos.pixels,
+      target,
+      velocity,
+      tolerance: tol,
+    );
+  }
+
+  @override
+  bool get allowImplicitScrolling => false;
+}
+
 /// Scrollable list inside a bento with a fixed max height; auto-advances when idle.
 class _BentoAutoScrollList extends StatefulWidget {
   const _BentoAutoScrollList({
@@ -1180,6 +1175,9 @@ class _BentoAutoScrollList extends StatefulWidget {
     required this.itemCount,
     required this.itemBuilder,
     this.separator,
+    this.snapScroll = true,
+    this.snapItemExtent = _kRecentMatchSnapSlotExtent,
+    this.scrollableTopInset = 0,
   });
 
   /// When null, the list expands within a parent [Expanded] (bounded height).
@@ -1187,6 +1185,12 @@ class _BentoAutoScrollList extends StatefulWidget {
   final int itemCount;
   final IndexedWidgetBuilder itemBuilder;
   final Widget? separator;
+  /// When false, uses smooth [ClampingScrollPhysics]. Defaults to true (recent games).
+  final bool snapScroll;
+  /// Grid for snap physics and auto-advance when [snapScroll] is true.
+  final double snapItemExtent;
+  /// Space above the first list item (e.g. stacked section title overlay).
+  final double scrollableTopInset;
 
   @override
   State<_BentoAutoScrollList> createState() => _BentoAutoScrollListState();
@@ -1201,7 +1205,6 @@ class _BentoAutoScrollListState extends State<_BentoAutoScrollList> {
 
   static const _resumeAfterIdle = Duration(seconds: 5);
   static const _autoTick = Duration(seconds: 4);
-  static const _stepPx = 88.0;
 
   @override
   void initState() {
@@ -1237,23 +1240,35 @@ class _BentoAutoScrollListState extends State<_BentoAutoScrollList> {
     final max = pos.maxScrollExtent;
     if (max < 8) return;
 
+    final o = _controller.offset;
+    double target;
+    if (widget.snapScroll) {
+      final step = widget.snapItemExtent;
+      final nextSnap = ((o / step).floor() + 1) * step;
+      if (nextSnap >= max - 4) {
+        target = 0;
+      } else {
+        target = nextSnap.clamp(0.0, max);
+      }
+    } else {
+      final step = (pos.viewportDimension * 0.88).clamp(96.0, 520.0);
+      if (o + step >= max - 4) {
+        target = 0;
+      } else {
+        target = (o + step).clamp(0.0, max);
+      }
+    }
+
     _autoBusy = true;
     _programmatic = true;
     try {
-      final o = _controller.offset;
-      if (o + _stepPx >= max - 4) {
-        await _controller.animateTo(
-          0,
-          duration: const Duration(milliseconds: 650),
-          curve: Curves.easeInOut,
-        );
-      } else {
-        await _controller.animateTo(
-          (o + _stepPx).clamp(0.0, max),
-          duration: const Duration(milliseconds: 480),
-          curve: Curves.easeInOut,
-        );
-      }
+      await _controller.animateTo(
+        target,
+        duration: Duration(
+          milliseconds: target == 0 && o > 8 ? 650 : 520,
+        ),
+        curve: Curves.easeInOut,
+      );
     } finally {
       if (mounted) _programmatic = false;
       _autoBusy = false;
@@ -1293,16 +1308,60 @@ class _BentoAutoScrollListState extends State<_BentoAutoScrollList> {
           }
           return false;
         },
-        child: ListView.separated(
-          controller: _controller,
-          primary: false,
-          physics: const ClampingScrollPhysics(),
-          padding: EdgeInsets.zero,
-          itemCount: widget.itemCount,
-          separatorBuilder:
-              (_, __) =>
-                  widget.separator ?? SizedBox(height: LayoutTokens.gr2),
-          itemBuilder: widget.itemBuilder,
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            scrollbars: false,
+          ),
+          child:
+              widget.snapScroll
+                  ? ListView.builder(
+                      controller: _controller,
+                      primary: false,
+                      physics: _SnapScrollPhysics(
+                        itemExtent: widget.snapItemExtent,
+                      ),
+                      padding: EdgeInsets.only(
+                        top: widget.scrollableTopInset,
+                        bottom: LayoutTokens.gr2,
+                      ),
+                      cacheExtent: 400,
+                      itemCount: widget.itemCount,
+                      itemBuilder: (context, i) {
+                        return SizedBox(
+                          height: widget.snapItemExtent,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Expanded(
+                                child: Align(
+                                  alignment: Alignment.center,
+                                  child: widget.itemBuilder(context, i),
+                                ),
+                              ),
+                              if (i < widget.itemCount - 1)
+                                widget.separator ??
+                                    SizedBox(height: LayoutTokens.gr2),
+                            ],
+                          ),
+                        );
+                      },
+                    )
+                  : ListView.separated(
+                      controller: _controller,
+                      primary: false,
+                      physics: const ClampingScrollPhysics(),
+                      padding: EdgeInsets.only(
+                        top: widget.scrollableTopInset,
+                        bottom: LayoutTokens.gr2,
+                      ),
+                      cacheExtent: 400,
+                      itemCount: widget.itemCount,
+                      separatorBuilder:
+                          (_, __) =>
+                              widget.separator ??
+                              SizedBox(height: LayoutTokens.gr2),
+                      itemBuilder: widget.itemBuilder,
+                    ),
         ),
       ),
     );
@@ -1317,7 +1376,7 @@ class _BentoAutoScrollListState extends State<_BentoAutoScrollList> {
 class _RecentGamesModule extends StatelessWidget {
   final List<MatchRecord> matches;
   final AppColorTokens colors;
-  /// When null, list fills remaining space inside an [Expanded] (one-screen layout).
+  /// When null, list uses remaining flex height (one-screen layout).
   final double? listMaxHeight;
 
   const _RecentGamesModule({
@@ -1329,6 +1388,16 @@ class _RecentGamesModule extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = colors;
+    final listMaxHeight = this.listMaxHeight;
+    const inset = _kRecentGamesOverlayTopInset;
+
+    final titleStyle = Theme.of(context).textTheme.titleLarge?.copyWith(
+      fontSize: 18,
+      fontWeight: FontWeight.w800,
+      letterSpacing: -0.2,
+      color: c.textPrimary,
+      shadows: _profileBentoTitleShadows(c),
+    );
 
     final emptyPlaceholder = Center(
       child: Padding(
@@ -1342,40 +1411,176 @@ class _RecentGamesModule extends StatelessWidget {
       ),
     );
 
-    final scrollList = _BentoAutoScrollList(
-      maxHeight: listMaxHeight,
-      itemCount: matches.length,
-      itemBuilder: (context, i) {
-        return _RecentMatchRow(match: matches[i], colors: c);
-      },
+    final overlayHeader = Positioned(
+      left: 0,
+      right: 0,
+      top: 0,
+      child: IgnorePointer(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Recent Games', style: titleStyle),
+            SizedBox(height: LayoutTokens.gr1),
+          ],
+        ),
+      ),
     );
 
+    final double bodyHeight = listMaxHeight ?? 320.0;
+    final Widget body = matches.isEmpty
+        ? emptyPlaceholder
+        : _RecentMatchListBody(
+            matches: matches,
+            colors: c,
+            viewportHeight: bodyHeight,
+            scrollableTopInset: inset,
+          );
+
     return _BentoCard(
-      colors: c,
       gradientColors: [
         Color.lerp(c.surfaceElevated, ColorTokens.success, 0.08)!,
         c.surfaceElevated,
       ],
+      child: SizedBox(
+        height: bodyHeight,
+        child: Stack(
+          clipBehavior: Clip.hardEdge,
+          children: [
+            Positioned.fill(child: body),
+            overlayHeader,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// List area: equal-height rows when all rows fit; otherwise scroll + snap.
+class _RecentMatchListBody extends StatelessWidget {
+  const _RecentMatchListBody({
+    required this.matches,
+    required this.colors,
+    this.viewportHeight,
+    this.scrollableTopInset = 0,
+  });
+
+  final List<MatchRecord> matches;
+  final AppColorTokens colors;
+  /// When set, height is known without [LayoutBuilder] (scroll-layout bento).
+  final double? viewportHeight;
+  /// Matches [_kRecentGamesOverlayTopInset] when titles use a [Stack] overlay.
+  final double scrollableTopInset;
+
+  static const double _kMinRowForEqualSplit = 56.0;
+
+  bool _useEqualSlots(double h, int n, double gap) {
+    if (n <= 0 || h <= 0) return false;
+    if (n == 1) return true;
+    final need = n * _kMinRowForEqualSplit + (n - 1) * gap;
+    return need <= h;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final gap = LayoutTokens.gr2;
+    final n = matches.length;
+    final inset = scrollableTopInset;
+
+    Widget scrollList({double? maxH}) {
+      return _BentoAutoScrollList(
+        maxHeight: maxH ?? viewportHeight,
+        scrollableTopInset: inset,
+        snapScroll: true,
+        snapItemExtent: _kRecentMatchSnapSlotExtent,
+        separator: SizedBox(height: LayoutTokens.gr2),
+        itemCount: n,
+        itemBuilder: (context, i) {
+          return _RecentMatchRow(match: matches[i], colors: colors);
+        },
+      );
+    }
+
+    if (viewportHeight != null) {
+      final h = viewportHeight!;
+      final innerH = (h - inset).clamp(0.0, double.infinity);
+      if (_useEqualSlots(innerH, n, gap)) {
+        return Padding(
+          padding: EdgeInsets.only(top: inset),
+          child: SizedBox(
+            height: innerH,
+            child: _RecentGamesEqualSlots(
+              matches: matches,
+              colors: colors,
+              gap: gap,
+              viewportHeight: innerH,
+            ),
+          ),
+        );
+      }
+      return scrollList(maxH: h);
+    }
+
+    return LayoutBuilder(
+      builder: (context, c) {
+        final h = c.maxHeight;
+        final innerH = (h - inset).clamp(0.0, double.infinity);
+        if (_useEqualSlots(innerH, n, gap)) {
+          return Padding(
+            padding: EdgeInsets.only(top: inset),
+            child: SizedBox(
+              height: innerH,
+              child: _RecentGamesEqualSlots(
+                matches: matches,
+                colors: colors,
+                gap: gap,
+                viewportHeight: innerH,
+              ),
+            ),
+          );
+        }
+        return scrollList(maxH: h);
+      },
+    );
+  }
+}
+
+/// Fills [viewportHeight] with [n] equal vertical slots and even [gap] between rows.
+class _RecentGamesEqualSlots extends StatelessWidget {
+  const _RecentGamesEqualSlots({
+    required this.matches,
+    required this.colors,
+    required this.gap,
+    required this.viewportHeight,
+  });
+
+  final List<MatchRecord> matches;
+  final AppColorTokens colors;
+  final double gap;
+  final double viewportHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    final n = matches.length;
+    return SizedBox(
+      height: viewportHeight,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Recent Games',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.2,
-              color: c.textPrimary,
+          for (int i = 0; i < n; i++) ...[
+            if (i > 0) SizedBox(height: gap),
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, c) {
+                  return _RecentMatchRow(
+                    match: matches[i],
+                    colors: colors,
+                    slotHeight: c.maxHeight,
+                  );
+                },
+              ),
             ),
-          ),
-          SizedBox(height: LayoutTokens.gr2),
-          if (matches.isEmpty)
-            listMaxHeight == null
-                ? Expanded(child: emptyPlaceholder)
-                : emptyPlaceholder
-          else if (listMaxHeight == null)
-            Expanded(child: scrollList)
-          else
-            scrollList,
+          ],
         ],
       ),
     );
@@ -1395,7 +1600,14 @@ String _formatDurationSeconds(int seconds) {
 class _RecentMatchRow extends ConsumerStatefulWidget {
   final MatchRecord match;
   final AppColorTokens colors;
-  const _RecentMatchRow({required this.match, required this.colors});
+  /// When set (equal-slot recent games layout), row fills this height and scrolls if needed.
+  final double? slotHeight;
+
+  const _RecentMatchRow({
+    required this.match,
+    required this.colors,
+    this.slotHeight,
+  });
 
   @override
   ConsumerState<_RecentMatchRow> createState() => _RecentMatchRowState();
@@ -1441,163 +1653,195 @@ class _RecentMatchRowState extends ConsumerState<_RecentMatchRow> {
     final secs = m.durationSecondsEffective;
     final participants = m.participantSnapshots;
 
-    final innerR = BorderRadius.circular(_kBentoRadiusPx - 6);
-    return Material(
+    final innerR = BorderRadius.circular(_kBentoRadiusPx - _kBentoCardPaddingPx);
+    final columnMainAxis =
+        widget.slotHeight != null && !_open
+            ? MainAxisAlignment.center
+            : MainAxisAlignment.start;
+    final paddedColumn = Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: LayoutTokens.gr3,
+        vertical: LayoutTokens.gr2,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisAlignment: columnMainAxis,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(
+                _open ? Icons.expand_less : Icons.expand_more,
+                color: colors.textSecondary,
+                size: 22,
+              ),
+              SizedBox(width: LayoutTokens.gr1),
+              Expanded(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minWidth: 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '${m.matchTypeLabel} · ${m.format} · $_opponentLabel',
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontSize:
+                              MediaQuery.sizeOf(context).width < 360
+                                  ? 14
+                                  : null,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 2,
+                      ),
+                      SizedBox(height: LayoutTokens.gr0),
+                      Text(
+                        '${fmt.format(m.date)} · ${timeFmt.format(m.date)}',
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.copyWith(
+                          color: colors.textSecondary,
+                          fontSize: FontTokens.sm,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(width: LayoutTokens.gr2),
+              Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: LayoutTokens.gr2,
+                  vertical: LayoutTokens.gr1,
+                ),
+                decoration: BoxDecoration(
+                  color: _resultColor.withValues(alpha: 0.15),
+                  borderRadius: RadiusTokens.radiusSm,
+                ),
+                child: Text(
+                  _resultLabel,
+                  style: TextStyle(
+                    color: _resultColor,
+                    fontWeight: FontWeight.w700,
+                    fontSize:
+                        MediaQuery.sizeOf(context).width < 360
+                            ? FontTokens.sm
+                            : FontTokens.caption,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ),
+            ],
+          ),
+          if (_open) ...[
+            Divider(color: colors.textSecondary.withValues(alpha: 0.2)),
+            SizedBox(height: LayoutTokens.gr1),
+            _detailRow(context, 'Duration', _formatDurationSeconds(secs)),
+            if (m.podNameSnapshot != null && m.podNameSnapshot!.isNotEmpty)
+              _detailRow(context, 'Pod', m.podNameSnapshot!),
+            if (m.localDeckIdSnapshot != null &&
+                m.localDeckIdSnapshot!.isNotEmpty)
+              _detailRow(
+                context,
+                'Deck',
+                ref
+                        .read(deckRepositoryProvider)
+                        .getById(m.localDeckIdSnapshot!)
+                        ?.displayName ??
+                    m.localDeckIdSnapshot!,
+              ),
+            if (participants.isNotEmpty) ...[
+              SizedBox(height: LayoutTokens.gr1),
+              Text(
+                'Players',
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: colors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              SizedBox(height: LayoutTokens.gr1),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children:
+                    participants.map((p) {
+                      return Chip(
+                        avatar: CircleAvatar(
+                          backgroundColor: colors.primaryAccent.withValues(
+                            alpha: 0.3,
+                          ),
+                          child: Text(
+                            _initials(p.username),
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: colors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        label: Text(
+                          p.commanderName ?? p.username,
+                          style: TextStyle(
+                            color: colors.textPrimary,
+                            fontSize: 12,
+                          ),
+                        ),
+                        backgroundColor: colors.backgroundSecondary,
+                        side: BorderSide(
+                          color: colors.textSecondary.withValues(alpha: 0.2),
+                        ),
+                      );
+                    }).toList(),
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
+
+    final inkChild =
+        widget.slotHeight != null
+            ? SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: widget.slotHeight!),
+                  child: paddedColumn,
+                ),
+              )
+            : paddedColumn;
+
+    Widget card = Material(
       color: colors.backgroundSecondary.withValues(alpha: 0.42),
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: innerR,
         side: BorderSide(color: _resultColor.withValues(alpha: 0.42)),
       ),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => setState(() => _open = !_open),
         borderRadius: innerR,
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal:
-                MediaQuery.sizeOf(context).width < 360
-                    ? LayoutTokens.gr3
-                    : LayoutTokens.gr4,
-            vertical: LayoutTokens.gr3,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    _open ? Icons.expand_less : Icons.expand_more,
-                    color: colors.textSecondary,
-                    size: 22,
-                  ),
-                  SizedBox(width: LayoutTokens.gr1),
-                  Expanded(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(minWidth: 0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '${m.matchTypeLabel} · ${m.format} · $_opponentLabel',
-                            style: Theme.of(
-                              context,
-                            ).textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              fontSize:
-                                  MediaQuery.sizeOf(context).width < 360
-                                      ? 14
-                                      : null,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 2,
-                          ),
-                          SizedBox(height: LayoutTokens.gr0),
-                          Text(
-                            '${fmt.format(m.date)} · ${timeFmt.format(m.date)}',
-                            style: Theme.of(
-                              context,
-                            ).textTheme.bodySmall?.copyWith(
-                              color: colors.textSecondary,
-                              fontSize: FontTokens.sm,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: LayoutTokens.gr2),
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: LayoutTokens.gr2,
-                      vertical: LayoutTokens.gr1,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _resultColor.withValues(alpha: 0.15),
-                      borderRadius: RadiusTokens.radiusSm,
-                    ),
-                    child: Text(
-                      _resultLabel,
-                      style: TextStyle(
-                        color: _resultColor,
-                        fontWeight: FontWeight.w700,
-                        fontSize:
-                            MediaQuery.sizeOf(context).width < 360
-                                ? FontTokens.sm
-                                : FontTokens.caption,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
-                  ),
-                ],
-              ),
-              if (_open) ...[
-                Divider(color: colors.textSecondary.withValues(alpha: 0.2)),
-                SizedBox(height: LayoutTokens.gr1),
-                _detailRow(context, 'Duration', _formatDurationSeconds(secs)),
-                if (m.podNameSnapshot != null && m.podNameSnapshot!.isNotEmpty)
-                  _detailRow(context, 'Pod', m.podNameSnapshot!),
-                if (m.localDeckIdSnapshot != null &&
-                    m.localDeckIdSnapshot!.isNotEmpty)
-                  _detailRow(
-                    context,
-                    'Deck',
-                    ref
-                            .read(deckRepositoryProvider)
-                            .getById(m.localDeckIdSnapshot!)
-                            ?.displayName ??
-                        m.localDeckIdSnapshot!,
-                  ),
-                if (participants.isNotEmpty) ...[
-                  SizedBox(height: LayoutTokens.gr2),
-                  Text(
-                    'Players',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: colors.textSecondary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(height: LayoutTokens.gr1),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children:
-                        participants.map((p) {
-                          return Chip(
-                            avatar: CircleAvatar(
-                              backgroundColor: colors.primaryAccent.withValues(
-                                alpha: 0.3,
-                              ),
-                              child: Text(
-                                _initials(p.username),
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  color: colors.textPrimary,
-                                ),
-                              ),
-                            ),
-                            label: Text(
-                              p.commanderName ?? p.username,
-                              style: TextStyle(
-                                color: colors.textPrimary,
-                                fontSize: 12,
-                              ),
-                            ),
-                            backgroundColor: colors.backgroundSecondary,
-                            side: BorderSide(
-                              color: colors.textSecondary.withValues(alpha: 0.2),
-                            ),
-                          );
-                        }).toList(),
-                  ),
-                ],
-              ],
-            ],
-          ),
-        ),
+        child: inkChild,
       ),
+    );
+
+    if (widget.slotHeight != null) {
+      card = SizedBox(height: widget.slotHeight, child: card);
+    }
+
+    return LayoutBuilder(
+      builder: (context, c) {
+        final w = math.min(_kBentoListingMaxContentWidth, c.maxWidth);
+        return Align(
+          alignment: Alignment.center,
+          child: SizedBox(width: w, child: card),
+        );
+      },
     );
   }
 
@@ -1863,7 +2107,7 @@ List<PlayerDeck> _previewPlaceholderDecks() {
 
 class _DeckPerformanceSection extends ConsumerStatefulWidget {
   final AppColorTokens colors;
-  /// When null, list fills remaining space inside an [Expanded] (one-screen layout).
+  /// When null, list uses remaining flex height (one-screen layout).
   final double? listMaxHeight;
 
   const _DeckPerformanceSection({
@@ -1876,7 +2120,23 @@ class _DeckPerformanceSection extends ConsumerStatefulWidget {
       _DeckPerformanceSectionState();
 }
 
-class _DeckPerformanceSectionState extends ConsumerState<_DeckPerformanceSection> {
+/// Horizontal card width — sized so 1.5 cards peek on a 360px-wide viewport
+/// (signals "more to scroll") and 2+ cards show on wider devices.
+const double _kDeckPerfCardWidth = 220;
+
+/// Title row height (text + spacing) reserved inside the bento.
+const double _kDeckPerfTitleHeight = 44;
+
+class _DeckPerformanceSectionState
+    extends ConsumerState<_DeckPerformanceSection> {
+  late final ScrollController _scrollCtrl = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.watch(deckListRevisionProvider);
@@ -1889,149 +2149,163 @@ class _DeckPerformanceSectionState extends ConsumerState<_DeckPerformanceSection
     final colors = widget.colors;
     final lh = widget.listMaxHeight;
 
-    final list = _BentoAutoScrollList(
-      maxHeight: lh,
-      itemCount: decks.length,
-      separator: Divider(
-        height: 1,
-        thickness: 1,
-        color: colors.borderSubtle.withValues(alpha: 0.45),
-      ),
-      itemBuilder: (context, i) {
-        final d = decks[i];
-        return Padding(
-          padding: EdgeInsets.only(
-            top: i == 0 ? LayoutTokens.gr1 : LayoutTokens.gr2,
-            bottom: LayoutTokens.gr2,
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              DeckCommanderAvatarCluster(
-                deck: d,
-                colors: colors,
-                size: 80,
-                portraitStyle: CommanderPortraitStyle.card,
-              ),
-              SizedBox(width: LayoutTokens.gr3),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      d.displayName,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: colors.textPrimary,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      d.hasPartner
-                          ? '${d.commanderName} // ${d.partnerCommanderName}'
-                          : d.commanderName,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colors.textSecondary,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (_deckHasManaForProfile(d)) ...[
-                      SizedBox(height: LayoutTokens.gr1),
-                      DeckManaCostRows(
-                        commanderManaCost: d.commanderManaCost,
-                        partnerManaCost: d.partnerManaCost,
-                        hasPartner: d.hasPartner,
-                        compact: false,
-                      ),
-                    ],
-                    SizedBox(height: LayoutTokens.gr1),
-                    DeckWinLossRatioBar(
-                      deck: d,
-                      colors: colors,
-                      height: 6,
-                    ),
-                    SizedBox(height: LayoutTokens.gr1),
-                    DeckStatChips(
-                      deck: d,
-                      colors: colors,
-                      compact: true,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+    final deckTitleStyle = Theme.of(context).textTheme.titleLarge?.copyWith(
+      fontSize: 18,
+      fontWeight: FontWeight.w800,
+      letterSpacing: -0.2,
+      color: colors.textPrimary,
     );
 
-    final sampleFooter = repoDecks.isEmpty
-        ? Padding(
-            padding: EdgeInsets.only(top: LayoutTokens.gr2),
-            child: Text(
-              'Sample rows with commander mana (pips), win/loss bar, and '
-              'stats. Add decks from the Decks tab and pick one in the lobby '
-              'to see your real numbers here.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: colors.textSecondary,
-              ),
+    Widget horizontalList(double cardHeight) {
+      return SizedBox(
+        height: cardHeight,
+        child: ListView.separated(
+          controller: _scrollCtrl,
+          scrollDirection: Axis.horizontal,
+          padding: EdgeInsets.zero,
+          physics: const BouncingScrollPhysics(),
+          itemCount: decks.length,
+          separatorBuilder: (_, __) => SizedBox(width: LayoutTokens.gr2),
+          itemBuilder: (context, i) {
+            return _DeckPerfCard(
+              deck: decks[i],
+              colors: colors,
+              width: _kDeckPerfCardWidth,
+              height: cardHeight,
+            );
+          },
+        ),
+      );
+    }
+
+    Widget titleRow() {
+      return Row(
+        children: [
+          Expanded(child: Text('Deck performance', style: deckTitleStyle)),
+          IconButton(
+            icon: Icon(
+              Icons.layers_outlined,
+              size: 22,
+              color: colors.primaryAccent,
             ),
-          )
-        : null;
+            tooltip: 'Manage decks',
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.all(4),
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            onPressed: () => context.go(AppRoutes.decks),
+          ),
+        ],
+      );
+    }
 
     return _BentoCard(
-      colors: colors,
       gradientColors: [
         Color.lerp(colors.surfaceElevated, colors.primaryAccent, 0.10)!,
         colors.surfaceElevated,
       ],
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
+      child: LayoutBuilder(
+        builder: (context, c) {
+          // Card height = remaining space below the title row when [lh] is set,
+          // otherwise a sensible default for scroll/fallback layouts.
+          final double cardHeight = (lh != null && lh.isFinite && lh > 0)
+              ? math.max(180.0, lh - _kDeckPerfTitleHeight)
+              : 240.0;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
-                child: Text(
-                  'Deck performance',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.2,
-                    color: colors.textPrimary,
-                  ),
+              titleRow(),
+              SizedBox(height: LayoutTokens.gr2),
+              horizontalList(cardHeight),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Vertical card showing one deck's commander art, names, mana, WR bar, and chips.
+class _DeckPerfCard extends StatelessWidget {
+  const _DeckPerfCard({
+    required this.deck,
+    required this.colors,
+    required this.width,
+    required this.height,
+  });
+
+  final PlayerDeck deck;
+  final AppColorTokens colors;
+  final double width;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return SizedBox(
+      width: width,
+      height: height,
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        margin: EdgeInsets.zero,
+        color: scheme.surfaceContainerHigh,
+        elevation: 1,
+        surfaceTintColor: scheme.surfaceTint,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: scheme.outlineVariant.withValues(alpha: 0.55),
+          ),
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(LayoutTokens.gr2),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: DeckCommanderAvatarCluster(
+                  deck: deck,
+                  colors: colors,
+                  size: 76,
+                  portraitStyle: CommanderPortraitStyle.card,
                 ),
               ),
-              IconButton(
-                icon: Icon(
-                  Icons.layers_outlined,
-                  size: 22,
-                  color: colors.primaryAccent,
+              SizedBox(height: LayoutTokens.gr2),
+              Text(
+                deck.displayName,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: colors.textPrimary,
                 ),
-                tooltip: 'Manage decks',
-                visualDensity: VisualDensity.compact,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-                onPressed: () => context.go(AppRoutes.decks),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
+              Text(
+                deck.hasPartner
+                    ? '${deck.commanderName} // ${deck.partnerCommanderName}'
+                    : deck.commanderName,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: colors.textSecondary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (_deckHasManaForProfile(deck)) ...[
+                SizedBox(height: LayoutTokens.gr1),
+                DeckManaCostRows(
+                  commanderManaCost: deck.commanderManaCost,
+                  partnerManaCost: deck.partnerManaCost,
+                  hasPartner: deck.hasPartner,
+                  compact: true,
+                ),
+              ],
+              const Spacer(),
+              DeckWinLossRatioBar(deck: deck, colors: colors, height: 6),
+              SizedBox(height: LayoutTokens.gr1),
+              DeckStatChips(deck: deck, colors: colors, compact: true),
             ],
           ),
-          SizedBox(height: LayoutTokens.gr2),
-          if (lh == null)
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(child: list),
-                  if (sampleFooter != null) sampleFooter,
-                ],
-              ),
-            )
-          else ...[
-            list,
-            if (sampleFooter != null) sampleFooter,
-          ],
-        ],
+        ),
       ),
     );
   }

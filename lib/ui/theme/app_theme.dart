@@ -6,99 +6,183 @@ import '../tokens/radius_tokens.dart';
 import '../tokens/spacing_tokens.dart';
 import 'app_color_tokens.dart';
 
-/// Cool dark fantasy + modern sans body. Uses Material 3 and design tokens.
+/// M3-compliant theme. Dark fantasy aesthetic is preserved via custom palette
+/// and Cormorant Garamond display fonts; all M3 color roles and type slots
+/// are fully populated so components render consistently out-of-the-box.
 class AppTheme {
   AppTheme._();
 
+  // ── Dark ──────────────────────────────────────────────────────────────────
+
   static ThemeData dark() {
+    final textTheme = _buildTextTheme(
+      primary: ColorTokens.textPrimary,
+      secondary: ColorTokens.textSecondary,
+    );
+
     return ThemeData(
       brightness: Brightness.dark,
       scaffoldBackgroundColor: ColorTokens.backgroundPrimary,
+
+      // ── Full M3 ColorScheme ────────────────────────────────────────────
       colorScheme: const ColorScheme.dark(
         primary: ColorTokens.primaryAccent,
         onPrimary: Colors.white,
+        primaryContainer: ColorTokens.darkPrimaryContainer,
+        onPrimaryContainer: ColorTokens.darkOnPrimaryContainer,
         secondary: ColorTokens.optionalAccent,
         onSecondary: ColorTokens.backgroundPrimary,
+        secondaryContainer: ColorTokens.darkSecondaryContainer,
+        onSecondaryContainer: ColorTokens.darkOnSecondaryContainer,
+        tertiary: ColorTokens.accentGold,
+        onTertiary: ColorTokens.darkOnTertiary,
+        tertiaryContainer: ColorTokens.darkTertiaryContainer,
+        onTertiaryContainer: ColorTokens.darkOnTertiaryContainer,
+        error: ColorTokens.danger,
+        onError: Colors.white,
+        errorContainer: ColorTokens.darkErrorContainer,
+        onErrorContainer: ColorTokens.darkOnErrorContainer,
         surface: ColorTokens.surface,
         onSurface: ColorTokens.textPrimary,
         onSurfaceVariant: ColorTokens.textSecondary,
-        error: ColorTokens.danger,
-        onError: Colors.white,
+        outline: ColorTokens.borderSubtle,
+        outlineVariant: ColorTokens.darkOutlineVariant,
+        shadow: Colors.black,
+        scrim: Colors.black,
+        inverseSurface: ColorTokens.darkInverseSurface,
+        onInverseSurface: ColorTokens.darkOnInverseSurface,
+        inversePrimary: ColorTokens.darkInversePrimary,
+        surfaceContainerLowest: ColorTokens.darkSurfaceContainerLowest,
+        surfaceContainerLow: ColorTokens.darkSurfaceContainerLow,
+        surfaceContainer: ColorTokens.surface,
+        surfaceContainerHigh: ColorTokens.surfaceElevated,
+        surfaceContainerHighest: ColorTokens.darkSurfaceContainerHighest,
       ),
-      cardColor: ColorTokens.surface,
-      textTheme: GoogleFonts.robotoTextTheme(
-        const TextTheme(
-          displayLarge: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.w900,
-            color: ColorTokens.textPrimary,
-            letterSpacing: 1.2,
+
+      // ── Full M3 TextTheme ──────────────────────────────────────────────
+      textTheme: textTheme,
+
+      // ── Component themes ──────────────────────────────────────────────
+
+      // Card — M3 elevated surface
+      cardTheme: CardTheme(
+        color: ColorTokens.surface,
+        elevation: 1,
+        surfaceTintColor: ColorTokens.primaryAccent.withValues(alpha: 0.12),
+        margin: EdgeInsets.zero,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: RadiusTokens.radiusMd,
+          side: BorderSide(
+            color: ColorTokens.borderSubtle.withValues(alpha: 0.5),
           ),
-          headlineLarge: TextStyle(
-            fontSize: 26,
-            fontWeight: FontWeight.w700,
-            color: ColorTokens.textPrimary,
-            letterSpacing: 0.4,
-          ),
-          headlineMedium: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-            color: ColorTokens.textPrimary,
-          ),
-          bodyLarge: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: ColorTokens.textPrimary,
-          ),
-          bodyMedium: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
+        ),
+      ),
+
+      // Divider — replaces deprecated dividerColor
+      dividerTheme: const DividerThemeData(
+        color: ColorTokens.borderSubtle,
+        thickness: 1,
+        space: 1,
+      ),
+
+      // AppBar
+      appBarTheme: AppBarTheme(
+        backgroundColor: ColorTokens.backgroundPrimary,
+        foregroundColor: ColorTokens.textPrimary,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
+        titleTextStyle: GoogleFonts.cormorantGaramond(
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          color: ColorTokens.textPrimary,
+          letterSpacing: 0.6,
+        ),
+        iconTheme: const IconThemeData(color: ColorTokens.textPrimary),
+      ),
+
+      // Icon
+      iconTheme: const IconThemeData(
+        color: ColorTokens.textPrimary,
+        size: 24,
+      ),
+
+      // NavigationBar (M3 bottom navigation)
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: ColorTokens.surface,
+        surfaceTintColor: ColorTokens.primaryAccent,
+        elevation: 3,
+        height: 80,
+        indicatorColor: ColorTokens.primaryAccent.withValues(alpha: 0.24),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return GoogleFonts.roboto(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+              color: ColorTokens.textPrimary,
+            );
+          }
+          return GoogleFonts.roboto(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.5,
             color: ColorTokens.textSecondary,
-          ),
-          labelLarge: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
-            color: ColorTokens.textPrimary,
-          ),
-        ),
-      ).apply(
-        bodyColor: ColorTokens.textPrimary,
-        displayColor: ColorTokens.textPrimary,
-        decoration: TextDecoration.none,
-      ).copyWith(
-        displayLarge: GoogleFonts.cormorantGaramond(
-          fontSize: 32,
-          fontWeight: FontWeight.w700,
-          color: ColorTokens.textPrimary,
-          letterSpacing: 1.0,
-        ),
-        headlineLarge: GoogleFonts.cormorantGaramond(
-          fontSize: 26,
-          fontWeight: FontWeight.w700,
-          color: ColorTokens.textPrimary,
-          letterSpacing: 0.5,
-        ),
-        headlineMedium: GoogleFonts.cormorantGaramond(
-          fontSize: 22,
-          fontWeight: FontWeight.w700,
-          color: ColorTokens.textPrimary,
-        ),
+          );
+        }),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(
+              color: ColorTokens.primaryAccent,
+              size: 24,
+            );
+          }
+          return const IconThemeData(
+            color: ColorTokens.textMuted,
+            size: 24,
+          );
+        }),
       ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
+
+      // FilledButton — M3 primary action (high emphasis)
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
           backgroundColor: ColorTokens.primaryAccent,
           foregroundColor: Colors.white,
-          elevation: 0,
+          disabledBackgroundColor: ColorTokens.surfaceElevated,
+          disabledForegroundColor: ColorTokens.textMuted,
           minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(
             borderRadius: RadiusTokens.radiusLg,
           ),
           textStyle: GoogleFonts.roboto(
             fontSize: 16,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.1,
           ),
         ),
       ),
+
+      // ElevatedButton — M3 tonal-surface action (medium emphasis)
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: ColorTokens.surfaceElevated,
+          foregroundColor: ColorTokens.primaryAccent,
+          elevation: 1,
+          minimumSize: const Size(double.infinity, 52),
+          shape: RoundedRectangleBorder(
+            borderRadius: RadiusTokens.radiusLg,
+          ),
+          textStyle: GoogleFonts.roboto(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.1,
+          ),
+        ),
+      ),
+
+      // OutlinedButton — medium-low emphasis
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: ColorTokens.textPrimary,
@@ -110,9 +194,36 @@ class AppTheme {
           textStyle: GoogleFonts.roboto(
             fontSize: 16,
             fontWeight: FontWeight.w700,
+            letterSpacing: 0.1,
           ),
         ),
       ),
+
+      // TextButton — low emphasis
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: ColorTokens.primaryAccent,
+          textStyle: GoogleFonts.roboto(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.1,
+          ),
+        ),
+      ),
+
+      // FloatingActionButton
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: ColorTokens.primaryAccent,
+        foregroundColor: Colors.white,
+        elevation: 4,
+        focusElevation: 6,
+        hoverElevation: 6,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+
+      // Input / TextField
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: ColorTokens.surface,
@@ -124,6 +235,13 @@ class AppTheme {
           borderRadius: RadiusTokens.radiusMd,
           borderSide: BorderSide.none,
         ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: RadiusTokens.radiusMd,
+          borderSide: const BorderSide(
+            color: ColorTokens.borderSubtle,
+            width: 1,
+          ),
+        ),
         focusedBorder: OutlineInputBorder(
           borderRadius: RadiusTokens.radiusMd,
           borderSide: const BorderSide(
@@ -131,121 +249,303 @@ class AppTheme {
             width: 2,
           ),
         ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: RadiusTokens.radiusMd,
+          borderSide: const BorderSide(color: ColorTokens.danger, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: RadiusTokens.radiusMd,
+          borderSide: const BorderSide(color: ColorTokens.danger, width: 2),
+        ),
         labelStyle: const TextStyle(color: ColorTokens.textSecondary),
         hintStyle: const TextStyle(color: ColorTokens.textMuted),
+        prefixIconColor: ColorTokens.textSecondary,
+        suffixIconColor: ColorTokens.textSecondary,
       ),
-      appBarTheme: AppBarTheme(
-        backgroundColor: ColorTokens.backgroundPrimary,
-        foregroundColor: ColorTokens.textPrimary,
+
+      // Chip
+      chipTheme: ChipThemeData(
+        backgroundColor: ColorTokens.surface,
+        selectedColor: ColorTokens.darkPrimaryContainer,
+        disabledColor: ColorTokens.darkSurfaceContainerLow,
+        labelStyle: const TextStyle(
+          color: ColorTokens.textPrimary,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.5,
+        ),
+        secondaryLabelStyle: const TextStyle(
+          color: ColorTokens.darkOnPrimaryContainer,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+        side: const BorderSide(color: ColorTokens.borderSubtle),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         elevation: 0,
-        centerTitle: true,
+        pressElevation: 0,
+      ),
+
+      // Dialog
+      dialogTheme: DialogTheme(
+        backgroundColor: ColorTokens.surfaceElevated,
+        elevation: 8,
+        shape: RoundedRectangleBorder(borderRadius: RadiusTokens.radiusLg),
         titleTextStyle: GoogleFonts.cormorantGaramond(
-          fontSize: 20,
+          fontSize: 22,
           fontWeight: FontWeight.w700,
           color: ColorTokens.textPrimary,
-          letterSpacing: 0.6,
+        ),
+        contentTextStyle: TextStyle(
+          fontSize: 14,
+          color: ColorTokens.textSecondary,
+          height: 1.5,
         ),
       ),
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+
+      // SnackBar
+      snackBarTheme: SnackBarThemeData(
         backgroundColor: ColorTokens.surfaceElevated,
-        selectedItemColor: ColorTokens.primaryAccent,
-        unselectedItemColor: ColorTokens.textMuted,
+        contentTextStyle: const TextStyle(color: ColorTokens.textPrimary),
+        actionTextColor: ColorTokens.primaryAccent,
+        shape: RoundedRectangleBorder(borderRadius: RadiusTokens.radiusMd),
+        behavior: SnackBarBehavior.floating,
+        elevation: 4,
       ),
-      dividerColor: ColorTokens.borderSubtle,
+
+      // ListTile
+      listTileTheme: const ListTileThemeData(
+        tileColor: Colors.transparent,
+        textColor: ColorTokens.textPrimary,
+        iconColor: ColorTokens.textSecondary,
+        contentPadding: EdgeInsets.symmetric(horizontal: SpacingTokens.md),
+      ),
+
+      // Switch
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return Colors.white;
+          return ColorTokens.textMuted;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return ColorTokens.primaryAccent;
+          }
+          return ColorTokens.surfaceElevated;
+        }),
+        trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return Colors.transparent;
+          return ColorTokens.borderSubtle;
+        }),
+      ),
+
+      // Checkbox
+      checkboxTheme: CheckboxThemeData(
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return ColorTokens.primaryAccent;
+          }
+          return Colors.transparent;
+        }),
+        checkColor: WidgetStateProperty.all(Colors.white),
+        side: const BorderSide(color: ColorTokens.borderSubtle, width: 1.5),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+      ),
+
+      // Radio
+      radioTheme: RadioThemeData(
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return ColorTokens.primaryAccent;
+          }
+          return ColorTokens.textMuted;
+        }),
+      ),
+
+      // Badge
+      badgeTheme: const BadgeThemeData(
+        backgroundColor: ColorTokens.primaryAccent,
+        textColor: Colors.white,
+        smallSize: 8,
+        largeSize: 16,
+        textStyle: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.5,
+        ),
+      ),
+
+      // Tooltip
+      tooltipTheme: TooltipThemeData(
+        decoration: BoxDecoration(
+          color: ColorTokens.surfaceElevated,
+          borderRadius: RadiusTokens.radiusSm,
+          border: Border.all(color: ColorTokens.borderSubtle),
+        ),
+        textStyle: const TextStyle(
+          color: ColorTokens.textPrimary,
+          fontSize: 12,
+        ),
+      ),
+
       useMaterial3: true,
       extensions: const [AppColorTokens.dark],
     );
   }
 
+  // ── Light ─────────────────────────────────────────────────────────────────
+
   static ThemeData light() {
+    final textTheme = _buildTextTheme(
+      primary: ColorTokens.lightTextPrimary,
+      secondary: ColorTokens.lightTextSecondary,
+    );
+
     return ThemeData(
       brightness: Brightness.light,
-      scaffoldBackgroundColor: const Color(0xFFF5F7FF),
+      scaffoldBackgroundColor: ColorTokens.lightBackgroundPrimary,
+
+      // ── Full M3 ColorScheme ────────────────────────────────────────────
       colorScheme: const ColorScheme.light(
-        primary: ColorTokens.primaryAccent,
+        primary: ColorTokens.lightPrimaryAccent,
         onPrimary: Colors.white,
+        primaryContainer: ColorTokens.lightPrimaryContainer,
+        onPrimaryContainer: ColorTokens.lightOnPrimaryContainer,
         secondary: ColorTokens.optionalAccent,
-        onSecondary: Color(0xFF0D1224),
-        surface: Colors.white,
-        onSurface: Color(0xFF0D1224),
-        onSurfaceVariant: Color(0xFF3D4A6B),
+        onSecondary: ColorTokens.lightTextPrimary,
+        secondaryContainer: ColorTokens.lightSecondaryContainer,
+        onSecondaryContainer: ColorTokens.lightOnSecondaryContainer,
+        tertiary: ColorTokens.lightTertiary,
+        onTertiary: ColorTokens.lightOnTertiary,
+        tertiaryContainer: ColorTokens.lightTertiaryContainer,
+        onTertiaryContainer: ColorTokens.lightOnTertiaryContainer,
         error: ColorTokens.danger,
         onError: Colors.white,
+        errorContainer: ColorTokens.lightErrorContainer,
+        onErrorContainer: ColorTokens.lightOnErrorContainer,
+        surface: ColorTokens.lightSurface,
+        onSurface: ColorTokens.lightTextPrimary,
+        onSurfaceVariant: ColorTokens.lightTextSecondary,
+        outline: ColorTokens.lightOutline,
+        outlineVariant: ColorTokens.lightBorderSubtle,
+        shadow: Colors.black,
+        scrim: Colors.black,
+        inverseSurface: ColorTokens.lightInverseSurface,
+        onInverseSurface: ColorTokens.lightOnInverseSurface,
+        inversePrimary: ColorTokens.lightInversePrimary,
+        surfaceContainerLowest: ColorTokens.lightSurface,
+        surfaceContainerLow: ColorTokens.lightSurfaceContainerLow,
+        surfaceContainer: ColorTokens.lightSurfaceContainer,
+        surfaceContainerHigh: ColorTokens.lightSurfaceContainerHigh,
+        surfaceContainerHighest: ColorTokens.lightSurfaceContainerHighest,
       ),
-      cardColor: Colors.white,
-      textTheme: GoogleFonts.robotoTextTheme(
-        const TextTheme(
-          displayLarge: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF0D1224),
-            letterSpacing: 1.0,
+
+      // ── Full M3 TextTheme ──────────────────────────────────────────────
+      textTheme: textTheme,
+
+      // ── Component themes ──────────────────────────────────────────────
+
+      cardTheme: CardTheme(
+        color: ColorTokens.lightSurface,
+        elevation: 1,
+        surfaceTintColor: ColorTokens.lightPrimaryAccent.withValues(alpha: 0.08),
+        margin: EdgeInsets.zero,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: RadiusTokens.radiusMd,
+          side: BorderSide(
+            color: ColorTokens.lightBorderSubtle.withValues(alpha: 0.8),
           ),
-          headlineLarge: TextStyle(
-            fontSize: 26,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF0D1224),
+        ),
+      ),
+
+      dividerTheme: const DividerThemeData(
+        color: ColorTokens.lightBorderSubtle,
+        thickness: 1,
+        space: 1,
+      ),
+
+      appBarTheme: AppBarTheme(
+        backgroundColor: ColorTokens.lightBackgroundPrimary,
+        foregroundColor: ColorTokens.lightTextPrimary,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
+        titleTextStyle: GoogleFonts.cormorantGaramond(
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          color: ColorTokens.lightTextPrimary,
+          letterSpacing: 0.6,
+        ),
+        iconTheme: const IconThemeData(color: ColorTokens.lightTextPrimary),
+      ),
+
+      iconTheme: const IconThemeData(
+        color: ColorTokens.lightTextPrimary,
+        size: 24,
+      ),
+
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: ColorTokens.lightSurface,
+        surfaceTintColor: ColorTokens.lightPrimaryAccent,
+        elevation: 3,
+        height: 80,
+        indicatorColor: ColorTokens.lightPrimaryAccent.withValues(alpha: 0.20),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return GoogleFonts.roboto(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+              color: ColorTokens.lightTextPrimary,
+            );
+          }
+          return GoogleFonts.roboto(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
             letterSpacing: 0.5,
+            color: ColorTokens.lightTextSecondary,
+          );
+        }),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(
+              color: ColorTokens.lightPrimaryAccent,
+              size: 24,
+            );
+          }
+          return const IconThemeData(
+            color: ColorTokens.lightTextMuted,
+            size: 24,
+          );
+        }),
+      ),
+
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: ColorTokens.lightPrimaryAccent,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: ColorTokens.lightSurfaceElevated,
+          disabledForegroundColor: ColorTokens.lightTextMuted,
+          minimumSize: const Size(double.infinity, 52),
+          shape: RoundedRectangleBorder(
+            borderRadius: RadiusTokens.radiusLg,
           ),
-          headlineMedium: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF0D1224),
-          ),
-          bodyLarge: TextStyle(
+          textStyle: GoogleFonts.roboto(
             fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF0D1224),
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.1,
           ),
-          bodyMedium: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF3D4A6B),
-          ),
-          labelLarge: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF0D1224),
-          ),
-        ),
-      ).copyWith(
-        displayLarge: GoogleFonts.cormorantGaramond(
-          fontSize: 32,
-          fontWeight: FontWeight.w700,
-          color: const Color(0xFF0D1224),
-          letterSpacing: 0.8,
-        ),
-        headlineLarge: GoogleFonts.cormorantGaramond(
-          fontSize: 26,
-          fontWeight: FontWeight.w700,
-          color: const Color(0xFF0D1224),
-          letterSpacing: 0.5,
-        ),
-        headlineMedium: GoogleFonts.cormorantGaramond(
-          fontSize: 22,
-          fontWeight: FontWeight.w700,
-          color: const Color(0xFF0D1224),
         ),
       ),
+
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: ColorTokens.primaryAccent,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          minimumSize: const Size(double.infinity, 52),
-          shape: RoundedRectangleBorder(
-            borderRadius: RadiusTokens.radiusLg,
-          ),
-          textStyle: GoogleFonts.roboto(
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: const Color(0xFF0D1224),
-          side: const BorderSide(color: Color(0xFFD4DBF0)),
+          backgroundColor: ColorTokens.lightSurfaceElevated,
+          foregroundColor: ColorTokens.lightPrimaryAccent,
+          elevation: 1,
           minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(
             borderRadius: RadiusTokens.radiusLg,
@@ -253,12 +553,52 @@ class AppTheme {
           textStyle: GoogleFonts.roboto(
             fontSize: 16,
             fontWeight: FontWeight.w700,
+            letterSpacing: 0.1,
           ),
         ),
       ),
+
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: ColorTokens.lightTextPrimary,
+          side: const BorderSide(color: ColorTokens.lightBorderSubtle),
+          minimumSize: const Size(double.infinity, 52),
+          shape: RoundedRectangleBorder(
+            borderRadius: RadiusTokens.radiusLg,
+          ),
+          textStyle: GoogleFonts.roboto(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.1,
+          ),
+        ),
+      ),
+
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: ColorTokens.lightPrimaryAccent,
+          textStyle: GoogleFonts.roboto(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.1,
+          ),
+        ),
+      ),
+
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: ColorTokens.lightPrimaryAccent,
+        foregroundColor: Colors.white,
+        elevation: 4,
+        focusElevation: 6,
+        hoverElevation: 6,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white,
+        fillColor: ColorTokens.lightSurface,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: SpacingTokens.md,
           vertical: SpacingTokens.md,
@@ -267,36 +607,308 @@ class AppTheme {
           borderRadius: RadiusTokens.radiusMd,
           borderSide: BorderSide.none,
         ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: RadiusTokens.radiusMd,
+          borderSide: const BorderSide(
+            color: ColorTokens.lightBorderSubtle,
+            width: 1,
+          ),
+        ),
         focusedBorder: OutlineInputBorder(
           borderRadius: RadiusTokens.radiusMd,
           borderSide: const BorderSide(
-            color: ColorTokens.primaryAccent,
+            color: ColorTokens.lightPrimaryAccent,
             width: 2,
           ),
         ),
-        labelStyle: const TextStyle(color: Color(0xFF3D4A6B)),
-        hintStyle: const TextStyle(color: Color(0xFF6B7280)),
+        errorBorder: OutlineInputBorder(
+          borderRadius: RadiusTokens.radiusMd,
+          borderSide: const BorderSide(color: ColorTokens.danger, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: RadiusTokens.radiusMd,
+          borderSide: const BorderSide(color: ColorTokens.danger, width: 2),
+        ),
+        labelStyle: const TextStyle(color: ColorTokens.lightTextSecondary),
+        hintStyle: const TextStyle(color: ColorTokens.lightTextMuted),
+        prefixIconColor: ColorTokens.lightTextSecondary,
+        suffixIconColor: ColorTokens.lightTextSecondary,
       ),
-      appBarTheme: AppBarTheme(
-        backgroundColor: const Color(0xFFF5F7FF),
-        foregroundColor: const Color(0xFF0D1224),
+
+      chipTheme: ChipThemeData(
+        backgroundColor: ColorTokens.lightSurface,
+        selectedColor: ColorTokens.lightPrimaryContainer,
+        disabledColor: ColorTokens.lightSurfaceElevated,
+        labelStyle: const TextStyle(
+          color: ColorTokens.lightTextPrimary,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.5,
+        ),
+        secondaryLabelStyle: const TextStyle(
+          color: ColorTokens.lightOnPrimaryContainer,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+        side: const BorderSide(color: ColorTokens.lightBorderSubtle),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         elevation: 0,
-        centerTitle: true,
+        pressElevation: 0,
+      ),
+
+      dialogTheme: DialogTheme(
+        backgroundColor: ColorTokens.lightSurface,
+        elevation: 8,
+        shape: RoundedRectangleBorder(borderRadius: RadiusTokens.radiusLg),
         titleTextStyle: GoogleFonts.cormorantGaramond(
-          fontSize: 20,
+          fontSize: 22,
           fontWeight: FontWeight.w700,
-          color: const Color(0xFF0D1224),
-          letterSpacing: 0.6,
+          color: ColorTokens.lightTextPrimary,
+        ),
+        contentTextStyle: TextStyle(
+          fontSize: 14,
+          color: ColorTokens.lightTextSecondary,
+          height: 1.5,
         ),
       ),
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: Color(0xFFF0F2FC),
-        selectedItemColor: ColorTokens.primaryAccent,
-        unselectedItemColor: Color(0xFF6B7280),
+
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: ColorTokens.lightSurfaceElevated,
+        contentTextStyle:
+            const TextStyle(color: ColorTokens.lightTextPrimary),
+        actionTextColor: ColorTokens.lightPrimaryAccent,
+        shape: RoundedRectangleBorder(borderRadius: RadiusTokens.radiusMd),
+        behavior: SnackBarBehavior.floating,
+        elevation: 4,
       ),
-      dividerColor: const Color(0xFFD4DBF0),
+
+      listTileTheme: const ListTileThemeData(
+        tileColor: Colors.transparent,
+        textColor: ColorTokens.lightTextPrimary,
+        iconColor: ColorTokens.lightTextSecondary,
+        contentPadding: EdgeInsets.symmetric(horizontal: SpacingTokens.md),
+      ),
+
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return Colors.white;
+          return ColorTokens.lightTextMuted;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return ColorTokens.lightPrimaryAccent;
+          }
+          return ColorTokens.lightSurfaceElevated;
+        }),
+        trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return Colors.transparent;
+          return ColorTokens.lightBorderSubtle;
+        }),
+      ),
+
+      checkboxTheme: CheckboxThemeData(
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return ColorTokens.lightPrimaryAccent;
+          }
+          return Colors.transparent;
+        }),
+        checkColor: WidgetStateProperty.all(Colors.white),
+        side: const BorderSide(color: ColorTokens.lightBorderSubtle, width: 1.5),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+      ),
+
+      radioTheme: RadioThemeData(
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return ColorTokens.lightPrimaryAccent;
+          }
+          return ColorTokens.lightTextMuted;
+        }),
+      ),
+
+      badgeTheme: const BadgeThemeData(
+        backgroundColor: ColorTokens.lightPrimaryAccent,
+        textColor: Colors.white,
+        smallSize: 8,
+        largeSize: 16,
+        textStyle: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.5,
+        ),
+      ),
+
+      tooltipTheme: TooltipThemeData(
+        decoration: BoxDecoration(
+          color: ColorTokens.lightSurfaceElevated,
+          borderRadius: RadiusTokens.radiusSm,
+          border: Border.all(color: ColorTokens.lightBorderSubtle),
+        ),
+        textStyle: const TextStyle(
+          color: ColorTokens.lightTextPrimary,
+          fontSize: 12,
+        ),
+      ),
+
       useMaterial3: true,
       extensions: const [AppColorTokens.light],
+    );
+  }
+
+  // ── Shared TextTheme builder ───────────────────────────────────────────────
+  //
+  // Cormorant Garamond: display + headline roles (fantasy / prestige feel)
+  // Roboto (via GoogleFonts): title + body + label roles (legible, M3-compliant)
+  //
+  // Sizes follow M3 spec with minor adjustments for the app's compact mobile
+  // viewport (displayLarge capped at 40 instead of M3's 57).
+
+  static TextTheme _buildTextTheme({
+    required Color primary,
+    required Color secondary,
+  }) {
+    final robotoBase = GoogleFonts.robotoTextTheme(
+      TextTheme(
+        // Display roles — overridden with Cormorant Garamond below
+        displayLarge: TextStyle(
+          fontSize: 40,
+          fontWeight: FontWeight.w700,
+          color: primary,
+          letterSpacing: -0.25,
+        ),
+        displayMedium: TextStyle(
+          fontSize: 32,
+          fontWeight: FontWeight.w700,
+          color: primary,
+          letterSpacing: 0,
+        ),
+        displaySmall: TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.w600,
+          color: primary,
+          letterSpacing: 0,
+        ),
+        // Headline roles — overridden with Cormorant Garamond below
+        headlineLarge: TextStyle(
+          fontSize: 26,
+          fontWeight: FontWeight.w700,
+          color: primary,
+          letterSpacing: 0.4,
+        ),
+        headlineMedium: TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+          color: primary,
+        ),
+        headlineSmall: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          color: primary,
+        ),
+        // Title roles — Roboto
+        titleLarge: TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.w500,
+          color: primary,
+          letterSpacing: 0,
+        ),
+        titleMedium: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: primary,
+          letterSpacing: 0.15,
+        ),
+        titleSmall: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: primary,
+          letterSpacing: 0.1,
+        ),
+        // Body roles — Roboto
+        bodyLarge: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w400,
+          color: primary,
+          letterSpacing: 0.5,
+        ),
+        bodyMedium: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+          color: secondary,
+          letterSpacing: 0.25,
+        ),
+        bodySmall: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w400,
+          color: secondary,
+          letterSpacing: 0.4,
+        ),
+        // Label roles — Roboto
+        labelLarge: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: primary,
+          letterSpacing: 0.1,
+        ),
+        labelMedium: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          color: secondary,
+          letterSpacing: 0.5,
+        ),
+        labelSmall: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+          color: secondary,
+          letterSpacing: 0.5,
+        ),
+      ),
+    ).apply(
+      bodyColor: primary,
+      displayColor: primary,
+      decoration: TextDecoration.none,
+    );
+
+    // Apply Cormorant Garamond to display and headline roles.
+    return robotoBase.copyWith(
+      displayLarge: GoogleFonts.cormorantGaramond(
+        fontSize: 40,
+        fontWeight: FontWeight.w700,
+        color: primary,
+        letterSpacing: 1.0,
+      ),
+      displayMedium: GoogleFonts.cormorantGaramond(
+        fontSize: 32,
+        fontWeight: FontWeight.w700,
+        color: primary,
+        letterSpacing: 0.5,
+      ),
+      displaySmall: GoogleFonts.cormorantGaramond(
+        fontSize: 28,
+        fontWeight: FontWeight.w600,
+        color: primary,
+        letterSpacing: 0.25,
+      ),
+      headlineLarge: GoogleFonts.cormorantGaramond(
+        fontSize: 26,
+        fontWeight: FontWeight.w700,
+        color: primary,
+        letterSpacing: 0.5,
+      ),
+      headlineMedium: GoogleFonts.cormorantGaramond(
+        fontSize: 22,
+        fontWeight: FontWeight.w700,
+        color: primary,
+      ),
+      headlineSmall: GoogleFonts.cormorantGaramond(
+        fontSize: 20,
+        fontWeight: FontWeight.w700,
+        color: primary,
+      ),
     );
   }
 }

@@ -954,7 +954,6 @@ class _StartingLifeRow extends StatelessWidget {
       builder: (ctx) {
         final colors = AppColorTokens.of(ctx);
         return AlertDialog(
-          backgroundColor: colors.surface,
           title: Text('Custom Starting Life',
               style: TextStyle(color: colors.textPrimary)),
           content: TextField(

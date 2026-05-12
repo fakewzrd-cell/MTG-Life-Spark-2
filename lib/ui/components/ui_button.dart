@@ -34,7 +34,7 @@ class UiButton extends StatelessWidget {
       return SizedBox(
         height: 52,
         width: double.infinity,
-        child: ElevatedButton.icon(
+        child: FilledButton.icon(
           onPressed: effectiveOnPressed,
           icon: loading
               ? const SizedBox(
@@ -47,7 +47,7 @@ class UiButton extends StatelessWidget {
                 )
               : (icon ?? const SizedBox.shrink()),
           label: loading ? const SizedBox.shrink() : Text(label, overflow: TextOverflow.ellipsis, maxLines: 1),
-          style: ElevatedButton.styleFrom(
+          style: FilledButton.styleFrom(
             backgroundColor: colors.primaryAccent,
             foregroundColor: Colors.white,
             disabledBackgroundColor: colors.surface,

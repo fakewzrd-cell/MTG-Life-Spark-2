@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../ui/theme/app_color_tokens.dart';
-import 'main_bottom_nav.dart';
-
-/// Shell scaffold with persistent bottom navigation.
-/// Body is the StatefulNavigationShell (branch content).
+/// Shell scaffold with Material 3 [NavigationBar].
 class MainShell extends StatelessWidget {
   const MainShell({
     super.key,
@@ -16,19 +12,34 @@ class MainShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = AppColorTokens.of(context);
-    final bottomInset = MediaQuery.paddingOf(context).bottom;
-    final navBottomPad = MainBottomNav.reservedBottomHeight(bottomInset);
     return Scaffold(
-      extendBody: true,
-      backgroundColor: colors.backgroundPrimary,
-      body: Padding(
-        padding: EdgeInsets.only(bottom: navBottomPad),
-        child: navigationShell,
-      ),
-      bottomNavigationBar: MainBottomNav(
-        currentIndex: navigationShell.currentIndex,
-        onTap: (index) => navigationShell.goBranch(index),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: navigationShell,
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: navigationShell.currentIndex,
+        onDestinationSelected: navigationShell.goBranch,
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home_rounded),
+            label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.groups_outlined),
+            selectedIcon: Icon(Icons.groups_rounded),
+            label: 'Lobby',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.layers_outlined),
+            selectedIcon: Icon(Icons.layers_rounded),
+            label: 'Decks',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings_rounded),
+            label: 'Settings',
+          ),
+        ],
       ),
     );
   }

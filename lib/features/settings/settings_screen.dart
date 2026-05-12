@@ -245,7 +245,6 @@ class _SwitchTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = AppColorTokens.of(context);
     return Padding(
       padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
       child: UiSurface(
@@ -253,19 +252,12 @@ class _SwitchTile extends StatelessWidget {
         borderRadius: RadiusTokens.radiusMd,
         child: SwitchListTile(
         secondary: icon != null
-            ? Icon(icon, size: 22, color: colors.textSecondary)
+            ? Icon(icon, size: 22, color: Theme.of(context).colorScheme.onSurfaceVariant)
             : null,
         title: Text(title, style: Theme.of(context).textTheme.bodyLarge, overflow: TextOverflow.ellipsis),
         subtitle: Text(subtitle, style: Theme.of(context).textTheme.bodyMedium, maxLines: 2, overflow: TextOverflow.ellipsis),
         value: value,
         onChanged: onChanged,
-        activeTrackColor: colors.primaryAccent.withValues(alpha: 0.5),
-        thumbColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return colors.primaryAccent;
-          }
-          return null;
-        }),
         contentPadding: EdgeInsets.symmetric(
           horizontal: LayoutTokens.gr3,
           vertical: LayoutTokens.gr1,
@@ -291,8 +283,8 @@ class _SettingTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = AppColorTokens.of(context);
-    final color = isDestructive ? ColorTokens.danger : colors.textSecondary;
+    final scheme = Theme.of(context).colorScheme;
+    final color = isDestructive ? ColorTokens.danger : scheme.onSurfaceVariant;
     return Padding(
       padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
       child: UiSurface(

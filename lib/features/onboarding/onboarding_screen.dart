@@ -124,9 +124,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr5),
               child: SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
+                child: FilledButton(
                   onPressed: _next,
-                  style: ElevatedButton.styleFrom(
+                  style: FilledButton.styleFrom(
                     backgroundColor: _slides[_currentPage].color,
                     foregroundColor: Colors.black87,
                   ),
