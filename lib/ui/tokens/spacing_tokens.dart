@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Strict spacing system. Use only these values.
+/// Strict **4dp** spacing system (multiples of 4). Prefer these or [LayoutTokens.gr*].
 class SpacingTokens {
   SpacingTokens._();
 

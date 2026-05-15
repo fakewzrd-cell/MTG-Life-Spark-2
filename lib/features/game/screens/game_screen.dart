@@ -301,7 +301,7 @@ class _FirstPlayerRollOverlayState extends State<_FirstPlayerRollOverlay>
                       : 'Tap the dice above to roll',
               style: const TextStyle(
                 color: AppTheme.textSecondary,
-                fontSize: 13,
+                fontSize: 12,
               ),
             ),
           ),
@@ -311,9 +311,7 @@ class _FirstPlayerRollOverlayState extends State<_FirstPlayerRollOverlay>
   }
 }
 
-// ── Golden ratio spacing (base 4, φ ≈ 1.618) ──────────────────────────────
-const _gBase = 4.0;
-double _g(num n) => (n * LayoutTokens.goldenRatio).roundToDouble();
+// ── 4dp spacing: use [LayoutTokens] in this file (no φ-based scaling). ─────
 
 // ── Personal View ──────────────────────────────────────────────────────────
 
@@ -366,7 +364,7 @@ class _PersonalView extends ConsumerWidget {
               ),
             ),
             Padding(
-              padding: EdgeInsets.only(right: _g(10)),
+              padding: EdgeInsets.only(right: LayoutTokens.gr3),
               child: CastCommanderButton(
                 player: local,
                 onCastCommander: () =>
@@ -378,7 +376,7 @@ class _PersonalView extends ConsumerWidget {
 
         // ── Turn order ────────────────────────────────────────────────────
         TurnOrderWidget(game: game),
-        SizedBox(height: _g(_gBase)),
+        SizedBox(height: LayoutTokens.gr0),
 
         // ── Phase bar (always visible; tap to set phase when your turn) ──
         PhaseBarWidget(
@@ -391,11 +389,11 @@ class _PersonalView extends ConsumerWidget {
               ? (phase) => notifier.setPhase(phase)
               : null,
         ),
-        SizedBox(height: _g(_gBase + 2)),
+        SizedBox(height: LayoutTokens.gr2),
 
         // ── Variant decks (Planechase, Archenemy, Bounty) ─────────────────
         const VariantCardPanel(),
-        SizedBox(height: _g(_gBase + 2)),
+        SizedBox(height: LayoutTokens.gr2),
 
         // ── Life counter (center, takes most space) ────────────────────
         SizedBox(
@@ -408,7 +406,7 @@ class _PersonalView extends ConsumerWidget {
                 notifier.adjustLife(local.playerId, delta),
           ),
         ),
-        SizedBox(height: _g(_gBase + 2)),
+        SizedBox(height: LayoutTokens.gr2),
 
         // ── Counter row ────────────────────────────────────────────────
         CounterRowWidget(
@@ -421,7 +419,7 @@ class _PersonalView extends ConsumerWidget {
               notifier.adjustCounter(local.playerId, field, delta),
           onProliferate: () => notifier.proliferate(local.playerId),
         ),
-        SizedBox(height: _g(_gBase + 2)),
+        SizedBox(height: LayoutTokens.gr2),
 
         // ── Commander damage panel ─────────────────────────────────────
         CommanderDamagePanel(
@@ -444,7 +442,7 @@ class _PersonalView extends ConsumerWidget {
         if (game.pendingProposalFor(local.playerId) != null)
           _AllianceProposalBanner(game: game, local: local),
         if (game.pendingProposalFor(local.playerId) != null)
-          SizedBox(height: _g(_gBase)),
+          SizedBox(height: LayoutTokens.gr0),
 
         // ── Game state banners ─────────────────────────────────────────
         if (game.monarchPlayerId == local.playerId)
@@ -459,7 +457,7 @@ class _PersonalView extends ConsumerWidget {
             isActiveTurn: game.isLocalPlayersTurn,
           ),
 
-        SizedBox(height: _g(_gBase * 2)),
+        SizedBox(height: LayoutTokens.gr3),
 
         // ── Bottom action bar ──────────────────────────────────────────
         _BottomBar(
@@ -468,7 +466,7 @@ class _PersonalView extends ConsumerWidget {
           onToggleOverview: onToggleOverview,
         ),
 
-        SizedBox(height: _g(_gBase + 2)),
+        SizedBox(height: LayoutTokens.gr2),
           ],
         ),
       ),
@@ -495,12 +493,18 @@ class _BottomBar extends ConsumerWidget {
     final hasUndo = local.undoStack.isNotEmpty;
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: _g(10), vertical: _g(_gBase + 2)),
+      padding: EdgeInsets.symmetric(
+        horizontal: LayoutTokens.gr3,
+        vertical: LayoutTokens.gr2,
+      ),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: _g(_gBase + 2), vertical: _g(_gBase + 2)),
+        padding: const EdgeInsets.symmetric(
+          horizontal: LayoutTokens.gr2,
+          vertical: LayoutTokens.gr2,
+        ),
         decoration: BoxDecoration(
           color: AppTheme.card,
-          borderRadius: BorderRadius.circular(_g(10)),
+          borderRadius: BorderRadius.circular(LayoutTokens.gr3),
           border: Border.all(color: AppTheme.surface),
           boxShadow: [
             BoxShadow(
@@ -968,16 +972,16 @@ class _BarButton extends StatelessWidget {
     final isVeryNarrow = w < 340;
     final iconOnly = w < 300;
     final iconSize = isVeryNarrow ? 20.0 : 24.0;
-    final fontSize = isVeryNarrow ? 9.0 : 11.0;
-    final hPad = iconOnly ? 4.0 : (isVeryNarrow ? 6.0 : 10.0);
-    final vPad = isVeryNarrow ? 6.0 : 8.0;
+    final fontSize = 12.0;
+    final hPad = iconOnly ? 4.0 : (isVeryNarrow ? 8.0 : 12.0);
+    final vPad = 8.0;
 
     final c = enabled ? AppTheme.textSecondary : AppTheme.textSecondary.withValues(alpha: 0.4);
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: enabled ? onTap : null,
-        borderRadius: BorderRadius.circular(_g(_gBase)),
+        borderRadius: BorderRadius.circular(LayoutTokens.gr1),
         child: Tooltip(
           message: label,
           child: Container(
@@ -987,7 +991,7 @@ class _BarButton extends StatelessWidget {
               children: [
                 Icon(icon, size: iconSize, color: c),
                 if (!iconOnly) ...[
-                  SizedBox(height: isVeryNarrow ? 2 : 4),
+                  const SizedBox(height: 4),
                   Text(label, style: TextStyle(color: c, fontSize: fontSize, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis, maxLines: 1),
                 ],
               ],

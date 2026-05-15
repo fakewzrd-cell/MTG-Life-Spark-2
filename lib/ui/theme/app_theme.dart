@@ -6,9 +6,9 @@ import '../tokens/radius_tokens.dart';
 import '../tokens/spacing_tokens.dart';
 import 'app_color_tokens.dart';
 
-/// M3-compliant theme. Dark fantasy aesthetic is preserved via custom palette
-/// and Cormorant Garamond display fonts; all M3 color roles and type slots
-/// are fully populated so components render consistently out-of-the-box.
+/// M3-compliant theme. Dark fantasy aesthetic is preserved via custom palette;
+/// typography uses **Noto Sans** (Google Fonts) across display through label
+/// roles. All M3 color roles and type slots are populated for consistent widgets.
 class AppTheme {
   AppTheme._();
 
@@ -93,11 +93,11 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
-        titleTextStyle: GoogleFonts.cormorantGaramond(
+        titleTextStyle: GoogleFonts.notoSans(
           fontSize: 20,
           fontWeight: FontWeight.w700,
           color: ColorTokens.textPrimary,
-          letterSpacing: 0.6,
+          letterSpacing: 0.2,
         ),
         iconTheme: const IconThemeData(color: ColorTokens.textPrimary),
       ),
@@ -117,14 +117,14 @@ class AppTheme {
         indicatorColor: ColorTokens.primaryAccent.withValues(alpha: 0.24),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return GoogleFonts.roboto(
+            return GoogleFonts.notoSans(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.5,
               color: ColorTokens.textPrimary,
             );
           }
-          return GoogleFonts.roboto(
+          return GoogleFonts.notoSans(
             fontSize: 12,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.5,
@@ -156,7 +156,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: RadiusTokens.radiusLg,
           ),
-          textStyle: GoogleFonts.roboto(
+          textStyle: GoogleFonts.notoSans(
             fontSize: 16,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.1,
@@ -174,7 +174,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: RadiusTokens.radiusLg,
           ),
-          textStyle: GoogleFonts.roboto(
+          textStyle: GoogleFonts.notoSans(
             fontSize: 16,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.1,
@@ -191,7 +191,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: RadiusTokens.radiusLg,
           ),
-          textStyle: GoogleFonts.roboto(
+          textStyle: GoogleFonts.notoSans(
             fontSize: 16,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.1,
@@ -203,8 +203,8 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: ColorTokens.primaryAccent,
-          textStyle: GoogleFonts.roboto(
-            fontSize: 14,
+          textStyle: GoogleFonts.notoSans(
+            fontSize: 16,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.1,
           ),
@@ -293,13 +293,13 @@ class AppTheme {
         backgroundColor: ColorTokens.surfaceElevated,
         elevation: 8,
         shape: RoundedRectangleBorder(borderRadius: RadiusTokens.radiusLg),
-        titleTextStyle: GoogleFonts.cormorantGaramond(
-          fontSize: 22,
+        titleTextStyle: GoogleFonts.notoSans(
+          fontSize: 24,
           fontWeight: FontWeight.w700,
           color: ColorTokens.textPrimary,
         ),
         contentTextStyle: TextStyle(
-          fontSize: 14,
+          fontSize: 16,
           color: ColorTokens.textSecondary,
           height: 1.5,
         ),
@@ -371,7 +371,7 @@ class AppTheme {
         smallSize: 8,
         largeSize: 16,
         textStyle: TextStyle(
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: FontWeight.w500,
           letterSpacing: 0.5,
         ),
@@ -473,11 +473,11 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
-        titleTextStyle: GoogleFonts.cormorantGaramond(
+        titleTextStyle: GoogleFonts.notoSans(
           fontSize: 20,
           fontWeight: FontWeight.w700,
           color: ColorTokens.lightTextPrimary,
-          letterSpacing: 0.6,
+          letterSpacing: 0.2,
         ),
         iconTheme: const IconThemeData(color: ColorTokens.lightTextPrimary),
       ),
@@ -495,14 +495,14 @@ class AppTheme {
         indicatorColor: ColorTokens.lightPrimaryAccent.withValues(alpha: 0.20),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return GoogleFonts.roboto(
+            return GoogleFonts.notoSans(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.5,
               color: ColorTokens.lightTextPrimary,
             );
           }
-          return GoogleFonts.roboto(
+          return GoogleFonts.notoSans(
             fontSize: 12,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.5,
@@ -533,7 +533,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: RadiusTokens.radiusLg,
           ),
-          textStyle: GoogleFonts.roboto(
+          textStyle: GoogleFonts.notoSans(
             fontSize: 16,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.1,
@@ -550,7 +550,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: RadiusTokens.radiusLg,
           ),
-          textStyle: GoogleFonts.roboto(
+          textStyle: GoogleFonts.notoSans(
             fontSize: 16,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.1,
@@ -566,7 +566,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: RadiusTokens.radiusLg,
           ),
-          textStyle: GoogleFonts.roboto(
+          textStyle: GoogleFonts.notoSans(
             fontSize: 16,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.1,
@@ -577,8 +577,8 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: ColorTokens.lightPrimaryAccent,
-          textStyle: GoogleFonts.roboto(
-            fontSize: 14,
+          textStyle: GoogleFonts.notoSans(
+            fontSize: 16,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.1,
           ),
@@ -663,13 +663,13 @@ class AppTheme {
         backgroundColor: ColorTokens.lightSurface,
         elevation: 8,
         shape: RoundedRectangleBorder(borderRadius: RadiusTokens.radiusLg),
-        titleTextStyle: GoogleFonts.cormorantGaramond(
-          fontSize: 22,
+        titleTextStyle: GoogleFonts.notoSans(
+          fontSize: 24,
           fontWeight: FontWeight.w700,
           color: ColorTokens.lightTextPrimary,
         ),
         contentTextStyle: TextStyle(
-          fontSize: 14,
+          fontSize: 16,
           color: ColorTokens.lightTextSecondary,
           height: 1.5,
         ),
@@ -736,7 +736,7 @@ class AppTheme {
         smallSize: 8,
         largeSize: 16,
         textStyle: TextStyle(
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: FontWeight.w500,
           letterSpacing: 0.5,
         ),
@@ -761,19 +761,18 @@ class AppTheme {
 
   // ── Shared TextTheme builder ───────────────────────────────────────────────
   //
-  // Cormorant Garamond: display + headline roles (fantasy / prestige feel)
-  // Roboto (via GoogleFonts): title + body + label roles (legible, M3-compliant)
-  //
   // Sizes follow M3 spec with minor adjustments for the app's compact mobile
   // viewport (displayLarge capped at 40 instead of M3's 57).
+  //
+  // Noto Sans (via GoogleFonts): all M3 text roles — legible, broad language coverage.
 
   static TextTheme _buildTextTheme({
     required Color primary,
     required Color secondary,
   }) {
-    final robotoBase = GoogleFonts.robotoTextTheme(
+    final notoSansBase = GoogleFonts.notoSansTextTheme(
       TextTheme(
-        // Display roles — overridden with Cormorant Garamond below
+        // Display roles
         displayLarge: TextStyle(
           fontSize: 40,
           fontWeight: FontWeight.w700,
@@ -792,15 +791,15 @@ class AppTheme {
           color: primary,
           letterSpacing: 0,
         ),
-        // Headline roles — overridden with Cormorant Garamond below
+        // Headline roles
         headlineLarge: TextStyle(
-          fontSize: 26,
+          fontSize: 28,
           fontWeight: FontWeight.w700,
           color: primary,
           letterSpacing: 0.4,
         ),
         headlineMedium: TextStyle(
-          fontSize: 22,
+          fontSize: 24,
           fontWeight: FontWeight.w700,
           color: primary,
         ),
@@ -809,9 +808,9 @@ class AppTheme {
           fontWeight: FontWeight.w700,
           color: primary,
         ),
-        // Title roles — Roboto
+        // Title roles — Noto Sans
         titleLarge: TextStyle(
-          fontSize: 22,
+          fontSize: 24,
           fontWeight: FontWeight.w500,
           color: primary,
           letterSpacing: 0,
@@ -823,12 +822,12 @@ class AppTheme {
           letterSpacing: 0.15,
         ),
         titleSmall: TextStyle(
-          fontSize: 14,
+          fontSize: 16,
           fontWeight: FontWeight.w500,
           color: primary,
           letterSpacing: 0.1,
         ),
-        // Body roles — Roboto
+        // Body roles — Noto Sans
         bodyLarge: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w400,
@@ -836,7 +835,7 @@ class AppTheme {
           letterSpacing: 0.5,
         ),
         bodyMedium: TextStyle(
-          fontSize: 14,
+          fontSize: 16,
           fontWeight: FontWeight.w400,
           color: secondary,
           letterSpacing: 0.25,
@@ -847,9 +846,9 @@ class AppTheme {
           color: secondary,
           letterSpacing: 0.4,
         ),
-        // Label roles — Roboto
+        // Label roles — Noto Sans
         labelLarge: TextStyle(
-          fontSize: 14,
+          fontSize: 16,
           fontWeight: FontWeight.w500,
           color: primary,
           letterSpacing: 0.1,
@@ -861,7 +860,7 @@ class AppTheme {
           letterSpacing: 0.5,
         ),
         labelSmall: TextStyle(
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: FontWeight.w500,
           color: secondary,
           letterSpacing: 0.5,
@@ -873,42 +872,6 @@ class AppTheme {
       decoration: TextDecoration.none,
     );
 
-    // Apply Cormorant Garamond to display and headline roles.
-    return robotoBase.copyWith(
-      displayLarge: GoogleFonts.cormorantGaramond(
-        fontSize: 40,
-        fontWeight: FontWeight.w700,
-        color: primary,
-        letterSpacing: 1.0,
-      ),
-      displayMedium: GoogleFonts.cormorantGaramond(
-        fontSize: 32,
-        fontWeight: FontWeight.w700,
-        color: primary,
-        letterSpacing: 0.5,
-      ),
-      displaySmall: GoogleFonts.cormorantGaramond(
-        fontSize: 28,
-        fontWeight: FontWeight.w600,
-        color: primary,
-        letterSpacing: 0.25,
-      ),
-      headlineLarge: GoogleFonts.cormorantGaramond(
-        fontSize: 26,
-        fontWeight: FontWeight.w700,
-        color: primary,
-        letterSpacing: 0.5,
-      ),
-      headlineMedium: GoogleFonts.cormorantGaramond(
-        fontSize: 22,
-        fontWeight: FontWeight.w700,
-        color: primary,
-      ),
-      headlineSmall: GoogleFonts.cormorantGaramond(
-        fontSize: 20,
-        fontWeight: FontWeight.w700,
-        color: primary,
-      ),
-    );
+    return notoSansBase;
   }
 }

@@ -1,29 +1,29 @@
-/// Consistent font sizes across the app.
-/// Aligns with theme: bodyLarge 16, bodyMedium 14, labelLarge 14.
+/// Consistent font sizes — **multiples of 4** for alignment with the 4dp layout grid.
+/// Pair with [FontWeight] on [TextStyle] for hierarchy when two slots share a size.
 class FontTokens {
   FontTokens._();
 
-  /// Tiny (10) - minimal labels, compact chips
-  static const double xs = 10;
+  /// Tiny emphasis (8)
+  static const double xs = 8;
 
-  /// Small (11) - chip labels, nav labels
-  static const double sm = 11;
+  /// Small / compact (12)
+  static const double sm = 12;
 
-  /// Caption (12) - subtitles, secondary captions
+  /// Captions, secondary (12)
   static const double caption = 12;
 
-  /// Label (13) - section labels, form labels
-  static const double label = 13;
+  /// Labels (12) — use [FontWeight.w700] vs body when both are 12.
+  static const double label = 12;
 
-  /// Body (14) - body text, switch titles
-  static const double body = 14;
+  /// Body (16)
+  static const double body = 16;
 
-  /// Title (15) - tile titles, section headings
-  static const double title = 15;
+  /// Tile / section titles (16) — use weight/letterSpacing vs [body].
+  static const double title = 16;
 
-  /// Body large (16) - primary body, buttons
+  /// Primary body / buttons (16)
   static const double bodyLg = 16;
 
-  /// Headline (18) - screen titles
-  static const double headline = 18;
+  /// Screen titles (20)
+  static const double headline = 20;
 }

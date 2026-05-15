@@ -124,7 +124,7 @@ class CommanderInfoBar extends StatelessWidget {
                   style: TextStyle(
                     color: AppTheme.textPrimary,
                     fontWeight: FontWeight.w600,
-                    fontSize: isVeryNarrow ? 12 : 14,
+                    fontSize: isVeryNarrow ? 12 : 16,
                   ),
                 ),
                 if (player.hasPartner && player.partnerCommanderName != null)
@@ -133,7 +133,7 @@ class CommanderInfoBar extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                        color: AppTheme.textSecondary, fontSize: 11),
+                        color: AppTheme.textSecondary, fontSize: 12),
                   ),
                 const SizedBox(height: 4),
                 _CommanderTaxBadge(
@@ -146,7 +146,7 @@ class CommanderInfoBar extends StatelessWidget {
                     'Round $roundNumber',
                     style: const TextStyle(
                       color: AppTheme.textSecondary,
-                      fontSize: 11,
+                      fontSize: 12,
                     ),
                   ),
                 ],
@@ -166,7 +166,7 @@ class CommanderInfoBar extends StatelessWidget {
             Tooltip(
               message: 'Allied with ${player.allyPlayerId}',
               child: Container(
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: AppTheme.accentGold.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
@@ -237,17 +237,17 @@ class _CommanderTaxBadge extends StatelessWidget {
     if (castCount == 0) {
       return const Text(
         'No tax yet',
-        style: TextStyle(color: AppTheme.textSecondary, fontSize: 11),
+        style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
       );
     }
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
             color: AppTheme.textSecondary.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(5),
+            borderRadius: BorderRadius.circular(8),
             border: Border.all(
                 color: AppTheme.textSecondary.withValues(alpha: 0.6)),
           ),
@@ -255,7 +255,7 @@ class _CommanderTaxBadge extends StatelessWidget {
             'Tax +$tax',
             style: const TextStyle(
               color: AppTheme.textSecondary,
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -263,7 +263,7 @@ class _CommanderTaxBadge extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           '(cast $castCount×)',
-          style: const TextStyle(color: AppTheme.textSecondary, fontSize: 10),
+          style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
         ),
       ],
     );

@@ -195,15 +195,14 @@ class _PhaseCarouselItem extends StatelessWidget {
     this.compact = false,
   });
 
-  static const _base = 6.0;
-
   @override
   Widget build(BuildContext context) {
-    final base = compact ? 4.0 : _base;
-    final margin = (base * LayoutTokens.goldenRatioInverse).roundToDouble();
-    final pad = (base * LayoutTokens.goldenRatio).roundToDouble();
-    final fontSizeInactive = (base * LayoutTokens.goldenRatio).roundToDouble();
-    final fontSizeActive = (fontSizeInactive * LayoutTokens.goldenRatio).roundToDouble();
+    // 4dp grid — chip padding and type ramp (no golden-ratio scaling).
+    final marginH = LayoutTokens.gr0;
+    final padH = compact ? LayoutTokens.gr1 : LayoutTokens.gr2;
+    final padV = padH;
+    final fontSizeInactive = 12.0;
+    final fontSizeActive = 16.0;
 
     return AnimatedOpacity(
       duration: const Duration(milliseconds: 150),
@@ -212,8 +211,8 @@ class _PhaseCarouselItem extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         scale: scale,
         child: Container(
-          margin: EdgeInsets.symmetric(horizontal: margin),
-          padding: EdgeInsets.symmetric(horizontal: pad, vertical: pad),
+          margin: EdgeInsets.symmetric(horizontal: marginH),
+          padding: EdgeInsets.symmetric(horizontal: padH, vertical: padV),
           decoration: BoxDecoration(
             color: isCentered ? activeColor : AppTheme.card,
             borderRadius: BorderRadius.circular(999),

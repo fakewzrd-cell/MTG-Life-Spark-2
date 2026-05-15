@@ -3,54 +3,54 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'color_tokens.dart';
 
-/// Duolingo-like bold typography. Nunito for friendly gamer SaaS.
+/// Bold typography helpers. **Noto Sans** — matches [AppTheme] / Material [TextTheme].
 class TypographyTokens {
   TypographyTokens._();
 
   static TextStyle headline(BuildContext context) =>
-      GoogleFonts.nunito(
-        fontSize: 26,
+      GoogleFonts.notoSans(
+        fontSize: 28,
         fontWeight: FontWeight.w800,
         color: ColorTokens.textPrimary,
       );
 
   static TextStyle title(BuildContext context) =>
-      GoogleFonts.nunito(
-        fontSize: 18,
+      GoogleFonts.notoSans(
+        fontSize: 20,
         fontWeight: FontWeight.w700,
         color: ColorTokens.textPrimary,
       );
 
   static TextStyle body(BuildContext context) =>
-      GoogleFonts.nunito(
+      GoogleFonts.notoSans(
         fontSize: 16,
         fontWeight: FontWeight.w500,
         color: ColorTokens.textPrimary,
       );
 
   static TextStyle bodySecondary(BuildContext context) =>
-      GoogleFonts.nunito(
-        fontSize: 14,
+      GoogleFonts.notoSans(
+        fontSize: 16,
         fontWeight: FontWeight.w500,
         color: ColorTokens.textSecondary,
       );
 
   static TextStyle label(BuildContext context) =>
-      GoogleFonts.nunito(
-        fontSize: 14,
+      GoogleFonts.notoSans(
+        fontSize: 16,
         fontWeight: FontWeight.w700,
         color: ColorTokens.textPrimary,
       );
 
   static TextStyle caption(BuildContext context) =>
-      GoogleFonts.nunito(
+      GoogleFonts.notoSans(
         fontSize: 12,
         fontWeight: FontWeight.w500,
         color: ColorTokens.textMuted,
       );
 
   static TextStyle button(BuildContext context) =>
-      GoogleFonts.nunito(
+      GoogleFonts.notoSans(
         fontSize: 16,
         fontWeight: FontWeight.w700,
         color: ColorTokens.textPrimary,

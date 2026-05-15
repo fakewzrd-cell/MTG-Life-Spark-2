@@ -116,7 +116,7 @@ class _VariantContent extends StatelessWidget {
         children.add(
           _VariantTile(
             title: 'Bounty',
-            iconWidget: GameIcon.bounty(size: 18, color: AppTheme.accent),
+            iconWidget: GameIcon.bounty(size: 20, color: AppTheme.accent),
             card: bounty[game.currentBountyIndex % bounty.length],
             deckSize: bounty.length,
             onAdvance: () => notifier.advanceBounty(bounty.length),
@@ -156,10 +156,10 @@ class _VariantTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pad = (8 * LayoutTokens.goldenRatio).roundToDouble();
+    final pad = LayoutTokens.gr3;
     final narrow = MediaQuery.sizeOf(context).width < 360;
     final thumbW = narrow ? 56.0 : 72.0;
-    final thumbH = narrow ? 78.0 : 100.0;
+    final thumbH = narrow ? 80.0 : 100.0;
     return Container(
       margin: EdgeInsets.only(bottom: pad),
       decoration: BoxDecoration(
@@ -178,7 +178,7 @@ class _VariantTile extends StatelessWidget {
               children: [
                 // Card thumbnail
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                   child: SizedBox(
                     width: thumbW,
                     height: thumbH,
@@ -224,19 +224,19 @@ class _VariantTile extends StatelessWidget {
                           if (iconWidget != null)
                             iconWidget!
                           else if (icon != null)
-                            Icon(icon, size: 18, color: AppTheme.accent),
+                            Icon(icon, size: 20, color: AppTheme.accent),
                           const SizedBox(width: 8),
                           Text(
                             title,
                             style: const TextStyle(
                               color: AppTheme.textSecondary,
-                              fontSize: 13,
+                              fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 8),
                       Text(
                         card.name,
                         style: const TextStyle(
@@ -249,7 +249,7 @@ class _VariantTile extends StatelessWidget {
                       ),
                       if (card.oracleText != null &&
                           card.oracleText!.isNotEmpty) ...[
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 8),
                         Text(
                           card.oracleText!,
                           style: const TextStyle(
@@ -305,11 +305,11 @@ class _VariantTile extends StatelessWidget {
                   height: 4,
                   decoration: BoxDecoration(
                     color: AppTheme.textSecondary.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(4),
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               if (card.imageUrl != null)
                 Center(
                   child: ClipRRect(
@@ -336,7 +336,7 @@ class _VariantTile extends StatelessWidget {
                   card.oracleText!,
                   style: const TextStyle(
                     color: AppTheme.textSecondary,
-                    fontSize: 14,
+                    fontSize: 16,
                     height: 1.4,
                   ),
                 ),

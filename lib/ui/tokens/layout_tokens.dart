@@ -1,23 +1,26 @@
 /// Layout and proportion constants.
-/// Use golden-ratio spacing for harmonious, evenly distributed layouts.
+///
+/// **Spacing** uses a strict **4dp grid** (`gr0` … `gr6`) so padding, gaps, and
+/// insets stay visually consistent. Use [SpacingTokens] for the same grid with
+/// semantic names (`xs`, `sm`, …).
+///
+/// **Golden ratio** helpers remain for non-spacing proportions (e.g. aspect
+/// ratios), not for padding or font sizes.
 class LayoutTokens {
   LayoutTokens._();
 
-  /// Golden ratio φ ≈ 1.618.
-  /// Use for harmonious proportions (e.g. width:height = φ:1 for golden rectangle).
+  /// Golden ratio φ ≈ 1.618 (aspect ratios only — not the spacing scale).
   static const double goldenRatio = 1.618;
 
   /// Inverse golden ratio 1/φ ≈ 0.618.
-  /// For portrait golden: aspectRatio = 1/goldenRatio gives height = width * φ.
   static const double goldenRatioInverse = 0.618;
 
-  /// Golden-ratio spacing scale: base × φ^n for n = 0,1,2,3,4,5,6.
-  /// Use for consistent, harmonious spacing across all screens.
-  static const double gr0 = 4;   // base
-  static const double gr1 = 6;   // base × φ
-  static const double gr2 = 10;  // base × φ²
-  static const double gr3 = 16;  // base × φ³
-  static const double gr4 = 26;  // base × φ⁴
-  static const double gr5 = 42; // base × φ⁵
-  static const double gr6 = 68; // base × φ⁶
+  /// 4dp spacing scale: `4 × n` for n = 1 … 12 on the main rungs.
+  static const double gr0 = 4;
+  static const double gr1 = 8;
+  static const double gr2 = 12;
+  static const double gr3 = 16;
+  static const double gr4 = 24;
+  static const double gr5 = 32;
+  static const double gr6 = 48;
 }
