@@ -17,6 +17,9 @@ class PlayerSlot {
   /// Registered deck id when the player chose a saved deck (local tracking).
   final String? selectedDeckId;
 
+  /// Commander color identity (WUBRG union); empty when unknown / manual pick without fetch.
+  final List<String> commanderColorIdentity;
+
   const PlayerSlot({
     required this.playerId,
     required this.username,
@@ -29,6 +32,7 @@ class PlayerSlot {
     this.isHost = false,
     this.isReady = false,
     this.selectedDeckId,
+    this.commanderColorIdentity = const [],
   });
 
   PlayerSlot copyWith({
@@ -40,6 +44,7 @@ class PlayerSlot {
     bool? isHost,
     bool? isReady,
     Object? selectedDeckId = _sentinelDeck,
+    Object? commanderColorIdentity = _sentinelCi,
   }) {
     return PlayerSlot(
       playerId: playerId,
@@ -56,10 +61,14 @@ class PlayerSlot {
       selectedDeckId: identical(selectedDeckId, _sentinelDeck)
           ? this.selectedDeckId
           : selectedDeckId as String?,
+      commanderColorIdentity: identical(commanderColorIdentity, _sentinelCi)
+          ? this.commanderColorIdentity
+          : List<String>.from(commanderColorIdentity as List<String>),
     );
   }
 
   static const Object _sentinelDeck = Object();
+  static const Object _sentinelCi = Object();
 
   Map<String, dynamic> toJson() => {
         'pid': playerId,
@@ -73,9 +82,11 @@ class PlayerSlot {
         'isHost': isHost,
         'isReady': isReady,
         'selectedDeckId': selectedDeckId,
+        'commanderColorIdentity': commanderColorIdentity,
       };
 
   factory PlayerSlot.fromJson(Map<String, dynamic> json) {
+    final ci = json['commanderColorIdentity'];
     return PlayerSlot(
       playerId: json['pid'] as String,
       username: json['username'] as String,
@@ -88,6 +99,8 @@ class PlayerSlot {
       isHost: json['isHost'] as bool? ?? false,
       isReady: json['isReady'] as bool? ?? false,
       selectedDeckId: json['selectedDeckId'] as String?,
+      commanderColorIdentity:
+          ci is List ? ci.map((e) => e.toString()).toList() : [],
     );
   }
 }

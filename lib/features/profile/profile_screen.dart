@@ -194,6 +194,11 @@ class ProfileScreen extends ConsumerWidget {
                         bodyWidth: bodyW,
                       ),
                       SizedBox(height: LayoutTokens.gr4),
+                      _MostPlayedCommanderSection(
+                        profile: profile,
+                        colors: colors,
+                      ),
+                      SizedBox(height: LayoutTokens.gr4),
                       _DeckPerformanceSection(
                         colors: colors,
                         listMaxHeight: sectionCardListMaxHeight,
@@ -549,6 +554,229 @@ class _AnimatedXpInLevelLabelState extends State<_AnimatedXpInLevelLabel>
           textAlign: TextAlign.center,
         );
       },
+    );
+  }
+}
+
+/// Highest-volume commander from hive stats with deck art when possible.
+class _MostPlayedCommanderSection extends ConsumerWidget {
+  const _MostPlayedCommanderSection({
+    required this.profile,
+    required this.colors,
+  });
+
+  final PlayerProfile profile;
+  final AppColorTokens colors;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(deckListRevisionProvider);
+    final stats =
+        List.of(ref.watch(profileRepositoryProvider).getAllCommanderStats());
+    if (stats.isEmpty) return const SizedBox.shrink();
+    stats.sort((a, b) {
+      final g = b.gamesPlayed.compareTo(a.gamesPlayed);
+      if (g != 0) return g;
+      return b.wins.compareTo(a.wins);
+    });
+    final top = stats.first;
+    if (top.gamesPlayed <= 0) return const SizedBox.shrink();
+
+    final decks = ref.watch(deckRepositoryProvider).getAll();
+    PlayerDeck? match;
+    for (final d in decks) {
+      if (d.commanderName.toLowerCase() == top.commanderName.toLowerCase()) {
+        match = d;
+        break;
+      }
+    }
+    final imageUrl =
+        match?.commanderImageUrl ?? profile.selectedCommanderImageUrl;
+
+    final xpNeeded = _xpNeededForLevel(profile.level);
+    final xpInLevel = profile.xp % xpNeeded;
+    final xpProgress =
+        (xpNeeded > 0) ? (xpInLevel / xpNeeded).clamp(0.0, 1.0) : 0.0;
+
+    final scheme = Theme.of(context).colorScheme;
+
+    return Card(
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      color: scheme.surfaceContainerHigh,
+      elevation: 1,
+      surfaceTintColor: scheme.surfaceTint,
+      shape: RoundedRectangleBorder(
+        borderRadius: _kBentoRadius,
+        side: BorderSide(
+          color: scheme.outlineVariant.withValues(alpha: 0.65),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            height: 168,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (imageUrl != null && imageUrl.isNotEmpty)
+                  CachedNetworkImage(
+                    imageUrl: imageUrl,
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) =>
+                        _defaultBannerFill(context),
+                    errorWidget: (_, __, ___) =>
+                        _defaultBannerFill(context),
+                  )
+                else
+                  _defaultBannerFill(context),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.05),
+                        Colors.black.withValues(alpha: 0.72),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: LayoutTokens.gr2,
+                  top: LayoutTokens.gr2,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: LayoutTokens.gr2,
+                      vertical: LayoutTokens.gr1,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colors.primaryAccent.withValues(alpha: 0.92),
+                      borderRadius:
+                          BorderRadius.circular(RadiusTokens.md),
+                      border: Border.all(
+                        color: colors.backgroundPrimary.withValues(alpha: 0.35),
+                      ),
+                    ),
+                    child: Text(
+                      'Most played',
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            color: colors.backgroundPrimary,
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(_kBentoCardPaddingPx),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  top.commanderName,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: colors.textPrimary,
+                        letterSpacing: -0.5,
+                      ),
+                ),
+                SizedBox(height: LayoutTokens.gr1),
+                Text(
+                  '${top.wins}W · ${top.losses}L · ${top.gamesPlayed} games',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: colors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                SizedBox(height: LayoutTokens.gr3),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 46,
+                      height: 46,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          CircularProgressIndicator(
+                            value: xpProgress,
+                            strokeWidth: 4,
+                            backgroundColor:
+                                colors.borderSubtle.withValues(alpha: 0.65),
+                            color: colors.primaryAccent,
+                          ),
+                          Center(
+                            child: Text(
+                              '${profile.level}',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                    color: colors.textPrimary,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: LayoutTokens.gr2),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Level progress',
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelMedium
+                                ?.copyWith(
+                                  color: colors.textSecondary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                          Text(
+                            '$xpInLevel / $xpNeeded XP',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(
+                                  color: colors.textSecondary,
+                                  fontWeight: FontWeight.w600,
+                                  fontFeatures: const [
+                                    FontFeature.tabularFigures(),
+                                  ],
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _behaviourSmileyMark(profile: profile, colors: colors),
+                  ],
+                ),
+                SizedBox(height: LayoutTokens.gr2),
+                LayoutBuilder(
+                  builder: (context, c) {
+                    final w = c.maxWidth.isFinite ? c.maxWidth : 280.0;
+                    return _behaviourSpectrumTrack(
+                      profile: profile,
+                      colors: colors,
+                      width: w,
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1941,12 +2169,13 @@ class _RecentMatchCardState extends ConsumerState<_RecentMatchCard> {
         child: AnimatedCrossFade(
           firstChild: LayoutBuilder(
             builder: (context, c) {
+              final h = c.maxHeight.isFinite ? c.maxHeight : innerH;
               return SingleChildScrollView(
                 physics: const NeverScrollableScrollPhysics(),
                 child: ConstrainedBox(
                   constraints: BoxConstraints.tightFor(
                     width: c.maxWidth,
-                    height: c.maxHeight,
+                    height: h,
                   ),
                   child: summaryColumn(),
                 ),

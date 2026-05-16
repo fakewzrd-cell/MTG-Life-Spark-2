@@ -7,8 +7,10 @@ import '../bluetooth/ble_protocol.dart';
 import '../bluetooth/ble_providers.dart';
 import '../persistence/providers.dart';
 import 'alliance.dart';
+import 'game_log_entry.dart';
 import 'game_phase.dart';
 import 'game_state.dart';
+import 'gameplay_dial_ids.dart';
 import 'lobby_state.dart';
 import 'player_game_state.dart';
 import 'undo_action.dart';
@@ -21,6 +23,60 @@ class GameStateNotifier extends StateNotifier<GameState> {
   int _seqNum = 0;
 
   GameStateNotifier(this._ref) : super(GameState.empty());
+
+  static const _kLogCap = 400;
+
+  void _trimAndSetLogs(List<GameLogEntry> logs) {
+    final trimmed =
+        logs.length > _kLogCap ? logs.sublist(logs.length - _kLogCap) : logs;
+    state = state.copyWith(sessionActionLog: trimmed);
+  }
+
+  void _appendGameLog(String message, {int? turnNumber}) {
+    final t = turnNumber ?? state.sessionTurnCounter;
+    final entry =
+        GameLogEntry(turnNumber: t, time: DateTime.now(), message: message);
+    _trimAndSetLogs([...state.sessionActionLog, entry]);
+  }
+
+  String _labelForCounterField(String field) {
+    switch (field) {
+      case 'poison':
+        return 'Poison';
+      case 'energy':
+        return 'Energy';
+      case 'experience':
+        return 'Experience';
+      case 'rad':
+        return 'Rad';
+      case GameplayDialIds.blood:
+        return 'Blood';
+      case GameplayDialIds.clue:
+        return 'Clue';
+      case GameplayDialIds.map:
+        return 'Map';
+      case GameplayDialIds.treasure:
+        return 'Treasure';
+      case GameplayDialIds.devotion:
+        return 'Devotion';
+      case GameplayDialIds.creatures:
+        return 'Creatures';
+      case GameplayDialIds.enchantments:
+        return 'Enchantments';
+      case GameplayDialIds.artifacts:
+        return 'Artifacts';
+      case GameplayDialIds.graveyardCreatures:
+        return 'GY creatures';
+      case GameplayDialIds.exile:
+        return 'Exile';
+      default:
+        for (final p in state.players) {
+          final lb = p.customDialLabels[field];
+          if (lb != null) return lb;
+        }
+        return field;
+    }
+  }
 
   // ── Initialization ───────────────────────────────────────────────────────
 
@@ -146,6 +202,10 @@ class GameStateNotifier extends StateNotifier<GameState> {
       }).toList(),
     );
 
+    _appendGameLog(
+      '${player.username}: Life ${delta > 0 ? '+' : ''}$delta',
+    );
+
     _send(BleMessage.stateDelta(
       seqNum: _nextSeq(),
       playerId: playerId,
@@ -180,6 +240,14 @@ class GameStateNotifier extends StateNotifier<GameState> {
           .toList(),
     );
 
+    final pl = _playerById(playerId);
+    if (pl != null) {
+      _appendGameLog(
+        '${pl.username}: ${_labelForCounterField(field)} '
+        '${delta > 0 ? '+' : ''}$delta (→ $newValue)',
+      );
+    }
+
     _send(BleMessage.stateDelta(
       seqNum: _nextSeq(),
       playerId: playerId,
@@ -191,23 +259,109 @@ class GameStateNotifier extends StateNotifier<GameState> {
     _checkLossConditions();
   }
 
+  /// Snap-style dial adjustment without flooding undo (single delta vs prior value).
+  void setGameplayDialAbsolute(String playerId, String field, int value) {
+    final player = _playerById(playerId);
+    if (player == null || player.isEliminated) return;
+    final v = value.clamp(0, 9999);
+    final cur = _getCounterValue(player, field);
+    if (v == cur) return;
+    adjustCounter(playerId, field, v - cur);
+  }
+
+  /// Session-local custom dial metadata (labels). Values sync via normal state deltas.
+  void registerCustomGameplayDial(
+      String playerId, String rawKey, String rawLabel) {
+    if (state.timeoutActive) return;
+    final key = rawKey
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9_]'), '');
+    final label = rawLabel.trim();
+    if (key.isEmpty || label.isEmpty) return;
+
+    const core = {'life', 'poison', 'energy', 'experience', 'rad'};
+    if (core.contains(key) || GameplayDialIds.presets.contains(key)) return;
+
+    state = state.copyWith(
+      players: state.players.map((p) {
+        if (p.playerId != playerId) return p;
+        final labels = Map<String, String>.from(p.customDialLabels);
+        labels[key] = label;
+        final vis = [...p.visibleGameplayDials];
+        if (!vis.contains(key)) vis.add(key);
+        return p.copyWith(customDialLabels: labels, visibleGameplayDials: vis);
+      }).toList(),
+    );
+  }
+
+  static const _coreDialFields = {'poison', 'energy', 'experience', 'rad'};
+
+  bool _isKnownDialField(PlayerGameState p, String field) =>
+      _coreDialFields.contains(field) ||
+      GameplayDialIds.presets.contains(field) ||
+      p.customDialLabels.containsKey(field);
+
+  /// Show a dial on this player's strip (values stay in counter maps).
+  void addGameplayDialToStrip(String playerId, String field) {
+    if (state.timeoutActive) return;
+    final f = field.trim().toLowerCase();
+    if (f.isEmpty) return;
+    final player = _playerById(playerId);
+    if (player == null || player.isEliminated) return;
+    if (!_isKnownDialField(player, f)) return;
+
+    state = state.copyWith(
+      players: state.players.map((p) {
+        if (p.playerId != playerId) return p;
+        if (p.visibleGameplayDials.contains(f)) return p;
+        return p.copyWith(visibleGameplayDials: [...p.visibleGameplayDials, f]);
+      }).toList(),
+    );
+  }
+
+  /// Hide a dial from the strip without changing its value.
+  void removeGameplayDialFromStrip(String playerId, String field) {
+    if (state.timeoutActive) return;
+    final f = field.trim().toLowerCase();
+    state = state.copyWith(
+      players: state.players.map((p) {
+        if (p.playerId != playerId) return p;
+        final next =
+            p.visibleGameplayDials.where((id) => id != f).toList(growable: false);
+        return p.copyWith(visibleGameplayDials: next);
+      }).toList(),
+    );
+  }
+
   int _getCounterValue(PlayerGameState p, String field) => switch (field) {
         'poison' => p.poison,
         'energy' => p.energy,
         'experience' => p.experience,
         'rad' => p.rad,
-        _ => 0,
+        _ => p.extraDials[field] ?? 0,
       };
 
-  PlayerGameState _setCounterValue(
-          PlayerGameState p, String field, int value) =>
-      switch (field) {
-        'poison' => p.copyWith(poison: value),
-        'energy' => p.copyWith(energy: value),
-        'experience' => p.copyWith(experience: value),
-        'rad' => p.copyWith(rad: value),
-        _ => p,
-      };
+  PlayerGameState _setCounterValue(PlayerGameState p, String field, int value) {
+    switch (field) {
+      case 'poison':
+        return p.copyWith(poison: value);
+      case 'energy':
+        return p.copyWith(energy: value);
+      case 'experience':
+        return p.copyWith(experience: value);
+      case 'rad':
+        return p.copyWith(rad: value);
+      default:
+        final m = Map<String, int>.from(p.extraDials);
+        if (value <= 0) {
+          m.remove(field);
+        } else {
+          m[field] = value;
+        }
+        return p.copyWith(extraDials: m);
+    }
+  }
 
   // ── Commander Damage ──────────────────────────────────────────────────────
 
@@ -265,6 +419,12 @@ class GameStateNotifier extends StateNotifier<GameState> {
       }).toList(),
     );
 
+    final fromP = _playerById(fromPlayerId);
+    final toP = victim;
+    _appendGameLog(
+      '${fromP?.username ?? '?'} → ${toP.username}: Commander damage +$delta',
+    );
+
     _send(BleMessage.commanderDamage(
       seqNum: _nextSeq(),
       fromPlayerId: fromPlayerId,
@@ -283,14 +443,21 @@ class GameStateNotifier extends StateNotifier<GameState> {
     state = state.copyWith(
       players: state.players.map((p) {
         if (p.isEliminated) return p;
+        final xd = Map<String, int>.from(p.extraDials);
+        for (final e in xd.entries.toList()) {
+          if (e.value > 0) xd[e.key] = e.value + 1;
+        }
         return p.copyWith(
           poison: p.poison > 0 ? p.poison + 1 : p.poison,
           energy: p.energy > 0 ? p.energy + 1 : p.energy,
           experience: p.experience > 0 ? p.experience + 1 : p.experience,
           rad: p.rad > 0 ? p.rad + 1 : p.rad,
+          extraDials: xd,
         );
       }).toList(),
     );
+
+    _appendGameLog('Proliferate: all players');
 
     _send(BleMessage(
       type: BleMessageType.proliferate,
@@ -373,6 +540,15 @@ class GameStateNotifier extends StateNotifier<GameState> {
             fromDmg[pi] = action.previousValue;
             dmg[fromId] = fromDmg;
             updated = updated.copyWith(life: prevLife, commanderDamage: dmg);
+            break;
+          default:
+            final m = Map<String, int>.from(p.extraDials);
+            if (action.previousValue <= 0) {
+              m.remove(action.field);
+            } else {
+              m[action.field] = action.previousValue;
+            }
+            updated = updated.copyWith(extraDials: m);
         }
         return updated;
       }).toList(),
@@ -494,6 +670,18 @@ class GameStateNotifier extends StateNotifier<GameState> {
         .toSet();
 
     final now = DateTime.now();
+    final ending = state.playerById(state.activePlayerId);
+    final tn = state.sessionTurnCounter;
+    final turnEndEntry = GameLogEntry(
+      turnNumber: tn,
+      time: now,
+      message: '${ending?.username ?? '?'} ends turn',
+    );
+    var turnLogs = [...state.sessionActionLog, turnEndEntry];
+    if (turnLogs.length > _kLogCap) {
+      turnLogs = turnLogs.sublist(turnLogs.length - _kLogCap);
+    }
+
     state = state.copyWith(
       activePlayerIndex: nextIndex,
       currentPhase: GamePhase.untap,
@@ -502,6 +690,8 @@ class GameStateNotifier extends StateNotifier<GameState> {
       priorityHolderId: null,
       alliances: alliances,
       turnStartTime: now,
+      sessionTurnCounter: tn + 1,
+      sessionActionLog: turnLogs,
       players: state.players.map((p) {
         if (p.allyPlayerId != null &&
             !aliveAllyIds.contains(p.playerId)) {
@@ -517,6 +707,8 @@ class GameStateNotifier extends StateNotifier<GameState> {
         'nextIndex': nextIndex,
         'round': newRound,
         'turnStartTime': now.toIso8601String(),
+        'sessionTurnCounter': tn + 1,
+        'turnEndLog': turnEndEntry.toJson(),
       },
       seqNum: _nextSeq(),
     ));
@@ -1018,10 +1210,32 @@ class GameStateNotifier extends StateNotifier<GameState> {
           case 'rad':
             return p.copyWith(rad: newValue);
           default:
-            return p;
+            final m = Map<String, int>.from(p.extraDials);
+            if (newValue <= 0) {
+              m.remove(field);
+            } else {
+              m[field] = newValue;
+            }
+            return p.copyWith(extraDials: m);
         }
       }).toList(),
     );
+
+    final delta = (payload['delta'] as num?)?.toInt() ?? 0;
+    final synced = _playerById(pid);
+    if (synced != null && delta != 0) {
+      if (field == 'life') {
+        _appendGameLog(
+          '${synced.username}: Life ${delta > 0 ? '+' : ''}$delta',
+        );
+      } else {
+        _appendGameLog(
+          '${synced.username}: ${_labelForCounterField(field)} '
+          '${delta > 0 ? '+' : ''}$delta',
+        );
+      }
+    }
+
     _checkLossConditions();
   }
 
@@ -1097,7 +1311,13 @@ class GameStateNotifier extends StateNotifier<GameState> {
             dmg[fromId] = fromDmg;
             return p.copyWith(life: prevLife, commanderDamage: dmg);
           default:
-            return p;
+            final m = Map<String, int>.from(p.extraDials);
+            if (prevValue <= 0) {
+              m.remove(field);
+            } else {
+              m[field] = prevValue;
+            }
+            return p.copyWith(extraDials: m);
         }
       }).toList(),
     );
@@ -1107,14 +1327,20 @@ class GameStateNotifier extends StateNotifier<GameState> {
     state = state.copyWith(
       players: state.players.map((p) {
         if (p.isEliminated) return p;
+        final xd = Map<String, int>.from(p.extraDials);
+        for (final e in xd.entries.toList()) {
+          if (e.value > 0) xd[e.key] = e.value + 1;
+        }
         return p.copyWith(
           poison: p.poison > 0 ? p.poison + 1 : p.poison,
           energy: p.energy > 0 ? p.energy + 1 : p.energy,
           experience: p.experience > 0 ? p.experience + 1 : p.experience,
           rad: p.rad > 0 ? p.rad + 1 : p.rad,
+          extraDials: xd,
         );
       }).toList(),
     );
+    _appendGameLog('Proliferate: all players');
     _checkLossConditions();
   }
 
@@ -1125,6 +1351,17 @@ class GameStateNotifier extends StateNotifier<GameState> {
     final turnStart = turnStartStr != null
         ? DateTime.tryParse(turnStartStr)
         : DateTime.now();
+    final stc = (payload['sessionTurnCounter'] as num?)?.toInt() ??
+        state.sessionTurnCounter + 1;
+    final logJson = payload['turnEndLog'] as Map<String, dynamic>?;
+    var logs = state.sessionActionLog;
+    if (logJson != null) {
+      logs = [...logs, GameLogEntry.fromJson(logJson)];
+      if (logs.length > _kLogCap) {
+        logs = logs.sublist(logs.length - _kLogCap);
+      }
+    }
+
     state = state.copyWith(
       activePlayerIndex: nextIndex,
       currentPhase: GamePhase.untap,
@@ -1132,6 +1369,8 @@ class GameStateNotifier extends StateNotifier<GameState> {
       priorityHeld: false,
       priorityHolderId: null,
       turnStartTime: turnStart,
+      sessionTurnCounter: stc,
+      sessionActionLog: logJson != null ? logs : state.sessionActionLog,
     );
   }
 

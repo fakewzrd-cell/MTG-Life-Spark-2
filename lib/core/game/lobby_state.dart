@@ -269,6 +269,7 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
     required String commanderImageUrl,
     String? partnerCommanderName,
     String? partnerCommanderImageUrl,
+    List<String> commanderColorIdentity = const [],
   }) {
     final players = state.players.map((p) {
       if (p.playerId != playerId) return p;
@@ -278,6 +279,7 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
         partnerCommanderName: partnerCommanderName,
         partnerCommanderImageUrl: partnerCommanderImageUrl,
         selectedDeckId: null,
+        commanderColorIdentity: List<String>.from(commanderColorIdentity),
       );
     }).toList();
     state = state.copyWith(players: players);
@@ -295,6 +297,7 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
         partnerCommanderImageUrl: deck.partnerCommanderImageUrl,
         hasPartner: deck.hasPartner,
         selectedDeckId: deck.id,
+        commanderColorIdentity: List<String>.from(deck.commanderColorIdentity),
       );
     }).toList();
     state = state.copyWith(players: players);

@@ -39,6 +39,10 @@ class PlayerDeck extends HiveObject {
   @HiveField(10)
   String? partnerManaCost;
 
+  /// Union of commander (+ partner) Scryfall `color_identity` letters (W,U,B,R,G).
+  @HiveField(11)
+  List<String> commanderColorIdentity;
+
   PlayerDeck({
     required this.id,
     required this.displayName,
@@ -51,6 +55,7 @@ class PlayerDeck extends HiveObject {
     this.gamesPlayed = 0,
     this.commanderManaCost,
     this.partnerManaCost,
+    this.commanderColorIdentity = const [],
   });
 
   bool get hasPartner =>
@@ -66,6 +71,7 @@ class PlayerDeck extends HiveObject {
     String? partnerCommanderImageUrl,
     String? commanderManaCost,
     String? partnerManaCost,
+    List<String> commanderColorIdentity = const [],
   }) =>
       PlayerDeck(
         id: const Uuid().v4(),
@@ -76,5 +82,6 @@ class PlayerDeck extends HiveObject {
         partnerCommanderImageUrl: partnerCommanderImageUrl,
         commanderManaCost: commanderManaCost,
         partnerManaCost: partnerManaCost,
+        commanderColorIdentity: commanderColorIdentity,
       );
 }

@@ -7,7 +7,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
+import '../../../debug/session_agent_log.dart';
+import '../../../core/game/game_log_entry.dart';
 import '../../../core/game/game_phase.dart';
+import '../../../core/game/commander_identity_colors.dart';
 import '../../../core/models/game_feedback.dart';
 import '../../../core/persistence/providers.dart';
 import '../../../core/game/game_providers.dart';
@@ -22,12 +25,33 @@ import '../../../shared/widgets/home_nav_bar.dart';
 import '../widgets/commander_damage_panel.dart';
 import '../widgets/commander_info_bar.dart';
 import '../widgets/variant_card_panel.dart';
-import '../widgets/counter_row_widget.dart';
+import '../widgets/gameplay_dials_strip_widget.dart';
 import '../widgets/life_counter_widget.dart';
 import '../widgets/phase_bar_widget.dart';
 import '../widgets/political_row_widget.dart';
 import '../widgets/turn_order_widget.dart';
 import '../widgets/team_panel_widget.dart';
+
+// #region agent log
+void _agentDbgGameUi(
+  String hypothesisId,
+  String location,
+  String message,
+  Map<String, Object?> data,
+) {
+  appendSessionNdjson({
+    'sessionId': '02a8f6',
+    'hypothesisId': hypothesisId,
+    'location': location,
+    'message': message,
+    'data': data,
+    'timestamp': DateTime.now().millisecondsSinceEpoch,
+  });
+}
+// #endregion
+
+String? _dbgLastPersonalPlaySig;
+String? _dbgLastBarBtnSig;
 
 class GameScreen extends ConsumerStatefulWidget {
   const GameScreen({super.key});
@@ -40,14 +64,18 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   bool _showOverview = false;
   StreamSubscription<Object?>? _gameOverSub;
 
+  /// Cached so [dispose] never uses `ref` after Riverpod tears down this widget.
+  bool _enteredWithHiddenSystemBars = false;
+
   @override
   void initState() {
     super.initState();
     final settings = ref.read(settingsRepositoryProvider).settings;
+    _enteredWithHiddenSystemBars = settings.hideSystemBars;
     if (settings.keepDisplayAwake) {
       WakelockPlus.enable();
     }
-    if (settings.hideSystemBars) {
+    if (_enteredWithHiddenSystemBars) {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -60,8 +88,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   @override
   void dispose() {
     WakelockPlus.disable();
-    final settings = ref.read(settingsRepositoryProvider).settings;
-    if (settings.hideSystemBars) {
+    if (_enteredWithHiddenSystemBars) {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     }
     _gameOverSub?.cancel();
@@ -82,9 +109,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final local = game.localPlayer;
 
     if (local == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (game.awaitingFirstPlayerRoll) {
@@ -94,39 +119,49 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           child: _FirstPlayerRollOverlay(
             game: game,
             local: local,
-            onRoll: (roll) =>
-                ref.read(gameProvider.notifier).submitFirstPlayerRoll(roll),
+            onRoll:
+                (roll) =>
+                    ref.read(gameProvider.notifier).submitFirstPlayerRoll(roll),
           ),
         ),
       );
     }
 
-    return Scaffold(
-      backgroundColor: local.isEliminated
-          ? AppTheme.primary.withValues(alpha: 0.7)
-          : AppTheme.primary,
-      body: Stack(
-        children: [
-          if (_showOverview)
-            _OverviewView(
-              game: game,
-              onClose: () => setState(() => _showOverview = false),
-            )
-          else
-            SafeArea(
-              child: _PersonalView(
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: CommanderIdentityColors.gameplayGradient(
+            local.commanderColorIdentity,
+            local.playerColor,
+          ),
+        ),
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Stack(
+          children: [
+            if (_showOverview)
+              _OverviewView(
                 game: game,
-                local: local,
-                onToggleOverview: () =>
-                    setState(() => _showOverview = true),
+                onClose: () => setState(() => _showOverview = false),
+              )
+            else
+              SafeArea(
+                child: _PersonalView(
+                  game: game,
+                  local: local,
+                  onToggleOverview: () => setState(() => _showOverview = true),
+                ),
               ),
-            ),
-          if (game.timeoutActive)
-            _TimeoutOverlay(
-              startTime: game.timeoutStartTime,
-              durationSeconds: game.timeoutDurationSeconds,
-            ),
-        ],
+            if (game.timeoutActive)
+              _TimeoutOverlay(
+                startTime: game.timeoutStartTime,
+                durationSeconds: game.timeoutDurationSeconds,
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -146,7 +181,8 @@ class _FirstPlayerRollOverlay extends StatefulWidget {
   });
 
   @override
-  State<_FirstPlayerRollOverlay> createState() => _FirstPlayerRollOverlayState();
+  State<_FirstPlayerRollOverlay> createState() =>
+      _FirstPlayerRollOverlayState();
 }
 
 class _FirstPlayerRollOverlayState extends State<_FirstPlayerRollOverlay>
@@ -164,9 +200,10 @@ class _FirstPlayerRollOverlayState extends State<_FirstPlayerRollOverlay>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    _scaleAnim = Tween<double>(begin: 0.5, end: 1.2)
-        .chain(CurveTween(curve: Curves.elasticOut))
-        .animate(_animController);
+    _scaleAnim = Tween<double>(
+      begin: 0.5,
+      end: 1.2,
+    ).chain(CurveTween(curve: Curves.elasticOut)).animate(_animController);
   }
 
   @override
@@ -212,10 +249,7 @@ class _FirstPlayerRollOverlayState extends State<_FirstPlayerRollOverlay>
           const SizedBox(height: 8),
           Text(
             'Highest roll goes first. Tap the dice to roll!',
-            style: const TextStyle(
-              color: AppTheme.textSecondary,
-              fontSize: 14,
-            ),
+            style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 40),
@@ -236,9 +270,7 @@ class _FirstPlayerRollOverlayState extends State<_FirstPlayerRollOverlay>
                   color: AppTheme.card,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: hasRolled
-                        ? AppTheme.accentGold
-                        : AppTheme.accent,
+                    color: hasRolled ? AppTheme.accentGold : AppTheme.accent,
                     width: 3,
                   ),
                   boxShadow: [
@@ -250,20 +282,21 @@ class _FirstPlayerRollOverlayState extends State<_FirstPlayerRollOverlay>
                   ],
                 ),
                 child: Center(
-                  child: hasRolled
-                      ? Text(
-                          '$_myRoll',
-                          style: const TextStyle(
-                            color: AppTheme.accentGold,
-                            fontSize: 56,
-                            fontWeight: FontWeight.bold,
+                  child:
+                      hasRolled
+                          ? Text(
+                            '$_myRoll',
+                            style: const TextStyle(
+                              color: AppTheme.accentGold,
+                              fontSize: 56,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )
+                          : const Icon(
+                            Icons.casino_outlined,
+                            size: 64,
+                            color: AppTheme.accent,
                           ),
-                        )
-                      : const Icon(
-                          Icons.casino_outlined,
-                          size: 64,
-                          color: AppTheme.accent,
-                        ),
                 ),
               ),
             ),
@@ -297,8 +330,8 @@ class _FirstPlayerRollOverlayState extends State<_FirstPlayerRollOverlay>
               widget.game.isHost
                   ? '$othersRolled / $totalPlayers players have rolled'
                   : hasRolled
-                      ? 'Waiting for others to roll…'
-                      : 'Tap the dice above to roll',
+                  ? 'Waiting for others to roll…'
+                  : 'Tap the dice above to roll',
               style: const TextStyle(
                 color: AppTheme.textSecondary,
                 fontSize: 12,
@@ -329,9 +362,8 @@ class _PersonalView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(gameProvider.notifier);
-    final opponents = game.players
-        .where((p) => p.playerId != local.playerId)
-        .toList();
+    final opponents =
+        game.players.where((p) => p.playerId != local.playerId).toList();
 
     final activeColor =
         game.playerById(game.activePlayerId)?.playerColor ?? AppTheme.accent;
@@ -339,138 +371,328 @@ class _PersonalView extends ConsumerWidget {
     final screenHeight = MediaQuery.sizeOf(context).height;
     final screenWidth = MediaQuery.sizeOf(context).width;
     final isCompact = screenHeight < 700 || screenWidth < 360;
+    final horizontalInset = LayoutTokens.gr3;
+    final lifeBandMaxW = min(screenWidth - horizontalInset * 2, 400.0);
+    final lifeBandH = isCompact ? 152.0 : 192.0;
 
-    return SingleChildScrollView(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          minHeight: MediaQuery.sizeOf(context).height -
-              MediaQuery.paddingOf(context).vertical -
-              MediaQuery.viewInsetsOf(context).vertical,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-        // ── Commander bar + Cast button (top right) ────────────────────────
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: CommanderInfoBar(
-                player: local,
-                onCastCommander: () =>
-                    notifier.castCommanderFromZone(local.playerId),
-                includeCastButton: false,
-                roundNumber: game.roundNumber,
+    final sig =
+        '${screenWidth.toStringAsFixed(0)}_${lifeBandMaxW.toStringAsFixed(0)}_$isCompact';
+    if (_dbgLastPersonalPlaySig != sig) {
+      _dbgLastPersonalPlaySig = sig;
+      // #region agent log
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _agentDbgGameUi(
+          'H2',
+          'game_screen.dart:_PersonalView',
+          'play_tab_layout',
+          {
+            'screenW': screenWidth,
+            'screenH': screenHeight,
+            'horizontalInset': horizontalInset,
+            'lifeBandMaxW': lifeBandMaxW,
+            'lifeBandH': lifeBandH,
+            'isCompact': isCompact,
+          },
+        );
+      });
+      // #endregion
+    }
+
+    return DefaultTabController(
+      length: 2,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: CommanderInfoBar(
+                  player: local,
+                  onCastCommander:
+                      () => notifier.castCommanderFromZone(local.playerId),
+                  includeCastButton: false,
+                  roundNumber: game.roundNumber,
+                ),
               ),
-            ),
-            Padding(
-              padding: EdgeInsets.only(right: LayoutTokens.gr3),
-              child: CastCommanderButton(
-                player: local,
-                onCastCommander: () =>
-                    notifier.castCommanderFromZone(local.playerId),
+              Padding(
+                padding: EdgeInsets.only(right: LayoutTokens.gr3),
+                child: CastCommanderButton(
+                  player: local,
+                  onCastCommander:
+                      () => notifier.castCommanderFromZone(local.playerId),
+                ),
               ),
-            ),
-          ],
-        ),
-
-        // ── Turn order ────────────────────────────────────────────────────
-        TurnOrderWidget(game: game),
-        SizedBox(height: LayoutTokens.gr0),
-
-        // ── Phase bar (always visible; tap to set phase when your turn) ──
-        PhaseBarWidget(
-          currentPhase: game.currentPhase,
-          activeColor: activeColor,
-          isHost: game.isHost,
-          onAdvancePhase: game.isHost ? () => notifier.advancePhase() : null,
-          canSetPhase: game.isLocalPlayersTurn,
-          onPhaseTap: game.isLocalPlayersTurn
-              ? (phase) => notifier.setPhase(phase)
-              : null,
-        ),
-        SizedBox(height: LayoutTokens.gr2),
-
-        // ── Variant decks (Planechase, Archenemy, Bounty) ─────────────────
-        const VariantCardPanel(),
-        SizedBox(height: LayoutTokens.gr2),
-
-        // ── Life counter (center, takes most space) ────────────────────
-        SizedBox(
-          height: isCompact ? 140 : 180,
-          child: LifeCounterWidget(
-            life: local.life,
-            playerColor: local.playerColor,
-            isEliminated: local.isEliminated,
-            onLifeChange: (delta) =>
-                notifier.adjustLife(local.playerId, delta),
+            ],
           ),
-        ),
-        SizedBox(height: LayoutTokens.gr2),
-
-        // ── Counter row ────────────────────────────────────────────────
-        CounterRowWidget(
-          poison: local.poison,
-          energy: local.energy,
-          experience: local.experience,
-          rad: local.rad,
-          isEliminated: local.isEliminated,
-          onCounterChange: (field, delta) =>
-              notifier.adjustCounter(local.playerId, field, delta),
-          onProliferate: () => notifier.proliferate(local.playerId),
-        ),
-        SizedBox(height: LayoutTokens.gr2),
-
-        // ── Commander damage panel ─────────────────────────────────────
-        CommanderDamagePanel(
-          localPlayer: local,
-          opponents: opponents,
-          onDamageChange: ({
-            required String fromPlayerId,
-            required int partnerIndex,
-            required int delta,
-          }) =>
-              notifier.applyCommanderDamage(
-                fromPlayerId: fromPlayerId,
-                partnerIndex: partnerIndex,
-                toPlayerId: local.playerId,
-                delta: delta,
-              ),
-        ),
-
-        // ── Alliance indicator ─────────────────────────────────────────
-        if (game.pendingProposalFor(local.playerId) != null)
-          _AllianceProposalBanner(game: game, local: local),
-        if (game.pendingProposalFor(local.playerId) != null)
+          TurnOrderWidget(game: game),
           SizedBox(height: LayoutTokens.gr0),
-
-        // ── Game state banners ─────────────────────────────────────────
-        if (game.monarchPlayerId == local.playerId)
-          _GameMarkerBanner(icon: '👑', label: 'You have the Monarch'),
-        if (game.initiativePlayerId == local.playerId)
-          _GameMarkerBanner(icon: '⚔️', label: 'You have the Initiative'),
-        if ((game.trackTurnDuration || game.turnTimeLimitSeconds != null) &&
-            game.turnStartTime != null)
-          _TurnDurationBanner(
-            turnStartTime: game.turnStartTime!,
-            limitSeconds: game.turnTimeLimitSeconds,
-            isActiveTurn: game.isLocalPlayersTurn,
+          TabBar(
+            labelColor: AppTheme.accent,
+            unselectedLabelColor: AppTheme.textSecondary.withValues(
+              alpha: 0.85,
+            ),
+            indicatorColor: AppTheme.accent,
+            tabs: const [Tab(text: 'Play'), Tab(text: 'History')],
           ),
-
-        SizedBox(height: LayoutTokens.gr3),
-
-        // ── Bottom action bar ──────────────────────────────────────────
-        _BottomBar(
-          game: game,
-          local: local,
-          onToggleOverview: onToggleOverview,
-        ),
-
-        SizedBox(height: LayoutTokens.gr2),
-          ],
-        ),
+          Expanded(
+            child: TabBarView(
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      flex: 5,
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: horizontalInset,
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            SizedBox(height: LayoutTokens.gr1),
+                            PhaseBarWidget(
+                              currentPhase: game.currentPhase,
+                              activeColor: activeColor,
+                              isHost: game.isHost,
+                              onAdvancePhase:
+                                  game.isHost
+                                      ? () => notifier.advancePhase()
+                                      : null,
+                              canSetPhase: game.isLocalPlayersTurn,
+                              onPhaseTap:
+                                  game.isLocalPlayersTurn
+                                      ? (phase) => notifier.setPhase(phase)
+                                      : null,
+                            ),
+                            SizedBox(height: LayoutTokens.gr2),
+                            const VariantCardPanel(),
+                            SizedBox(height: LayoutTokens.gr2),
+                            CommanderDamagePanel(
+                              localPlayer: local,
+                              opponents: opponents,
+                              onDamageChange:
+                                  ({
+                                    required String fromPlayerId,
+                                    required int partnerIndex,
+                                    required int delta,
+                                  }) => notifier.applyCommanderDamage(
+                                    fromPlayerId: fromPlayerId,
+                                    partnerIndex: partnerIndex,
+                                    toPlayerId: local.playerId,
+                                    delta: delta,
+                                  ),
+                            ),
+                            if (game.pendingProposalFor(local.playerId) != null)
+                              _AllianceProposalBanner(game: game, local: local),
+                            if (game.pendingProposalFor(local.playerId) != null)
+                              SizedBox(height: LayoutTokens.gr0),
+                            if (game.monarchPlayerId == local.playerId)
+                              _GameMarkerBanner(
+                                icon: '👑',
+                                label: 'You have the Monarch',
+                              ),
+                            if (game.initiativePlayerId == local.playerId)
+                              _GameMarkerBanner(
+                                icon: '⚔️',
+                                label: 'You have the Initiative',
+                              ),
+                            if ((game.trackTurnDuration ||
+                                    game.turnTimeLimitSeconds != null) &&
+                                game.turnStartTime != null)
+                              _TurnDurationBanner(
+                                turnStartTime: game.turnStartTime!,
+                                limitSeconds: game.turnTimeLimitSeconds,
+                                isActiveTurn: game.isLocalPlayersTurn,
+                              ),
+                            SizedBox(height: LayoutTokens.gr3),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 6,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: LayoutTokens.gr3,
+                        ),
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(maxWidth: lifeBandMaxW),
+                            child: SizedBox(
+                              height: lifeBandH,
+                              width: double.infinity,
+                              child: LifeCounterWidget(
+                                life: local.life,
+                                playerColor: local.playerColor,
+                                commanderColorIdentity:
+                                    local.commanderColorIdentity,
+                                isEliminated: local.isEliminated,
+                                onLifeChange:
+                                    (delta) => notifier.adjustLife(
+                                      local.playerId,
+                                      delta,
+                                    ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        horizontalInset,
+                        LayoutTokens.gr2,
+                        horizontalInset,
+                        LayoutTokens.gr1,
+                      ),
+                      child: GameplayDialsStripWidget(
+                        player: local,
+                        isEliminated: local.isEliminated,
+                        onAdjustCounter:
+                            (field, delta) => notifier.adjustCounter(
+                              local.playerId,
+                              field,
+                              delta,
+                            ),
+                        onSetCounterAbsolute:
+                            (field, v) => notifier.setGameplayDialAbsolute(
+                              local.playerId,
+                              field,
+                              v,
+                            ),
+                        onProliferate:
+                            () => notifier.proliferate(local.playerId),
+                        onRegisterCustomDial:
+                            (key, label) => notifier.registerCustomGameplayDial(
+                              local.playerId,
+                              key,
+                              label,
+                            ),
+                        onAddDialToStrip:
+                            (field) => notifier.addGameplayDialToStrip(
+                              local.playerId,
+                              field,
+                            ),
+                        onRemoveDialFromStrip:
+                            (field) => notifier.removeGameplayDialFromStrip(
+                              local.playerId,
+                              field,
+                            ),
+                      ),
+                    ),
+                  ],
+                ),
+                _GameHistoryTab(entries: game.sessionActionLog),
+              ],
+            ),
+          ),
+          _BottomBar(
+            game: game,
+            local: local,
+            onToggleOverview: onToggleOverview,
+          ),
+          SizedBox(height: LayoutTokens.gr2),
+        ],
       ),
     );
+  }
+}
+
+class _GameHistoryTab extends StatelessWidget {
+  final List<GameLogEntry> entries;
+
+  const _GameHistoryTab({required this.entries});
+
+  @override
+  Widget build(BuildContext context) {
+    if (entries.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.all(LayoutTokens.gr4),
+          child: Text(
+            'No actions logged yet.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppTheme.textSecondary.withValues(alpha: 0.9),
+              fontSize: 14,
+            ),
+          ),
+        ),
+      );
+    }
+
+    final grouped = <int, List<GameLogEntry>>{};
+    for (final e in entries) {
+      grouped.putIfAbsent(e.turnNumber, () => []).add(e);
+    }
+    final turns = grouped.keys.toList()..sort();
+
+    return ListView.builder(
+      padding: EdgeInsets.fromLTRB(
+        LayoutTokens.gr3,
+        LayoutTokens.gr2,
+        LayoutTokens.gr3,
+        LayoutTokens.gr4,
+      ),
+      itemCount: turns.length,
+      itemBuilder: (context, ti) {
+        final turn = turns[ti];
+        final rows = grouped[turn]!;
+        return Padding(
+          padding: EdgeInsets.only(bottom: LayoutTokens.gr3),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Turn $turn',
+                style: TextStyle(
+                  color: AppTheme.accent,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                ),
+              ),
+              SizedBox(height: LayoutTokens.gr1),
+              ...rows.map(
+                (e) => Padding(
+                  padding: EdgeInsets.only(bottom: LayoutTokens.gr1),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _formatTime(e.time),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppTheme.textSecondary.withValues(alpha: 0.85),
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                      SizedBox(width: LayoutTokens.gr2),
+                      Expanded(
+                        child: Text(
+                          e.message,
+                          style: const TextStyle(
+                            color: AppTheme.textPrimary,
+                            fontSize: 13,
+                            height: 1.25,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  static String _formatTime(DateTime t) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${two(t.hour)}:${two(t.minute)}';
   }
 }
 
@@ -491,6 +713,21 @@ class _BottomBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(gameProvider.notifier);
     final hasUndo = local.undoStack.isNotEmpty;
+    final vw = MediaQuery.sizeOf(context).width;
+    final barSig = vw.toStringAsFixed(0);
+    if (_dbgLastBarBtnSig != barSig) {
+      _dbgLastBarBtnSig = barSig;
+      // #region agent log
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _agentDbgGameUi(
+          'H3',
+          'game_screen.dart:_BottomBar',
+          'bottom_bar_viewport',
+          {'viewportW': vw, 'minTouchDp': 48},
+        );
+      });
+      // #endregion
+    }
 
     return Container(
       padding: EdgeInsets.symmetric(
@@ -514,67 +751,79 @@ class _BottomBar extends ConsumerWidget {
             ),
           ],
         ),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-          // Home (quit with confirmation)
-          _BarButton(
-            icon: Icons.home_rounded,
-            label: 'Home',
-            enabled: true,
-            onTap: () => HomeNavBar.promptQuitAndGoHome(context),
-          ),
-
-          // Undo
-          _BarButton(
-            icon: Icons.undo,
-            label: 'Undo',
-            enabled: hasUndo && !local.isEliminated,
-            onTap: () => notifier.undo(local.playerId),
-          ),
-
-          // Timeout (host only)
-          if (game.isHost)
-            _BarButton(
-              icon: game.timeoutActive ? Icons.play_arrow : Icons.timer,
-              label: game.timeoutActive ? 'Resume' : 'Timeout',
-              onTap: () {
-                if (game.timeoutActive) {
-                  notifier.endTimeout();
-                } else {
-                  _showTimeoutPicker(context, notifier);
-                }
-              },
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Center(
+                child: _BarButton(
+                  icon: Icons.home_rounded,
+                  label: 'Home',
+                  enabled: true,
+                  onTap: () => HomeNavBar.promptQuitAndGoHome(context),
+                ),
+              ),
             ),
-
-          // End Turn (host controls phase; any player can see it)
-          _BarButton(
-            icon: Icons.skip_next,
-            label: 'End Turn',
-            enabled: game.isHost && game.isLocalPlayersTurn && !game.timeoutActive,
-            onTap: () => notifier.endTurn(),
-          ),
-
-          // Overview (always selectable, including single player)
-          _BarButton(
-            icon: Icons.grid_view,
-            label: 'Overview',
-            enabled: true,
-            onTap: onToggleOverview,
-          ),
-
-          // Concede
-          _BarButton(
-            icon: Icons.flag_outlined,
-            label: 'Concede',
-            enabled: !local.isEliminated,
-            onTap: () => _showConcedeDialog(context, ref, local.playerId),
-          ),
-            ],
-          ),
+            Expanded(
+              child: Center(
+                child: _BarButton(
+                  icon: Icons.undo,
+                  label: 'Undo',
+                  enabled: hasUndo && !local.isEliminated,
+                  onTap: () => notifier.undo(local.playerId),
+                ),
+              ),
+            ),
+            if (game.isHost)
+              Expanded(
+                child: Center(
+                  child: _BarButton(
+                    icon: game.timeoutActive ? Icons.play_arrow : Icons.timer,
+                    label: game.timeoutActive ? 'Resume' : 'Timeout',
+                    onTap: () {
+                      if (game.timeoutActive) {
+                        notifier.endTimeout();
+                      } else {
+                        _showTimeoutPicker(context, notifier);
+                      }
+                    },
+                  ),
+                ),
+              ),
+            Expanded(
+              child: Center(
+                child: _BarButton(
+                  icon: Icons.skip_next,
+                  label: 'End Turn',
+                  enabled:
+                      game.isHost &&
+                      game.isLocalPlayersTurn &&
+                      !game.timeoutActive,
+                  onTap: () => notifier.endTurn(),
+                ),
+              ),
+            ),
+            Expanded(
+              child: Center(
+                child: _BarButton(
+                  icon: Icons.grid_view,
+                  label: 'Overview',
+                  enabled: true,
+                  onTap: onToggleOverview,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Center(
+                child: _BarButton(
+                  icon: Icons.flag_outlined,
+                  label: 'Concede',
+                  enabled: !local.isEliminated,
+                  onTap: () => _showConcedeDialog(context, ref, local.playerId),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -592,17 +841,21 @@ class _BottomBar extends ConsumerWidget {
   }
 
   void _showConcedeDialog(
-      BuildContext context, WidgetRef ref, String playerId) {
+    BuildContext context,
+    WidgetRef ref,
+    String playerId,
+  ) {
     final game = ref.read(gameProvider);
     showDialog<void>(
       context: context,
-      builder: (_) => _ConcedeDialog(
-        game: game,
-        playerId: playerId,
-        onConcede: () {
-          ref.read(gameProvider.notifier).concede(playerId);
-        },
-      ),
+      builder:
+          (_) => _ConcedeDialog(
+            game: game,
+            playerId: playerId,
+            onConcede: () {
+              ref.read(gameProvider.notifier).concede(playerId);
+            },
+          ),
     );
   }
 }
@@ -646,141 +899,159 @@ class _ConcedeDialogState extends State<_ConcedeDialog> {
   @override
   Widget build(BuildContext context) {
     final game = widget.game;
-    final others = game.players
-        .where((p) => p.playerId != game.localPlayerId && !p.isEliminated)
-        .toList();
+    final others =
+        game.players
+            .where((p) => p.playerId != game.localPlayerId && !p.isEliminated)
+            .toList();
     final allPlayers = game.players.where((p) => !p.isEliminated).toList();
 
     return Consumer(
-      builder: (context, ref, _) => AlertDialog(
-        backgroundColor: AppTheme.card,
-        contentPadding: EdgeInsets.zero,
-        content: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: MediaQuery.sizeOf(context).width * 0.95,
-            maxHeight: MediaQuery.sizeOf(context).height * 0.85,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Title + X
-                Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    MediaQuery.sizeOf(context).width < 360 ? 16 : 24,
-                    20, 8, 0,
-                  ),
-                  child: Row(
-                    children: [
-                      const Expanded(
-                        child: Text('Concede?',
-                            style: TextStyle(
+      builder:
+          (context, ref, _) => AlertDialog(
+            backgroundColor: AppTheme.card,
+            contentPadding: EdgeInsets.zero,
+            content: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.sizeOf(context).width * 0.95,
+                maxHeight: MediaQuery.sizeOf(context).height * 0.85,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Title + X
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        MediaQuery.sizeOf(context).width < 360 ? 16 : 24,
+                        20,
+                        8,
+                        0,
+                      ),
+                      child: Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Concede?',
+                              style: TextStyle(
                                 color: AppTheme.textPrimary,
                                 fontSize: 20,
-                                fontWeight: FontWeight.bold)),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () => Navigator.pop(context),
+                            color: AppTheme.textSecondary,
+                            style: IconButton.styleFrom(
+                              minimumSize: const Size(40, 40),
+                              padding: EdgeInsets.zero,
+                            ),
+                          ),
+                        ],
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(context),
-                        color: AppTheme.textSecondary,
-                        style: IconButton.styleFrom(
-                          minimumSize: const Size(40, 40),
-                          padding: EdgeInsets.zero,
+                    ),
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        MediaQuery.sizeOf(context).width < 360 ? 16 : 24,
+                        8,
+                        MediaQuery.sizeOf(context).width < 360 ? 16 : 24,
+                        0,
+                      ),
+                      child: const Text(
+                        'This will remove you from the game. Rate your opponents before leaving.',
+                        style: TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 13,
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    MediaQuery.sizeOf(context).width < 360 ? 16 : 24,
-                    8,
-                    MediaQuery.sizeOf(context).width < 360 ? 16 : 24,
-                    0,
-                  ),
-                  child: const Text(
-                    'This will remove you from the game. Rate your opponents before leaving.',
-                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                if (others.isNotEmpty) ...[
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: MediaQuery.sizeOf(context).width < 360 ? 16 : 24,
                     ),
-                    child: const Text('Rate opponents',
-                        style: TextStyle(
+                    const SizedBox(height: 16),
+                    if (others.isNotEmpty) ...[
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal:
+                              MediaQuery.sizeOf(context).width < 360 ? 16 : 24,
+                        ),
+                        child: const Text(
+                          'Rate opponents',
+                          style: TextStyle(
                             color: AppTheme.textPrimary,
                             fontSize: 13,
-                            fontWeight: FontWeight.w600)),
-                  ),
-                  const SizedBox(height: 8),
-                  ...others.map((p) => _ConcedePlayerFeedbackRow(
-                        player: p,
-                        isLiked: _likePlayerIds.contains(p.playerId),
-                        isDisliked: _dislikePlayerIds.contains(p.playerId),
-                        onLike: () => setState(() {
-                          _dislikePlayerIds.remove(p.playerId);
-                          _likePlayerIds.add(p.playerId);
-                        }),
-                        onDislike: () => setState(() {
-                          _likePlayerIds.remove(p.playerId);
-                          _dislikePlayerIds.add(p.playerId);
-                        }),
-                      )),
-                  const SizedBox(height: 12),
-                ],
-                // MVP
-                _ConcedeVoteDropdown(
-                  label: 'MVP',
-                  hint: 'Most Valuable Player',
-                  players: allPlayers,
-                  selectedId: _mvpPlayerId,
-                  onChanged: (id) => setState(() => _mvpPlayerId = id),
-                ),
-                const SizedBox(height: 8),
-                // Team Player
-                _ConcedeVoteDropdown(
-                  label: 'Team Player',
-                  hint: 'Best teammate',
-                  players: allPlayers,
-                  selectedId: _teamPlayerId,
-                  onChanged: (id) => setState(() => _teamPlayerId = id),
-                ),
-                const SizedBox(height: 8),
-                _ConcedeVoteDropdown(
-                  label: 'Underdog',
-                  hint: 'Best comeback or underdog performance',
-                  players: allPlayers,
-                  selectedId: _underdogPlayerId,
-                  onChanged: (id) => setState(() => _underdogPlayerId = id),
-                ),
-                const SizedBox(height: 20),
-                // Concede button
-                Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    MediaQuery.sizeOf(context).width < 360 ? 16 : 24,
-                    0,
-                    MediaQuery.sizeOf(context).width < 360 ? 16 : 24,
-                    24,
-                  ),
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppTheme.textSecondary,
-                      side: const BorderSide(color: AppTheme.textSecondary),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ...others.map(
+                        (p) => _ConcedePlayerFeedbackRow(
+                          player: p,
+                          isLiked: _likePlayerIds.contains(p.playerId),
+                          isDisliked: _dislikePlayerIds.contains(p.playerId),
+                          onLike:
+                              () => setState(() {
+                                _dislikePlayerIds.remove(p.playerId);
+                                _likePlayerIds.add(p.playerId);
+                              }),
+                          onDislike:
+                              () => setState(() {
+                                _likePlayerIds.remove(p.playerId);
+                                _dislikePlayerIds.add(p.playerId);
+                              }),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    // MVP
+                    _ConcedeVoteDropdown(
+                      label: 'MVP',
+                      hint: 'Most Valuable Player',
+                      players: allPlayers,
+                      selectedId: _mvpPlayerId,
+                      onChanged: (id) => setState(() => _mvpPlayerId = id),
                     ),
-                    onPressed: () => _submit(ref),
-                    child: const Text('Concede'),
-                  ),
+                    const SizedBox(height: 8),
+                    // Team Player
+                    _ConcedeVoteDropdown(
+                      label: 'Team Player',
+                      hint: 'Best teammate',
+                      players: allPlayers,
+                      selectedId: _teamPlayerId,
+                      onChanged: (id) => setState(() => _teamPlayerId = id),
+                    ),
+                    const SizedBox(height: 8),
+                    _ConcedeVoteDropdown(
+                      label: 'Underdog',
+                      hint: 'Best comeback or underdog performance',
+                      players: allPlayers,
+                      selectedId: _underdogPlayerId,
+                      onChanged: (id) => setState(() => _underdogPlayerId = id),
+                    ),
+                    const SizedBox(height: 20),
+                    // Concede button
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        MediaQuery.sizeOf(context).width < 360 ? 16 : 24,
+                        0,
+                        MediaQuery.sizeOf(context).width < 360 ? 16 : 24,
+                        24,
+                      ),
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.textSecondary,
+                          side: const BorderSide(color: AppTheme.textSecondary),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        onPressed: () => _submit(ref),
+                        child: const Text('Concede'),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
     );
   }
 }
@@ -830,25 +1101,33 @@ class _ConcedePlayerFeedbackRow extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: Icon(Icons.thumb_up, size: 20,
-                color: isLiked ? AppTheme.success : AppTheme.textSecondary),
+            icon: Icon(
+              Icons.thumb_up,
+              size: 20,
+              color: isLiked ? AppTheme.success : AppTheme.textSecondary,
+            ),
             onPressed: onLike,
             style: IconButton.styleFrom(
-              backgroundColor: isLiked
-                  ? AppTheme.success.withValues(alpha: 0.2)
-                  : Colors.transparent,
+              backgroundColor:
+                  isLiked
+                      ? AppTheme.success.withValues(alpha: 0.2)
+                      : Colors.transparent,
               minimumSize: const Size(44, 44),
               padding: EdgeInsets.zero,
             ),
           ),
           IconButton(
-            icon: Icon(Icons.thumb_down, size: 20,
-                color: isDisliked ? AppTheme.accent : AppTheme.textSecondary),
+            icon: Icon(
+              Icons.thumb_down,
+              size: 20,
+              color: isDisliked ? AppTheme.accent : AppTheme.textSecondary,
+            ),
             onPressed: onDislike,
             style: IconButton.styleFrom(
-              backgroundColor: isDisliked
-                  ? AppTheme.accent.withValues(alpha: 0.2)
-                  : Colors.transparent,
+              backgroundColor:
+                  isDisliked
+                      ? AppTheme.accent.withValues(alpha: 0.2)
+                      : Colors.transparent,
               minimumSize: const Size(44, 44),
               padding: EdgeInsets.zero,
             ),
@@ -913,37 +1192,39 @@ class _ConcedeVoteDropdown extends StatelessWidget {
             items: [
               const DropdownMenuItem<String>(
                 value: null,
-                child: Text('— None —',
-                    style: TextStyle(
-                        color: AppTheme.textSecondary,
-                        fontSize: 13)),
+                child: Text(
+                  '— None —',
+                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                ),
               ),
-              ...players.map((p) => DropdownMenuItem<String>(
-                    value: p.playerId,
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: BoxDecoration(
-                            color: p.playerColor,
-                            shape: BoxShape.circle,
-                          ),
+              ...players.map(
+                (p) => DropdownMenuItem<String>(
+                  value: p.playerId,
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: p.playerColor,
+                          shape: BoxShape.circle,
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            p.username,
-                            style: const TextStyle(
-                              color: AppTheme.textPrimary,
-                              fontSize: 13,
-                            ),
-                            overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          p.username,
+                          style: const TextStyle(
+                            color: AppTheme.textPrimary,
+                            fontSize: 13,
                           ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
-                  )),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
             onChanged: onChanged,
           ),
@@ -971,12 +1252,15 @@ class _BarButton extends StatelessWidget {
     final w = MediaQuery.sizeOf(context).width;
     final isVeryNarrow = w < 340;
     final iconOnly = w < 300;
-    final iconSize = isVeryNarrow ? 20.0 : 24.0;
-    final fontSize = 12.0;
-    final hPad = iconOnly ? 4.0 : (isVeryNarrow ? 8.0 : 12.0);
-    final vPad = 8.0;
+    final iconSize = isVeryNarrow ? 20.0 : 22.0;
+    final fontSize = 11.5;
+    final hPad = iconOnly ? 6.0 : (isVeryNarrow ? 10.0 : 14.0);
+    final vPad = 10.0;
 
-    final c = enabled ? AppTheme.textSecondary : AppTheme.textSecondary.withValues(alpha: 0.4);
+    final c =
+        enabled
+            ? AppTheme.textSecondary
+            : AppTheme.textSecondary.withValues(alpha: 0.4);
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -984,17 +1268,30 @@ class _BarButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(LayoutTokens.gr1),
         child: Tooltip(
           message: label,
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: iconSize, color: c),
-                if (!iconOnly) ...[
-                  const SizedBox(height: 4),
-                  Text(label, style: TextStyle(color: c, fontSize: fontSize, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis, maxLines: 1),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, size: iconSize, color: c),
+                  if (!iconOnly) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        color: c,
+                        fontSize: fontSize,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
@@ -1017,11 +1314,14 @@ class _TimeoutPickerSheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Start Timeout',
-              style: TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold)),
+          const Text(
+            'Start Timeout',
+            style: TextStyle(
+              color: AppTheme.textPrimary,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 16),
           _TimeoutOption(
             label: '2 minutes',
@@ -1060,8 +1360,11 @@ class _TimeoutOption extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const _TimeoutOption(
-      {required this.label, required this.icon, required this.onTap});
+  const _TimeoutOption({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1069,8 +1372,7 @@ class _TimeoutOption extends StatelessWidget {
       tileColor: AppTheme.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       leading: Icon(icon, color: AppTheme.accentGold),
-      title:
-          Text(label, style: const TextStyle(color: AppTheme.textPrimary)),
+      title: Text(label, style: const TextStyle(color: AppTheme.textPrimary)),
       onTap: onTap,
     );
   }
@@ -1096,8 +1398,7 @@ class _AllianceProposalBanner extends ConsumerWidget {
       decoration: BoxDecoration(
         color: AppTheme.accentGold.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(10),
-        border:
-            Border.all(color: AppTheme.accentGold.withValues(alpha: 0.6)),
+        border: Border.all(color: AppTheme.accentGold.withValues(alpha: 0.6)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1111,7 +1412,9 @@ class _AllianceProposalBanner extends ConsumerWidget {
                 child: Text(
                   '${from?.username ?? proposal.fromId} proposes an alliance!',
                   style: const TextStyle(
-                      color: AppTheme.accentGold, fontSize: 12),
+                    color: AppTheme.accentGold,
+                    fontSize: 12,
+                  ),
                 ),
               ),
             ],
@@ -1132,10 +1435,14 @@ class _AllianceProposalBanner extends ConsumerWidget {
                         horizontal: narrow ? 12 : 16,
                       ),
                     ),
-                    onPressed: () =>
-                        ref.read(gameProvider.notifier).respondToAlliance(local.playerId, true),
-                    child: const Text('Accept',
-                        style: TextStyle(color: AppTheme.success, fontSize: 13)),
+                    onPressed:
+                        () => ref
+                            .read(gameProvider.notifier)
+                            .respondToAlliance(local.playerId, true),
+                    child: const Text(
+                      'Accept',
+                      style: TextStyle(color: AppTheme.success, fontSize: 13),
+                    ),
                   ),
                   TextButton(
                     style: TextButton.styleFrom(
@@ -1144,10 +1451,17 @@ class _AllianceProposalBanner extends ConsumerWidget {
                         horizontal: narrow ? 12 : 16,
                       ),
                     ),
-                    onPressed: () =>
-                        ref.read(gameProvider.notifier).respondToAlliance(local.playerId, false),
-                    child: const Text('Decline',
-                        style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                    onPressed:
+                        () => ref
+                            .read(gameProvider.notifier)
+                            .respondToAlliance(local.playerId, false),
+                    child: const Text(
+                      'Decline',
+                      style: TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
                   ),
                 ],
               );
@@ -1179,9 +1493,10 @@ class _GameMarkerBanner extends StatelessWidget {
         children: [
           Text(icon, style: const TextStyle(fontSize: 14)),
           const SizedBox(width: 6),
-          Text(label,
-              style: const TextStyle(
-                  color: AppTheme.accentGold, fontSize: 12)),
+          Text(
+            label,
+            style: const TextStyle(color: AppTheme.accentGold, fontSize: 12),
+          ),
         ],
       ),
     );
@@ -1224,8 +1539,7 @@ class _TimeoutOverlayState extends State<_TimeoutOverlay> {
 
   String get _timeStr {
     if (widget.durationSeconds != null) {
-      final remaining =
-          (widget.durationSeconds! - _elapsed).clamp(0, 9999);
+      final remaining = (widget.durationSeconds! - _elapsed).clamp(0, 9999);
       final m = remaining ~/ 60;
       final s = remaining % 60;
       return '$m:${s.toString().padLeft(2, '0')}';
@@ -1248,7 +1562,10 @@ class _TimeoutOverlayState extends State<_TimeoutOverlay> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: AppTheme.surface.withValues(alpha: 0.95),
                   borderRadius: BorderRadius.circular(20),
@@ -1314,7 +1631,10 @@ class _TimeoutOverlayState extends State<_TimeoutOverlay> {
                     top: -8,
                     right: -8,
                     child: IconButton(
-                      icon: const Icon(Icons.close, color: AppTheme.textSecondary),
+                      icon: const Icon(
+                        Icons.close,
+                        color: AppTheme.textSecondary,
+                      ),
                       onPressed: () => setState(() => _minimized = true),
                       style: IconButton.styleFrom(
                         backgroundColor: AppTheme.surface,
@@ -1325,11 +1645,7 @@ class _TimeoutOverlayState extends State<_TimeoutOverlay> {
                   Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        Icons.timer,
-                        size: 56,
-                        color: AppTheme.accentGold,
-                      ),
+                      Icon(Icons.timer, size: 56, color: AppTheme.accentGold),
                       const SizedBox(height: 16),
                       Text(
                         'TIMEOUT',
@@ -1423,8 +1739,7 @@ class _TimeoutBannerState extends State<_TimeoutBanner> {
       decoration: BoxDecoration(
         color: AppTheme.accentGold.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(8),
-        border:
-            Border.all(color: AppTheme.accentGold.withValues(alpha: 0.5)),
+        border: Border.all(color: AppTheme.accentGold.withValues(alpha: 0.5)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1434,9 +1749,10 @@ class _TimeoutBannerState extends State<_TimeoutBanner> {
           Text(
             'TIMEOUT — $_timeStr',
             style: const TextStyle(
-                color: AppTheme.accentGold,
-                fontSize: 12,
-                fontWeight: FontWeight.bold),
+              color: AppTheme.accentGold,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
@@ -1480,9 +1796,8 @@ class _TurnDurationBannerState extends State<_TurnDurationBanner> {
   Widget build(BuildContext context) {
     final elapsed = DateTime.now().difference(widget.turnStartTime).inSeconds;
     final hasLimit = widget.limitSeconds != null;
-    final remaining = hasLimit
-        ? (widget.limitSeconds! - elapsed).clamp(0, 9999)
-        : null;
+    final remaining =
+        hasLimit ? (widget.limitSeconds! - elapsed).clamp(0, 9999) : null;
 
     String label;
     if (hasLimit && remaining != null) {
@@ -1508,14 +1823,18 @@ class _TurnDurationBannerState extends State<_TurnDurationBanner> {
         children: [
           Icon(
             Icons.schedule,
-            color: widget.isActiveTurn ? AppTheme.accent : AppTheme.textSecondary,
+            color:
+                widget.isActiveTurn ? AppTheme.accent : AppTheme.textSecondary,
             size: 14,
           ),
           const SizedBox(width: 6),
           Text(
             label,
             style: TextStyle(
-              color: widget.isActiveTurn ? AppTheme.accent : AppTheme.textSecondary,
+              color:
+                  widget.isActiveTurn
+                      ? AppTheme.accent
+                      : AppTheme.textSecondary,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
@@ -1557,7 +1876,11 @@ class _OverviewView extends ConsumerWidget {
             ),
             centerTitle: true,
             leading: IconButton(
-              icon: const Icon(Icons.close, color: AppTheme.textSecondary, size: 22),
+              icon: const Icon(
+                Icons.close,
+                color: AppTheme.textSecondary,
+                size: 22,
+              ),
               onPressed: onClose,
               style: IconButton.styleFrom(
                 padding: const EdgeInsets.all(8),
@@ -1568,20 +1891,27 @@ class _OverviewView extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.only(right: 8, top: 6, bottom: 6),
                 child: TextButton(
-                  onPressed: game.isHost &&
-                          game.isLocalPlayersTurn &&
-                          !game.timeoutActive
-                      ? () => notifier.endTurn()
-                      : null,
+                  onPressed:
+                      game.isHost &&
+                              game.isLocalPlayersTurn &&
+                              !game.timeoutActive
+                          ? () => notifier.endTurn()
+                          : null,
                   style: TextButton.styleFrom(
                     backgroundColor: AppTheme.accent.withValues(alpha: 0.2),
                     foregroundColor: AppTheme.accent,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: const Text('End', style: TextStyle(fontWeight: FontWeight.w600)),
+                  child: const Text(
+                    'End',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                 ),
               ),
             ],
@@ -1609,10 +1939,9 @@ class _OverviewView extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                ...game.players.map((p) => _OverviewPlayerCard(
-                      p: p,
-                      game: game,
-                    )),
+                ...game.players.map(
+                  (p) => _OverviewPlayerCard(p: p, game: game),
+                ),
               ]),
             ),
           ),
@@ -1634,30 +1963,24 @@ class _OverviewPlayerCard extends ConsumerWidget {
     final isLocal = p.playerId == game.localPlayerId;
     final teamIdx = game.teamAssignments[p.playerId] ?? 0;
 
-    final borderColor = teamIdx > 0
-        ? teamColor(teamIdx)
-        : p.playerColor;
+    final borderColor = teamIdx > 0 ? teamColor(teamIdx) : p.playerColor;
     final borderColorResolved =
         isActive ? borderColor : borderColor.withValues(alpha: 0.25);
 
-    final actionLabel = isActive
-        ? game.currentPhase.displayName
-        : 'Waiting';
+    final actionLabel = isActive ? game.currentPhase.displayName : 'Waiting';
 
     final card = AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
-        color: p.isEliminated
-            ? AppTheme.surface.withValues(alpha: 0.5)
-            : isLocal
+        color:
+            p.isEliminated
+                ? AppTheme.surface.withValues(alpha: 0.5)
+                : isLocal
                 ? AppTheme.card.withValues(alpha: 0.9)
                 : AppTheme.card,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: borderColorResolved,
-          width: isActive ? 2 : 1,
-        ),
+        border: Border.all(color: borderColorResolved, width: isActive ? 2 : 1),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -1666,13 +1989,12 @@ class _OverviewPlayerCard extends ConsumerWidget {
             // Avatar
             CircleAvatar(
               radius: 20,
-              backgroundColor: p.isEliminated
-                  ? AppTheme.textSecondary.withValues(alpha: 0.4)
-                  : p.playerColor,
+              backgroundColor:
+                  p.isEliminated
+                      ? AppTheme.textSecondary.withValues(alpha: 0.4)
+                      : p.playerColor,
               child: Text(
-                p.username.isNotEmpty
-                    ? p.username[0].toUpperCase()
-                    : '?',
+                p.username.isNotEmpty ? p.username[0].toUpperCase() : '?',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
@@ -1686,9 +2008,10 @@ class _OverviewPlayerCard extends ConsumerWidget {
               child: Text(
                 p.username + (isLocal ? ' (you)' : ''),
                 style: TextStyle(
-                  color: p.isEliminated
-                      ? AppTheme.textSecondary
-                      : AppTheme.textPrimary,
+                  color:
+                      p.isEliminated
+                          ? AppTheme.textSecondary
+                          : AppTheme.textPrimary,
                   fontWeight: FontWeight.w500,
                   fontSize: 14,
                 ),
@@ -1699,22 +2022,25 @@ class _OverviewPlayerCard extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: isActive
-                    ? borderColor.withValues(alpha: 0.2)
-                    : AppTheme.surface.withValues(alpha: 0.5),
+                color:
+                    isActive
+                        ? borderColor.withValues(alpha: 0.2)
+                        : AppTheme.surface.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: isActive
-                      ? borderColor.withValues(alpha: 0.5)
-                      : AppTheme.textSecondary.withValues(alpha: 0.2),
+                  color:
+                      isActive
+                          ? borderColor.withValues(alpha: 0.5)
+                          : AppTheme.textSecondary.withValues(alpha: 0.2),
                 ),
               ),
               child: Text(
                 p.isEliminated ? 'OUT' : actionLabel,
                 style: TextStyle(
-                  color: p.isEliminated
-                      ? AppTheme.textSecondary
-                      : isActive
+                  color:
+                      p.isEliminated
+                          ? AppTheme.textSecondary
+                          : isActive
                           ? borderColor
                           : AppTheme.textSecondary,
                   fontSize: 12,
@@ -1736,9 +2062,10 @@ class _OverviewPlayerCard extends ConsumerWidget {
               child: Text(
                 p.isEliminated ? 'OUT' : '${p.life}',
                 style: TextStyle(
-                  color: p.isEliminated
-                      ? AppTheme.textSecondary
-                      : p.life <= 10
+                  color:
+                      p.isEliminated
+                          ? AppTheme.textSecondary
+                          : p.life <= 10
                           ? AppTheme.textSecondary
                           : AppTheme.textPrimary,
                   fontWeight: FontWeight.bold,
@@ -1753,8 +2080,13 @@ class _OverviewPlayerCard extends ConsumerWidget {
 
     if (isLocal) {
       return GestureDetector(
-        onTap: () => _OverviewPlayerCard._showTeamSelectorSheet(
-            context, ref, p.playerId, teamIdx),
+        onTap:
+            () => _OverviewPlayerCard._showTeamSelectorSheet(
+              context,
+              ref,
+              p.playerId,
+              teamIdx,
+            ),
         child: card,
       );
     }
@@ -1762,7 +2094,11 @@ class _OverviewPlayerCard extends ConsumerWidget {
   }
 
   static void _showTeamSelectorSheet(
-      BuildContext context, WidgetRef ref, String playerId, int currentTeam) {
+    BuildContext context,
+    WidgetRef ref,
+    String playerId,
+    int currentTeam,
+  ) {
     final notifier = ref.read(gameProvider.notifier);
     showModalBottomSheet<void>(
       context: context,
@@ -1770,81 +2106,90 @@ class _OverviewPlayerCard extends ConsumerWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'Assign team',
-                style: TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              ...[0, 1, 2, 3, 4].map((idx) {
-                final label =
-                    idx == 0 ? 'None' : 'Team $idx';
-                final color = idx == 0 ? AppTheme.textSecondary : teamColor(idx);
-                final isSelected = currentTeam == idx;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Material(
-                    color: isSelected
-                        ? (idx == 0
-                            ? AppTheme.textSecondary.withValues(alpha: 0.15)
-                            : color.withValues(alpha: 0.15))
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(10),
-                    child: InkWell(
-                      onTap: () {
-                        notifier.assignTeam(playerId, idx);
-                        Navigator.of(ctx).pop();
-                      },
-                      borderRadius: BorderRadius.circular(10),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 12),
-                        child: Row(
-                          children: [
-                            if (idx > 0)
-                              Container(
-                                width: 12,
-                                height: 12,
-                                decoration: BoxDecoration(
-                                  color: color,
-                                  shape: BoxShape.circle,
-                                ),
-                              )
-                            else
-                              const SizedBox(width: 12),
-                            if (idx > 0) const SizedBox(width: 10),
-                            Text(
-                              label,
-                              style: TextStyle(
-                                color: idx == 0
-                                    ? AppTheme.textSecondary
-                                    : AppTheme.textPrimary,
-                                fontSize: 14,
-                                fontWeight:
-                                    isSelected ? FontWeight.bold : FontWeight.normal,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+      builder:
+          (ctx) => SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Assign team',
+                    style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                );
-              }),
-            ],
+                  const SizedBox(height: 12),
+                  ...[0, 1, 2, 3, 4].map((idx) {
+                    final label = idx == 0 ? 'None' : 'Team $idx';
+                    final color =
+                        idx == 0 ? AppTheme.textSecondary : teamColor(idx);
+                    final isSelected = currentTeam == idx;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Material(
+                        color:
+                            isSelected
+                                ? (idx == 0
+                                    ? AppTheme.textSecondary.withValues(
+                                      alpha: 0.15,
+                                    )
+                                    : color.withValues(alpha: 0.15))
+                                : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                        child: InkWell(
+                          onTap: () {
+                            notifier.assignTeam(playerId, idx);
+                            Navigator.of(ctx).pop();
+                          },
+                          borderRadius: BorderRadius.circular(10),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
+                            child: Row(
+                              children: [
+                                if (idx > 0)
+                                  Container(
+                                    width: 12,
+                                    height: 12,
+                                    decoration: BoxDecoration(
+                                      color: color,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  )
+                                else
+                                  const SizedBox(width: 12),
+                                if (idx > 0) const SizedBox(width: 10),
+                                Text(
+                                  label,
+                                  style: TextStyle(
+                                    color:
+                                        idx == 0
+                                            ? AppTheme.textSecondary
+                                            : AppTheme.textPrimary,
+                                    fontSize: 14,
+                                    fontWeight:
+                                        isSelected
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
     );
   }
 }

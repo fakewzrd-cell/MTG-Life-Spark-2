@@ -10,6 +10,8 @@ class ScryfallCard {
   /// Scryfall `mana_cost`, e.g. `{2}{W}{U}`; may be null on some card layouts.
   final String? manaCost;
   final bool isPartner;
+  /// Scryfall `color_identity`: subset of `W`,`U`,`B`,`R`,`G` (empty = colorless).
+  final List<String> colorIdentity;
 
   const ScryfallCard({
     required this.name,
@@ -17,10 +19,27 @@ class ScryfallCard {
     this.oracleText,
     this.manaCost,
     this.isPartner = false,
+    this.colorIdentity = const [],
   });
 
   /// Local placeholder path when the network is unavailable.
   static const offlineImageAsset = 'assets/placeholders/card_placeholder.png';
+
+  /// Commander color identity union (partner decks): sorted WUBRG.
+  static List<String> unionColorIdentity(ScryfallCard primary, ScryfallCard? partner) {
+    const order = ['W', 'U', 'B', 'R', 'G'];
+    final set = <String>{};
+    for (final c in primary.colorIdentity) {
+      if (order.contains(c)) set.add(c);
+    }
+    if (partner != null) {
+      for (final c in partner.colorIdentity) {
+        if (order.contains(c)) set.add(c);
+      }
+    }
+    final out = order.where(set.contains).toList();
+    return out;
+  }
 }
 
 class ScryfallService {
@@ -187,12 +206,18 @@ class ScryfallService {
     final isPartner =
         keywords.contains('Partner') || keywords.contains('Friends forever');
 
+    final ciRaw = card['color_identity'];
+    final colorIdentity = ciRaw is List
+        ? ciRaw.map((e) => e.toString()).where((s) => s.length == 1).toList()
+        : <String>[];
+
     return ScryfallCard(
       name: name,
       imageUrl: imageUrl,
       oracleText: oracleText,
       manaCost: manaCost,
       isPartner: isPartner,
+      colorIdentity: colorIdentity,
     );
   }
 }

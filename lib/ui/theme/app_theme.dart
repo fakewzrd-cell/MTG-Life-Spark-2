@@ -6,9 +6,8 @@ import '../tokens/radius_tokens.dart';
 import '../tokens/spacing_tokens.dart';
 import 'app_color_tokens.dart';
 
-/// M3-compliant theme. Dark fantasy aesthetic is preserved via custom palette;
-/// typography uses **Noto Sans** (Google Fonts) across display through label
-/// roles. All M3 color roles and type slots are populated for consistent widgets.
+/// M3-compliant theme (P2P Magic blueprint): deep purple palette + orange accent;
+/// typography uses **Lato** (Google Fonts) across display through label roles.
 class AppTheme {
   AppTheme._();
 
@@ -27,7 +26,7 @@ class AppTheme {
       // ── Full M3 ColorScheme ────────────────────────────────────────────
       colorScheme: const ColorScheme.dark(
         primary: ColorTokens.primaryAccent,
-        onPrimary: Colors.white,
+        onPrimary: Color(0xFF1A0D12),
         primaryContainer: ColorTokens.darkPrimaryContainer,
         onPrimaryContainer: ColorTokens.darkOnPrimaryContainer,
         secondary: ColorTokens.optionalAccent,
@@ -93,7 +92,7 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
-        titleTextStyle: GoogleFonts.notoSans(
+        titleTextStyle: GoogleFonts.lato(
           fontSize: 20,
           fontWeight: FontWeight.w700,
           color: ColorTokens.textPrimary,
@@ -117,14 +116,14 @@ class AppTheme {
         indicatorColor: ColorTokens.primaryAccent.withValues(alpha: 0.24),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return GoogleFonts.notoSans(
+            return GoogleFonts.lato(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.5,
               color: ColorTokens.textPrimary,
             );
           }
-          return GoogleFonts.notoSans(
+          return GoogleFonts.lato(
             fontSize: 12,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.5,
@@ -149,14 +148,14 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: ColorTokens.primaryAccent,
-          foregroundColor: Colors.white,
+          foregroundColor: const Color(0xFF1A0D12),
           disabledBackgroundColor: ColorTokens.surfaceElevated,
           disabledForegroundColor: ColorTokens.textMuted,
           minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(
             borderRadius: RadiusTokens.radiusLg,
           ),
-          textStyle: GoogleFonts.notoSans(
+          textStyle: GoogleFonts.lato(
             fontSize: 16,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.1,
@@ -174,7 +173,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: RadiusTokens.radiusLg,
           ),
-          textStyle: GoogleFonts.notoSans(
+          textStyle: GoogleFonts.lato(
             fontSize: 16,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.1,
@@ -191,7 +190,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: RadiusTokens.radiusLg,
           ),
-          textStyle: GoogleFonts.notoSans(
+          textStyle: GoogleFonts.lato(
             fontSize: 16,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.1,
@@ -203,7 +202,7 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: ColorTokens.primaryAccent,
-          textStyle: GoogleFonts.notoSans(
+          textStyle: GoogleFonts.lato(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.1,
@@ -214,7 +213,7 @@ class AppTheme {
       // FloatingActionButton
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: ColorTokens.primaryAccent,
-        foregroundColor: Colors.white,
+        foregroundColor: const Color(0xFF1A0D12),
         elevation: 4,
         focusElevation: 6,
         hoverElevation: 6,
@@ -293,7 +292,7 @@ class AppTheme {
         backgroundColor: ColorTokens.surfaceElevated,
         elevation: 8,
         shape: RoundedRectangleBorder(borderRadius: RadiusTokens.radiusLg),
-        titleTextStyle: GoogleFonts.notoSans(
+        titleTextStyle: GoogleFonts.lato(
           fontSize: 24,
           fontWeight: FontWeight.w700,
           color: ColorTokens.textPrimary,
@@ -410,7 +409,7 @@ class AppTheme {
       // ── Full M3 ColorScheme ────────────────────────────────────────────
       colorScheme: const ColorScheme.light(
         primary: ColorTokens.lightPrimaryAccent,
-        onPrimary: Colors.white,
+        onPrimary: Color(0xFF1A0D12),
         primaryContainer: ColorTokens.lightPrimaryContainer,
         onPrimaryContainer: ColorTokens.lightOnPrimaryContainer,
         secondary: ColorTokens.optionalAccent,
@@ -473,7 +472,7 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
-        titleTextStyle: GoogleFonts.notoSans(
+        titleTextStyle: GoogleFonts.lato(
           fontSize: 20,
           fontWeight: FontWeight.w700,
           color: ColorTokens.lightTextPrimary,
@@ -495,14 +494,14 @@ class AppTheme {
         indicatorColor: ColorTokens.lightPrimaryAccent.withValues(alpha: 0.20),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return GoogleFonts.notoSans(
+            return GoogleFonts.lato(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.5,
               color: ColorTokens.lightTextPrimary,
             );
           }
-          return GoogleFonts.notoSans(
+          return GoogleFonts.lato(
             fontSize: 12,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.5,
@@ -526,14 +525,14 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: ColorTokens.lightPrimaryAccent,
-          foregroundColor: Colors.white,
+          foregroundColor: const Color(0xFF1A0D12),
           disabledBackgroundColor: ColorTokens.lightSurfaceElevated,
           disabledForegroundColor: ColorTokens.lightTextMuted,
           minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(
             borderRadius: RadiusTokens.radiusLg,
           ),
-          textStyle: GoogleFonts.notoSans(
+          textStyle: GoogleFonts.lato(
             fontSize: 16,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.1,
@@ -550,7 +549,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: RadiusTokens.radiusLg,
           ),
-          textStyle: GoogleFonts.notoSans(
+          textStyle: GoogleFonts.lato(
             fontSize: 16,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.1,
@@ -566,7 +565,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: RadiusTokens.radiusLg,
           ),
-          textStyle: GoogleFonts.notoSans(
+          textStyle: GoogleFonts.lato(
             fontSize: 16,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.1,
@@ -577,7 +576,7 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: ColorTokens.lightPrimaryAccent,
-          textStyle: GoogleFonts.notoSans(
+          textStyle: GoogleFonts.lato(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.1,
@@ -587,7 +586,7 @@ class AppTheme {
 
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: ColorTokens.lightPrimaryAccent,
-        foregroundColor: Colors.white,
+        foregroundColor: const Color(0xFF1A0D12),
         elevation: 4,
         focusElevation: 6,
         hoverElevation: 6,
@@ -663,7 +662,7 @@ class AppTheme {
         backgroundColor: ColorTokens.lightSurface,
         elevation: 8,
         shape: RoundedRectangleBorder(borderRadius: RadiusTokens.radiusLg),
-        titleTextStyle: GoogleFonts.notoSans(
+        titleTextStyle: GoogleFonts.lato(
           fontSize: 24,
           fontWeight: FontWeight.w700,
           color: ColorTokens.lightTextPrimary,
@@ -764,13 +763,13 @@ class AppTheme {
   // Sizes follow M3 spec with minor adjustments for the app's compact mobile
   // viewport (displayLarge capped at 40 instead of M3's 57).
   //
-  // Noto Sans (via GoogleFonts): all M3 text roles — legible, broad language coverage.
+  // Lato (via GoogleFonts): blueprint typography for all M3 text roles.
 
   static TextTheme _buildTextTheme({
     required Color primary,
     required Color secondary,
   }) {
-    final notoSansBase = GoogleFonts.notoSansTextTheme(
+    final latoBase = GoogleFonts.latoTextTheme(
       TextTheme(
         // Display roles
         displayLarge: TextStyle(
@@ -808,7 +807,7 @@ class AppTheme {
           fontWeight: FontWeight.w700,
           color: primary,
         ),
-        // Title roles — Noto Sans
+        // Title roles — Lato
         titleLarge: TextStyle(
           fontSize: 24,
           fontWeight: FontWeight.w500,
@@ -827,7 +826,7 @@ class AppTheme {
           color: primary,
           letterSpacing: 0.1,
         ),
-        // Body roles — Noto Sans
+        // Body roles — Lato
         bodyLarge: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w400,
@@ -846,7 +845,7 @@ class AppTheme {
           color: secondary,
           letterSpacing: 0.4,
         ),
-        // Label roles — Noto Sans
+        // Label roles — Lato
         labelLarge: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w500,
@@ -872,6 +871,6 @@ class AppTheme {
       decoration: TextDecoration.none,
     );
 
-    return notoSansBase;
+    return latoBase;
   }
 }

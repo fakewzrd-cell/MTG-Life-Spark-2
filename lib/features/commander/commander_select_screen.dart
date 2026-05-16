@@ -76,6 +76,9 @@ class _CommanderSelectScreenState
         name: deck.commanderName,
         imageUrl: deck.commanderImageUrl,
         manaCost: deck.commanderManaCost,
+        colorIdentity: deck.hasPartner
+            ? const []
+            : List<String>.from(deck.commanderColorIdentity),
       );
       if (deck.hasPartner && deck.partnerCommanderName != null) {
         _partner = ScryfallCard(
@@ -165,6 +168,7 @@ class _CommanderSelectScreenState
     if (!_canConfirm) return;
     if (widget.newDeckDisplayName != null &&
         widget.newDeckDisplayName!.trim().isNotEmpty) {
+      final ci = ScryfallCard.unionColorIdentity(_primary!, _hasPartner ? _partner : null);
       final deck = PlayerDeck.create(
         displayName: widget.newDeckDisplayName!.trim(),
         commanderName: _primary!.name,
@@ -173,6 +177,7 @@ class _CommanderSelectScreenState
         partnerCommanderImageUrl: _hasPartner ? _partner?.imageUrl : null,
         commanderManaCost: _hiveManaCost(_primary!.manaCost),
         partnerManaCost: _hasPartner ? _hiveManaCost(_partner?.manaCost) : null,
+        commanderColorIdentity: ci,
       );
       await ref.read(deckRepositoryProvider).save(deck);
       bumpDeckListRevision(ref);
@@ -186,12 +191,14 @@ class _CommanderSelectScreenState
         if (mounted) context.pop();
         return;
       }
+      final ci = ScryfallCard.unionColorIdentity(_primary!, _hasPartner ? _partner : null);
       deck.commanderName = _primary!.name;
       deck.commanderImageUrl = _primary!.imageUrl;
       deck.commanderManaCost = _hiveManaCost(_primary!.manaCost);
       deck.partnerCommanderName = _hasPartner ? _partner?.name : null;
       deck.partnerCommanderImageUrl = _hasPartner ? _partner?.imageUrl : null;
       deck.partnerManaCost = _hasPartner ? _hiveManaCost(_partner?.manaCost) : null;
+      deck.commanderColorIdentity = ci;
       await repo.save(deck);
       bumpDeckListRevision(ref);
       if (mounted) context.pop();
@@ -204,6 +211,8 @@ class _CommanderSelectScreenState
           partnerCommanderName: _hasPartner ? _partner?.name : null,
           partnerCommanderImageUrl:
               _hasPartner ? (_partner?.imageUrl ?? '') : null,
+          commanderColorIdentity:
+              ScryfallCard.unionColorIdentity(_primary!, _hasPartner ? _partner : null),
         );
     if (mounted) context.pop();
   }

@@ -544,66 +544,69 @@ class _PlayerSlotCard extends ConsumerWidget {
                       ],
                     );
                   }
-                  // Wide: all three in a row
-                  return Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _PartnerChip(slot: slot, compact: false),
-                      SizedBox(width: LayoutTokens.gr2),
-                      OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: Size(72, btnH),
-                          padding: EdgeInsets.symmetric(horizontal: btnPadH),
-                          backgroundColor: slot.selectedDeckId != null
-                              ? colors.primaryAccent.withValues(alpha: 0.35)
-                              : Colors.transparent,
-                          foregroundColor: slot.selectedDeckId != null
-                              ? colors.textPrimary
-                              : colors.textSecondary,
-                          side: BorderSide(
-                            color: slot.selectedDeckId != null
-                                ? colors.primaryAccent
+                  // Wide: all three in a row (horizontal scroll when card is tight)
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _PartnerChip(slot: slot, compact: false),
+                        SizedBox(width: LayoutTokens.gr2),
+                        OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: Size(72, btnH),
+                            padding: EdgeInsets.symmetric(horizontal: btnPadH),
+                            backgroundColor: slot.selectedDeckId != null
+                                ? colors.primaryAccent.withValues(alpha: 0.35)
+                                : Colors.transparent,
+                            foregroundColor: slot.selectedDeckId != null
+                                ? colors.textPrimary
                                 : colors.textSecondary,
+                            side: BorderSide(
+                              color: slot.selectedDeckId != null
+                                  ? colors.primaryAccent
+                                  : colors.textSecondary,
+                            ),
+                            textStyle: TextStyle(fontSize: FontTokens.body, fontWeight: FontWeight.w600),
                           ),
-                          textStyle: TextStyle(fontSize: FontTokens.body, fontWeight: FontWeight.w600),
+                          onPressed: () => showDeckPickerSheet(
+                            context,
+                            ref,
+                            slot.playerId,
+                          ),
+                          child: const Text('Deck'),
                         ),
-                        onPressed: () => showDeckPickerSheet(
-                          context,
-                          ref,
-                          slot.playerId,
-                        ),
-                        child: const Text('Deck'),
-                      ),
-                      SizedBox(width: LayoutTokens.gr2),
-                      OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: Size(80, btnH),
-                          padding: EdgeInsets.symmetric(horizontal: btnPadH),
-                          backgroundColor: slot.commanderName != null
-                              ? colors.primaryAccent
-                              : Colors.transparent,
-                          foregroundColor: slot.commanderName != null
-                              ? Colors.white
-                              : colors.textSecondary,
-                          side: BorderSide(
-                            color: slot.commanderName != null
+                        SizedBox(width: LayoutTokens.gr2),
+                        OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: Size(80, btnH),
+                            padding: EdgeInsets.symmetric(horizontal: btnPadH),
+                            backgroundColor: slot.commanderName != null
                                 ? colors.primaryAccent
+                                : Colors.transparent,
+                            foregroundColor: slot.commanderName != null
+                                ? Colors.white
                                 : colors.textSecondary,
+                            side: BorderSide(
+                              color: slot.commanderName != null
+                                  ? colors.primaryAccent
+                                  : colors.textSecondary,
+                            ),
+                            textStyle: TextStyle(fontSize: FontTokens.body, fontWeight: FontWeight.w600),
                           ),
-                          textStyle: TextStyle(fontSize: FontTokens.body, fontWeight: FontWeight.w600),
+                          onPressed: () => context.push(
+                            AppRoutes.commanderSelect,
+                            extra: {
+                              'playerId': slot.playerId,
+                              'hasPartner': slot.hasPartner,
+                            },
+                          ),
+                          child: const Text('Commander'),
                         ),
-                        onPressed: () => context.push(
-                          AppRoutes.commanderSelect,
-                          extra: {
-                            'playerId': slot.playerId,
-                            'hasPartner': slot.hasPartner,
-                          },
-                        ),
-                        child: const Text('Commander'),
-                      ),
-                      SizedBox(width: LayoutTokens.gr2),
-                      readyButton,
-                    ],
+                        SizedBox(width: LayoutTokens.gr2),
+                        readyButton,
+                      ],
+                    ),
                   );
                 },
               ),

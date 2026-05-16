@@ -1,4 +1,5 @@
 import 'alliance.dart';
+import 'game_log_entry.dart';
 import 'game_phase.dart';
 import 'player_game_state.dart';
 
@@ -65,6 +66,12 @@ class GameState {
   final int currentSchemeIndex;
   final int currentBountyIndex;
 
+  /// Monotonic counter for History tab grouping (increments on each turn pass).
+  final int sessionTurnCounter;
+
+  /// Session action log (life, counters, commander damage, …).
+  final List<GameLogEntry> sessionActionLog;
+
   const GameState({
     this.players = const [],
     this.turnOrder = const [],
@@ -103,6 +110,8 @@ class GameState {
     this.currentPlanarIndex = 0,
     this.currentSchemeIndex = 0,
     this.currentBountyIndex = 0,
+    this.sessionTurnCounter = 1,
+    this.sessionActionLog = const [],
   });
 
   factory GameState.empty() => const GameState();
@@ -147,6 +156,8 @@ class GameState {
     int? currentPlanarIndex,
     int? currentSchemeIndex,
     int? currentBountyIndex,
+    int? sessionTurnCounter,
+    List<GameLogEntry>? sessionActionLog,
   }) {
     return GameState(
       players: players ?? this.players,
@@ -207,6 +218,8 @@ class GameState {
       currentPlanarIndex: currentPlanarIndex ?? this.currentPlanarIndex,
       currentSchemeIndex: currentSchemeIndex ?? this.currentSchemeIndex,
       currentBountyIndex: currentBountyIndex ?? this.currentBountyIndex,
+      sessionTurnCounter: sessionTurnCounter ?? this.sessionTurnCounter,
+      sessionActionLog: sessionActionLog ?? this.sessionActionLog,
     );
   }
 
@@ -288,6 +301,9 @@ class GameState {
         'currentPlanarIndex': currentPlanarIndex,
         'currentSchemeIndex': currentSchemeIndex,
         'currentBountyIndex': currentBountyIndex,
+        'sessionTurnCounter': sessionTurnCounter,
+        'sessionActionLog':
+            sessionActionLog.map((e) => e.toJson()).toList(),
       };
 
   factory GameState.fromSnapshotJson(
@@ -352,6 +368,11 @@ class GameState {
       currentPlanarIndex: (json['currentPlanarIndex'] as num?)?.toInt() ?? 0,
       currentSchemeIndex: (json['currentSchemeIndex'] as num?)?.toInt() ?? 0,
       currentBountyIndex: (json['currentBountyIndex'] as num?)?.toInt() ?? 0,
+      sessionTurnCounter: (json['sessionTurnCounter'] as num?)?.toInt() ?? 1,
+      sessionActionLog: (json['sessionActionLog'] as List<dynamic>?)
+              ?.map((e) => GameLogEntry.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
     );
   }
 }
