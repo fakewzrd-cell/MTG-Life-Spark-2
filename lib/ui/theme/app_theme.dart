@@ -65,7 +65,7 @@ class AppTheme {
       // ── Component themes ──────────────────────────────────────────────
 
       // Card — M3 elevated surface
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: ColorTokens.surface,
         elevation: 1,
         surfaceTintColor: ColorTokens.primaryAccent.withValues(alpha: 0.12),
@@ -289,7 +289,7 @@ class AppTheme {
       ),
 
       // Dialog
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: ColorTokens.surfaceElevated,
         elevation: 8,
         shape: RoundedRectangleBorder(borderRadius: RadiusTokens.radiusLg),
@@ -447,7 +447,7 @@ class AppTheme {
 
       // ── Component themes ──────────────────────────────────────────────
 
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: ColorTokens.lightSurface,
         elevation: 1,
         surfaceTintColor: ColorTokens.lightPrimaryAccent.withValues(alpha: 0.08),
@@ -659,7 +659,7 @@ class AppTheme {
         pressElevation: 0,
       ),
 
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: ColorTokens.lightSurface,
         elevation: 8,
         shape: RoundedRectangleBorder(borderRadius: RadiusTokens.radiusLg),
