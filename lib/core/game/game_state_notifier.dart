@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 
 import '../bluetooth/ble_message.dart';
 import '../bluetooth/ble_protocol.dart';
@@ -9,10 +10,12 @@ import '../persistence/providers.dart';
 import 'alliance.dart';
 import 'game_log_entry.dart';
 import 'game_phase.dart';
+import 'stack_example_data.dart';
 import 'game_state.dart';
 import 'gameplay_dial_ids.dart';
 import 'lobby_state.dart';
 import 'player_game_state.dart';
+import 'stack_item.dart';
 import 'undo_action.dart';
 
 class GameStateNotifier extends StateNotifier<GameState> {
@@ -1067,6 +1070,288 @@ class GameStateNotifier extends StateNotifier<GameState> {
     }
   }
 
+  // ── Stack tracker ─────────────────────────────────────────────────────────
+
+  bool canEditStackItem(StackItem item) =>
+      item.playerId == state.localPlayerId && item.isActive;
+
+  bool canChangeStackItemStatus(StackItem item) {
+    if (item.playerId != state.localPlayerId && !state.isHost) return false;
+    return item.isActive || item.status == StackItemStatus.fizzled;
+  }
+
+  void addStackItem({
+    required String name,
+    String? parentId,
+    String? playerId,
+    String? oracleText,
+    String? manaCost,
+    String? imageUrl,
+    String? typeLine,
+  }) {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return;
+    final owner = playerId ?? state.localPlayerId;
+    if (owner.isEmpty) return;
+
+    if (parentId != null) {
+      final parent = _stackItemById(parentId);
+      if (parent == null || !parent.isActive) return;
+    }
+
+    final item = StackItem(
+      id: const Uuid().v4(),
+      playerId: owner,
+      name: trimmed,
+      parentId: parentId,
+      createdAt: DateTime.now().millisecondsSinceEpoch,
+      oracleText: oracleText,
+      manaCost: manaCost,
+      imageUrl: imageUrl,
+      typeLine: typeLine,
+    );
+
+    _mutateStack(
+      op: 'add',
+      item: item,
+      log: '${_playerLabel(owner)} added “$trimmed”${parentId != null ? ' (response)' : ''}',
+    );
+  }
+
+  void renameStackItem(
+    String id,
+    String name, {
+    String? oracleText,
+    String? manaCost,
+    String? imageUrl,
+    String? typeLine,
+  }) {
+    final item = _stackItemById(id);
+    if (item == null || !canEditStackItem(item)) return;
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return;
+    if (trimmed == item.name &&
+        oracleText == item.oracleText &&
+        manaCost == item.manaCost &&
+        imageUrl == item.imageUrl &&
+        typeLine == item.typeLine) {
+      return;
+    }
+
+    _mutateStack(
+      op: 'rename',
+      id: id,
+      name: trimmed,
+      oracleText: oracleText,
+      manaCost: manaCost,
+      imageUrl: imageUrl,
+      typeLine: typeLine,
+      log: '${_playerLabel(item.playerId)} renamed stack item to “$trimmed”',
+    );
+  }
+
+  void setStackItemStatus(String id, StackItemStatus status) {
+    final item = _stackItemById(id);
+    if (item == null || !canChangeStackItemStatus(item)) return;
+    if (item.status == status) return;
+
+    final logLabel = switch (status) {
+      StackItemStatus.fizzled => 'fizzled',
+      StackItemStatus.countered => 'countered',
+      StackItemStatus.resolved => 'resolved',
+      StackItemStatus.active => 'reactivated',
+    };
+
+    _mutateStack(
+      op: 'status',
+      id: id,
+      status: status,
+      log:
+          '${_playerLabel(item.playerId)}’s “${item.name}” $logLabel',
+    );
+  }
+
+  /// Fills the stack with a four-player tutorial example (host or solo only).
+  void loadExampleStack() {
+    if (state.players.isEmpty || state.localPlayerId.isEmpty) return;
+    if (!state.isHost && state.players.length > 1) return;
+
+    final localId = state.localPlayerId;
+    final startingLife = state.players.first.life;
+    final mergedPlayers = mergeExamplePodPlayers(
+      current: state.players,
+      localPlayerId: localId,
+      startingLife: startingLife,
+    );
+
+    final playerIds = state.players.length >= 4
+        ? (state.turnOrder.length >= 4
+            ? state.turnOrder.take(4).toList()
+            : state.players.take(4).map((p) => p.playerId).toList())
+        : exampleTurnOrder(localId);
+
+    final items = buildExampleStackItems(
+      playerIds: playerIds,
+      localPlayerId: localId,
+    );
+
+    state = state.copyWith(
+      players: mergedPlayers,
+      turnOrder: playerIds,
+      activePlayerIndex: playerIds.indexOf(localId).clamp(0, 3),
+      stackItems: items,
+    );
+    _appendGameLog('Loaded example stack (4-player pod)');
+
+    _send(BleMessage.stackUpdate(
+      seqNum: _nextSeq(),
+      payload: {
+        'op': 'replace',
+        'items': items.map((e) => e.toJson()).toList(),
+      },
+    ));
+  }
+
+  /// Removes every stack entry (host or solo only).
+  void clearAllStackItems() {
+    if (state.stackItems.isEmpty) return;
+    if (!state.isHost && state.players.length > 1) return;
+
+    _mutateStack(
+      op: 'replace',
+      items: const [],
+      log: 'Cleared stack',
+    );
+  }
+
+  StackItem? _stackItemById(String id) {
+    try {
+      return state.stackItems.firstWhere((i) => i.id == id);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String _playerLabel(String playerId) {
+    return state.playerById(playerId)?.username ?? playerId;
+  }
+
+  void _mutateStack({
+    required String op,
+    StackItem? item,
+    String? id,
+    String? name,
+    String? oracleText,
+    String? manaCost,
+    String? imageUrl,
+    String? typeLine,
+    StackItemStatus? status,
+    List<StackItem>? items,
+    required String log,
+  }) {
+    List<StackItem> next;
+    switch (op) {
+      case 'add':
+        next = [...state.stackItems, item!];
+      case 'rename':
+        next = state.stackItems
+            .map(
+              (i) => i.id == id
+                  ? i.copyWith(
+                      name: name,
+                      oracleText: oracleText,
+                      manaCost: manaCost,
+                      imageUrl: imageUrl,
+                      typeLine: typeLine,
+                    )
+                  : i,
+            )
+            .toList();
+      case 'status':
+        next = state.stackItems
+            .map((i) => i.id == id ? i.copyWith(status: status) : i)
+            .toList();
+      case 'replace':
+        next = items!;
+      default:
+        return;
+    }
+
+    state = state.copyWith(stackItems: next);
+    _appendGameLog(log);
+
+    final payload = <String, dynamic>{'op': op};
+    if (item != null) payload['item'] = item.toJson();
+    if (id != null) payload['id'] = id;
+    if (name != null) payload['name'] = name;
+    if (oracleText != null) payload['oracleText'] = oracleText;
+    if (manaCost != null) payload['manaCost'] = manaCost;
+    if (imageUrl != null) payload['imageUrl'] = imageUrl;
+    if (typeLine != null) payload['typeLine'] = typeLine;
+    if (status != null) payload['status'] = status.name;
+    if (items != null) {
+      payload['items'] = items.map((e) => e.toJson()).toList();
+    }
+
+    _send(BleMessage.stackUpdate(seqNum: _nextSeq(), payload: payload));
+  }
+
+  void _applyStackUpdate(Map<String, dynamic> payload) {
+    final op = payload['op'] as String? ?? '';
+    List<StackItem> next = state.stackItems;
+
+    switch (op) {
+      case 'add':
+        final raw = payload['item'] as Map<String, dynamic>?;
+        if (raw != null) {
+          final item = StackItem.fromJson(raw);
+          if (!next.any((i) => i.id == item.id)) {
+            next = [...next, item];
+          }
+        }
+      case 'rename':
+        final id = payload['id'] as String?;
+        final name = payload['name'] as String?;
+        if (id != null && name != null) {
+          next = next
+              .map(
+                (i) => i.id == id
+                    ? i.copyWith(
+                        name: name,
+                        oracleText: payload['oracleText'] as String?,
+                        manaCost: payload['manaCost'] as String?,
+                        imageUrl: payload['imageUrl'] as String?,
+                        typeLine: payload['typeLine'] as String?,
+                      )
+                    : i,
+              )
+              .toList();
+        }
+      case 'status':
+        final id = payload['id'] as String?;
+        final statusName = payload['status'] as String?;
+        if (id != null && statusName != null) {
+          final status = StackItemStatus.values.firstWhere(
+            (s) => s.name == statusName,
+            orElse: () => StackItemStatus.active,
+          );
+          next =
+              next.map((i) => i.id == id ? i.copyWith(status: status) : i).toList();
+        }
+      case 'replace':
+        final list = payload['items'] as List<dynamic>?;
+        if (list != null) {
+          next = list
+              .map((e) => StackItem.fromJson(e as Map<String, dynamic>))
+              .toList();
+        }
+      default:
+        return;
+    }
+
+    state = state.copyWith(stackItems: next);
+  }
+
   // ── State Snapshot ────────────────────────────────────────────────────────
 
   /// Build a full snapshot for a reconnecting player or for game start.
@@ -1085,6 +1370,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
   void _listenToBle() {
     final service = _ref.read(bleServiceProvider);
     if (service == null) return;
+    _messageSub?.cancel();
     _messageSub = service.messageStream.listen(_onBleMessage);
   }
 
@@ -1173,6 +1459,8 @@ class GameStateNotifier extends StateNotifier<GameState> {
           currentSchemeIndex: scheme ?? state.currentSchemeIndex,
           currentBountyIndex: bounty ?? state.currentBountyIndex,
         );
+      case BleMessageType.stackUpdate:
+        _applyStackUpdate(msg.payload);
       case BleMessageType.rematchPropose:
         // Clients handle this at the UI layer via stream.
         break;

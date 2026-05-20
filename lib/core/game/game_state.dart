@@ -2,6 +2,7 @@ import 'alliance.dart';
 import 'game_log_entry.dart';
 import 'game_phase.dart';
 import 'player_game_state.dart';
+import 'stack_item.dart';
 
 enum DayNightState { none, day, night }
 
@@ -72,6 +73,9 @@ class GameState {
   /// Session action log (life, counters, commander damage, …).
   final List<GameLogEntry> sessionActionLog;
 
+  /// Stack tracker entries (shared across players via BLE / snapshot).
+  final List<StackItem> stackItems;
+
   const GameState({
     this.players = const [],
     this.turnOrder = const [],
@@ -112,6 +116,7 @@ class GameState {
     this.currentBountyIndex = 0,
     this.sessionTurnCounter = 1,
     this.sessionActionLog = const [],
+    this.stackItems = const [],
   });
 
   factory GameState.empty() => const GameState();
@@ -158,6 +163,7 @@ class GameState {
     int? currentBountyIndex,
     int? sessionTurnCounter,
     List<GameLogEntry>? sessionActionLog,
+    List<StackItem>? stackItems,
   }) {
     return GameState(
       players: players ?? this.players,
@@ -220,6 +226,7 @@ class GameState {
       currentBountyIndex: currentBountyIndex ?? this.currentBountyIndex,
       sessionTurnCounter: sessionTurnCounter ?? this.sessionTurnCounter,
       sessionActionLog: sessionActionLog ?? this.sessionActionLog,
+      stackItems: stackItems ?? this.stackItems,
     );
   }
 
@@ -304,6 +311,7 @@ class GameState {
         'sessionTurnCounter': sessionTurnCounter,
         'sessionActionLog':
             sessionActionLog.map((e) => e.toJson()).toList(),
+        'stackItems': stackItems.map((e) => e.toJson()).toList(),
       };
 
   factory GameState.fromSnapshotJson(
@@ -371,6 +379,10 @@ class GameState {
       sessionTurnCounter: (json['sessionTurnCounter'] as num?)?.toInt() ?? 1,
       sessionActionLog: (json['sessionActionLog'] as List<dynamic>?)
               ?.map((e) => GameLogEntry.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      stackItems: (json['stackItems'] as List<dynamic>?)
+              ?.map((e) => StackItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
     );

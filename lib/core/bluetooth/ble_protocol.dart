@@ -83,4 +83,7 @@ enum BleMessageType {
 
   // Variant modes (Planechase, Archenemy, Bounty)
   variantStateUpdate,
+
+  // Stack tracker
+  stackUpdate,
 }

@@ -108,6 +108,16 @@ class BleMessage {
         seqNum: seqNum,
       );
 
+  static BleMessage stackUpdate({
+    required int seqNum,
+    required Map<String, dynamic> payload,
+  }) =>
+      BleMessage(
+        type: BleMessageType.stackUpdate,
+        payload: payload,
+        seqNum: seqNum,
+      );
+
   static BleMessage playerEliminated({
     required int seqNum,
     required String playerId,

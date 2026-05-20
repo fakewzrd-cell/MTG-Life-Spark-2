@@ -9,6 +9,8 @@ class ScryfallCard {
   final String? oracleText;
   /// Scryfall `mana_cost`, e.g. `{2}{W}{U}`; may be null on some card layouts.
   final String? manaCost;
+  /// Scryfall `type_line`, e.g. `Instant` or `Legendary Creature — Human Wizard`.
+  final String? typeLine;
   final bool isPartner;
   /// Scryfall `color_identity`: subset of `W`,`U`,`B`,`R`,`G` (empty = colorless).
   final List<String> colorIdentity;
@@ -18,6 +20,7 @@ class ScryfallCard {
     this.imageUrl,
     this.oracleText,
     this.manaCost,
+    this.typeLine,
     this.isPartner = false,
     this.colorIdentity = const [],
   });
@@ -151,6 +154,24 @@ class ScryfallService {
 
   // ── Fetch by exact name ───────────────────────────────────────────────────
 
+  /// Fuzzy match for a single card name (stack picker confirm).
+  Future<ScryfallCard?> fetchCardFuzzy(String name) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return null;
+    try {
+      final encoded = Uri.encodeComponent(trimmed);
+      final uri = Uri.parse('$_base/cards/named?fuzzy=$encoded');
+      final response = await _client
+          .get(uri, headers: _headers)
+          .timeout(const Duration(seconds: 15));
+      if (response.statusCode != 200) return null;
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      return _parseCard(json);
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Fetches a single card by exact name (for loading saved commanders).
   Future<ScryfallCard?> fetchCardByName(String name) async {
     try {
@@ -202,6 +223,11 @@ class ScryfallService {
           : null;
     }
 
+    var typeLine = card['type_line'] as String?;
+    if (typeLine == null || typeLine.isEmpty) {
+      typeLine = firstFace != null ? firstFace['type_line'] as String? : null;
+    }
+
     final keywords = List<String>.from(card['keywords'] as List? ?? []);
     final isPartner =
         keywords.contains('Partner') || keywords.contains('Friends forever');
@@ -216,6 +242,7 @@ class ScryfallService {
       imageUrl: imageUrl,
       oracleText: oracleText,
       manaCost: manaCost,
+      typeLine: typeLine,
       isPartner: isPartner,
       colorIdentity: colorIdentity,
     );

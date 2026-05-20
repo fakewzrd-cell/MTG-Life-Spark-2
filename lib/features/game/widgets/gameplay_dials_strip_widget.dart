@@ -715,17 +715,23 @@ class _GameplayDialPillState extends State<_GameplayDialPill> {
 
   int get _clampedValue => widget.value.clamp(0, _kDialWheelMax);
 
+  int _wheelIndexForValue(int value) => _kDialWheelMax - value;
+
+  int _valueFromWheelIndex(int index) => _kDialWheelMax - index;
+
   @override
   void initState() {
     super.initState();
-    _ctrl = FixedExtentScrollController(initialItem: _clampedValue);
+    _ctrl = FixedExtentScrollController(
+      initialItem: _wheelIndexForValue(_clampedValue),
+    );
   }
 
   @override
   void didUpdateWidget(covariant _GameplayDialPill oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!_dragging && oldWidget.value != widget.value && _ctrl.hasClients) {
-      final i = _clampedValue;
+      final i = _wheelIndexForValue(_clampedValue);
       if (_ctrl.selectedItem != i) {
         _ctrl.jumpToItem(i);
       }
@@ -801,7 +807,9 @@ class _GameplayDialPillState extends State<_GameplayDialPill> {
                               _dragging = false;
                               WidgetsBinding.instance.addPostFrameCallback((_) {
                                 if (!mounted || !_ctrl.hasClients) return;
-                                final t = _ctrl.selectedItem;
+                                final t = _valueFromWheelIndex(
+                                  _ctrl.selectedItem,
+                                );
                                 if (t != _clampedValue) {
                                   HapticFeedback.selectionClick();
                                   widget.onSetAbsolute(t);
@@ -825,7 +833,7 @@ class _GameplayDialPillState extends State<_GameplayDialPill> {
                               builder: (c, i) {
                                 return Center(
                                   child: Text(
-                                    '$i',
+                                    '${_valueFromWheelIndex(i)}',
                                     style: TextStyle(
                                       fontSize: widget.metrics.wheelFontSize,
                                       fontWeight: FontWeight.w700,

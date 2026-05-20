@@ -29,6 +29,7 @@ import '../widgets/gameplay_dials_strip_widget.dart';
 import '../widgets/life_counter_widget.dart';
 import '../widgets/phase_picker_sheet.dart';
 import '../widgets/political_row_widget.dart';
+import '../widgets/stack_tracker_tab.dart';
 import '../widgets/team_panel_widget.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
@@ -342,8 +343,8 @@ class _PersonalView extends ConsumerStatefulWidget {
 }
 
 class _PersonalViewState extends ConsumerState<_PersonalView> {
-  /// 0 = Play, 1 = History
-  int _playOrHistory = 0;
+  /// 0 = Play, 1 = Stack, 2 = History
+  int _mainTabIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -401,48 +402,60 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
               padding: EdgeInsets.all(
                 tightVertical ? LayoutTokens.gr1 : LayoutTokens.gr2,
               ),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Padding(
-                  padding: EdgeInsets.only(
-                    right:
-                        2 * (LayoutTokens.gr6 + LayoutTokens.gr1) +
-                        1 +
-                        LayoutTokens.gr2,
-                  ),
-                  child: CommanderInfoBar(
-                    player: local,
-                    onCastCommander:
-                        () => notifier.castCommanderFromZone(local.playerId),
-                    includeCastButton: false,
-                    embeddedInCard: true,
-                    roundNumber: game.roundNumber,
-                  ),
-                ),
-                Positioned(
-                  top: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: Center(
-                    child: _PlayHistoryPillSwitch(
-                      selectedIndex: _playOrHistory,
-                      onChanged: (i) => setState(() => _playOrHistory = i),
-                    ),
-                  ),
-                ),
-              ],
+              child: CommanderInfoBar(
+                player: local,
+                onCastCommander:
+                    () => notifier.castCommanderFromZone(local.playerId),
+                includeCastButton: false,
+                embeddedInCard: true,
+                roundNumber: game.roundNumber,
+              ),
             ),
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(
+            horizontalInset,
+            tightVertical ? LayoutTokens.gr1 : LayoutTokens.gr2,
+            horizontalInset,
+            0,
+          ),
+          child: SegmentedButton<int>(
+            segments: const [
+              ButtonSegment(
+                value: 0,
+                label: Text('Play'),
+                icon: Icon(Icons.sports_esports_rounded, size: 18),
+              ),
+              ButtonSegment(
+                value: 1,
+                label: Text('Stack'),
+                icon: Icon(Icons.layers_rounded, size: 18),
+              ),
+              ButtonSegment(
+                value: 2,
+                label: Text('History'),
+                icon: Icon(Icons.history_rounded, size: 18),
+              ),
+            ],
+            selected: {_mainTabIndex},
+            onSelectionChanged: (s) {
+              setState(() => _mainTabIndex = s.first);
+            },
+            style: ButtonStyle(
+              visualDensity: VisualDensity.compact,
+              textStyle: WidgetStatePropertyAll(
+                TextStyle(fontSize: 13, color: AppTheme.textPrimary),
+              ),
             ),
           ),
         ),
         SizedBox(height: tightVertical ? LayoutTokens.gr1 : LayoutTokens.gr2),
         Expanded(
-          child: IndexedStack(
-            index: _playOrHistory,
-            sizing: StackFit.expand,
-            children: [
-              LayoutBuilder(
+          child: switch (_mainTabIndex) {
+            1 => StackTrackerTab(game: game),
+            2 => _GameHistoryTab(entries: game.sessionActionLog),
+            _ => LayoutBuilder(
                 builder: (context, playViewport) {
                   return ClipRect(
                     child: FittedBox(
@@ -759,9 +772,7 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
                   );
                 },
               ),
-              _GameHistoryTab(entries: game.sessionActionLog),
-            ],
-          ),
+          },
         ),
         _BottomBar(
           game: game,
@@ -846,119 +857,6 @@ class _PhaseSelectorLabel extends StatelessWidget {
             child: Tooltip(
               message: 'Choose phase',
               child: label,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Horizontal **Play** | **History** segmented control (fits the commander bar).
-class _PlayHistoryPillSwitch extends StatelessWidget {
-  final int selectedIndex;
-  final ValueChanged<int> onChanged;
-
-  const _PlayHistoryPillSwitch({
-    required this.selectedIndex,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final borderC = AppTheme.textSecondary.withValues(alpha: 0.28);
-    final segmentW = LayoutTokens.gr6 + LayoutTokens.gr1;
-    final segmentH = LayoutTokens.gr5;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppTheme.surface.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(LayoutTokens.gr2),
-        border: Border.all(color: borderC),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _PillSegment(
-            width: segmentW,
-            height: segmentH,
-            selected: selectedIndex == 0,
-            icon: Icons.sports_esports_rounded,
-            tooltip: 'Play',
-            borderRadius: BorderRadius.horizontal(
-              left: Radius.circular(LayoutTokens.gr2 - 2),
-            ),
-            onTap: () => onChanged(0),
-          ),
-          SizedBox(
-            width: 1,
-            height: segmentH - LayoutTokens.gr1,
-            child: DecoratedBox(
-              decoration: BoxDecoration(color: borderC),
-            ),
-          ),
-          _PillSegment(
-            width: segmentW,
-            height: segmentH,
-            selected: selectedIndex == 1,
-            icon: Icons.history_rounded,
-            tooltip: 'History',
-            borderRadius: BorderRadius.horizontal(
-              right: Radius.circular(LayoutTokens.gr2 - 2),
-            ),
-            onTap: () => onChanged(1),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PillSegment extends StatelessWidget {
-  final double width;
-  final double height;
-  final bool selected;
-  final IconData icon;
-  final String tooltip;
-  final BorderRadius borderRadius;
-  final VoidCallback onTap;
-
-  const _PillSegment({
-    required this.width,
-    required this.height,
-    required this.selected,
-    required this.icon,
-    required this.tooltip,
-    required this.borderRadius,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: borderRadius,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 160),
-            curve: Curves.easeOut,
-            width: width,
-            height: height,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: selected ? AppTheme.accent : Colors.transparent,
-              borderRadius: borderRadius,
-            ),
-            child: Icon(
-              icon,
-              size: LayoutTokens.gr4,
-              color:
-                  selected
-                      ? AppTheme.primary
-                      : AppTheme.textSecondary.withValues(alpha: 0.88),
             ),
           ),
         ),

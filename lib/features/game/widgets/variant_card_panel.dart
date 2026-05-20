@@ -56,15 +56,15 @@ class VariantCardPanel extends ConsumerWidget {
         ),
       ),
       error: (_, __) => Padding(
-        padding: SpacingTokens.horizontalMd.add(SpacingTokens.verticalXs),
-        child: Text(
-          'Could not load decks (internet required)',
-          style: TextStyle(
-            color: AppTheme.textSecondary,
-            fontSize: LayoutTokens.gr2,
+          padding: SpacingTokens.horizontalMd.add(SpacingTokens.verticalXs),
+          child: Text(
+            'Could not load decks (internet required)',
+            style: TextStyle(
+              color: AppTheme.textSecondary,
+              fontSize: LayoutTokens.gr2,
+            ),
           ),
         ),
-      ),
     );
   }
 }
