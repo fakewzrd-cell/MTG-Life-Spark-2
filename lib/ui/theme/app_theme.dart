@@ -6,8 +6,8 @@ import '../tokens/radius_tokens.dart';
 import '../tokens/spacing_tokens.dart';
 import 'app_color_tokens.dart';
 
-/// M3-compliant theme: near-black base (#0E0E0E), brand red accent (#D41414),
-/// warm orange (#FF6D00) for secondary highlights (often at reduced opacity).
+/// M3 dark/light themes: neutral surfaces, brand red primary, semantic green/amber/red.
+/// Shell chrome uses primary tints only — orange is reserved for in-game [ColorTokens.emphasis].
 /// Typography uses **Lato** (Google Fonts) across display through label roles.
 class AppTheme {
   AppTheme._();
@@ -30,11 +30,11 @@ class AppTheme {
         onPrimary: ColorTokens.onAccent,
         primaryContainer: ColorTokens.darkPrimaryContainer,
         onPrimaryContainer: ColorTokens.darkOnPrimaryContainer,
-        secondary: ColorTokens.optionalAccent,
-        onSecondary: ColorTokens.backgroundPrimary,
+        secondary: ColorTokens.darkSecondary,
+        onSecondary: ColorTokens.darkOnSecondary,
         secondaryContainer: ColorTokens.darkSecondaryContainer,
         onSecondaryContainer: ColorTokens.darkOnSecondaryContainer,
-        tertiary: ColorTokens.blueprintOrange,
+        tertiary: ColorTokens.darkTertiary,
         onTertiary: ColorTokens.darkOnTertiary,
         tertiaryContainer: ColorTokens.darkTertiaryContainer,
         onTertiaryContainer: ColorTokens.darkOnTertiaryContainer,
@@ -68,7 +68,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: ColorTokens.surface,
         elevation: 1,
-        surfaceTintColor: ColorTokens.blueprintOrange.withValues(alpha: 0.14),
+        surfaceTintColor: ColorTokens.primaryAccent.withValues(alpha: 0.08),
         margin: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
@@ -111,10 +111,10 @@ class AppTheme {
       // NavigationBar (M3 bottom navigation)
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: ColorTokens.surface,
-        surfaceTintColor: ColorTokens.blueprintOrange.withValues(alpha: 0.22),
+        surfaceTintColor: ColorTokens.primaryAccent.withValues(alpha: 0.06),
         elevation: 3,
         height: 80,
-        indicatorColor: ColorTokens.blueprintOrange.withValues(alpha: 0.32),
+        indicatorColor: ColorTokens.primaryAccent.withValues(alpha: 0.18),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return GoogleFonts.lato(
@@ -413,8 +413,8 @@ class AppTheme {
         onPrimary: ColorTokens.onAccent,
         primaryContainer: ColorTokens.lightPrimaryContainer,
         onPrimaryContainer: ColorTokens.lightOnPrimaryContainer,
-        secondary: ColorTokens.optionalAccent,
-        onSecondary: ColorTokens.lightTextPrimary,
+        secondary: ColorTokens.lightSecondary,
+        onSecondary: ColorTokens.lightOnSecondary,
         secondaryContainer: ColorTokens.lightSecondaryContainer,
         onSecondaryContainer: ColorTokens.lightOnSecondaryContainer,
         tertiary: ColorTokens.lightTertiary,
@@ -450,7 +450,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: ColorTokens.lightSurface,
         elevation: 1,
-        surfaceTintColor: ColorTokens.blueprintOrange.withValues(alpha: 0.10),
+        surfaceTintColor: ColorTokens.primaryAccent.withValues(alpha: 0.06),
         margin: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
@@ -489,10 +489,10 @@ class AppTheme {
 
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: ColorTokens.lightSurface,
-        surfaceTintColor: ColorTokens.blueprintOrange.withValues(alpha: 0.18),
+        surfaceTintColor: ColorTokens.primaryAccent.withValues(alpha: 0.04),
         elevation: 3,
         height: 80,
-        indicatorColor: ColorTokens.blueprintOrange.withValues(alpha: 0.28),
+        indicatorColor: ColorTokens.primaryAccent.withValues(alpha: 0.14),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return GoogleFonts.lato(

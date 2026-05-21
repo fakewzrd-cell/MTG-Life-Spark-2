@@ -6,7 +6,9 @@ import 'package:go_router/go_router.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../shared/utils/app_router.dart';
+import '../../ui/tokens/color_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
+import '../../ui/tokens/radius_tokens.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -39,21 +41,21 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       title: 'Phase Bar & Turns',
       body:
           'The phase bar shows every step of the turn — from Untap to Cleanup. Hold Priority to pause progression. Hit Timeout to pause the whole game.',
-      color: Color(0xFF81C784),
+      color: AppTheme.accent,
     ),
     _OnboardingSlide(
       icon: Icons.shield_outlined,
       title: 'Commander & Counters',
       body:
           'Track commander damage per opponent — 21 kills. Track poison (10 kills), energy, experience, and rad counters. Use Proliferate to add 1 to all at once.',
-      color: Color(0xFFFFD54F),
+      color: AppTheme.accent,
     ),
     _OnboardingSlide(
       icon: Icons.handshake_outlined,
       title: 'Alliances & Politics',
       body:
           'Propose secret alliances with other players. They expire automatically or break when you attack each other. Track the Monarch and Initiative with a single tap.',
-      color: Color(0xFFCE93D8),
+      color: AppTheme.accent,
     ),
   ];
 
@@ -115,7 +117,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     color: _currentPage == i
                         ? _slides[i].color
                         : AppTheme.textSecondary.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: RadiusTokens.radiusControlMd,
                   ),
                 );
               }).toList(),
@@ -124,12 +126,21 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             Padding(
               padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr5),
               child: SizedBox(
+                height: 52,
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: _next,
                   style: FilledButton.styleFrom(
                     backgroundColor: _slides[_currentPage].color,
-                    foregroundColor: Colors.black87,
+                    foregroundColor: ColorTokens.onAccent,
+                    minimumSize: const Size(double.infinity, 52),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: RadiusTokens.radiusLg,
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   child: Text(
                     _currentPage == _slides.length - 1

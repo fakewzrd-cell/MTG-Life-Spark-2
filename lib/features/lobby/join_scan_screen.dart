@@ -19,6 +19,7 @@ import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/color_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
+import '../../ui/components/ui_app_bar.dart';
 
 enum _JoinPhase { scanning, connecting, waitingRoom }
 
@@ -167,8 +168,8 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen> {
     final colors = AppColorTokens.of(context);
     return Scaffold(
       backgroundColor: colors.backgroundPrimary,
-      appBar: AppBar(
-        title: const Text('Join a Game'),
+      appBar: UiAppBar(
+        title: 'Join a Game',
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () async {

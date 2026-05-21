@@ -18,6 +18,7 @@ import '../../shared/utils/wizard_rank_titles.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
+import '../../ui/tokens/typography_tokens.dart';
 import '../../ui/tokens/color_tokens.dart';
 
 class EndGameScreen extends ConsumerStatefulWidget {
@@ -373,7 +374,7 @@ class _LevelUpCard extends StatelessWidget {
             AppTheme.accent.withValues(alpha: 0.15),
           ],
         ),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: RadiusTokens.radiusSm,
         border: Border.all(
             color: AppTheme.accentGold.withValues(alpha: 0.5)),
       ),
@@ -438,7 +439,7 @@ class _XpCard extends StatelessWidget {
       padding: EdgeInsets.all(LayoutTokens.gr3),
       decoration: BoxDecoration(
         color: AppTheme.card,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: RadiusTokens.radiusSm,
       ),
       child: Row(
         children: [
@@ -458,7 +459,7 @@ class _XpCard extends StatelessWidget {
               Text(
                 isWinner ? 'Win bonus included' : 'Participation XP',
                 style: const TextStyle(
-                    color: AppTheme.textSecondary, fontSize: 11),
+                    color: AppTheme.textSecondary, fontSize: FontTokens.hudXs),
               ),
             ],
           ),
@@ -567,13 +568,9 @@ class _FeedbackCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Rate Your Opponents',
-            style: TextStyle(
-              color: AppTheme.textPrimary,
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TypographyTokens.sectionTitle(ColorTokens.textPrimary),
           ),
           SizedBox(height: LayoutTokens.gr2),
           if (others.isNotEmpty) ...[

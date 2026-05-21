@@ -1,109 +1,129 @@
 import 'package:flutter/material.dart';
 
-/// Design palette: near-black base (#0E0E0E), brand red accent (#D41414),
-/// warm orange (#FF6D00) for secondary emphasis (often with [.withValues] opacity).
+/// MTG Life Spark color system — **dark-first**, minimal palette.
+///
+/// ### Structure (best practice)
+/// - **Neutrals** — 4 surface steps + 1 border + 3 text levels (no extra grays in UI chrome).
+/// - **Brand** — single red primary for actions, selection, and M3 `primary` role.
+/// - **Semantic** — success / warning / error only for status (not navigation or cards).
+/// - **Emphasis** — warm amber alias for in-game highlights (monarch, timers); not used in shell chrome.
+/// - **Player** — 6 distinct hues for multiplayer identification only.
+///
+/// Shell UI (nav, cards, app bars) uses **primary** tints — not orange or green.
 class ColorTokens {
   ColorTokens._();
 
-  // ── Brand ────────────────────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════════════════
+  // Brand
+  // ══════════════════════════════════════════════════════════════════════════
+
   static const Color brandBlack = Color(0xFF0E0E0E);
   static const Color brandRed = Color(0xFFD41414);
-
-  /// Warm orange — use full strength or `blueprintOrange.withValues(alpha: x)` for tints.
-  static const Color blueprintOrange = Color(0xFFFF6D00);
-
-  /// Text/icons on top of [brandRed] filled surfaces (buttons, FAB, etc.).
   static const Color onAccent = Color(0xFFFFFFFF);
 
-  // ── Dark background ──────────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════════════════
+  // Dark neutrals (Material-style elevation steps)
+  // ══════════════════════════════════════════════════════════════════════════
+
   static const Color backgroundPrimary = brandBlack;
-  static const Color backgroundSecondary = Color(0xFF131313);
+  static const Color backgroundSecondary = Color(0xFF121212);
+  static const Color surface = Color(0xFF1A1A1A);
+  static const Color surfaceElevated = Color(0xFF242424);
+  static const Color borderSubtle = Color(0xFF2E2E2E);
 
-  // ── Dark surface ─────────────────────────────────────────────────────────
-  static const Color surface = Color(0xFF181818);
-  static const Color surfaceElevated = Color(0xFF222222);
+  static const Color textPrimary = Color(0xFFEDEDED);
+  static const Color textSecondary = Color(0xFFA3A3A3);
+  static const Color textMuted = Color(0xFF6B6B6B);
 
-  // ── Dark border ──────────────────────────────────────────────────────────
-  static const Color borderSubtle = Color(0xFF383838);
+  // ══════════════════════════════════════════════════════════════════════════
+  // Semantic (status only)
+  // ══════════════════════════════════════════════════════════════════════════
 
-  // ── Dark text ─────────────────────────────────────────────────────────────
-  static const Color textPrimary = Color(0xFFF5F5F5);
-  static const Color textSecondary = Color(0xFFB8B8B8);
-  static const Color textMuted = Color(0xFF7A7A7A);
+  static const Color success = Color(0xFF4ADE80);
+  static const Color warning = Color(0xFFF59E0B);
+  static const Color danger = Color(0xFFEF4444);
 
-  // ── Accent ───────────────────────────────────────────────────────────────
+  /// In-game warm highlight (monarch, energy, etc.). Prefer over raw orange in features.
+  static const Color emphasis = warning;
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // Aliases (backward compatibility — do not use in new shell UI)
+  // ══════════════════════════════════════════════════════════════════════════
+
   static const Color primaryAccent = brandRed;
-  static const Color optionalAccent = Color(0xFF57F287); // secondary emphasis (success-adjacent)
-  /// Legacy name: warm orange highlights (monarch, timers, energy, etc.).
-  static const Color accentGold = blueprintOrange;
+  static const Color optionalAccent = success;
+  static const Color blueprintOrange = emphasis;
+  static const Color accentGold = emphasis;
+  static const Color dangerAmber = warning;
 
-  // ── Semantic ─────────────────────────────────────────────────────────────
-  static const Color success = Color(0xFF57F287);
-  static const Color danger = Color(0xFFED4245);
-  static const Color dangerAmber = Color(0xFFF97316);
-  static const Color warning = Color(0xFFFEE75C);
+  // ══════════════════════════════════════════════════════════════════════════
+  // Player identification (multiplayer only — not app chrome)
+  // ══════════════════════════════════════════════════════════════════════════
 
-  // ── Player palette ───────────────────────────────────────────────────────
   static const List<Color> playerPalette = [
-    Color(0xFFE94560),
-    Color(0xFF4FC3F7),
-    Color(0xFF81C784),
-    Color(0xFFFFD54F),
-    Color(0xFFCE93D8),
-    Color(0xFFFF8A65),
+    Color(0xFFEF5350),
+    Color(0xFF42A5F5),
+    Color(0xFF66BB6A),
+    Color(0xFFFFCA28),
+    Color(0xFFAB47BC),
+    Color(0xFFFF7043),
   ];
 
   static Color playerColor(int index) =>
       playerPalette[index % playerPalette.length];
 
   // ══════════════════════════════════════════════════════════════════════════
-  // Light theme palette
+  // Light theme neutrals
   // ══════════════════════════════════════════════════════════════════════════
 
-  static const Color lightBackgroundPrimary = Color(0xFFF4F4F4);
-  static const Color lightBackgroundSecondary = Color(0xFFEBEBEB);
+  static const Color lightBackgroundPrimary = Color(0xFFF5F5F5);
+  static const Color lightBackgroundSecondary = Color(0xFFEEEEEE);
   static const Color lightSurface = Color(0xFFFFFFFF);
   static const Color lightSurfaceElevated = Color(0xFFF0F0F0);
-  static const Color lightBorderSubtle = Color(0xFFD0D0D0);
+  static const Color lightBorderSubtle = Color(0xFFD4D4D4);
   static const Color lightTextPrimary = Color(0xFF0E0E0E);
-  static const Color lightTextSecondary = Color(0xFF4A4A4A);
-  static const Color lightTextMuted = Color(0xFF6B7280);
+  static const Color lightTextSecondary = Color(0xFF525252);
+  static const Color lightTextMuted = Color(0xFF737373);
   static const Color lightPrimaryAccent = brandRed;
 
   // ══════════════════════════════════════════════════════════════════════════
-  // M3 container / role tokens — dark
+  // M3 ColorScheme roles — dark (tonal, derived from brand + neutrals)
   // ══════════════════════════════════════════════════════════════════════════
 
-  static const Color darkPrimaryContainer = Color(0xFF3D1010);
-  static const Color darkOnPrimaryContainer = Color(0xFFFFDAD6);
-  static const Color darkSecondaryContainer = Color(0xFF1A2E24);
-  static const Color darkOnSecondaryContainer = Color(0xFFA6F4C5);
-  // tertiary == warm orange for M3 tertiary role
-  static const Color darkOnTertiary = Color(0xFF1A0D12);
-  static const Color darkTertiaryContainer = Color(0xFF2A2218);
-  static const Color darkOnTertiaryContainer = Color(0xFFFFE7CC);
-  static const Color darkOutlineVariant = Color(0xFF3A3A3A);
-  static const Color darkErrorContainer = Color(0xFF4A0E0E);
-  static const Color darkOnErrorContainer = Color(0xFFFFB3B3);
+  static const Color darkPrimaryContainer = Color(0xFF3A1515);
+  static const Color darkOnPrimaryContainer = Color(0xFFFFD6D6);
+  static const Color darkSecondary = Color(0xFF9E9E9E);
+  static const Color darkOnSecondary = Color(0xFF0E0E0E);
+  static const Color darkSecondaryContainer = Color(0xFF252525);
+  static const Color darkOnSecondaryContainer = Color(0xFFE0E0E0);
+  static const Color darkTertiary = Color(0xFF8C8C8C);
+  static const Color darkOnTertiary = Color(0xFF0E0E0E);
+  static const Color darkTertiaryContainer = Color(0xFF2A2A2A);
+  static const Color darkOnTertiaryContainer = Color(0xFFE5E5E5);
+  static const Color darkOutlineVariant = borderSubtle;
+  static const Color darkErrorContainer = Color(0xFF3D1515);
+  static const Color darkOnErrorContainer = Color(0xFFFFD6D6);
   static const Color darkInverseSurface = Color(0xFFE8E8E8);
   static const Color darkOnInverseSurface = Color(0xFF0E0E0E);
-  static const Color darkInversePrimary = Color(0xFFFFB4A8);
+  static const Color darkInversePrimary = Color(0xFFFF8A80);
   static const Color darkSurfaceContainerLowest = Color(0xFF080808);
-  static const Color darkSurfaceContainerLow = Color(0xFF0A0A0A);
-  static const Color darkSurfaceContainerHighest = Color(0xFF262626);
+  static const Color darkSurfaceContainerLow = Color(0xFF101010);
+  static const Color darkSurfaceContainerHighest = surfaceElevated;
 
   // ══════════════════════════════════════════════════════════════════════════
-  // M3 container / role tokens — light
+  // M3 ColorScheme roles — light
   // ══════════════════════════════════════════════════════════════════════════
 
   static const Color lightPrimaryContainer = Color(0xFFFFDAD6);
   static const Color lightOnPrimaryContainer = Color(0xFF410008);
-  static const Color lightSecondaryContainer = Color(0xFFCCF5E0);
-  static const Color lightOnSecondaryContainer = Color(0xFF0A3020);
-  static const Color lightTertiary = blueprintOrange;
-  static const Color lightOnTertiary = Color(0xFF1A0D12);
-  static const Color lightTertiaryContainer = Color(0xFFFFE8D6);
-  static const Color lightOnTertiaryContainer = Color(0xFF331800);
+  static const Color lightSecondary = Color(0xFF5C5C5C);
+  static const Color lightOnSecondary = Color(0xFFFFFFFF);
+  static const Color lightSecondaryContainer = Color(0xFFE5E5E5);
+  static const Color lightOnSecondaryContainer = Color(0xFF1A1A1A);
+  static const Color lightTertiary = Color(0xFF737373);
+  static const Color lightOnTertiary = Color(0xFFFFFFFF);
+  static const Color lightTertiaryContainer = Color(0xFFE0E0E0);
+  static const Color lightOnTertiaryContainer = Color(0xFF262626);
   static const Color lightOutline = Color(0xFF9A9A9A);
   static const Color lightErrorContainer = Color(0xFFFFDAD6);
   static const Color lightOnErrorContainer = Color(0xFF410002);

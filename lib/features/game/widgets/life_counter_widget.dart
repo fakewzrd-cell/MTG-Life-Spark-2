@@ -156,7 +156,7 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
 
         return Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: RadiusTokens.radiusBento,
             gradient: LinearGradient(
               colors: CommanderIdentityColors.gameplayGradient(
                 widget.commanderColorIdentity,
@@ -173,7 +173,9 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
           ),
           padding: const EdgeInsets.all(LayoutTokens.gr0),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(25),
+            borderRadius: BorderRadius.circular(
+              RadiusTokens.bento - LayoutTokens.gr0,
+            ),
             child: Container(
               color: AppTheme.primary.withValues(alpha: 0.88),
               child: GestureDetector(

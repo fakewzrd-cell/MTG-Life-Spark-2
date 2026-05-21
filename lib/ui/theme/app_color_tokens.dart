@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// Theme-aware color tokens. Use [AppColorTokens.of] to resolve for current theme.
+import '../tokens/color_tokens.dart';
+
+/// Theme-aware color tokens. Use [AppColorTokens.of] in widgets instead of raw hex.
+///
+/// Covers shell UI (surfaces, text, border, primary) plus semantic status colors.
 class AppColorTokens extends ThemeExtension<AppColorTokens> {
   const AppColorTokens({
     required this.backgroundPrimary,
@@ -12,6 +16,11 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     required this.textSecondary,
     required this.textMuted,
     required this.primaryAccent,
+    required this.onAccent,
+    required this.success,
+    required this.warning,
+    required this.error,
+    required this.emphasis,
   });
 
   final Color backgroundPrimary;
@@ -23,33 +32,49 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
   final Color textSecondary;
   final Color textMuted;
   final Color primaryAccent;
+  final Color onAccent;
+  final Color success;
+  final Color warning;
+  final Color error;
+  /// Warm in-game highlight (monarch, timers). Same as [ColorTokens.emphasis].
+  final Color emphasis;
 
   static AppColorTokens of(BuildContext context) {
     return Theme.of(context).extension<AppColorTokens>()!;
   }
 
   static const AppColorTokens dark = AppColorTokens(
-    backgroundPrimary: Color(0xFF0E0E0E),
-    backgroundSecondary: Color(0xFF131313),
-    surface: Color(0xFF181818),
-    surfaceElevated: Color(0xFF222222),
-    borderSubtle: Color(0xFF383838),
-    textPrimary: Color(0xFFF5F5F5),
-    textSecondary: Color(0xFFB8B8B8),
-    textMuted: Color(0xFF7A7A7A),
-    primaryAccent: Color(0xFFD41414),
+    backgroundPrimary: ColorTokens.backgroundPrimary,
+    backgroundSecondary: ColorTokens.backgroundSecondary,
+    surface: ColorTokens.surface,
+    surfaceElevated: ColorTokens.surfaceElevated,
+    borderSubtle: ColorTokens.borderSubtle,
+    textPrimary: ColorTokens.textPrimary,
+    textSecondary: ColorTokens.textSecondary,
+    textMuted: ColorTokens.textMuted,
+    primaryAccent: ColorTokens.primaryAccent,
+    onAccent: ColorTokens.onAccent,
+    success: ColorTokens.success,
+    warning: ColorTokens.warning,
+    error: ColorTokens.danger,
+    emphasis: ColorTokens.emphasis,
   );
 
   static const AppColorTokens light = AppColorTokens(
-    backgroundPrimary: Color(0xFFF4F4F4),
-    backgroundSecondary: Color(0xFFEBEBEB),
-    surface: Color(0xFFFFFFFF),
-    surfaceElevated: Color(0xFFF0F0F0),
-    borderSubtle: Color(0xFFD0D0D0),
-    textPrimary: Color(0xFF0E0E0E),
-    textSecondary: Color(0xFF4A4A4A),
-    textMuted: Color(0xFF6B7280),
-    primaryAccent: Color(0xFFD41414),
+    backgroundPrimary: ColorTokens.lightBackgroundPrimary,
+    backgroundSecondary: ColorTokens.lightBackgroundSecondary,
+    surface: ColorTokens.lightSurface,
+    surfaceElevated: ColorTokens.lightSurfaceElevated,
+    borderSubtle: ColorTokens.lightBorderSubtle,
+    textPrimary: ColorTokens.lightTextPrimary,
+    textSecondary: ColorTokens.lightTextSecondary,
+    textMuted: ColorTokens.lightTextMuted,
+    primaryAccent: ColorTokens.lightPrimaryAccent,
+    onAccent: ColorTokens.onAccent,
+    success: ColorTokens.success,
+    warning: ColorTokens.warning,
+    error: ColorTokens.danger,
+    emphasis: ColorTokens.emphasis,
   );
 
   @override
@@ -63,6 +88,11 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     Color? textSecondary,
     Color? textMuted,
     Color? primaryAccent,
+    Color? onAccent,
+    Color? success,
+    Color? warning,
+    Color? error,
+    Color? emphasis,
   }) {
     return AppColorTokens(
       backgroundPrimary: backgroundPrimary ?? this.backgroundPrimary,
@@ -74,6 +104,11 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
       textSecondary: textSecondary ?? this.textSecondary,
       textMuted: textMuted ?? this.textMuted,
       primaryAccent: primaryAccent ?? this.primaryAccent,
+      onAccent: onAccent ?? this.onAccent,
+      success: success ?? this.success,
+      warning: warning ?? this.warning,
+      error: error ?? this.error,
+      emphasis: emphasis ?? this.emphasis,
     );
   }
 
@@ -81,8 +116,10 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
   AppColorTokens lerp(ThemeExtension<AppColorTokens>? other, double t) {
     if (other is! AppColorTokens) return this;
     return AppColorTokens(
-      backgroundPrimary: Color.lerp(backgroundPrimary, other.backgroundPrimary, t)!,
-      backgroundSecondary: Color.lerp(backgroundSecondary, other.backgroundSecondary, t)!,
+      backgroundPrimary:
+          Color.lerp(backgroundPrimary, other.backgroundPrimary, t)!,
+      backgroundSecondary:
+          Color.lerp(backgroundSecondary, other.backgroundSecondary, t)!,
       surface: Color.lerp(surface, other.surface, t)!,
       surfaceElevated: Color.lerp(surfaceElevated, other.surfaceElevated, t)!,
       borderSubtle: Color.lerp(borderSubtle, other.borderSubtle, t)!,
@@ -90,6 +127,11 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
       textSecondary: Color.lerp(textSecondary, other.textSecondary, t)!,
       textMuted: Color.lerp(textMuted, other.textMuted, t)!,
       primaryAccent: Color.lerp(primaryAccent, other.primaryAccent, t)!,
+      onAccent: Color.lerp(onAccent, other.onAccent, t)!,
+      success: Color.lerp(success, other.success, t)!,
+      warning: Color.lerp(warning, other.warning, t)!,
+      error: Color.lerp(error, other.error, t)!,
+      emphasis: Color.lerp(emphasis, other.emphasis, t)!,
     );
   }
 }

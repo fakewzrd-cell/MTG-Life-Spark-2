@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import '../../ui/components/ui_app_bar.dart';
 import '../../ui/tokens/color_tokens.dart';
 import '../../ui/tokens/motion_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,7 +14,9 @@ import '../../core/models/player_deck.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/mana/mana_symbol_assets.dart';
 import '../../shared/theme/app_theme.dart';
+import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
+import '../../ui/tokens/radius_tokens.dart';
 
 String? _hiveManaCost(String? raw) {
   final n = normalizeScryfallManaCost(raw);
@@ -233,8 +236,8 @@ class _CommanderSelectScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.primary,
-      appBar: AppBar(
-        title: Text(_pickingPartner ? 'Select Partner' : _title),
+      appBar: UiAppBar(
+        title: _pickingPartner ? 'Select Partner' : _title,
         actions: [
           if (_canConfirm)
             TextButton(
@@ -410,7 +413,7 @@ class _SelectionPreview extends StatelessWidget {
                     color: pickingPartner
                         ? AppTheme.accent.withValues(alpha: 0.15)
                         : AppTheme.card,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: RadiusTokens.radiusControlMd,
                     border: Border.all(
                       color: pickingPartner
                           ? AppTheme.accent
@@ -434,7 +437,7 @@ class _SelectionPreview extends StatelessWidget {
                           color: pickingPartner
                               ? AppTheme.accent
                               : AppTheme.textSecondary,
-                          fontSize: 9,
+                          fontSize: FontTokens.hudXs,
                         ),
                       ),
                     ],
@@ -471,7 +474,7 @@ class _MiniCard extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: RadiusTokens.radiusXs,
           child: card.imageUrl != null
               ? CachedNetworkImage(
                   imageUrl: card.imageUrl!,
@@ -486,7 +489,8 @@ class _MiniCard extends StatelessWidget {
         Text(
           label,
           style:
-              const TextStyle(color: AppTheme.textSecondary, fontSize: 10),
+              const TextStyle(
+                  color: AppTheme.textSecondary, fontSize: FontTokens.hudXs),
         ),
       ],
     );
@@ -521,7 +525,7 @@ class _CommanderCard extends StatelessWidget {
         duration: MotionTokens.fast,
         decoration: BoxDecoration(
           color: AppTheme.card,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: RadiusTokens.radiusSm,
           border: Border.all(
             color: isSelected ? AppTheme.accent : Colors.transparent,
             width: 2,
@@ -581,7 +585,7 @@ class _CommanderCard extends StatelessWidget {
                     const Text(
                       'Partner',
                       style: TextStyle(
-                          color: AppTheme.accentGold, fontSize: 10),
+                          color: AppTheme.accentGold, fontSize: FontTokens.hudXs),
                     ),
                 ],
               ),
@@ -603,7 +607,7 @@ class _CommanderCard extends StatelessWidget {
                       'Selected',
                       style: TextStyle(
                           color: ColorTokens.onAccent,
-                          fontSize: 11,
+                          fontSize: FontTokens.hudXs,
                           fontWeight: FontWeight.bold),
                     ),
                   ],

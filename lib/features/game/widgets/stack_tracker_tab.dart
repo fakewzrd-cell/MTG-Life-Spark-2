@@ -1422,7 +1422,7 @@ class _StackCardInfo extends StatelessWidget {
                 item.name,
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  fontSize: 15,
+                  fontSize: FontTokens.body,
                   height: 1.3,
                   color: AppTheme.textPrimary,
                   decoration: (isFizzled || isResolved)

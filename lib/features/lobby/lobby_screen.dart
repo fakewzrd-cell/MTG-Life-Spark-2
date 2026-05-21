@@ -19,6 +19,8 @@ import '../../ui/tokens/color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
+import '../../ui/tokens/typography_tokens.dart';
+import '../../ui/components/ui_app_bar.dart';
 import '../../ui/tokens/opacity_tokens.dart';
 
 class LobbyScreen extends ConsumerStatefulWidget {
@@ -63,8 +65,8 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
 
     return Scaffold(
       backgroundColor: colors.backgroundPrimary,
-      appBar: AppBar(
-        title: const Text('Host Lobby'),
+      appBar: UiAppBar(
+        title: 'Host Lobby',
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () async {
@@ -143,11 +145,7 @@ class _PodSection extends ConsumerWidget {
         children: [
           Text(
             'Match pod',
-            style: TextStyle(
-              color: colors.textPrimary,
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
-            ),
+            style: TypographyTokens.sectionTitle(colors.textPrimary),
           ),
           SizedBox(height: LayoutTokens.gr1),
           Text(
@@ -292,7 +290,7 @@ class _QrHeader extends StatelessWidget {
             Container(
               decoration: BoxDecoration(
                 color: ColorTokens.onAccent,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: RadiusTokens.radiusSm,
                 boxShadow: [
                   BoxShadow(
                     color: colors.primaryAccent.withValues(alpha: 0.15),
@@ -357,7 +355,7 @@ class _PlayerSlotCard extends ConsumerWidget {
       padding: EdgeInsets.all(compact ? LayoutTokens.gr2 : LayoutTokens.gr3),
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: RadiusTokens.radiusMd,
         border: Border.all(
           color: borderColor,
           width: isMe ? 2 : 1,
@@ -650,18 +648,21 @@ class _PartnerChip extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColorTokens.of(context);
-    final gold = ColorTokens.accentGold;
+    final accent = colors.primaryAccent;
     return OutlinedButton(
       style: OutlinedButton.styleFrom(
         minimumSize: const Size(0, LayoutTokens.minTapTarget),
         padding: const EdgeInsets.symmetric(horizontal: LayoutTokens.gr2),
         backgroundColor:
-            slot.hasPartner ? gold.withValues(alpha: 0.15) : Colors.transparent,
-        foregroundColor: slot.hasPartner ? gold : colors.textSecondary,
+            slot.hasPartner
+                ? accent.withValues(alpha: 0.15)
+                : Colors.transparent,
+        foregroundColor:
+            slot.hasPartner ? accent : colors.textSecondary,
         side: BorderSide(
           color:
               slot.hasPartner
-                  ? gold
+                  ? accent
                   : colors.textSecondary.withValues(alpha: 0.4),
         ),
         shape: RoundedRectangleBorder(
@@ -743,11 +744,7 @@ class _ConfigSection extends ConsumerWidget {
         children: [
           Text(
             'Game Settings',
-            style: TextStyle(
-              color: colors.textPrimary,
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
-            ),
+            style: TypographyTokens.sectionTitle(colors.textPrimary),
           ),
           SizedBox(height: LayoutTokens.gr3),
           _ConfigDropdownRow(
@@ -794,7 +791,7 @@ class _ConfigSection extends ConsumerWidget {
 InputDecoration _lobbyDropdownDecoration(BuildContext context) {
   final colors = AppColorTokens.of(context);
   final border = OutlineInputBorder(
-    borderRadius: BorderRadius.circular(12),
+    borderRadius: RadiusTokens.radiusSm,
     borderSide: BorderSide(
       color: colors.textSecondary.withValues(alpha: OpacityTokens.moderate),
     ),
@@ -1133,7 +1130,7 @@ class _GameplaySwitchTile extends StatelessWidget {
       margin: EdgeInsets.only(bottom: compact ? 8 : 12),
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: RadiusTokens.radiusSm,
       ),
       child: SwitchListTile(
         title: Text(

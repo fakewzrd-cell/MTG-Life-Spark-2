@@ -11,6 +11,7 @@ import '../../shared/widgets/deck_tile_visual.dart';
 import '../../shared/widgets/mana_cost_pips.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
+import '../../ui/components/ui_app_bar.dart';
 
 class DecksManageScreen extends ConsumerStatefulWidget {
   const DecksManageScreen({super.key});
@@ -173,9 +174,7 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
     final repo = ref.read(deckRepositoryProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My decks'),
-      ),
+      appBar: const UiAppBar(title: 'My decks'),
       body: ListView.builder(
         padding: EdgeInsets.all(LayoutTokens.gr3),
         itemCount: _decks.length + 1,

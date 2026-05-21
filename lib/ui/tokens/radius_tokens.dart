@@ -20,6 +20,9 @@ class RadiusTokens {
   /// Small control corner (6). QR frame, code chips, compact badges.
   static const double controlXs = 6;
 
+  /// Compact tile corner (8). Commander grid cells, onboarding dots.
+  static const double controlMd = 8;
+
   /// Small control corner (10). Pill-adjacent buttons, HUD chips.
   static const double controlSm = 10;
 
@@ -33,6 +36,8 @@ class RadiusTokens {
 
   // ── BorderRadius constants ────────────────────────────────────────────────
   static const BorderRadius radiusXs = BorderRadius.all(Radius.circular(controlXs));
+  static const BorderRadius radiusControlMd =
+      BorderRadius.all(Radius.circular(controlMd));
   static const BorderRadius radiusSm = BorderRadius.all(Radius.circular(sm));
   static const BorderRadius radiusMd = BorderRadius.all(Radius.circular(md));
   static const BorderRadius radiusLg = BorderRadius.all(Radius.circular(lg));

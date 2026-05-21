@@ -25,6 +25,7 @@ import '../../../ui/tokens/motion_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
+import '../../../ui/tokens/typography_tokens.dart';
 import '../../../shared/widgets/home_nav_bar.dart';
 import '../widgets/commander_damage_panel.dart';
 import '../widgets/commander_info_bar.dart';
@@ -252,7 +253,7 @@ class _FirstPlayerRollOverlayState extends State<_FirstPlayerRollOverlay>
                 height: 120,
                 decoration: BoxDecoration(
                   color: AppTheme.card,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: RadiusTokens.radiusLg,
                   border: Border.all(
                     color: hasRolled ? AppTheme.accentGold : AppTheme.accent,
                     width: 3,
@@ -929,7 +930,7 @@ class _GameHistoryTab extends StatelessWidget {
                 style: TextStyle(
                   color: AppTheme.accent,
                   fontWeight: FontWeight.w800,
-                  fontSize: 15,
+                  fontSize: FontTokens.title,
                 ),
               ),
               SizedBox(height: LayoutTokens.gr1),
@@ -1222,13 +1223,11 @@ class _ConcedeDialogState extends State<_ConcedeDialog> {
                       ),
                       child: Row(
                         children: [
-                          const Expanded(
+                          Expanded(
                             child: Text(
                               'Forfeit?',
-                              style: TextStyle(
-                                color: AppTheme.textPrimary,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
+                              style: TypographyTokens.sectionTitle(
+                                ColorTokens.textPrimary,
                               ),
                             ),
                           ),
@@ -1674,7 +1673,7 @@ class _AllianceProposalBanner extends ConsumerWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppTheme.accentGold.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: RadiusTokens.radiusControlSm,
         border: Border.all(color: AppTheme.accentGold.withValues(alpha: 0.6)),
       ),
       child: Column(
@@ -1763,7 +1762,7 @@ class _GameMarkerBanner extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         color: AppTheme.accentGold.withValues(alpha: OpacityTokens.faint),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: RadiusTokens.radiusControlMd,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1845,7 +1844,7 @@ class _TimeoutOverlayState extends State<_TimeoutOverlay> {
                 ),
                 decoration: BoxDecoration(
                   color: AppTheme.surface.withValues(alpha: 0.95),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: RadiusTokens.radiusLg,
                   border: Border.all(
                     color: AppTheme.accentGold.withValues(alpha: 0.6),
                     width: 1,
@@ -1888,7 +1887,7 @@ class _TimeoutOverlayState extends State<_TimeoutOverlay> {
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
               decoration: BoxDecoration(
                 color: AppTheme.card,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: RadiusTokens.radiusLg,
                 border: Border.all(
                   color: AppTheme.accentGold.withValues(alpha: 0.8),
                   width: 3,
@@ -2015,7 +2014,7 @@ class _TimeoutBannerState extends State<_TimeoutBanner> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         color: AppTheme.accentGold.withValues(alpha: OpacityTokens.subtle),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: RadiusTokens.radiusControlMd,
         border: Border.all(color: AppTheme.accentGold.withValues(alpha: OpacityTokens.half)),
       ),
       child: Row(
@@ -2092,7 +2091,7 @@ class _TurnDurationBannerState extends State<_TurnDurationBanner> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         color: AppTheme.accent.withValues(alpha: OpacityTokens.subtle),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: RadiusTokens.radiusControlMd,
         border: Border.all(color: AppTheme.accent.withValues(alpha: OpacityTokens.half)),
       ),
       child: Row(
@@ -2182,7 +2181,7 @@ class _OverviewView extends ConsumerWidget {
                       vertical: 8,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: RadiusTokens.radiusControlMd,
                     ),
                   ),
                   child: const Text(
@@ -2262,7 +2261,7 @@ class _OverviewPlayerCard extends ConsumerWidget {
                 : isLocal
                 ? AppTheme.card.withValues(alpha: OpacityTokens.nearOpaque)
                 : AppTheme.card,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: RadiusTokens.radiusSm,
         border: Border.all(color: borderColorResolved, width: isActive ? 2 : 1),
       ),
       child: Padding(
@@ -2309,7 +2308,7 @@ class _OverviewPlayerCard extends ConsumerWidget {
                     isActive
                         ? borderColor.withValues(alpha: OpacityTokens.soft)
                         : AppTheme.surface.withValues(alpha: OpacityTokens.half),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: RadiusTokens.radiusControlMd,
                 border: Border.all(
                   color:
                       isActive
@@ -2337,7 +2336,7 @@ class _OverviewPlayerCard extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: AppTheme.surface.withValues(alpha: OpacityTokens.half),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: RadiusTokens.radiusControlMd,
                 border: Border.all(
                   color: AppTheme.textSecondary.withValues(alpha: OpacityTokens.soft),
                 ),

@@ -8,6 +8,9 @@ import '../../../core/game/scryfall_service.dart';
 import '../../../shared/theme/app_theme.dart';
 import '../../../shared/widgets/game_icon.dart';
 import '../../../ui/tokens/layout_tokens.dart';
+import '../../../ui/tokens/radius_tokens.dart';
+import '../../../ui/tokens/typography_tokens.dart';
+import '../../../ui/tokens/color_tokens.dart';
 import '../../../ui/tokens/spacing_tokens.dart';
 
 /// Shows current Planechase plane, Archenemy scheme, or Bounty card with
@@ -187,7 +190,7 @@ class _VariantTile extends StatelessWidget {
               children: [
                 // Card thumbnail
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: RadiusTokens.radiusSm,
                   child: SizedBox(
                     width: thumbW,
                     height: thumbH,
@@ -314,7 +317,7 @@ class _VariantTile extends StatelessWidget {
                   height: 4,
                   decoration: BoxDecoration(
                     color: AppTheme.textSecondary.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: RadiusTokens.radiusXs,
                   ),
                 ),
               ),
@@ -322,7 +325,7 @@ class _VariantTile extends StatelessWidget {
               if (card.imageUrl != null)
                 Center(
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: RadiusTokens.radiusSm,
                     child: CachedNetworkImage(
                       imageUrl: card.imageUrl!,
                       width: (MediaQuery.sizeOf(context).width - 40).clamp(200.0, 280.0),
@@ -333,11 +336,7 @@ class _VariantTile extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 card.name,
-                style: const TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TypographyTokens.sectionTitle(ColorTokens.textPrimary),
               ),
               if (card.oracleText != null && card.oracleText!.isNotEmpty) ...[
                 const SizedBox(height: 12),

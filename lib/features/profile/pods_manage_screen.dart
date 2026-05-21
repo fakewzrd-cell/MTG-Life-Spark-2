@@ -7,6 +7,7 @@ import '../../core/persistence/pod_repository.dart';
 import '../../core/persistence/providers.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
+import '../../ui/components/ui_app_bar.dart';
 
 class PodsManageScreen extends ConsumerStatefulWidget {
   const PodsManageScreen({super.key});
@@ -101,9 +102,7 @@ class _PodsManageScreenState extends ConsumerState<PodsManageScreen> {
     final repo = ref.read(podRepositoryProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My pods'),
-      ),
+      appBar: const UiAppBar(title: 'My pods'),
       body: ListView.builder(
         padding: EdgeInsets.all(LayoutTokens.gr3),
         itemCount: _pods.length + 1,

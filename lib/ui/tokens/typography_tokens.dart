@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'color_tokens.dart';
+import 'font_tokens.dart';
 
 /// Bold typography helpers. **Lato** — matches [AppTheme] / Material [TextTheme].
 class TypographyTokens {
@@ -19,6 +20,15 @@ class TypographyTokens {
         fontSize: 20,
         fontWeight: FontWeight.w700,
         color: ColorTokens.textPrimary,
+      );
+
+  /// Section headers — profile carousels, lobby blocks, decks (20dp w800).
+  static TextStyle sectionTitle(Color primary) => GoogleFonts.lato(
+        fontSize: FontTokens.headline,
+        fontWeight: FontWeight.w800,
+        letterSpacing: -0.2,
+        height: 1.2,
+        color: primary,
       );
 
   static TextStyle body(BuildContext context) =>

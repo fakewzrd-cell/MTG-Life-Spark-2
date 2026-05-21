@@ -7,6 +7,7 @@ import '../../core/persistence/providers.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../shared/utils/app_router.dart';
 import '../../ui/tokens/layout_tokens.dart';
+import '../../ui/tokens/radius_tokens.dart';
 
 class ProfileSetupScreen extends ConsumerStatefulWidget {
   const ProfileSetupScreen({super.key});
@@ -79,7 +80,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                               height: 80,
                               decoration: BoxDecoration(
                                 color: AppTheme.card,
-                                borderRadius: BorderRadius.circular(14),
+                                borderRadius: RadiusTokens.radiusChip,
                               ),
                               child: const Icon(
                                 Icons.shield,

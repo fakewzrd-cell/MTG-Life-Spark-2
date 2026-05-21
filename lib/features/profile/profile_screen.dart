@@ -22,6 +22,7 @@ import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/motion_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
+import '../../ui/tokens/typography_tokens.dart';
 
 /// Internal padding of every bento card.
 /// Inner element radius = RadiusTokens.bento − _kBentoCardPaddingPx (nested radius rule).
@@ -611,12 +612,7 @@ class _PlayerStatsSection extends ConsumerWidget {
       top = stats.first;
     }
 
-    final titleStyle = Theme.of(context).textTheme.titleLarge?.copyWith(
-      fontSize: 20,
-      fontWeight: FontWeight.w800,
-      letterSpacing: -0.2,
-      color: colors.textPrimary,
-    );
+    final titleStyle = TypographyTokens.sectionTitle(colors.textPrimary);
 
     return LayoutBuilder(
       builder: (context, _) {
@@ -629,7 +625,7 @@ class _PlayerStatsSection extends ConsumerWidget {
             width: cardWidth,
             height: cardHeight,
             gradientColors: [
-              Color.lerp(colors.surfaceElevated, ColorTokens.success, 0.14)!,
+              Color.lerp(colors.surfaceElevated, colors.primaryAccent, 0.12)!,
               colors.surfaceElevated,
             ],
             child: _LevelDonutCard(
@@ -834,7 +830,7 @@ IconData _behaviourSmileyIcon(double salt) {
 
 Color _behaviourSmileyColor(double salt, AppColorTokens colors) {
   return Color.lerp(
-        ColorTokens.success,
+        colors.textMuted,
         colors.primaryAccent,
         salt,
       ) ??
@@ -903,7 +899,7 @@ Widget _behaviourSpectrumTrack({
               ),
               gradient: LinearGradient(
                 colors: [
-                  ColorTokens.success,
+                  colors.textMuted,
                   colors.textSecondary,
                   colors.primaryAccent,
                 ],
@@ -967,13 +963,7 @@ class _BentoSectionHeader extends StatelessWidget {
               title,
               maxLines: titleMaxLines,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.2,
-                color: colors.textPrimary,
-                height: 1.05,
-              ),
+              style: TypographyTokens.sectionTitle(colors.textPrimary),
             ),
           ),
           SizedBox(width: LayoutTokens.gr1),
@@ -1540,12 +1530,7 @@ class _RecentGamesModuleState extends State<_RecentGamesModule> {
     final filtered = _filterMatchesForRecentGames(widget.matches, _filter);
     final showFilterMenu = widget.matches.isNotEmpty;
 
-    final titleStyle = Theme.of(context).textTheme.titleLarge?.copyWith(
-      fontSize: 20,
-      fontWeight: FontWeight.w800,
-      letterSpacing: -0.2,
-      color: c.textPrimary,
-    );
+    final titleStyle = TypographyTokens.sectionTitle(c.textPrimary);
 
     Widget titleRow() {
       return Row(
@@ -2164,7 +2149,7 @@ class _RecentMatchCardState extends ConsumerState<_RecentMatchCard> {
         elevation: 1,
         surfaceTintColor: scheme.surfaceTint,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: RadiusTokens.radiusMd,
           side: BorderSide(
             color: scheme.outlineVariant.withValues(alpha: 0.55),
           ),
@@ -2175,7 +2160,7 @@ class _RecentMatchCardState extends ConsumerState<_RecentMatchCard> {
             onTap: () {
               setState(() => _expanded = !_expanded);
             },
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: RadiusTokens.radiusMd,
             child: inner,
           ),
         ),
@@ -2504,12 +2489,7 @@ class _DeckPerformanceSectionState
     final colors = widget.colors;
     final lh = widget.listMaxHeight;
 
-    final deckTitleStyle = Theme.of(context).textTheme.titleLarge?.copyWith(
-      fontSize: 20,
-      fontWeight: FontWeight.w800,
-      letterSpacing: -0.2,
-      color: colors.textPrimary,
-    );
+    final deckTitleStyle = TypographyTokens.sectionTitle(colors.textPrimary);
 
     Widget horizontalList(double cardHeight) {
       return SizedBox(
@@ -2599,7 +2579,7 @@ class _DeckPerfCard extends StatelessWidget {
         elevation: 1,
         surfaceTintColor: scheme.surfaceTint,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: RadiusTokens.radiusMd,
           side: BorderSide(
             color: scheme.outlineVariant.withValues(alpha: 0.55),
           ),
