@@ -455,7 +455,11 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
           child: switch (_mainTabIndex) {
             1 => StackTrackerTab(game: game),
             2 => _GameHistoryTab(entries: game.sessionActionLog),
-            _ => LayoutBuilder(
+            _ => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: LayoutBuilder(
                 builder: (context, playViewport) {
                   return ClipRect(
                     child: FittedBox(
@@ -772,13 +776,16 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
                   );
                 },
               ),
+                ),
+                _BottomBar(
+                  game: game,
+                  local: local,
+                  onToggleOverview: widget.onToggleOverview,
+                  compact: tightVertical,
+                ),
+              ],
+            ),
           },
-        ),
-        _BottomBar(
-          game: game,
-          local: local,
-          onToggleOverview: widget.onToggleOverview,
-          compact: tightVertical,
         ),
       ],
     );
@@ -894,12 +901,14 @@ class _GameHistoryTab extends StatelessWidget {
     }
     final turns = grouped.keys.toList()..sort();
 
+    final bottomSafe = MediaQuery.paddingOf(context).bottom;
+
     return ListView.builder(
       padding: EdgeInsets.fromLTRB(
         LayoutTokens.gr3,
         LayoutTokens.gr2,
         LayoutTokens.gr3,
-        LayoutTokens.gr4,
+        LayoutTokens.gr4 + bottomSafe,
       ),
       itemCount: turns.length,
       itemBuilder: (context, ti) {

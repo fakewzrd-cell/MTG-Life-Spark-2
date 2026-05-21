@@ -62,20 +62,49 @@
       margin: 0;
       font-size: 14px;
       opacity: 0.75;
+      text-align: center;
+      max-width: 280px;
+      line-height: 1.4;
+    }
+    #app-loading .hint {
+      margin-top: 12px;
+      font-size: 12px;
+      opacity: 0.55;
     }
   </style>
 </head>
 <body>
   <div id="app-loading" aria-live="polite">
     <div class="spinner" aria-hidden="true"></div>
-    <p>Loading MGT Life Spark…</p>
+    <p id="app-loading-text">Loading MGT Life Spark…</p>
+    <p id="app-loading-hint" class="hint" hidden></p>
   </div>
-  <script src="flutter_bootstrap.js" async></script>
+  <script src="flutter_bootstrap.js" async onerror="window.__flutterLoadFailed && window.__flutterLoadFailed()"></script>
   <script>
-    window.addEventListener('flutter-first-frame', function () {
-      var el = document.getElementById('app-loading');
-      if (el) el.remove();
-    });
+    (function () {
+      var hint = document.getElementById('app-loading-hint');
+      var text = document.getElementById('app-loading-text');
+      window.__flutterLoadFailed = function () {
+        if (text) text.textContent = 'Could not load the app.';
+        if (hint) {
+          hint.hidden = false;
+          hint.textContent =
+            'Use the Mac dev server in release mode (flutter run -d web-server --release).';
+        }
+      };
+      window.addEventListener('flutter-first-frame', function () {
+        var el = document.getElementById('app-loading');
+        if (el) el.remove();
+      });
+      setTimeout(function () {
+        if (!document.getElementById('app-loading')) return;
+        if (hint) {
+          hint.hidden = false;
+          hint.textContent =
+            'Still loading… On phone, first open can take 1–2 minutes. Keep this tab open.';
+        }
+      }, 45000);
+    })();
   </script>
 </body>
 </html>

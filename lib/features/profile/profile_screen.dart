@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' show DateFormat, NumberFormat;
 
+import '../../core/models/commander_stats.dart';
 import '../../core/models/match_record.dart';
 import '../../core/models/player_deck.dart';
 import '../../core/models/player_profile.dart';
@@ -34,7 +35,7 @@ const String _kDefaultBannerPlaceholderAsset = 'assets/mana/MYB/fullManaCost.png
 BorderRadius get _kBentoRadius =>
     const BorderRadius.all(Radius.circular(_kBentoRadiusPx));
 
-/// Typical phones (≥360 logical width) use the side‑by‑side level/behaviour row to save height.
+/// Typical phones (≥360 logical width) use tighter horizontal page padding.
 const double _kProfileStatsRowBreakpoint = 360;
 
 /// Clamped text scale (1.0 = default) for layout reserves and hero sizing.
@@ -188,15 +189,10 @@ class ProfileScreen extends ConsumerWidget {
                   padding: EdgeInsets.fromLTRB(hPad, 0, hPad, hPad),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
-                      _ProfileLevelBehaviourBentoRow(
+                      _PlayerStatsSection(
                         profile: profile,
                         colors: colors,
-                        bodyWidth: bodyW,
-                      ),
-                      SizedBox(height: LayoutTokens.gr4),
-                      _MostPlayedCommanderSection(
-                        profile: profile,
-                        colors: colors,
+                        listMaxHeight: sectionCardListMaxHeight,
                       ),
                       SizedBox(height: LayoutTokens.gr4),
                       _DeckPerformanceSection(
@@ -559,303 +555,268 @@ class _AnimatedXpInLevelLabelState extends State<_AnimatedXpInLevelLabel>
 }
 
 /// Highest-volume commander from hive stats with deck art when possible.
-class _MostPlayedCommanderSection extends ConsumerWidget {
-  const _MostPlayedCommanderSection({
-    required this.profile,
-    required this.colors,
+/// Fixed-size bento tile for the player stats horizontal carousel.
+class _PlayerStatsBentoTile extends StatelessWidget {
+  const _PlayerStatsBentoTile({
+    required this.width,
+    required this.height,
+    required this.child,
+    this.gradientColors,
   });
 
-  final PlayerProfile profile;
-  final AppColorTokens colors;
+  final double width;
+  final double height;
+  final Widget child;
+  final List<Color>? gradientColors;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(deckListRevisionProvider);
-    final stats =
-        List.of(ref.watch(profileRepositoryProvider).getAllCommanderStats());
-    if (stats.isEmpty) return const SizedBox.shrink();
-    stats.sort((a, b) {
-      final g = b.gamesPlayed.compareTo(a.gamesPlayed);
-      if (g != 0) return g;
-      return b.wins.compareTo(a.wins);
-    });
-    final top = stats.first;
-    if (top.gamesPlayed <= 0) return const SizedBox.shrink();
-
-    final decks = ref.watch(deckRepositoryProvider).getAll();
-    PlayerDeck? match;
-    for (final d in decks) {
-      if (d.commanderName.toLowerCase() == top.commanderName.toLowerCase()) {
-        match = d;
-        break;
-      }
-    }
-    final imageUrl =
-        match?.commanderImageUrl ?? profile.selectedCommanderImageUrl;
-
-    final xpNeeded = _xpNeededForLevel(profile.level);
-    final xpInLevel = profile.xp % xpNeeded;
-    final xpProgress =
-        (xpNeeded > 0) ? (xpInLevel / xpNeeded).clamp(0.0, 1.0) : 0.0;
-
-    final scheme = Theme.of(context).colorScheme;
-
-    return Card(
-      margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
-      color: scheme.surfaceContainerHigh,
-      elevation: 1,
-      surfaceTintColor: scheme.surfaceTint,
-      shape: RoundedRectangleBorder(
-        borderRadius: _kBentoRadius,
-        side: BorderSide(
-          color: scheme.outlineVariant.withValues(alpha: 0.65),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SizedBox(
-            height: 168,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                if (imageUrl != null && imageUrl.isNotEmpty)
-                  CachedNetworkImage(
-                    imageUrl: imageUrl,
-                    fit: BoxFit.cover,
-                    placeholder: (_, __) =>
-                        _defaultBannerFill(context),
-                    errorWidget: (_, __, ___) =>
-                        _defaultBannerFill(context),
-                  )
-                else
-                  _defaultBannerFill(context),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.black.withValues(alpha: 0.05),
-                        Colors.black.withValues(alpha: 0.72),
-                      ],
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: LayoutTokens.gr2,
-                  top: LayoutTokens.gr2,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: LayoutTokens.gr2,
-                      vertical: LayoutTokens.gr1,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colors.primaryAccent.withValues(alpha: 0.92),
-                      borderRadius:
-                          BorderRadius.circular(RadiusTokens.md),
-                      border: Border.all(
-                        color: colors.backgroundPrimary.withValues(alpha: 0.35),
-                      ),
-                    ),
-                    child: Text(
-                      'Most played',
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            color: colors.backgroundPrimary,
-                            fontWeight: FontWeight.w800,
-                          ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.all(_kBentoCardPaddingPx),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  top.commanderName,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        color: colors.textPrimary,
-                        letterSpacing: -0.5,
-                      ),
-                ),
-                SizedBox(height: LayoutTokens.gr1),
-                Text(
-                  '${top.wins}W · ${top.losses}L · ${top.gamesPlayed} games',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: colors.textSecondary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-                SizedBox(height: LayoutTokens.gr3),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: 46,
-                      height: 46,
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          CircularProgressIndicator(
-                            value: xpProgress,
-                            strokeWidth: 4,
-                            backgroundColor:
-                                colors.borderSubtle.withValues(alpha: 0.65),
-                            color: colors.primaryAccent,
-                          ),
-                          Center(
-                            child: Text(
-                              '${profile.level}',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w900,
-                                    color: colors.textPrimary,
-                                  ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(width: LayoutTokens.gr2),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Level progress',
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelMedium
-                                ?.copyWith(
-                                  color: colors.textSecondary,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                          ),
-                          Text(
-                            '$xpInLevel / $xpNeeded XP',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(
-                                  color: colors.textSecondary,
-                                  fontWeight: FontWeight.w600,
-                                  fontFeatures: const [
-                                    FontFeature.tabularFigures(),
-                                  ],
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    _behaviourSmileyMark(profile: profile, colors: colors),
-                  ],
-                ),
-                SizedBox(height: LayoutTokens.gr2),
-                LayoutBuilder(
-                  builder: (context, c) {
-                    final w = c.maxWidth.isFinite ? c.maxWidth : 280.0;
-                    return _behaviourSpectrumTrack(
-                      profile: profile,
-                      colors: colors,
-                      width: w,
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: width,
+      height: height,
+      child: _BentoCard(
+        gradientColors: gradientColors,
+        child: child,
       ),
     );
   }
 }
 
-/// Row (wide) or column: **Level progress** (donut) + **Player behaviour** (spectrum bar).
-class _ProfileLevelBehaviourBentoRow extends StatelessWidget {
-  const _ProfileLevelBehaviourBentoRow({
+class _PlayerStatsSection extends ConsumerWidget {
+  const _PlayerStatsSection({
     required this.profile,
     required this.colors,
-    required this.bodyWidth,
+    required this.listMaxHeight,
   });
 
   final PlayerProfile profile;
   final AppColorTokens colors;
-  final double bodyWidth;
-
-  /// Height for the wide two-column row in the scroll layout.
-  static const double _kWideRowHeight = 252;
+  final double listMaxHeight;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(deckListRevisionProvider);
     final xpNeeded = _xpNeededForLevel(profile.level);
     final xpInLevel = profile.xp % xpNeeded;
     final xpProgress =
         (xpNeeded > 0) ? (xpInLevel / xpNeeded).clamp(0.0, 1.0) : 0.0;
 
-    final wide = bodyWidth >= _kProfileStatsRowBreakpoint;
-
-    final levelCard = _BentoCard(
-      gradientColors: [
-        Color.lerp(colors.surfaceElevated, ColorTokens.success, 0.14)!,
-        colors.surfaceElevated,
-      ],
-      child: _LevelDonutCard(
-        profile: profile,
-        colors: colors,
-        xpNeeded: xpNeeded,
-        xpInLevel: xpInLevel,
-        xpProgress: xpProgress,
-        fillHeight: wide,
-      ),
-    );
-
-    final behaviourCard = _BentoCard(
-      gradientColors: [
-        Color.lerp(colors.surfaceElevated, colors.primaryAccent, 0.12)!,
-        colors.surfaceElevated,
-      ],
-      child: _BehaviourBarCard(
-        profile: profile,
-        colors: colors,
-        fillHeight: wide,
-      ),
-    );
-
-    if (wide) {
-      return SizedBox(
-        height: _kWideRowHeight,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(child: levelCard),
-            SizedBox(width: LayoutTokens.gr3),
-            Expanded(child: behaviourCard),
-          ],
-        ),
-      );
+    final stats =
+        List<CommanderStats>.from(
+          ref.watch(profileRepositoryProvider).getAllCommanderStats(),
+        )..sort((a, b) {
+          final g = b.gamesPlayed.compareTo(a.gamesPlayed);
+          if (g != 0) return g;
+          return b.wins.compareTo(a.wins);
+        });
+    CommanderStats? top;
+    if (stats.isNotEmpty && stats.first.gamesPlayed > 0) {
+      top = stats.first;
     }
 
-    final stack = Column(
+    final titleStyle = Theme.of(context).textTheme.titleLarge?.copyWith(
+      fontSize: 20,
+      fontWeight: FontWeight.w800,
+      letterSpacing: -0.2,
+      color: colors.textPrimary,
+    );
+
+    return LayoutBuilder(
+      builder: (context, _) {
+        final cardHeight =
+            _profileSectionHorizontalCardHeight(context, listMaxHeight);
+        final cardWidth = _kDeckPerfCardWidth;
+
+        final tiles = <Widget>[
+          _PlayerStatsBentoTile(
+            width: cardWidth,
+            height: cardHeight,
+            gradientColors: [
+              Color.lerp(colors.surfaceElevated, ColorTokens.success, 0.14)!,
+              colors.surfaceElevated,
+            ],
+            child: _LevelDonutCard(
+              profile: profile,
+              colors: colors,
+              xpNeeded: xpNeeded,
+              xpInLevel: xpInLevel,
+              xpProgress: xpProgress,
+              fillHeight: true,
+            ),
+          ),
+          _PlayerStatsBentoTile(
+            width: cardWidth,
+            height: cardHeight,
+            gradientColors: [
+              Color.lerp(colors.surfaceElevated, colors.primaryAccent, 0.12)!,
+              colors.surfaceElevated,
+            ],
+            child: _BehaviourBarCard(
+              profile: profile,
+              colors: colors,
+              fillHeight: true,
+            ),
+          ),
+          _PlayerStatsBentoTile(
+            width: cardWidth,
+            height: cardHeight,
+            gradientColors: [
+              Color.lerp(colors.surfaceElevated, colors.primaryAccent, 0.08)!,
+              colors.surfaceElevated,
+            ],
+            child: _MostPlayedBentoCard(
+              profile: profile,
+              colors: colors,
+              top: top,
+            ),
+          ),
+        ];
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Player stats', style: titleStyle),
+            SizedBox(height: LayoutTokens.gr2),
+            SizedBox(
+              height: cardHeight,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                clipBehavior: Clip.none,
+                physics: const BouncingScrollPhysics(),
+                itemCount: tiles.length,
+                separatorBuilder: (_, __) =>
+                    SizedBox(width: LayoutTokens.gr2),
+                itemBuilder: (_, i) => tiles[i],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _MostPlayedBentoCard extends ConsumerWidget {
+  const _MostPlayedBentoCard({
+    required this.profile,
+    required this.colors,
+    required this.top,
+  });
+
+  final PlayerProfile profile;
+  final AppColorTokens colors;
+  final CommanderStats? top;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    String? imageUrl;
+    if (top != null) {
+      final decks = ref.watch(deckRepositoryProvider).getAll();
+      for (final d in decks) {
+        if (d.commanderName.toLowerCase() == top!.commanderName.toLowerCase()) {
+          imageUrl = d.commanderImageUrl;
+          break;
+        }
+      }
+      imageUrl ??= profile.selectedCommanderImageUrl;
+    }
+
+    final innerRadius = _kBentoRadiusPx - _kBentoCardPaddingPx;
+
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
       children: [
-        levelCard,
-        SizedBox(height: LayoutTokens.gr3),
-        behaviourCard,
+        _BentoSectionHeader(
+          title: 'Most\nplayed',
+          titleMaxLines: 2,
+          colors: colors,
+          infoMessage:
+              'Commander you have played the most games with across recorded matches.',
+        ),
+        SizedBox(height: LayoutTokens.gr2),
+        Expanded(
+          child: top == null
+              ? Center(
+                  child: Text(
+                    'Play games with a commander deck to see stats here.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colors.textSecondary,
+                      height: 1.35,
+                    ),
+                  ),
+                )
+              : Builder(
+                  builder: (context) {
+                    final commander = top!;
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius:
+                                BorderRadius.circular(innerRadius),
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                if (imageUrl != null && imageUrl.isNotEmpty)
+                                  CachedNetworkImage(
+                                    imageUrl: imageUrl,
+                                    fit: BoxFit.cover,
+                                    placeholder: (_, __) =>
+                                        _defaultBannerFill(context),
+                                    errorWidget: (_, __, ___) =>
+                                        _defaultBannerFill(context),
+                                  )
+                                else
+                                  _defaultBannerFill(context),
+                                DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Colors.black.withValues(alpha: 0.08),
+                                        Colors.black.withValues(alpha: 0.65),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: LayoutTokens.gr1),
+                        Text(
+                          commander.commanderName,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: colors.textPrimary,
+                                height: 1.15,
+                              ),
+                        ),
+                        SizedBox(height: LayoutTokens.gr0),
+                        Text(
+                          '${commander.wins}W · ${commander.losses}L · ${commander.gamesPlayed} games',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: colors.textSecondary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+        ),
       ],
     );
-    return stack;
   }
 }
 

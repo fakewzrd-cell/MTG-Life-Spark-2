@@ -8,7 +8,6 @@ import '../../../core/game/stack_display.dart';
 import '../../../core/game/scryfall_service.dart';
 import '../../../core/game/stack_item.dart';
 import '../../../shared/theme/app_theme.dart';
-import '../../../shared/widgets/mana_cost_pips.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import 'stack_card_picker_dialog.dart';
 import 'stack_help_sheet.dart';
@@ -27,6 +26,37 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
   StackSortMode _sortMode = StackSortMode.stackOrder;
   bool _showCountered = false;
   bool _tipBannerVisible = true;
+  final Set<String> _enteredStackIds = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _markStackItemsSeen(widget.game.stackItems);
+  }
+
+  @override
+  void didUpdateWidget(StackTrackerTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final oldItems = oldWidget.game.stackItems;
+    final newItems = widget.game.stackItems;
+    if (newItems.isEmpty) {
+      _enteredStackIds.clear();
+      return;
+    }
+    final added =
+        newItems.length - oldItems.length;
+    if (added > 1) {
+      _markStackItemsSeen(newItems);
+    }
+  }
+
+  void _markStackItemsSeen(List<StackItem> items) {
+    _enteredStackIds.addAll(items.map((i) => i.id));
+  }
+
+  bool _shouldAnimateEnter(String id) => !_enteredStackIds.contains(id);
+
+  void _markEntered(String id) => _enteredStackIds.add(id);
 
   @override
   Widget build(BuildContext context) {
@@ -39,135 +69,175 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
     final resolvesNext = StackDisplay.resolvesNextItem(allItems);
     final activeRoots = StackDisplay.activeRootsNewestFirst(allItems);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
+    final bottomSafe = MediaQuery.paddingOf(context).bottom;
+    final listChildren = _sortMode == StackSortMode.stackOrder
+        ? _stackOrderChildren(
+            game,
+            visible,
+            resolvesNext,
+            activeRoots,
+          )
+        : _apnapChildren(game, visible, resolvesNext);
+
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
           padding: EdgeInsets.fromLTRB(
             LayoutTokens.gr3,
             LayoutTokens.gr2,
             LayoutTokens.gr3,
-            LayoutTokens.gr1,
+            LayoutTokens.gr0,
           ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  _sortMode == StackSortMode.stackOrder
-                      ? 'Order on stack'
-                      : 'By player',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    color: AppTheme.textPrimary,
-                  ),
+          sliver: SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _sortMode == StackSortMode.stackOrder
+                            ? 'Order on stack'
+                            : 'By player',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Add spell or ability',
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.all(LayoutTokens.gr0),
+                      constraints: const BoxConstraints(
+                        minWidth: LayoutTokens.minTapTarget,
+                        minHeight: LayoutTokens.minTapTarget,
+                      ),
+                      icon: Icon(
+                        Icons.add_circle_outline_rounded,
+                        color: AppTheme.accent,
+                      ),
+                      onPressed: () => _showAddDialog(context, parentId: null),
+                    ),
+                    IconButton(
+                      tooltip: 'How the stack works',
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.all(LayoutTokens.gr0),
+                      constraints: const BoxConstraints(
+                        minWidth: LayoutTokens.minTapTarget,
+                        minHeight: LayoutTokens.minTapTarget,
+                      ),
+                      icon: Icon(
+                        Icons.help_outline_rounded,
+                        color: AppTheme.textSecondary.withValues(alpha: 0.9),
+                      ),
+                      onPressed: () => StackHelpSheet.show(context),
+                    ),
+                  ],
                 ),
-              ),
-              IconButton(
-                tooltip: 'Add spell or ability',
-                visualDensity: VisualDensity.compact,
-                icon: Icon(
-                  Icons.add_circle_outline_rounded,
-                  color: AppTheme.accent,
+                SizedBox(height: LayoutTokens.gr1),
+                Wrap(
+                  spacing: LayoutTokens.gr1,
+                  runSpacing: LayoutTokens.gr0,
+                  children: [
+                    FilterChip(
+                      label: const Text('By player'),
+                      selected: _sortMode == StackSortMode.apnap,
+                      onSelected: (v) => setState(
+                        () => _sortMode = v
+                            ? StackSortMode.apnap
+                            : StackSortMode.stackOrder,
+                      ),
+                      visualDensity: VisualDensity.compact,
+                      padding:
+                          EdgeInsets.symmetric(horizontal: LayoutTokens.gr0),
+                    ),
+                    FilterChip(
+                      label: const Text('Countered'),
+                      selected: _showCountered,
+                      onSelected: (v) => setState(() => _showCountered = v),
+                      visualDensity: VisualDensity.compact,
+                      padding:
+                          EdgeInsets.symmetric(horizontal: LayoutTokens.gr0),
+                    ),
+                  ],
                 ),
-                onPressed: () => _showAddDialog(context, parentId: null),
-              ),
-              IconButton(
-                tooltip: 'How the stack works',
-                visualDensity: VisualDensity.compact,
-                icon: Icon(
-                  Icons.help_outline_rounded,
-                  color: AppTheme.textSecondary.withValues(alpha: 0.9),
-                ),
-                onPressed: () => StackHelpSheet.show(context),
-              ),
-              FilterChip(
-                label: const Text('By player'),
-                selected: _sortMode == StackSortMode.apnap,
-                onSelected: (v) => setState(
-                  () => _sortMode =
-                      v ? StackSortMode.apnap : StackSortMode.stackOrder,
-                ),
-                visualDensity: VisualDensity.compact,
-              ),
-              SizedBox(width: LayoutTokens.gr1),
-              FilterChip(
-                label: const Text('Countered'),
-                selected: _showCountered,
-                onSelected: (v) => setState(() => _showCountered = v),
-                visualDensity: VisualDensity.compact,
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         if (_sortMode == StackSortMode.apnap)
-          Padding(
+          SliverPadding(
             padding: EdgeInsets.fromLTRB(
               LayoutTokens.gr3,
-              0,
+              LayoutTokens.gr0,
               LayoutTokens.gr3,
               LayoutTokens.gr1,
             ),
-            child: Text(
-              'Who added what (active player first)',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppTheme.textSecondary.withValues(alpha: 0.9),
+            sliver: SliverToBoxAdapter(
+              child: Text(
+                'Who added what (active player first)',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.textSecondary.withValues(alpha: 0.9),
+                ),
               ),
             ),
           ),
         if (_tipBannerVisible)
-          Padding(
+          SliverPadding(
             padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr3),
-            child: _TipBanner(
-              onHide: () => setState(() => _tipBannerVisible = false),
+            sliver: SliverToBoxAdapter(
+              child: _TipBanner(
+                onHide: () => setState(() => _tipBannerVisible = false),
+              ),
             ),
           ),
         if (game.stackItems.isNotEmpty &&
             (game.isHost || game.players.length <= 1))
-          Padding(
+          SliverPadding(
             padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr3),
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: Wrap(
-                spacing: LayoutTokens.gr1,
-                runSpacing: LayoutTokens.gr0,
-                alignment: WrapAlignment.end,
-                children: [
-                  TextButton.icon(
-                    onPressed: () => _confirmClearAll(context, notifier),
-                    icon: const Icon(Icons.delete_outline_rounded, size: 18),
-                    label: const Text('Clear all'),
-                  ),
-                ],
+            sliver: SliverToBoxAdapter(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Wrap(
+                  spacing: LayoutTokens.gr1,
+                  runSpacing: LayoutTokens.gr0,
+                  alignment: WrapAlignment.end,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () => _confirmClearAll(context, notifier),
+                      icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                      label: const Text('Clear all'),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        Expanded(
-          child: visible.isEmpty
-              ? _EmptyStackState(
-                  onPutOnStack: () => _showAddDialog(context, parentId: null),
-                  onLoadExample: game.isHost || game.players.length <= 1
-                      ? () => notifier.loadExampleStack()
-                      : null,
-                )
-              : ListView(
-                  padding: EdgeInsets.fromLTRB(
-                    LayoutTokens.gr3,
-                    LayoutTokens.gr1,
-                    LayoutTokens.gr3,
-                    LayoutTokens.gr6,
-                  ),
-                  children: _sortMode == StackSortMode.stackOrder
-                      ? _stackOrderChildren(
-                          game,
-                          visible,
-                          resolvesNext,
-                          activeRoots,
-                        )
-                      : _apnapChildren(game, visible, resolvesNext),
-                ),
-        ),
+        if (visible.isEmpty)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: _EmptyStackState(
+              onPutOnStack: () => _showAddDialog(context, parentId: null),
+              onLoadExample: game.isHost || game.players.length <= 1
+                  ? () => notifier.loadExampleStack()
+                  : null,
+            ),
+          )
+        else
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(
+              LayoutTokens.gr3,
+              LayoutTokens.gr0,
+              LayoutTokens.gr3,
+              LayoutTokens.gr4 + bottomSafe,
+            ),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate(listChildren),
+            ),
+          ),
       ],
     );
   }
@@ -183,13 +253,17 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
       includeInactive: _showCountered,
     );
     return [
-      for (final node in tree)
+      for (var i = 0; i < tree.length; i++)
         _StackNodeTile(
           game: game,
-          node: node,
+          node: tree[i],
+          siblingIndex: i,
+          siblingCount: tree.length,
           resolvesNextId: resolvesNext?.id,
           activeRoots: activeRoots,
           allItems: game.stackItems,
+          shouldAnimateEnter: _shouldAnimateEnter,
+          onEnterComplete: _markEntered,
         ),
     ];
   }
@@ -235,16 +309,23 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
             ],
           ),
         ),
-        for (final item in g.items)
-          _StackItemTile(
+        for (var i = 0; i < g.items.length; i++) ...[
+          _StackItemEntry(
             game: game,
-            item: item,
+            item: g.items[i],
             depth: 0,
+            siblingIndex: i,
+            siblingCount: g.items.length,
+            showStemBelow: false,
+            linkToParent: false,
             resolvesNextId: resolvesNext?.id,
             showWaitsHint: false,
-            nestedResponses: _nestedUnder(item, visible),
             allItems: game.stackItems,
+            nestedResponses: _nestedUnder(g.items[i], visible),
+            shouldAnimateEnter: _shouldAnimateEnter,
+            onEnterComplete: _markEntered,
           ),
+        ],
       ],
     ];
   }
@@ -452,71 +533,473 @@ class _EmptyStackState extends StatelessWidget {
   }
 }
 
-class _StackNodeTile extends ConsumerWidget {
-  final GameState game;
-  final StackDisplayNode node;
-  final String? resolvesNextId;
-  final List<StackItem> activeRoots;
-  final List<StackItem> allItems;
-
-  const _StackNodeTile({
-    required this.game,
-    required this.node,
-    required this.resolvesNextId,
-    required this.activeRoots,
-    required this.allItems,
+/// Fade + slide when a stack item is newly added.
+class _StackAnimatedEnter extends StatefulWidget {
+  const _StackAnimatedEnter({
+    required this.animate,
+    required this.onEnterComplete,
+    required this.child,
   });
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isRoot = node.depth == 0;
-    final showWaits = isRoot &&
-        node.item.isActive &&
-        resolvesNextId != null &&
-        node.item.id != resolvesNextId &&
-        activeRoots.any((r) => r.id == node.item.id);
+  final bool animate;
+  final VoidCallback onEnterComplete;
+  final Widget child;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _StackItemTile(
-          game: game,
-          item: node.item,
-          depth: node.depth,
-          resolvesNextId: resolvesNextId,
-          showWaitsHint: showWaits,
-          nestedResponses: const [],
-          allItems: allItems,
-        ),
-        for (final child in node.responses)
-          _StackNodeTile(
-            game: game,
-            node: child,
-            resolvesNextId: resolvesNextId,
-            activeRoots: activeRoots,
-            allItems: allItems,
-          ),
-      ],
+  @override
+  State<_StackAnimatedEnter> createState() => _StackAnimatedEnterState();
+}
+
+class _StackAnimatedEnterState extends State<_StackAnimatedEnter>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _fade;
+  late final Animation<Offset> _slide;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 280),
+    );
+    final curve = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic,
+    );
+    _fade = Tween<double>(begin: 0, end: 1).animate(curve);
+    _slide = Tween<Offset>(
+      begin: const Offset(0, -0.1),
+      end: Offset.zero,
+    ).animate(curve);
+    if (widget.animate) {
+      widget.onEnterComplete();
+      _controller.forward();
+    } else {
+      _controller.value = 1;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _fade,
+      child: SlideTransition(
+        position: _slide,
+        child: widget.child,
+      ),
     );
   }
 }
 
-class _StackItemTile extends ConsumerWidget {
+/// Reports the laid-out height of [child] so connector rails align to the card center.
+class _MeasureCardHeight extends StatefulWidget {
+  const _MeasureCardHeight({
+    required this.child,
+    required this.onHeight,
+  });
+
+  final Widget child;
+  final ValueChanged<double> onHeight;
+
+  @override
+  State<_MeasureCardHeight> createState() => _MeasureCardHeightState();
+}
+
+class _MeasureCardHeightState extends State<_MeasureCardHeight> {
+  final GlobalKey _key = GlobalKey();
+  double? _lastHeight;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback(_reportHeight);
+  }
+
+  void _reportHeight(Duration _) {
+    final box = _key.currentContext?.findRenderObject() as RenderBox?;
+    final h = box?.size.height;
+    if (h == null || h <= 0 || h == _lastHeight) return;
+    _lastHeight = h;
+    widget.onHeight(h);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback(_reportHeight);
+    return KeyedSubtree(key: _key, child: widget.child);
+  }
+}
+
+class _StackNodeTile extends ConsumerStatefulWidget {
+  final GameState game;
+  final StackDisplayNode node;
+  final int siblingIndex;
+  final int siblingCount;
+  final String? resolvesNextId;
+  final List<StackItem> activeRoots;
+  final List<StackItem> allItems;
+  final bool Function(String id) shouldAnimateEnter;
+  final void Function(String id) onEnterComplete;
+
+  const _StackNodeTile({
+    required this.game,
+    required this.node,
+    required this.siblingIndex,
+    required this.siblingCount,
+    required this.resolvesNextId,
+    required this.activeRoots,
+    required this.allItems,
+    required this.shouldAnimateEnter,
+    required this.onEnterComplete,
+  });
+
+  @override
+  ConsumerState<_StackNodeTile> createState() => _StackNodeTileState();
+}
+
+class _StackNodeTileState extends ConsumerState<_StackNodeTile> {
+  double? _cardHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    final node = widget.node;
+    final isRoot = node.depth == 0;
+    final showWaits = isRoot &&
+        node.item.isActive &&
+        widget.resolvesNextId != null &&
+        node.item.id != widget.resolvesNextId &&
+        widget.activeRoots.any((r) => r.id == node.item.id);
+    final cardColumn = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _MeasureCardHeight(
+          onHeight: (h) {
+            if (_cardHeight != h) setState(() => _cardHeight = h);
+          },
+          child: _StackItemCard(
+            game: widget.game,
+            item: node.item,
+            resolvesNextId: widget.resolvesNextId,
+            showWaitsHint: showWaits,
+            allItems: widget.allItems,
+          ),
+        ),
+        for (var i = 0; i < node.responses.length; i++)
+          _StackNodeTile(
+            game: widget.game,
+            node: node.responses[i],
+            siblingIndex: i,
+            siblingCount: node.responses.length,
+            resolvesNextId: widget.resolvesNextId,
+            activeRoots: widget.activeRoots,
+            allItems: widget.allItems,
+            shouldAnimateEnter: widget.shouldAnimateEnter,
+            onEnterComplete: widget.onEnterComplete,
+          ),
+      ],
+    );
+
+    final content = node.depth == 0
+        ? Padding(
+            padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
+            child: cardColumn,
+          )
+        : IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _StackOrderRail(
+                  depth: node.depth,
+                  cardCenterY: _cardHeight != null ? _cardHeight! / 2 : null,
+                  showStemBelow: node.responses.isNotEmpty,
+                ),
+                Expanded(child: cardColumn),
+              ],
+            ),
+          );
+
+    return _StackAnimatedEnter(
+      animate: widget.shouldAnimateEnter(node.item.id),
+      onEnterComplete: () => widget.onEnterComplete(node.item.id),
+      child: content,
+    );
+  }
+}
+
+/// Stack list row: order rail + card (+ nested entries for APNAP mode).
+class _StackItemEntry extends ConsumerStatefulWidget {
   final GameState game;
   final StackItem item;
   final int depth;
+  final int siblingIndex;
+  final int siblingCount;
+  final bool showStemBelow;
+  final bool linkToParent;
   final String? resolvesNextId;
   final bool showWaitsHint;
-  final List<StackItem> nestedResponses;
   final List<StackItem> allItems;
+  final List<StackItem> nestedResponses;
+  final bool Function(String id) shouldAnimateEnter;
+  final void Function(String id) onEnterComplete;
 
-  const _StackItemTile({
+  const _StackItemEntry({
     required this.game,
     required this.item,
     required this.depth,
+    this.siblingIndex = 0,
+    this.siblingCount = 1,
+    required this.showStemBelow,
+    required this.linkToParent,
     required this.resolvesNextId,
     required this.showWaitsHint,
-    required this.nestedResponses,
+    required this.allItems,
+    this.nestedResponses = const [],
+    required this.shouldAnimateEnter,
+    required this.onEnterComplete,
+  });
+
+  @override
+  ConsumerState<_StackItemEntry> createState() => _StackItemEntryState();
+}
+
+class _StackItemEntryState extends ConsumerState<_StackItemEntry> {
+  double? _cardHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    final cardColumn = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _MeasureCardHeight(
+          onHeight: (h) {
+            if (_cardHeight != h) setState(() => _cardHeight = h);
+          },
+          child: _StackItemCard(
+            game: widget.game,
+            item: widget.item,
+            resolvesNextId: widget.resolvesNextId,
+            showWaitsHint: widget.showWaitsHint,
+            allItems: widget.allItems,
+          ),
+        ),
+        for (var i = 0; i < widget.nestedResponses.length; i++)
+          _StackItemEntry(
+            game: widget.game,
+            item: widget.nestedResponses[i],
+            depth: widget.depth + 1,
+            siblingIndex: i,
+            siblingCount: widget.nestedResponses.length,
+            showStemBelow: false,
+            linkToParent: true,
+            resolvesNextId: widget.resolvesNextId,
+            showWaitsHint: false,
+            allItems: widget.allItems,
+            nestedResponses: widget.allItems
+                .where(
+                  (r) => r.parentId == widget.nestedResponses[i].id,
+                )
+                .toList()
+              ..sort((a, b) => a.createdAt.compareTo(b.createdAt)),
+            shouldAnimateEnter: widget.shouldAnimateEnter,
+            onEnterComplete: widget.onEnterComplete,
+          ),
+      ],
+    );
+
+    final content = !widget.linkToParent
+        ? Padding(
+            padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
+            child: cardColumn,
+          )
+        : IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _StackOrderRail(
+                  depth: widget.depth,
+                  cardCenterY:
+                      _cardHeight != null ? _cardHeight! / 2 : null,
+                  showStemBelow: widget.nestedResponses.isNotEmpty,
+                ),
+                Expanded(child: cardColumn),
+              ],
+            ),
+          );
+
+    return _StackAnimatedEnter(
+      animate: widget.shouldAnimateEnter(widget.item.id),
+      onEnterComplete: () => widget.onEnterComplete(widget.item.id),
+      child: content,
+    );
+  }
+}
+
+class _StackOrderRail extends StatelessWidget {
+  final int depth;
+  final double? cardCenterY;
+  final bool showStemBelow;
+
+  const _StackOrderRail({
+    required this.depth,
+    required this.cardCenterY,
+    required this.showStemBelow,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final lineColor = AppTheme.textSecondary.withValues(alpha: 0.22);
+    return SizedBox(
+      width: LayoutTokens.gr3 + depth * LayoutTokens.gr4,
+      child: CustomPaint(
+        painter: _StackOrderRailPainter(
+          depth: depth,
+          cardCenterY: cardCenterY,
+          showStemBelow: showStemBelow,
+          color: lineColor,
+        ),
+      ),
+    );
+  }
+}
+
+class _StackOrderRailPainter extends CustomPainter {
+  _StackOrderRailPainter({
+    required this.depth,
+    required this.cardCenterY,
+    required this.showStemBelow,
+    required this.color,
+  });
+
+  final int depth;
+  final double? cardCenterY;
+  final bool showStemBelow;
+  final Color color;
+
+  static const double _stroke = 2;
+  static const double _dotLength = 2;
+  static const double _dotGap = LayoutTokens.gr0;
+
+  static void _drawDottedLine(
+    Canvas canvas,
+    Offset from,
+    Offset to,
+    Paint paint,
+  ) {
+    final path = Path()
+      ..moveTo(from.dx, from.dy)
+      ..lineTo(to.dx, to.dy);
+    for (final metric in path.computeMetrics()) {
+      var distance = 0.0;
+      while (distance < metric.length) {
+        final end = (distance + _dotLength).clamp(0.0, metric.length);
+        canvas.drawPath(metric.extractPath(distance, end), paint);
+        distance += _dotLength + _dotGap;
+      }
+    }
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = _stroke
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    if (depth <= 0) return;
+
+    final centerY = cardCenterY ?? size.height / 2;
+    final parentX = LayoutTokens.gr1 + (depth - 1) * LayoutTokens.gr4;
+
+    // L-branch from parent spell into this response card.
+    _drawDottedLine(
+      canvas,
+      Offset(parentX, 0),
+      Offset(parentX, centerY),
+      paint,
+    );
+    _drawDottedLine(
+      canvas,
+      Offset(parentX, centerY),
+      Offset(size.width, centerY),
+      paint,
+    );
+
+    if (showStemBelow) {
+      _drawDottedLine(
+        canvas,
+        Offset(parentX, centerY),
+        Offset(parentX, size.height),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _StackOrderRailPainter oldDelegate) =>
+      oldDelegate.depth != depth ||
+      oldDelegate.cardCenterY != cardCenterY ||
+      oldDelegate.showStemBelow != showStemBelow;
+}
+
+/// Stack action pill dimensions (4dp grid).
+abstract final class _StackPillMetrics {
+  static const double height = LayoutTokens.minTapTarget;
+  static const double gap = LayoutTokens.gr1;
+}
+
+/// Stack card spacing (4dp grid).
+abstract final class _StackCardLayout {
+  static const double paddingH = LayoutTokens.gr3;
+  static const double paddingV = LayoutTokens.gr3;
+  static const double groupGap = LayoutTokens.gr1;
+  static const double metaGap = LayoutTokens.gr0;
+  static const double actionsTopGap = LayoutTokens.gr2;
+
+  /// Align footer actions with text column (player rail + gap).
+  static const double actionsInset =
+      LayoutTokens.gr0 + LayoutTokens.gr2;
+}
+
+class _StackPlayerRail extends StatelessWidget {
+  const _StackPlayerRail({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(top: LayoutTokens.gr0),
+      child: Container(
+        width: LayoutTokens.gr0,
+        height: LayoutTokens.gr4,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(LayoutTokens.gr0),
+        ),
+      ),
+    );
+  }
+}
+
+class _StackItemCard extends ConsumerWidget {
+  final GameState game;
+  final StackItem item;
+  final String? resolvesNextId;
+  final bool showWaitsHint;
+  final List<StackItem> allItems;
+
+  const _StackItemCard({
+    required this.game,
+    required this.item,
+    required this.resolvesNextId,
+    required this.showWaitsHint,
     required this.allItems,
   });
 
@@ -529,16 +1012,14 @@ class _StackItemTile extends ConsumerWidget {
     final isLocal = item.playerId == game.localPlayerId;
     final isFizzled = item.status == StackItemStatus.fizzled;
     final isResolved = item.status == StackItemStatus.resolved;
-    final isResolvesNext =
-        item.isActive && item.id == resolvesNextId;
+    final isResolvesNext = item.isActive && item.id == resolvesNextId;
     final parentName = StackDisplay.parentNameFor(item, allItems);
 
     final targetInvalid =
         StackDisplay.hasInvalidStackTarget(item, allItems);
     final showFizzleToggle = canStatus &&
         (isFizzled ||
-            (item.isActive &&
-                (targetInvalid || item.parentId != null)));
+            (item.isActive && (targetInvalid || item.parentId != null)));
     final statusLabel = switch (item.status) {
       StackItemStatus.resolved => 'Resolved',
       StackItemStatus.countered => 'Countered',
@@ -555,293 +1036,133 @@ class _StackItemTile extends ConsumerWidget {
     final borderColor = isResolvesNext
         ? AppTheme.accent
         : AppTheme.textSecondary.withValues(alpha: 0.14);
+    final showActions = showFizzleToggle || (item.isActive && canStatus);
+
+    final actions = showActions
+        ? _StackItemActions(
+            notifier: notifier,
+            itemId: item.id,
+            isFizzled: isFizzled,
+            showResolveRespond: item.isActive && canStatus,
+            showFizzleToggle: showFizzleToggle,
+            onRespond: () => openStackAddDialog(
+              context,
+              ref,
+              parentId: item.id,
+            ),
+          )
+        : null;
+
+    return Material(
+      color: isFizzled
+          ? AppTheme.card.withValues(alpha: 0.72)
+          : isResolved
+              ? AppTheme.success.withValues(alpha: 0.14)
+              : AppTheme.card,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(LayoutTokens.gr2),
+        side: BorderSide(
+          color: isFizzled
+              ? AppTheme.dangerAmber.withValues(alpha: 0.35)
+              : isResolved
+                  ? AppTheme.success.withValues(alpha: 0.55)
+                  : borderColor,
+          width: isResolvesNext ? 2 : 1,
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(LayoutTokens.gr2),
+        onTap: item.isActive || isFizzled || isResolved
+            ? () => _openItemMenu(context, ref, item)
+            : null,
+        onLongPress: canEdit ? () => _renameItem(context, ref, item) : null,
+        child: Opacity(
+          opacity: isFizzled ? 0.62 : isResolved ? 0.92 : 1,
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: _StackCardLayout.paddingH,
+              vertical: _StackCardLayout.paddingV,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (isResolvesNext) ...[
+                  _ResolvesNextBadge(),
+                  SizedBox(height: _StackCardLayout.groupGap),
+                ],
+                _buildCardBody(
+                  context,
+                  ownerColor: owner?.playerColor ?? AppTheme.textSecondary,
+                  isFizzled: isFizzled,
+                  isResolved: isResolved,
+                  parentName: parentName,
+                  ownerLabel:
+                      '${owner?.username ?? item.playerId}${isLocal ? ' (you)' : ''}',
+                  showWaitsHint: showWaitsHint,
+                  targetInvalid: targetInvalid,
+                  statusLabel: statusLabel,
+                  statusColor: statusColor,
+                  actions: actions,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCardBody(
+    BuildContext context, {
+    required Color ownerColor,
+    required bool isFizzled,
+    required bool isResolved,
+    required String? parentName,
+    required String ownerLabel,
+    required bool showWaitsHint,
+    required bool targetInvalid,
+    required String? statusLabel,
+    required Color? statusColor,
+    required Widget? actions,
+  }) {
+    final info = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _StackPlayerRail(color: ownerColor),
+        SizedBox(width: LayoutTokens.gr2),
+        Expanded(
+          child: _StackCardInfo(
+            item: item,
+            isFizzled: isFizzled,
+            isResolved: isResolved,
+            parentName: parentName,
+            ownerLabel: ownerLabel,
+            showWaitsHint: showWaitsHint,
+            targetInvalid: targetInvalid,
+            statusLabel: statusLabel,
+            statusColor: statusColor,
+            onShowRules: item.oracleText != null &&
+                    item.oracleText!.trim().isNotEmpty
+                ? () => _showOracleText(context, item)
+                : null,
+          ),
+        ),
+      ],
+    );
+
+    if (actions == null) return info;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        info,
+        SizedBox(height: _StackCardLayout.actionsTopGap),
         Padding(
-          padding: EdgeInsets.only(
-            left: depth * LayoutTokens.gr4,
-            bottom: LayoutTokens.gr1,
-          ),
-          child: Material(
-            color: isFizzled
-                ? AppTheme.card.withValues(alpha: 0.72)
-                : isResolved
-                    ? AppTheme.success.withValues(alpha: 0.14)
-                    : AppTheme.card,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(LayoutTokens.gr2),
-              side: BorderSide(
-                color: isFizzled
-                    ? AppTheme.dangerAmber.withValues(alpha: 0.35)
-                    : isResolved
-                        ? AppTheme.success.withValues(alpha: 0.55)
-                        : borderColor,
-                width: isResolvesNext ? 2 : 1,
-              ),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(LayoutTokens.gr2),
-              onTap: item.isActive || isFizzled || isResolved
-                  ? () => _openItemMenu(context, ref, item)
-                  : null,
-              onLongPress: canEdit
-                  ? () => _renameItem(context, ref, item)
-                  : null,
-              child: Opacity(
-                opacity: isFizzled ? 0.62 : isResolved ? 0.92 : 1,
-                child: Padding(
-                padding: EdgeInsets.all(LayoutTokens.gr2),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (isResolvesNext)
-                      Padding(
-                        padding: EdgeInsets.only(bottom: LayoutTokens.gr1),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: LayoutTokens.gr2,
-                                vertical: LayoutTokens.gr1 / 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppTheme.accent.withValues(alpha: 0.25),
-                                borderRadius:
-                                    BorderRadius.circular(LayoutTokens.gr1),
-                              ),
-                              child: Text(
-                                'Resolves next',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.accent,
-                                ),
-                              ),
-                            ),
-                            SizedBox(width: LayoutTokens.gr1),
-                            Text(
-                              '#1',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.textSecondary
-                                    .withValues(alpha: 0.8),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 4,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color:
-                                owner?.playerColor ?? AppTheme.textSecondary,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                        SizedBox(width: LayoutTokens.gr2),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      item.name,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 15,
-                                        color: AppTheme.textPrimary,
-                                        decoration: (isFizzled || isResolved)
-                                            ? null
-                                            : (item.isActive
-                                                ? null
-                                                : TextDecoration
-                                                    .lineThrough),
-                                      ),
-                                    ),
-                                  ),
-                                  if (item.manaCost != null &&
-                                      item.manaCost!.isNotEmpty) ...[
-                                    SizedBox(width: LayoutTokens.gr1),
-                                    ManaCostPips(
-                                      manaCost: item.manaCost,
-                                      symbolHeight: 14,
-                                    ),
-                                  ],
-                                  if (item.oracleText != null &&
-                                      item.oracleText!.trim().isNotEmpty)
-                                    IconButton(
-                                      visualDensity: VisualDensity.compact,
-                                      padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(
-                                        minWidth: 32,
-                                        minHeight: 32,
-                                      ),
-                                      tooltip: 'Card rules',
-                                      icon: Icon(
-                                        Icons.menu_book_outlined,
-                                        size: 20,
-                                        color: AppTheme.textSecondary
-                                            .withValues(alpha: 0.9),
-                                      ),
-                                      onPressed: () =>
-                                          _showOracleText(context, item),
-                                    ),
-                                ],
-                              ),
-                              if (item.typeLabel != null) ...[
-                                SizedBox(height: LayoutTokens.gr1 / 2),
-                                Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: LayoutTokens.gr1,
-                                    vertical: LayoutTokens.gr1 / 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.textSecondary
-                                        .withValues(alpha: 0.12),
-                                    borderRadius:
-                                        BorderRadius.circular(LayoutTokens.gr1),
-                                  ),
-                                  child: Text(
-                                    item.typeLabel!,
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppTheme.textSecondary
-                                          .withValues(alpha: 0.95),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                              if (parentName != null) ...[
-                                SizedBox(height: LayoutTokens.gr1 / 2),
-                                Text(
-                                  'In response to $parentName',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontStyle: FontStyle.italic,
-                                    color: AppTheme.textSecondary
-                                        .withValues(alpha: 0.85),
-                                  ),
-                                ),
-                              ],
-                              SizedBox(height: LayoutTokens.gr1 / 2),
-                              Text(
-                                '${owner?.username ?? item.playerId}${isLocal ? ' (you)' : ''}',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppTheme.textSecondary
-                                      .withValues(alpha: 0.85),
-                                ),
-                              ),
-                              if (showWaitsHint)
-                                Padding(
-                                  padding: EdgeInsets.only(
-                                    top: LayoutTokens.gr1 / 2,
-                                  ),
-                                  child: Text(
-                                    'Resolves after items above',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: AppTheme.textSecondary
-                                          .withValues(alpha: 0.75),
-                                    ),
-                                  ),
-                                ),
-                              if (targetInvalid && item.isActive) ...[
-                                Padding(
-                                  padding: EdgeInsets.only(
-                                    top: LayoutTokens.gr1 / 2,
-                                  ),
-                                  child: Text(
-                                    'Target is no longer on the stack',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppTheme.dangerAmber,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                              if (statusLabel != null && statusColor != null)
-                                Padding(
-                                  padding: EdgeInsets.only(
-                                    top: LayoutTokens.gr1 / 2,
-                                  ),
-                                  child: Text(
-                                    statusLabel,
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: statusColor,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                        if (showFizzleToggle || (item.isActive && canStatus))
-                          isResolvesNext
-                              ? _StackItemActions(
-                                  notifier: notifier,
-                                  itemId: item.id,
-                                  isFizzled: isFizzled,
-                                  labeled: true,
-                                  showResolveRespond:
-                                      item.isActive && canStatus,
-                                  showFizzleToggle: showFizzleToggle,
-                                  onRespond: () => openStackAddDialog(
-                                    context,
-                                    ref,
-                                    parentId: item.id,
-                                  ),
-                                )
-                              : _StackItemActions(
-                                  notifier: notifier,
-                                  itemId: item.id,
-                                  isFizzled: isFizzled,
-                                  labeled: false,
-                                  showResolveRespond:
-                                      item.isActive && canStatus,
-                                  showFizzleToggle: showFizzleToggle,
-                                  onRespond: () => openStackAddDialog(
-                                    context,
-                                    ref,
-                                    parentId: item.id,
-                                  ),
-                                ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+          padding: EdgeInsets.only(left: _StackCardLayout.actionsInset),
+          child: actions,
         ),
-        ),
-        for (final child in nestedResponses)
-          _StackItemTile(
-            game: game,
-            item: child,
-            depth: depth + 1,
-            resolvesNextId: resolvesNextId,
-            showWaitsHint: false,
-            nestedResponses: allItems
-                .where((i) => i.parentId == child.id)
-                .toList()
-              ..sort((a, b) => a.createdAt.compareTo(b.createdAt)),
-            allItems: allItems,
-          ),
       ],
     );
   }
@@ -974,10 +1295,6 @@ class _StackItemTile extends ConsumerWidget {
                   ),
                 ),
               ],
-              if (item.manaCost != null && item.manaCost!.isNotEmpty) ...[
-                SizedBox(height: LayoutTokens.gr1),
-                ManaCostPips(manaCost: item.manaCost, symbolHeight: 18),
-              ],
               SizedBox(height: LayoutTokens.gr2),
               Text(
                 text,
@@ -995,11 +1312,268 @@ class _StackItemTile extends ConsumerWidget {
   }
 }
 
+class _ResolvesNextBadge extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: LayoutTokens.gr2,
+            vertical: LayoutTokens.gr0,
+          ),
+          decoration: BoxDecoration(
+            color: AppTheme.accent.withValues(alpha: 0.25),
+            borderRadius: BorderRadius.circular(LayoutTokens.gr1),
+          ),
+          child: Text(
+            'Resolves next',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.accent,
+            ),
+          ),
+        ),
+        SizedBox(width: LayoutTokens.gr1),
+        Text(
+          '#1',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.textSecondary.withValues(alpha: 0.8),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StackCardInfo extends StatelessWidget {
+  const _StackCardInfo({
+    required this.item,
+    required this.isFizzled,
+    required this.isResolved,
+    required this.parentName,
+    required this.ownerLabel,
+    required this.showWaitsHint,
+    required this.targetInvalid,
+    required this.statusLabel,
+    required this.statusColor,
+    required this.onShowRules,
+  });
+
+  final StackItem item;
+  final bool isFizzled;
+  final bool isResolved;
+  final String? parentName;
+  final String ownerLabel;
+  final bool showWaitsHint;
+  final bool targetInvalid;
+  final String? statusLabel;
+  final Color? statusColor;
+  final VoidCallback? onShowRules;
+
+  @override
+  Widget build(BuildContext context) {
+    final metaLines = <Widget>[
+      if (showWaitsHint)
+        Text(
+          'Resolves after items above',
+          style: TextStyle(
+            fontSize: 11,
+            height: 1.35,
+            color: AppTheme.textSecondary.withValues(alpha: 0.75),
+          ),
+        ),
+      if (targetInvalid && item.isActive)
+        Text(
+          'Target is no longer on the stack',
+          style: TextStyle(
+            fontSize: 11,
+            height: 1.35,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.dangerAmber,
+          ),
+        ),
+      if (statusLabel != null && statusColor != null)
+        Text(
+          statusLabel!,
+          style: TextStyle(
+            fontSize: 11,
+            height: 1.35,
+            fontWeight: FontWeight.w600,
+            color: statusColor,
+          ),
+        ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Text(
+                item.name,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                  height: 1.3,
+                  color: AppTheme.textPrimary,
+                  decoration: (isFizzled || isResolved)
+                      ? null
+                      : (item.isActive
+                          ? null
+                          : TextDecoration.lineThrough),
+                ),
+              ),
+            ),
+            if (onShowRules != null)
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: LayoutTokens.gr3,
+                  minHeight: LayoutTokens.gr3,
+                ),
+                tooltip: 'Card rules',
+                icon: Icon(
+                  Icons.menu_book_outlined,
+                  size: LayoutTokens.gr3,
+                  color: AppTheme.textSecondary.withValues(alpha: 0.9),
+                ),
+                onPressed: onShowRules,
+              ),
+          ],
+        ),
+        if (item.typeLabel != null) ...[
+          SizedBox(height: _StackCardLayout.groupGap),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: LayoutTokens.gr1,
+                vertical: LayoutTokens.gr0,
+              ),
+              decoration: BoxDecoration(
+                color: AppTheme.textSecondary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(LayoutTokens.gr1),
+              ),
+              child: Text(
+                item.typeLabel!,
+                style: TextStyle(
+                  fontSize: 11,
+                  height: 1.35,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textSecondary.withValues(alpha: 0.95),
+                ),
+              ),
+            ),
+          ),
+        ],
+        if (parentName != null) ...[
+          SizedBox(height: _StackCardLayout.groupGap),
+          Text(
+            'In response to $parentName',
+            style: TextStyle(
+              fontSize: 12,
+              height: 1.35,
+              fontStyle: FontStyle.italic,
+              color: AppTheme.textSecondary.withValues(alpha: 0.85),
+            ),
+          ),
+        ],
+        SizedBox(height: _StackCardLayout.groupGap),
+        Text(
+          ownerLabel,
+          style: TextStyle(
+            fontSize: 12,
+            height: 1.35,
+            color: AppTheme.textSecondary.withValues(alpha: 0.85),
+          ),
+        ),
+        if (metaLines.isNotEmpty) ...[
+          SizedBox(height: _StackCardLayout.groupGap),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (var i = 0; i < metaLines.length; i++) ...[
+                if (i > 0) SizedBox(height: _StackCardLayout.metaGap),
+                metaLines[i],
+              ],
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _StackPillButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onPressed;
+  final Color foreground;
+  final Color? background;
+  final Color? border;
+  final bool filled;
+
+  const _StackPillButton({
+    required this.label,
+    required this.onPressed,
+    required this.foreground,
+    this.background,
+    this.border,
+    this.filled = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: _StackPillMetrics.height,
+      width: double.infinity,
+      child: TextButton(
+        onPressed: onPressed,
+        style: TextButton.styleFrom(
+          visualDensity: VisualDensity.standard,
+          foregroundColor: foreground,
+          backgroundColor: filled
+              ? background
+              : background?.withValues(alpha: 0.18),
+          padding: EdgeInsets.symmetric(
+            horizontal: LayoutTokens.gr1,
+            vertical: LayoutTokens.gr1,
+          ),
+          minimumSize: Size(0, _StackPillMetrics.height),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          shape: StadiumBorder(
+            side: border != null
+                ? BorderSide(color: border!, width: 1)
+                : BorderSide.none,
+          ),
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.1,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _StackItemActions extends StatelessWidget {
   final GameStateNotifier notifier;
   final String itemId;
   final bool isFizzled;
-  final bool labeled;
   final bool showResolveRespond;
   final bool showFizzleToggle;
   final VoidCallback onRespond;
@@ -1008,7 +1582,6 @@ class _StackItemActions extends StatelessWidget {
     required this.notifier,
     required this.itemId,
     required this.isFizzled,
-    required this.labeled,
     required this.showResolveRespond,
     required this.showFizzleToggle,
     required this.onRespond,
@@ -1023,96 +1596,47 @@ class _StackItemActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (labeled) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (showResolveRespond) ...[
-            TextButton(
-              onPressed: () => notifier.setStackItemStatus(
-                itemId,
-                StackItemStatus.resolved,
-              ),
-              style: TextButton.styleFrom(
-                visualDensity: VisualDensity.compact,
-                foregroundColor: AppTheme.success,
-                padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr1),
-              ),
-              child: const Text('Resolve'),
-            ),
-            TextButton(
-              onPressed: onRespond,
-              style: TextButton.styleFrom(
-                visualDensity: VisualDensity.compact,
-                foregroundColor: AppTheme.accent,
-                padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr1),
-              ),
-              child: const Text('Respond'),
-            ),
-          ],
-          if (showFizzleToggle)
-            TextButton(
-              onPressed: _toggleFizzle,
-              style: TextButton.styleFrom(
-                visualDensity: VisualDensity.compact,
-                foregroundColor: AppTheme.dangerAmber,
-                backgroundColor: isFizzled
-                    ? AppTheme.dangerAmber.withValues(alpha: 0.22)
-                    : null,
-                padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr1),
-              ),
-              child: Text(isFizzled ? 'Fizzled' : 'Fizzle'),
-            ),
-        ],
-      );
-    }
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (showResolveRespond) ...[
-          IconButton(
-            tooltip: 'Resolve',
-            visualDensity: VisualDensity.compact,
-            icon: Icon(
-              Icons.check_circle_outline_rounded,
-              color: AppTheme.success,
-              size: 22,
-            ),
+    final slots = <Widget>[
+      if (showResolveRespond) ...[
+        Expanded(
+          child: _StackPillButton(
+            label: 'Resolve',
             onPressed: () => notifier.setStackItemStatus(
               itemId,
               StackItemStatus.resolved,
             ),
+            foreground: AppTheme.success,
+            background: AppTheme.success,
           ),
-          IconButton(
-            tooltip: 'Respond',
-            visualDensity: VisualDensity.compact,
-            icon: Icon(
-              Icons.reply_rounded,
-              color: AppTheme.accent,
-              size: 22,
-            ),
+        ),
+        SizedBox(width: _StackPillMetrics.gap),
+        Expanded(
+          child: _StackPillButton(
+            label: 'Respond',
             onPressed: onRespond,
+            foreground: AppTheme.accent,
+            background: AppTheme.accent,
+            border: AppTheme.accent.withValues(alpha: 0.55),
           ),
-        ],
-        if (showFizzleToggle)
-          IconButton(
-            tooltip: isFizzled ? 'Undo fizzle' : 'Fizzle',
-            visualDensity: VisualDensity.compact,
-            style: IconButton.styleFrom(
-              backgroundColor: isFizzled
-                  ? AppTheme.dangerAmber.withValues(alpha: 0.22)
-                  : null,
-            ),
-            icon: Icon(
-              Icons.not_interested_rounded,
-              color: AppTheme.dangerAmber,
-              size: 22,
-            ),
-            onPressed: _toggleFizzle,
-          ),
+        ),
       ],
+      if (showFizzleToggle) ...[
+        if (showResolveRespond) SizedBox(width: _StackPillMetrics.gap),
+        Expanded(
+          child: _StackPillButton(
+            label: isFizzled ? 'Fizzled' : 'Fizzle',
+            onPressed: _toggleFizzle,
+            foreground: AppTheme.dangerAmber,
+            background: AppTheme.dangerAmber,
+            filled: isFizzled,
+          ),
+        ),
+      ],
+    ];
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: slots,
     );
   }
 }
