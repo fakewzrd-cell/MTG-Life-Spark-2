@@ -32,12 +32,15 @@ class MatchRepository {
   /// Call on app startup — removes detailed entries older than 30 days.
   /// Stats should already be rolled into PlayerProfile lifetime totals.
   Future<void> purgeOldMatches() async {
+    if (!Hive.isBoxOpen(_boxName)) return;
     final cutoff = DateTime.now().subtract(const Duration(days: 30));
-    final oldKeys = _box.keys.where((k) {
-      final record = _box.get(k);
-      return record != null && record.date.isBefore(cutoff);
-    }).toList();
-
+    final oldKeys = <dynamic>[];
+    for (final record in _box.values) {
+      if (record.date.isBefore(cutoff)) {
+        oldKeys.add(record.matchId);
+      }
+    }
+    if (oldKeys.isEmpty) return;
     await _box.deleteAll(oldKeys);
   }
 

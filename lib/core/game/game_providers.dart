@@ -35,29 +35,37 @@ final pendingFeedbackProvider =
 /// Returns null keys when not enabled or loading failed.
 final variantDecksProvider =
     FutureProvider<Map<String, List<ScryfallCard>>>((ref) async {
-  final game = ref.watch(gameProvider);
-  if (!game.planechaseEnabled &&
-      !game.archenemyEnabled &&
-      !game.bountyEnabled) {
+  final flags = ref.watch(
+    gameProvider.select(
+      (g) => (
+        planechaseEnabled: g.planechaseEnabled,
+        archenemyEnabled: g.archenemyEnabled,
+        bountyEnabled: g.bountyEnabled,
+      ),
+    ),
+  );
+  if (!flags.planechaseEnabled &&
+      !flags.archenemyEnabled &&
+      !flags.bountyEnabled) {
     return {};
   }
   final service = ref.read(scryfallServiceProvider);
   final result = <String, List<ScryfallCard>>{};
-  if (game.planechaseEnabled) {
+  if (flags.planechaseEnabled) {
     try {
       result['planar'] = await service.fetchPlanarDeck();
     } catch (_) {
       result['planar'] = [];
     }
   }
-  if (game.archenemyEnabled) {
+  if (flags.archenemyEnabled) {
     try {
       result['scheme'] = await service.fetchSchemeDeck();
     } catch (_) {
       result['scheme'] = [];
     }
   }
-  if (game.bountyEnabled) {
+  if (flags.bountyEnabled) {
     try {
       result['bounty'] = await service.fetchBountyDeck();
     } catch (_) {

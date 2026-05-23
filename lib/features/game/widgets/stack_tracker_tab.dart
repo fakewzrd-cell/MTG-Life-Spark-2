@@ -12,6 +12,7 @@ import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/motion_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
+import 'game_modal_chrome.dart';
 import 'stack_card_picker_dialog.dart';
 import 'stack_help_sheet.dart';
 
@@ -350,24 +351,13 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
     BuildContext context,
     GameStateNotifier notifier,
   ) async {
-    final ok = await showDialog<bool>(
+    final ok = await showGameConfirmDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Clear stack?'),
-        content: const Text(
+      title: 'Clear stack?',
+      message:
           'Remove every spell and ability on the stack. This cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Clear all'),
-          ),
-        ],
-      ),
+      confirmLabel: 'Clear all',
+      destructive: true,
     );
     if (ok == true) notifier.clearAllStackItems();
   }
@@ -1013,13 +1003,14 @@ class _StackItemCard extends ConsumerWidget {
     StackItem item,
   ) async {
     final notifier = ref.read(gameProvider.notifier);
-    final action = await showModalBottomSheet<String>(
+    final action = await showGameBottomSheet<String>(
       context: context,
-      showDragHandle: true,
-      builder: (ctx) => SafeArea(
+      builder: (ctx) => GameSheetBody(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            const GameSheetHandle(),
+            SizedBox(height: LayoutTokens.gr1),
             if (item.isActive)
               ListTile(
                 leading: const Icon(Icons.reply_rounded),
@@ -1105,16 +1096,12 @@ class _StackItemCard extends ConsumerWidget {
   void _showOracleText(BuildContext context, StackItem item) {
     final text = item.oracleText?.trim();
     if (text == null || text.isEmpty) return;
-    showModalBottomSheet<void>(
+    showGameBottomSheet<void>(
       context: context,
-      showDragHandle: true,
-      backgroundColor: AppTheme.card,
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: EdgeInsets.all(LayoutTokens.gr3),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
+      builder: (ctx) => GameSheetBody(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 item.name,
@@ -1145,7 +1132,6 @@ class _StackItemCard extends ConsumerWidget {
                 ),
               ),
             ],
-          ),
         ),
       ),
     );

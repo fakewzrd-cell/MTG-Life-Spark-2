@@ -6,6 +6,7 @@ import '../../../core/game/game_phase.dart';
 import '../../../shared/theme/app_theme.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
+import 'game_modal_chrome.dart';
 
 /// Scrollable phase list for host / active player to jump to any step.
 Future<void> showPhasePickerSheet(
@@ -14,13 +15,9 @@ Future<void> showPhasePickerSheet(
   required Color accentColor,
   required ValueChanged<GamePhase> onSelected,
 }) {
-  return showModalBottomSheet<void>(
+  return showGameBottomSheet<void>(
     context: context,
-    backgroundColor: AppTheme.card,
     isScrollControlled: true,
-    shape: const RoundedRectangleBorder(
-      borderRadius: RadiusTokens.radiusSheetTop,
-    ),
     builder: (sheetCtx) => PhasePickerSheet(
       currentPhase: currentPhase,
       accentColor: accentColor,
@@ -87,16 +84,7 @@ class _PhasePickerSheetState extends State<PhasePickerSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppTheme.textSecondary.withValues(alpha: 0.22),
-                  borderRadius: RadiusTokens.radiusPill,
-                ),
-              ),
-            ),
+            const GameSheetHandle(),
             SizedBox(height: LayoutTokens.gr2),
             Text(
               'Select phase',

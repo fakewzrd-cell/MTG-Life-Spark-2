@@ -12,6 +12,7 @@ import '../../../shared/theme/app_theme.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
 import '../../../ui/tokens/spacing_tokens.dart';
+import 'game_modal_chrome.dart';
 
 /// The main life counter — occupies the center of the personal view.
 ///
@@ -505,14 +506,18 @@ class _LifeInputDialogState extends State<_LifeInputDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: AppTheme.card,
-      title: Text(
-        _input.isEmpty ? 'Set Life Total' : _input,
-        style: TextStyle(
-          color: _input.isEmpty ? AppTheme.textSecondary : AppTheme.textPrimary,
-          fontSize: _input.isEmpty ? LayoutTokens.gr3 : LayoutTokens.gr5,
-          fontWeight: FontWeight.bold,
+      title: GameDialogTitleRow(
+        titleWidget: Text(
+          _input.isEmpty ? 'Set Life Total' : _input,
+          style: TextStyle(
+            color:
+                _input.isEmpty ? AppTheme.textSecondary : AppTheme.textPrimary,
+            fontSize: _input.isEmpty ? LayoutTokens.gr3 : LayoutTokens.gr5,
+            fontWeight: FontWeight.bold,
+          ),
+          textAlign: TextAlign.center,
         ),
-        textAlign: TextAlign.center,
+        onClose: () => Navigator.pop(context),
       ),
       contentPadding: SpacingTokens.horizontalMd.copyWith(top: 0, bottom: 0),
       content: Column(
@@ -559,15 +564,7 @@ class _LifeInputDialogState extends State<_LifeInputDialog> {
             ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text(
-            'Cancel',
-            style: TextStyle(color: AppTheme.textSecondary),
-          ),
-        ),
-      ],
+      actions: const [],
     );
   }
 }

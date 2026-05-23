@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../../../core/game/gameplay_dial_ids.dart';
 import '../../../core/game/player_game_state.dart';
 import '../../../shared/theme/app_theme.dart';
+import 'game_modal_chrome.dart';
 import '../../../shared/widgets/game_icon.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
@@ -237,48 +238,32 @@ class GameplayDialsStripWidget extends StatelessWidget {
     if (isEliminated) return;
     final keyCtl = TextEditingController();
     final labelCtl = TextEditingController();
-    final ok = await showDialog<bool>(
+    final ok = await showGameChoiceDialog(
       context: context,
-      builder:
-          (ctx) => AlertDialog(
-            backgroundColor: AppTheme.card,
-            title: const Text(
-              'Custom dial',
-              style: TextStyle(color: AppTheme.textPrimary),
+      title: 'Custom dial',
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: keyCtl,
+            style: const TextStyle(color: AppTheme.textPrimary),
+            decoration: const InputDecoration(
+              labelText: 'Id (letters/numbers)',
+              labelStyle: TextStyle(color: AppTheme.textSecondary),
             ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: keyCtl,
-                  style: const TextStyle(color: AppTheme.textPrimary),
-                  decoration: const InputDecoration(
-                    labelText: 'Id (letters/numbers)',
-                    labelStyle: TextStyle(color: AppTheme.textSecondary),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: labelCtl,
-                  style: const TextStyle(color: AppTheme.textPrimary),
-                  decoration: const InputDecoration(
-                    labelText: 'Label',
-                    labelStyle: TextStyle(color: AppTheme.textSecondary),
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('Add'),
-              ),
-            ],
           ),
+          SizedBox(height: LayoutTokens.gr2),
+          TextField(
+            controller: labelCtl,
+            style: const TextStyle(color: AppTheme.textPrimary),
+            decoration: const InputDecoration(
+              labelText: 'Label',
+              labelStyle: TextStyle(color: AppTheme.textSecondary),
+            ),
+          ),
+        ],
+      ),
+      primaryLabel: 'Add',
     );
     if (ok == true && context.mounted) {
       onRegisterCustomDial(keyCtl.text, labelCtl.text);
@@ -292,12 +277,8 @@ class GameplayDialsStripWidget extends StatelessWidget {
     final visible = player.visibleGameplayDials.toSet();
     final coreOrdered = ['poison', 'energy', 'experience', 'rad'];
 
-    await showModalBottomSheet<void>(
+    await showGameBottomSheet<void>(
       context: context,
-      backgroundColor: AppTheme.card,
-      shape: const RoundedRectangleBorder(
-        borderRadius: RadiusTokens.radiusSheetTop,
-      ),
       builder: (sheetCtx) {
         void pick(String field) {
           Navigator.pop(sheetCtx);
@@ -363,17 +344,7 @@ class GameplayDialsStripWidget extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  SizedBox(height: LayoutTokens.gr2),
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: AppTheme.textSecondary.withValues(alpha: 0.22),
-                        borderRadius: RadiusTokens.radiusPill,
-                      ),
-                    ),
-                  ),
+                  const GameSheetHandle(),
                   Padding(
                     padding: EdgeInsets.fromLTRB(
                       LayoutTokens.gr3,
@@ -381,13 +352,9 @@ class GameplayDialsStripWidget extends StatelessWidget {
                       LayoutTokens.gr3,
                       LayoutTokens.gr1,
                     ),
-                    child: const Text(
+                    child: Text(
                       'Add counter',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: AppTheme.textPrimary,
-                      ),
+                      style: GameModalChrome.sheetTitleStyle,
                     ),
                   ),
                   Padding(
@@ -453,33 +420,13 @@ class GameplayDialsStripWidget extends StatelessWidget {
   Future<void> _confirmRemove(BuildContext context, String field) async {
     if (isEliminated) return;
     final label = _labelFor(player, field);
-    final ok = await showDialog<bool>(
+    final ok = await showGameConfirmDialog(
       context: context,
-      builder:
-          (ctx) => AlertDialog(
-            backgroundColor: AppTheme.card,
-            title: Text(
-              'Remove $label?',
-              style: const TextStyle(color: AppTheme.textPrimary),
-            ),
-            content: Text(
-              'The counter stays at its current value; it only disappears from your strip.',
-              style: TextStyle(
-                color: AppTheme.textSecondary.withValues(alpha: 0.9),
-                fontSize: 14,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                child: Text('Remove', style: TextStyle(color: AppTheme.accent)),
-              ),
-            ],
-          ),
+      title: 'Remove $label?',
+      message:
+          'The counter stays at its current value; it only disappears from your strip.',
+      confirmLabel: 'Remove',
+      destructive: true,
     );
     if (ok == true && context.mounted) {
       onRemoveDialFromStrip(field);

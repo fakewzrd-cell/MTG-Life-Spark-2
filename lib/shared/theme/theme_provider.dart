@@ -27,24 +27,33 @@ class ThemePreferenceNotifier extends StateNotifier<bool> {
   }
 }
 
+ThemeData? _cachedDarkTheme;
+ThemeData? _cachedLightTheme;
+
+ThemeData _darkTheme() => _cachedDarkTheme ??= AppTheme.dark();
+ThemeData _lightTheme() => _cachedLightTheme ??= AppTheme.light();
+
 /// Effective theme: when in game, Day/Night overrides settings.
 /// Day → light, Night → dark, None → use settings.
+///
+/// Watches only day/night + in-game flag — not life/counters/phases.
 final effectiveThemeProvider = Provider<ThemeData>((ref) {
-  final game = ref.watch(gameProvider);
   final useDarkTheme = ref.watch(themePreferenceProvider);
-
-  final inGame = game.players.isNotEmpty;
+  final inGame = ref.watch(
+    gameProvider.select((g) => g.players.isNotEmpty),
+  );
+  final dayNight = ref.watch(gameProvider.select((g) => g.dayNight));
 
   if (inGame) {
-    switch (game.dayNight) {
+    switch (dayNight) {
       case DayNightState.day:
-        return AppTheme.light();
+        return _lightTheme();
       case DayNightState.night:
-        return AppTheme.dark();
+        return _darkTheme();
       case DayNightState.none:
-        return useDarkTheme ? AppTheme.dark() : AppTheme.light();
+        return useDarkTheme ? _darkTheme() : _lightTheme();
     }
   }
 
-  return useDarkTheme ? AppTheme.dark() : AppTheme.light();
+  return useDarkTheme ? _darkTheme() : _lightTheme();
 });

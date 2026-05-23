@@ -10,6 +10,7 @@ import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/color_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
+import 'game_modal_chrome.dart';
 import '../../../ui/tokens/spacing_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
 
@@ -145,14 +146,9 @@ class PoliticalRowWidget extends ConsumerWidget {
     void Function(String? pid) onAssign,
   ) {
     final game = ref.read(gameProvider);
-    showModalBottomSheet<void>(
+    showGameBottomSheet<void>(
       context: context,
-      backgroundColor: AppTheme.card,
-      shape: const RoundedRectangleBorder(
-        borderRadius: RadiusTokens.radiusSheetTop,
-      ),
-      builder:
-          (_) => _PlayerPickerSheet(
+      builder: (_) => _PlayerPickerSheet(
             title: title,
             players: game.players.where((p) => !p.isEliminated).toList(),
             currentHolderId: currentHolderId,

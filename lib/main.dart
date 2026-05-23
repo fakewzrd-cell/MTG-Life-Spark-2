@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -15,6 +16,7 @@ import 'core/models/player_deck.dart';
 import 'core/persistence/match_repository.dart';
 import 'core/persistence/feedback_repository.dart';
 import 'core/persistence/profile_repository.dart';
+import 'core/debug/dismiss_web_splash.dart';
 import 'shared/theme/theme_provider.dart';
 import 'shared/utils/app_router.dart';
 
@@ -57,31 +59,32 @@ class _AppBootstrapState extends State<_AppBootstrap> {
             stack: snapshot.stackTrace.toString(),
           );
         }
-        if (snapshot.connectionState != ConnectionState.done) {
-          return MaterialApp(
-            debugShowCheckedModeBanner: false,
-            home: Scaffold(
-              backgroundColor: const Color(0xFF0e0e0e),
-              body: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(color: Colors.red.shade700),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Loading MGT Life Spark…',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.75),
-                        fontSize: 14,
-                      ),
+        if (snapshot.connectionState == ConnectionState.done) {
+          dismissWebSplash();
+          return const MgtLifeSparkApp();
+        }
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          home: Scaffold(
+            backgroundColor: const Color(0xFF0e0e0e),
+            body: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(color: Colors.red.shade700),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Loading MGT Life Spark…',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.75),
+                      fontSize: 14,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-          );
-        }
-        return const MgtLifeSparkApp();
+          ),
+        );
       },
     );
   }
@@ -148,12 +151,22 @@ Future<void> _initHive() async {
     await settingsBox.put('settings', AppSettings());
   }
 
-  // Purge match history entries older than 30 days on every startup
-  await MatchRepository().purgeOldMatches();
-  await FeedbackRepository().init();
+  // Warm Lato before first themed frame (avoids text layout jank).
+  GoogleFonts.pendingFonts([GoogleFonts.lato()]);
 
   // Non-blocking maintenance — keeps first paint fast on web/mobile.
-  unawaited(_deferredProfileMaintenance());
+  unawaited(_deferredStartupMaintenance());
+}
+
+Future<void> _deferredStartupMaintenance() async {
+  try {
+    await MatchRepository().purgeOldMatches();
+    await FeedbackRepository().init();
+    await _deferredProfileMaintenance();
+  } catch (e, st) {
+    debugPrint('Deferred startup maintenance failed: $e');
+    debugPrint('Stack: $st');
+  }
 }
 
 Future<void> _deferredProfileMaintenance() async {
@@ -207,6 +220,7 @@ class MgtLifeSparkApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    dismissWebSplash();
     final router = ref.watch(routerProvider);
 
     final theme = ref.watch(effectiveThemeProvider);

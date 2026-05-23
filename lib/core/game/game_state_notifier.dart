@@ -35,11 +35,27 @@ class GameStateNotifier extends StateNotifier<GameState> {
     state = state.copyWith(sessionActionLog: trimmed);
   }
 
-  void _appendGameLog(String message, {int? turnNumber}) {
+  List<GameLogEntry> _logsWithAppended(String message, {int? turnNumber}) {
     final t = turnNumber ?? state.sessionTurnCounter;
     final entry =
         GameLogEntry(turnNumber: t, time: DateTime.now(), message: message);
-    _trimAndSetLogs([...state.sessionActionLog, entry]);
+    final logs = [...state.sessionActionLog, entry];
+    return logs.length > _kLogCap ? logs.sublist(logs.length - _kLogCap) : logs;
+  }
+
+  void _appendGameLog(String message, {int? turnNumber}) {
+    _trimAndSetLogs(_logsWithAppended(message, turnNumber: turnNumber));
+  }
+
+  List<PlayerGameState> _playersWithUndoOn(
+    String playerId,
+    UndoAction action,
+  ) {
+    return state.players.map((p) {
+      if (p.playerId != playerId) return p;
+      final stack = List<UndoAction>.from(p.undoStack)..add(action);
+      return p.copyWith(undoStack: stack);
+    }).toList();
   }
 
   String _labelForCounterField(String field) {
@@ -192,21 +208,21 @@ class GameStateNotifier extends StateNotifier<GameState> {
       ..add(LifeChange(delta: delta, time: DateTime.now()));
     if (newLog.length > 10) newLog.removeAt(0);
 
-    _pushUndo(UndoAction(
+    final undo = UndoAction(
       playerId: playerId,
       field: 'life',
       previousValue: player.life,
-    ));
+    );
+    final players = _playersWithUndoOn(playerId, undo).map((p) {
+      if (p.playerId != playerId) return p;
+      return p.copyWith(life: newLife, lifeChangeLog: newLog);
+    }).toList();
 
     state = state.copyWith(
-      players: state.players.map((p) {
-        if (p.playerId != playerId) return p;
-        return p.copyWith(life: newLife, lifeChangeLog: newLog);
-      }).toList(),
-    );
-
-    _appendGameLog(
-      '${player.username}: Life ${delta > 0 ? '+' : ''}$delta',
+      players: players,
+      sessionActionLog: _logsWithAppended(
+        '${player.username}: Life ${delta > 0 ? '+' : ''}$delta',
+      ),
     );
 
     _send(BleMessage.stateDelta(
@@ -230,26 +246,28 @@ class GameStateNotifier extends StateNotifier<GameState> {
     final current = _getCounterValue(player, field);
     final newValue = (current + delta).clamp(0, 9999);
 
-    _pushUndo(UndoAction(
+    final undo = UndoAction(
       playerId: playerId,
       field: field,
       previousValue: current,
-    ));
+    );
+    final players = _playersWithUndoOn(playerId, undo)
+        .map(
+          (p) => p.playerId == playerId
+              ? _setCounterValue(p, field, newValue)
+              : p,
+        )
+        .toList();
+
+    final pl = player;
+    final logMessage =
+        '${pl.username}: ${_labelForCounterField(field)} '
+        '${delta > 0 ? '+' : ''}$delta (→ $newValue)';
 
     state = state.copyWith(
-      players: state.players
-          .map((p) =>
-              p.playerId == playerId ? _setCounterValue(p, field, newValue) : p)
-          .toList(),
+      players: players,
+      sessionActionLog: _logsWithAppended(logMessage),
     );
-
-    final pl = _playerById(playerId);
-    if (pl != null) {
-      _appendGameLog(
-        '${pl.username}: ${_labelForCounterField(field)} '
-        '${delta > 0 ? '+' : ''}$delta (→ $newValue)',
-      );
-    }
 
     _send(BleMessage.stateDelta(
       seqNum: _nextSeq(),

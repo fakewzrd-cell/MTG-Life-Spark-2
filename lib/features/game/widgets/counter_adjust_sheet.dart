@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../shared/theme/app_theme.dart';
 import '../../../ui/tokens/layout_tokens.dart';
-import '../../../ui/tokens/radius_tokens.dart';
-import '../../../ui/tokens/spacing_tokens.dart';
+import 'game_modal_chrome.dart';
 
 Future<void> showCounterAdjustSheet(
   BuildContext context, {
@@ -11,12 +10,8 @@ Future<void> showCounterAdjustSheet(
   required int current,
   required void Function(int delta) onChanged,
 }) {
-  return showModalBottomSheet<void>(
+  return showGameBottomSheet<void>(
     context: context,
-    backgroundColor: AppTheme.card,
-    shape: const RoundedRectangleBorder(
-      borderRadius: RadiusTokens.radiusSheetTop,
-    ),
     builder: (_) => CounterAdjustSheet(
       title: title,
       current: current,
@@ -59,25 +54,14 @@ class _CounterAdjustSheetState extends State<CounterAdjustSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        SpacingTokens.lg,
-        SpacingTokens.md,
-        SpacingTokens.lg,
-        SpacingTokens.xl,
-      ),
+    return GameSheetBody(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            widget.title,
-            style: TextStyle(
-              color: AppTheme.textPrimary,
-              fontSize: LayoutTokens.gr3,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: SpacingTokens.lg),
+          const GameSheetHandle(),
+          SizedBox(height: LayoutTokens.gr2),
+          Text(widget.title, style: GameModalChrome.sheetTitleStyle),
+          SizedBox(height: LayoutTokens.gr3),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -99,7 +83,7 @@ class _CounterAdjustSheetState extends State<CounterAdjustSheet> {
               _AdjBtn(label: '+5', onTap: () => _adjust(5)),
             ],
           ),
-          const SizedBox(height: SpacingTokens.lg),
+          SizedBox(height: LayoutTokens.gr3),
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text(

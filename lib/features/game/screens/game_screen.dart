@@ -25,18 +25,18 @@ import '../../../ui/tokens/motion_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
-import '../../../ui/tokens/typography_tokens.dart';
 import '../../../shared/widgets/home_nav_bar.dart';
 import '../widgets/commander_damage_panel.dart';
 import '../widgets/commander_info_bar.dart';
 import '../widgets/game_ui_tokens.dart';
 import '../widgets/variant_card_panel.dart';
 import '../widgets/gameplay_dials_strip_widget.dart';
-import '../widgets/life_counter_widget.dart';
 import '../widgets/phase_picker_sheet.dart';
+import '../widgets/game_modal_chrome.dart';
 import '../widgets/political_row_widget.dart';
+import '../widgets/game_performance_widgets.dart';
 import '../widgets/stack_tracker_tab.dart';
-import '../widgets/team_panel_widget.dart';
+import '../widgets/team_panel_widget.dart' show teamColor;
 
 class GameScreen extends ConsumerStatefulWidget {
   const GameScreen({super.key});
@@ -90,14 +90,19 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final game = ref.watch(gameProvider);
-    final local = game.localPlayer;
-
-    if (local == null) {
+    final localPresent = ref.watch(
+      gameProvider.select((g) => g.localPlayer != null),
+    );
+    if (!localPresent) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    if (game.awaitingFirstPlayerRoll) {
+    final awaitingFirstPlayerRoll = ref.watch(
+      gameProvider.select((g) => g.awaitingFirstPlayerRoll),
+    );
+    if (awaitingFirstPlayerRoll) {
+      final game = ref.watch(gameProvider);
+      final local = game.localPlayer!;
       return Scaffold(
         backgroundColor: AppTheme.primary,
         body: SafeArea(
@@ -112,15 +117,32 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       );
     }
 
+    final gradientColors = ref.watch(
+      gameProvider.select((g) {
+        final p = g.localPlayer!;
+        return CommanderIdentityColors.gameplayGradient(
+          p.commanderColorIdentity,
+          p.playerColor,
+        );
+      }),
+    );
+    final localPlayerId = ref.read(gameProvider).localPlayerId;
+    final timeoutActive = ref.watch(
+      gameProvider.select((g) => g.timeoutActive),
+    );
+    final timeoutStartTime = ref.watch(
+      gameProvider.select((g) => g.timeoutStartTime),
+    );
+    final timeoutDurationSeconds = ref.watch(
+      gameProvider.select((g) => g.timeoutDurationSeconds),
+    );
+
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: CommanderIdentityColors.gameplayGradient(
-            local.commanderColorIdentity,
-            local.playerColor,
-          ),
+          colors: gradientColors,
         ),
       ),
       child: Scaffold(
@@ -128,22 +150,23 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         body: Stack(
           children: [
             if (_showOverview)
-              _OverviewView(
-                game: game,
-                onClose: () => setState(() => _showOverview = false),
+              Consumer(
+                builder: (context, ref, _) => _OverviewView(
+                  game: ref.watch(gameProvider),
+                  onClose: () => setState(() => _showOverview = false),
+                ),
               )
             else
               SafeArea(
                 child: _PersonalView(
-                  game: game,
-                  local: local,
+                  localPlayerId: localPlayerId,
                   onToggleOverview: () => setState(() => _showOverview = true),
                 ),
               ),
-            if (game.timeoutActive)
+            if (timeoutActive)
               _TimeoutOverlay(
-                startTime: game.timeoutStartTime,
-                durationSeconds: game.timeoutDurationSeconds,
+                startTime: timeoutStartTime,
+                durationSeconds: timeoutDurationSeconds,
               ),
           ],
         ),
@@ -334,13 +357,11 @@ class _FirstPlayerRollOverlayState extends State<_FirstPlayerRollOverlay>
 // ── Personal View ──────────────────────────────────────────────────────────
 
 class _PersonalView extends ConsumerStatefulWidget {
-  final GameState game;
-  final PlayerGameState local;
+  final String localPlayerId;
   final VoidCallback onToggleOverview;
 
   const _PersonalView({
-    required this.game,
-    required this.local,
+    required this.localPlayerId,
     required this.onToggleOverview,
   });
 
@@ -355,8 +376,16 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
 
   @override
   Widget build(BuildContext context) {
-    final game = widget.game;
-    final local = widget.local;
+    if (_mainTabIndex == 0) {
+      ref.watch(gameProvider.select(playTabRebuildFingerprint));
+    } else {
+      ref.watch(gameProvider);
+    }
+
+    final game = ref.read(gameProvider);
+    final local = game.playerById(widget.localPlayerId);
+    if (local == null) return const SizedBox.shrink();
+
     final notifier = ref.read(gameProvider.notifier);
     final opponents =
         game.players.where((p) => p.playerId != local.playerId).toList();
@@ -509,8 +538,12 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
         SizedBox(height: tightVertical ? LayoutTokens.gr1 : LayoutTokens.gr2),
         Expanded(
           child: switch (_mainTabIndex) {
-            1 => StackTrackerTab(game: game),
-            2 => _GameHistoryTab(entries: game.sessionActionLog),
+            1 => StackTrackerTab(game: ref.watch(gameProvider)),
+            2 => _GameHistoryTab(
+              entries: ref.watch(
+                gameProvider.select((g) => g.sessionActionLog),
+              ),
+            ),
             _ => Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -684,17 +717,10 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
                                         constraints: BoxConstraints(
                                           maxWidth: lifeBandMaxW,
                                         ),
-                                        child: SizedBox(
+                                        child: ScopedLifeCounter(
+                                          playerId: local.playerId,
                                           height: lifeBandH,
-                                          width: double.infinity,
-                                          child: LifeCounterWidget(
-                                            life: local.life,
-                                            playerColor: local.playerColor,
-                                            commanderColorIdentity:
-                                                local.commanderColorIdentity,
-                                            isEliminated: local.isEliminated,
-                                            onLifeChange: adjustLife,
-                                          ),
+                                          onLifeChange: adjustLife,
                                         ),
                                       ),
                                     )
@@ -705,17 +731,10 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
                                           constraints: BoxConstraints(
                                             maxWidth: lifeBandMaxW,
                                           ),
-                                          child: SizedBox(
+                                          child: ScopedLifeCounter(
+                                            playerId: local.playerId,
                                             height: lifeBandH,
-                                            width: double.infinity,
-                                            child: LifeCounterWidget(
-                                              life: local.life,
-                                              playerColor: local.playerColor,
-                                              commanderColorIdentity:
-                                                  local.commanderColorIdentity,
-                                              isEliminated: local.isEliminated,
-                                              onLifeChange: adjustLife,
-                                            ),
+                                            onLifeChange: adjustLife,
                                           ),
                                         ),
                                       ),
@@ -774,42 +793,36 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
                                             ? LayoutTokens.gr2
                                             : LayoutTokens.gr3,
                                   ),
-                                  GameplayDialsStripWidget(
-                                    player: local,
-                                    isEliminated: local.isEliminated,
-                                    onAdjustCounter:
-                                        (field, delta) =>
-                                            notifier.adjustCounter(
-                                              local.playerId,
-                                              field,
-                                              delta,
-                                            ),
-                                    onSetCounterAbsolute:
-                                        (field, v) =>
-                                            notifier.setGameplayDialAbsolute(
-                                              local.playerId,
-                                              field,
-                                              v,
-                                            ),
-                                    onRegisterCustomDial:
-                                        (key, label) =>
-                                            notifier.registerCustomGameplayDial(
-                                              local.playerId,
-                                              key,
-                                              label,
-                                            ),
-                                    onAddDialToStrip:
-                                        (field) =>
-                                            notifier.addGameplayDialToStrip(
-                                              local.playerId,
-                                              field,
-                                            ),
-                                    onRemoveDialFromStrip:
-                                        (field) =>
-                                            notifier.removeGameplayDialFromStrip(
-                                              local.playerId,
-                                              field,
-                                            ),
+                                  ScopedGameplayDials(
+                                    playerId: local.playerId,
+                                    onAdjustCounter: (field, delta) =>
+                                        notifier.adjustCounter(
+                                          local.playerId,
+                                          field,
+                                          delta,
+                                        ),
+                                    onSetCounterAbsolute: (field, v) =>
+                                        notifier.setGameplayDialAbsolute(
+                                          local.playerId,
+                                          field,
+                                          v,
+                                        ),
+                                    onRegisterCustomDial: (key, label) =>
+                                        notifier.registerCustomGameplayDial(
+                                          local.playerId,
+                                          key,
+                                          label,
+                                        ),
+                                    onAddDialToStrip: (field) =>
+                                        notifier.addGameplayDialToStrip(
+                                          local.playerId,
+                                          field,
+                                        ),
+                                    onRemoveDialFromStrip: (field) =>
+                                        notifier.removeGameplayDialFromStrip(
+                                          local.playerId,
+                                          field,
+                                        ),
                                   ),
                                 ],
                               );
@@ -867,7 +880,7 @@ class _PhaseSelectorLabel extends StatelessWidget {
             maxLines: 1,
             style: TextStyle(
               fontWeight: FontWeight.w800,
-              fontSize: 16,
+              fontSize: FontTokens.title,
               letterSpacing: 0.2,
               color: phaseColor,
             ),
@@ -1151,12 +1164,8 @@ class _BottomBar extends ConsumerWidget {
   }
 
   void _showTimeoutPicker(BuildContext context, GameStateNotifier notifier) {
-    showModalBottomSheet<void>(
+    showGameBottomSheet<void>(
       context: context,
-      backgroundColor: AppTheme.card,
-      shape: const RoundedRectangleBorder(
-        borderRadius: RadiusTokens.radiusSheetTop,
-      ),
       builder: (_) => _TimeoutPickerSheet(notifier: notifier),
     );
   }
@@ -1254,38 +1263,21 @@ class _ConcedeDialogState extends State<_ConcedeDialog> {
                     // Title + X
                     Padding(
                       padding: EdgeInsets.fromLTRB(
-                        MediaQuery.sizeOf(context).width < 360 ? 16 : 24,
-                        20,
-                        8,
+                        GameModalChrome.horizontalInset(context),
+                        LayoutTokens.gr3,
+                        LayoutTokens.gr2,
                         0,
                       ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              'Forfeit?',
-                              style: TypographyTokens.sectionTitle(
-                                ColorTokens.textPrimary,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () => Navigator.pop(context),
-                            color: AppTheme.textSecondary,
-                            style: IconButton.styleFrom(
-                              minimumSize: const Size(40, 40),
-                              padding: EdgeInsets.zero,
-                            ),
-                          ),
-                        ],
+                      child: GameDialogTitleRow(
+                        title: 'Forfeit?',
+                        onClose: () => Navigator.pop(context),
                       ),
                     ),
                     Padding(
                       padding: EdgeInsets.fromLTRB(
-                        MediaQuery.sizeOf(context).width < 360 ? 16 : 24,
-                        8,
-                        MediaQuery.sizeOf(context).width < 360 ? 16 : 24,
+                        GameModalChrome.horizontalInset(context),
+                        LayoutTokens.gr2,
+                        GameModalChrome.horizontalInset(context),
                         0,
                       ),
                       child: const Text(
@@ -1300,8 +1292,7 @@ class _ConcedeDialogState extends State<_ConcedeDialog> {
                     if (others.isNotEmpty) ...[
                       Padding(
                         padding: EdgeInsets.symmetric(
-                          horizontal:
-                              MediaQuery.sizeOf(context).width < 360 ? 16 : 24,
+                          horizontal: GameModalChrome.horizontalInset(context),
                         ),
                         child: const Text(
                           'Rate opponents',
@@ -1361,10 +1352,10 @@ class _ConcedeDialogState extends State<_ConcedeDialog> {
                     // Concede button
                     Padding(
                       padding: EdgeInsets.fromLTRB(
-                        MediaQuery.sizeOf(context).width < 360 ? 16 : 24,
+                        GameModalChrome.horizontalInset(context),
                         0,
-                        MediaQuery.sizeOf(context).width < 360 ? 16 : 24,
-                        24,
+                        GameModalChrome.horizontalInset(context),
+                        LayoutTokens.gr4,
                       ),
                       child: OutlinedButton(
                         style: OutlinedButton.styleFrom(
@@ -1404,7 +1395,7 @@ class _ConcedePlayerFeedbackRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(
-        horizontal: MediaQuery.sizeOf(context).width < 360 ? 16 : 24,
+        horizontal: GameModalChrome.horizontalInset(context),
         vertical: 2,
       ),
       child: Row(
@@ -1486,7 +1477,7 @@ class _ConcedeVoteDropdown extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(
-        horizontal: MediaQuery.sizeOf(context).width < 360 ? 16 : 24,
+        horizontal: GameModalChrome.horizontalInset(context),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1622,21 +1613,13 @@ class _TimeoutPickerSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
+    return GameSheetBody(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Start Timeout',
-            style: TextStyle(
-              color: AppTheme.textPrimary,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
+          const GameSheetHeader(title: 'Start Timeout'),
+          SizedBox(height: LayoutTokens.gr3),
           _TimeoutOption(
             label: '2 minutes',
             icon: Icons.timer,
@@ -2259,7 +2242,12 @@ class _OverviewView extends ConsumerWidget {
 
           // Player cards list
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
+            padding: EdgeInsets.fromLTRB(
+              LayoutTokens.gr3,
+              0,
+              LayoutTokens.gr3,
+              LayoutTokens.gr3,
+            ),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 ...game.players.map(
@@ -2425,96 +2413,76 @@ class _OverviewPlayerCard extends ConsumerWidget {
     int currentTeam,
   ) {
     final notifier = ref.read(gameProvider.notifier);
-    showModalBottomSheet<void>(
+    showGameBottomSheet<void>(
       context: context,
-      backgroundColor: AppTheme.card,
-      shape: const RoundedRectangleBorder(
-        borderRadius: RadiusTokens.radiusSheetTop,
-      ),
-      builder:
-          (ctx) => SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text(
-                    'Assign team',
-                    style: TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  ...[0, 1, 2, 3, 4].map((idx) {
-                    final label = idx == 0 ? 'None' : 'Team $idx';
-                    final color =
-                        idx == 0 ? AppTheme.textSecondary : teamColor(idx);
-                    final isSelected = currentTeam == idx;
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: Material(
-                        color:
-                            isSelected
-                                ? (idx == 0
-                                    ? AppTheme.textSecondary.withValues(
-                                      alpha: 0.15,
-                                    )
-                                    : color.withValues(alpha: 0.15))
-                                : Colors.transparent,
-                        borderRadius: RadiusTokens.radiusControlSm,
-                        child: InkWell(
-                          onTap: () {
-                            notifier.assignTeam(playerId, idx);
-                            Navigator.of(ctx).pop();
-                          },
-                          borderRadius: RadiusTokens.radiusControlSm,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 12,
-                            ),
-                            child: Row(
-                              children: [
-                                if (idx > 0)
-                                  Container(
-                                    width: 12,
-                                    height: 12,
-                                    decoration: BoxDecoration(
-                                      color: color,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  )
-                                else
-                                  const SizedBox(width: 12),
-                                if (idx > 0) const SizedBox(width: 10),
-                                Text(
-                                  label,
-                                  style: TextStyle(
-                                    color:
-                                        idx == 0
-                                            ? AppTheme.textSecondary
-                                            : AppTheme.textPrimary,
-                                    fontSize: 14,
-                                    fontWeight:
-                                        isSelected
-                                            ? FontWeight.bold
-                                            : FontWeight.normal,
-                                  ),
-                                ),
-                              ],
+      builder: (ctx) => GameSheetBody(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const GameSheetHeader(title: 'Assign team'),
+            SizedBox(height: LayoutTokens.gr2),
+            ...[0, 1, 2, 3, 4].map((idx) {
+              final label = idx == 0 ? 'None' : 'Team $idx';
+              final color =
+                  idx == 0 ? AppTheme.textSecondary : teamColor(idx);
+              final isSelected = currentTeam == idx;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Material(
+                  color: isSelected
+                      ? (idx == 0
+                          ? AppTheme.textSecondary.withValues(alpha: 0.15)
+                          : color.withValues(alpha: 0.15))
+                      : Colors.transparent,
+                  borderRadius: RadiusTokens.radiusControlSm,
+                  child: InkWell(
+                    onTap: () {
+                      notifier.assignTeam(playerId, idx);
+                      Navigator.of(ctx).pop();
+                    },
+                    borderRadius: RadiusTokens.radiusControlSm,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      child: Row(
+                        children: [
+                          if (idx > 0)
+                            Container(
+                              width: 12,
+                              height: 12,
+                              decoration: BoxDecoration(
+                                color: color,
+                                shape: BoxShape.circle,
+                              ),
+                            )
+                          else
+                            const SizedBox(width: 12),
+                          if (idx > 0) const SizedBox(width: 10),
+                          Text(
+                            label,
+                            style: TextStyle(
+                              color: idx == 0
+                                  ? AppTheme.textSecondary
+                                  : AppTheme.textPrimary,
+                              fontSize: 14,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
                             ),
                           ),
-                        ),
+                        ],
                       ),
-                    );
-                  }),
-                ],
-              ),
-            ),
-          ),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -10,6 +10,7 @@ import '../../../shared/widgets/game_icon.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
 import '../../../ui/tokens/typography_tokens.dart';
+import 'game_modal_chrome.dart';
 import '../../../ui/tokens/color_tokens.dart';
 import '../../../ui/tokens/spacing_tokens.dart';
 
@@ -20,14 +21,31 @@ class VariantCardPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final game = ref.watch(gameProvider);
-    final decksAsync = ref.watch(variantDecksProvider);
+    final variantFlags = ref.watch(
+      gameProvider.select(
+        (g) => (
+          g.planechaseEnabled,
+          g.archenemyEnabled,
+          g.bountyEnabled,
+        ),
+      ),
+    );
+    ref.watch(
+      gameProvider.select(
+        (g) => (
+          g.currentPlanarIndex,
+          g.currentSchemeIndex,
+          g.currentBountyIndex,
+        ),
+      ),
+    );
 
-    if (!game.planechaseEnabled &&
-        !game.archenemyEnabled &&
-        !game.bountyEnabled) {
+    if (!variantFlags.$1 && !variantFlags.$2 && !variantFlags.$3) {
       return const SizedBox.shrink();
     }
+
+    final decksAsync = ref.watch(variantDecksProvider);
+    final game = ref.read(gameProvider);
 
     return decksAsync.when(
       data: (decks) => _VariantContent(
@@ -294,12 +312,9 @@ class _VariantTile extends StatelessWidget {
   }
 
   void _showCardDetail(BuildContext context) {
-    showModalBottomSheet(
+    showGameBottomSheet<void>(
       context: context,
-      backgroundColor: AppTheme.card,
-      shape: const RoundedRectangleBorder(
-        borderRadius: RadiusTokens.radiusSheetTop,
-      ),
+      isScrollControlled: true,
       builder: (ctx) => DraggableScrollableSheet(
         initialChildSize: 0.6,
         minChildSize: 0.3,
@@ -307,7 +322,7 @@ class _VariantTile extends StatelessWidget {
         expand: false,
         builder: (_, scrollController) => SingleChildScrollView(
           controller: scrollController,
-          padding: EdgeInsets.all(MediaQuery.sizeOf(context).width < 360 ? 16 : 20),
+          padding: EdgeInsets.all(GameModalChrome.horizontalInset(context)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

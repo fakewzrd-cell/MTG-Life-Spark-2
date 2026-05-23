@@ -8,6 +8,7 @@ import '../../../core/game/scryfall_service.dart';
 import '../../../shared/theme/app_theme.dart';
 import '../../../shared/mana/mana_symbol_assets.dart';
 import '../../../ui/tokens/layout_tokens.dart';
+import 'game_modal_chrome.dart';
 
 /// Pick a card from Scryfall so the stack entry stores the official name and rules.
 Future<ScryfallCard?> showStackCardPickerDialog(
@@ -146,7 +147,11 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
         (_selected != null || _searchController.text.trim().isNotEmpty);
 
     return AlertDialog(
-      title: Text(widget.title),
+      backgroundColor: AppTheme.card,
+      title: GameDialogTitleRow(
+        title: widget.title,
+        onClose: () => Navigator.pop(context),
+      ),
       content: SizedBox(
         width: 360,
         height: 380,
@@ -155,11 +160,7 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
           children: [
             Text(
               'Search Scryfall so we store the correct card name and rules text.',
-              style: TextStyle(
-                fontSize: 12,
-                height: 1.35,
-                color: AppTheme.textSecondary.withValues(alpha: 0.9),
-              ),
+              style: GameModalChrome.dialogBodyStyle,
             ),
             SizedBox(height: LayoutTokens.gr2),
             TextField(
@@ -201,14 +202,10 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: _confirming ? null : () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
         FilledButton(
           onPressed: canAdd ? _confirm : null,
           child: _confirming
-              ? SizedBox(
+              ? const SizedBox(
                   width: 18,
                   height: 18,
                   child: CircularProgressIndicator(
