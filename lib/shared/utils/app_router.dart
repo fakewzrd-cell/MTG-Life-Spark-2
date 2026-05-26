@@ -196,6 +196,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (path == AppRoutes.game) {
         final lobby = ref.read(lobbyProvider);
         final game = ref.read(gameProvider);
+        if (game.gameOver) {
+          return AppRoutes.endGame;
+        }
         final hasLobbyPlayers = lobby.players.isNotEmpty;
         final hasLocalPlayer = game.localPlayer != null;
         if (!hasLobbyPlayers && !hasLocalPlayer) {

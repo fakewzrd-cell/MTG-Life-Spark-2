@@ -65,10 +65,15 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
       final lobby = ref.read(lobbyProvider);
       final service = ref.read(progressionServiceProvider);
 
+      final stableMatchId = game.gameStartTime != null
+          ? '${game.gameStartTime!.millisecondsSinceEpoch}_${game.localPlayerId}'
+          : null;
+
       final result = await service.recordMatch(
         finalState: game,
         lobbyState: lobby,
         startTime: game.gameStartTime ?? DateTime.now(),
+        matchId: stableMatchId,
       );
 
       if (pending != null && result.matchId.isNotEmpty) {
@@ -161,7 +166,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
                           ),
                           SizedBox(height: LayoutTokens.gr2),
                           TextButton(
-                            onPressed: () => context.go(AppRoutes.home),
+                            onPressed: () => _leaveToHome(context),
                             child: Text('Continue without saving'),
                           ),
                         ],
@@ -258,7 +263,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
                     // ── Actions ────────────────────────────────────────────
                     _ActionButtons(
                       isHost: game.isHost,
-                      onHome: () => context.go(AppRoutes.home),
+                      onHome: () => _leaveToHome(context),
                       onRematch: () => _doRematch(context, ref, game),
                     ),
 
@@ -270,15 +275,18 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
     );
   }
 
+  Future<void> _leaveToHome(BuildContext context) async {
+    await quitActiveGame(ref);
+    if (context.mounted) context.go(AppRoutes.home);
+  }
+
   Future<void> _doRematch(
     BuildContext context,
     WidgetRef ref,
     GameState game,
   ) async {
     ref.read(gameProvider.notifier).proposeRematch();
-    ref.read(gameProvider.notifier).reset();
-    ref.read(lobbyProvider.notifier).reset();
-    await endSession(ref);
+    await quitActiveGame(ref);
     if (!context.mounted) return;
     context.go(game.isHost ? AppRoutes.lobbyHost : AppRoutes.lobby);
   }
@@ -295,6 +303,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
       underdogPlayerId: _underdogPlayerId,
     );
     await ref.read(progressionServiceProvider).saveFeedback(feedback);
+    bumpProfileRevision(ref);
     if (mounted) setState(() => _feedbackSubmitted = true);
   }
 }

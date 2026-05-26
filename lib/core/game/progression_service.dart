@@ -62,6 +62,7 @@ class ProgressionService {
     required GameState finalState,
     required LobbyState lobbyState,
     required DateTime startTime,
+    String? matchId,
   }) async {
     final localId = finalState.localPlayerId;
     final local = finalState.playerById(localId);
@@ -74,6 +75,18 @@ class ProgressionService {
           oldLevel: 1,
           newLevel: 1,
           newAchievementIds: []);
+    }
+
+    final resolvedMatchId =
+        matchId ?? DateTime.now().millisecondsSinceEpoch.toString();
+    if (_matchRepo.hasMatch(resolvedMatchId)) {
+      return ProgressResult(
+        matchId: resolvedMatchId,
+        xpGained: 0,
+        oldLevel: profile.level,
+        newLevel: profile.level,
+        newAchievementIds: const [],
+      );
     }
 
     final won = finalState.winnerPlayerId == localId;
@@ -111,9 +124,8 @@ class ProgressionService {
       }).toList(),
     );
 
-    final matchId = DateTime.now().millisecondsSinceEpoch.toString();
     await _matchRepo.saveMatch(MatchRecord(
-      matchId: matchId,
+      matchId: resolvedMatchId,
       date: DateTime.now(),
       commanderName: local.commanderName ?? 'Unknown',
       partnerCommanderName: local.partnerCommanderName,
@@ -150,7 +162,7 @@ class ProgressionService {
     final newLevel = updatedProfile.level;
 
     return ProgressResult(
-      matchId: matchId,
+      matchId: resolvedMatchId,
       xpGained: xp,
       oldLevel: oldLevel,
       newLevel: newLevel,

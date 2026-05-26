@@ -1,0 +1,37 @@
+name: Flutter CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  analyze-test-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze lib/
+
+      - name: Test
+        run: |
+          flutter test test/stack_tracker_tab_test.dart
+          flutter test test/alliance_secrecy_test.dart
+          flutter test test/is_commander_game_session_test.dart
+          flutter test test/stack_display_test.dart
+          flutter test test/gameplay_dial_limits_test.dart
+          flutter test test/stack_example_data_test.dart
+          flutter test test/widget_test.dart
+
+      - name: Build web
+        run: flutter build web --release

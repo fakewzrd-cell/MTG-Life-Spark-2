@@ -69,17 +69,15 @@ Future<void> startClientSession(WidgetRef ref) async {
   ref.read(bleRoleProvider.notifier).state = BleRole.client;
 }
 
-/// Tears down the current session completely.
+/// Tears down the network session and clears in-memory game/lobby state.
 Future<void> endSession(WidgetRef ref) async {
   final service = ref.read(bleServiceProvider);
   await service?.dispose();
   ref.read(bleServiceProvider.notifier).state = null;
   ref.read(bleRoleProvider.notifier).state = BleRole.none;
-}
-
-/// Ends the network session and clears in-memory game/lobby state.
-Future<void> quitActiveGame(WidgetRef ref) async {
-  await endSession(ref);
   ref.read(gameProvider.notifier).reset();
   ref.read(lobbyProvider.notifier).reset();
 }
+
+/// Alias for leaving an active game or lobby (same as [endSession]).
+Future<void> quitActiveGame(WidgetRef ref) => endSession(ref);

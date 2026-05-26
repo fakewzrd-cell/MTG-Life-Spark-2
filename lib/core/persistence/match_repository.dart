@@ -12,6 +12,8 @@ class MatchRepository {
 
   Box<MatchRecord> get _box => Hive.box<MatchRecord>(_boxName);
 
+  bool hasMatch(String matchId) => _box.containsKey(matchId);
+
   Future<void> saveMatch(MatchRecord record) async {
     await _box.put(record.matchId, record);
   }

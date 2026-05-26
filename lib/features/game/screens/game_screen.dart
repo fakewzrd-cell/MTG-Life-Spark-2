@@ -71,7 +71,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       _listenForGameOver();
       _startShakeDetector();
       final lobby = ref.read(lobbyProvider);
-      ref.read(gameProvider.notifier).initFromLobby(lobby);
+      ref.read(gameProvider.notifier).initFromLobbyIfNeeded(lobby);
     });
   }
 

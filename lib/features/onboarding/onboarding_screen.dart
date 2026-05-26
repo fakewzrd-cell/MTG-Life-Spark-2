@@ -61,6 +61,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   Future<void> _finish() async {
     await ref.read(settingsRepositoryProvider).markOnboardingCompleted();
+    bumpSettingsRevision(ref);
     if (mounted) context.go(AppRoutes.home);
   }
 

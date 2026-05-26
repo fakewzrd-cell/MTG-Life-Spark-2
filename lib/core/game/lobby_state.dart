@@ -224,10 +224,12 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
 
   /// Call when a client joins an existing session.
   void initAsClient() {
-    state = state.copyWith(
-      isHost: false,
-      isGameStarted: false,
-    );
+    _messageSub?.cancel();
+    _connectionSub?.cancel();
+    _messageSub = null;
+    _connectionSub = null;
+    _seqNum = 0;
+    state = const LobbyState(isHost: false);
     _listenToBle();
   }
 

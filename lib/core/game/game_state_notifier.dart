@@ -105,6 +105,23 @@ class GameStateNotifier extends StateNotifier<GameState> {
 
   // ── Initialization ───────────────────────────────────────────────────────
 
+  /// True when [initFromLobby] should run (fresh game from lobby).
+  bool shouldInitializeFromLobby() =>
+      shouldInitializeGameFromLobby(state);
+
+  /// Shared guard for game init (also used in tests).
+  static bool shouldInitializeGameFromLobby(GameState state) {
+    if (state.localPlayer == null) return true;
+    if (state.gameOver) return false;
+    if (state.gameStartTime != null && state.players.isNotEmpty) return false;
+    return true;
+  }
+
+  void initFromLobbyIfNeeded(LobbyState lobby) {
+    if (!shouldInitializeFromLobby()) return;
+    initFromLobby(lobby);
+  }
+
   void initFromLobby(LobbyState lobby) {
     final profile = _ref.read(profileRepositoryProvider).getProfile();
     final deckRepo = _ref.read(deckRepositoryProvider);
@@ -352,6 +369,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
 
     if (field == 'poison' && delta > 0) {
       _ref.read(profileRepositoryProvider).addPoisonDealt(delta);
+      bumpProfileRevisionRef(_ref);
     }
 
     _checkLossConditions();
