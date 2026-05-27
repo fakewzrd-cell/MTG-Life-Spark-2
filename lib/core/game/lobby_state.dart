@@ -298,7 +298,7 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
       );
     }).toList();
     state = state.copyWith(players: players);
-    _broadcastLobbyUpdate();
+    _publishLobbyChange();
   }
 
   /// Apply a saved deck: fills commanders and tags the slot for win/loss tracking.
@@ -328,7 +328,7 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
       );
     }).toList();
     state = state.copyWith(players: players);
-    _broadcastLobbyUpdate();
+    _publishLobbyChange();
   }
 
   /// Stop attributing results to a registered deck (keeps current commanders).
@@ -338,7 +338,7 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
       return p.copyWith(selectedDeckId: null);
     }).toList();
     state = state.copyWith(players: players);
-    _broadcastLobbyUpdate();
+    _publishLobbyChange();
   }
 
   void togglePartner(String playerId) {
@@ -352,7 +352,7 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
       );
     }).toList();
     state = state.copyWith(players: players);
-    _broadcastLobbyUpdate();
+    _publishLobbyChange();
   }
 
   void setReady(String playerId, {required bool ready}) {
@@ -392,18 +392,7 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
     }).toList();
     state = state.copyWith(players: players);
 
-    _send(BleMessage(
-      type: BleMessageType.lobbyPlayerReady,
-      payload: {
-        'pid': profile.username,
-        'ready': ready,
-        'slot': players
-            .firstWhere((p) => p.playerId == profile.username,
-                orElse: () => players.first)
-            .toJson(),
-      },
-      seqNum: _nextSeq(),
-    ));
+    _sendClientSlotToHost();
   }
 
   // ── BLE inbound handling ─────────────────────────────────────────────────
@@ -523,6 +512,39 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────
+
+  void _publishLobbyChange() {
+    if (state.isHost) {
+      _broadcastLobbyUpdate();
+    } else {
+      _sendClientSlotToHost();
+    }
+  }
+
+  /// Joiner pushes their slot (commander, deck, ready) to the host.
+  void _sendClientSlotToHost() {
+    final profile = _ref.read(profileRepositoryProvider).getProfile();
+    if (profile == null) return;
+
+    PlayerSlot? slot;
+    for (final player in state.players) {
+      if (player.playerId == profile.username) {
+        slot = player;
+        break;
+      }
+    }
+    if (slot == null) return;
+
+    _send(BleMessage(
+      type: BleMessageType.lobbyPlayerReady,
+      payload: {
+        'pid': profile.username,
+        'ready': slot.isReady,
+        'slot': slot.toJson(),
+      },
+      seqNum: _nextSeq(),
+    ));
+  }
 
   void _broadcastLobbyUpdate() {
     if (!state.isHost) return;

@@ -452,8 +452,6 @@ class _WaitingRoomView extends ConsumerStatefulWidget {
 }
 
 class _WaitingRoomViewState extends ConsumerState<_WaitingRoomView> {
-  bool _isReady = false;
-
   @override
   Widget build(BuildContext context) {
     ref.listen<LobbyState>(lobbyProvider, (previous, next) {
@@ -464,6 +462,16 @@ class _WaitingRoomViewState extends ConsumerState<_WaitingRoomView> {
     });
 
     final lobby = ref.watch(lobbyProvider);
+    final profile = ref.read(profileRepositoryProvider).getProfile();
+    PlayerSlot? mySlot;
+    if (profile != null) {
+      for (final slot in lobby.players) {
+        if (slot.playerId == profile.username) {
+          mySlot = slot;
+          break;
+        }
+      }
+    }
 
     final colors = AppColorTokens.of(context);
     return Column(
@@ -480,75 +488,114 @@ class _WaitingRoomViewState extends ConsumerState<_WaitingRoomView> {
               ),
               const SizedBox(height: 16),
               ...lobby.players.map((slot) => _WaitingSlotRow(slot: slot)),
-              const SizedBox(height: 24),
-              Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 12,
-                runSpacing: 8,
-                children: [
-                  OutlinedButton(
+              if (profile != null) ...[
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _JoinLobbyActionButton(
+                        label: 'Select deck',
+                        highlighted: mySlot?.selectedDeckId != null,
+                        onPressed: () =>
+                            showDeckPickerSheet(context, ref, profile.username),
+                      ),
+                    ),
+                    SizedBox(width: LayoutTokens.gr2),
+                    Expanded(
+                      child: _JoinLobbyActionButton(
+                        label: 'Select commander',
+                        highlighted: mySlot?.commanderName != null,
+                        filled: true,
+                        onPressed: () {
+                          context.push(AppRoutes.commanderSelect, extra: {
+                            'playerId': profile.username,
+                            'hasPartner': mySlot?.hasPartner ?? false,
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: LayoutTokens.gr2),
+                SizedBox(
+                  width: double.infinity,
+                  child: _JoinLobbyActionButton(
+                    label: mySlot?.isReady == true ? 'Ready' : 'Mark ready',
+                    highlighted: mySlot?.isReady == true,
+                    filled: true,
                     onPressed: () {
-                      final profile =
-                          ref.read(profileRepositoryProvider).getProfile();
-                      if (profile == null) return;
-                      showDeckPickerSheet(context, ref, profile.username);
+                      final ready = !(mySlot?.isReady ?? false);
+                      ref
+                          .read(lobbyProvider.notifier)
+                          .sendReadyToHost(ready: ready);
                     },
-                    child: Text('Deck'),
-                  ),
-                  OutlinedButton.icon(
-                    icon: Icon(Icons.style),
-                    label: Text('Commander'),
-                    onPressed: () {
-                      final profile =
-                          ref.read(profileRepositoryProvider).getProfile();
-                      if (profile == null) return;
-                      context.push(AppRoutes.commanderSelect, extra: {
-                        'playerId': profile.username,
-                        'hasPartner': lobby.players
-                            .firstWhere(
-                              (p) => p.playerId == profile.username,
-                              orElse: () => lobby.players.first,
-                            )
-                            .hasPartner,
-                      });
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              IconButton(
-                style: IconButton.styleFrom(
-                  minimumSize: Size(
-                    LayoutTokens.minTapTarget,
-                    LayoutTokens.minTapTarget,
-                  ),
-                  backgroundColor:
-                      _isReady
-                          ? colors.primaryAccent.withValues(
-                            alpha: OpacityTokens.soft,
-                          )
-                          : colors.surface,
-                  foregroundColor:
-                      _isReady ? colors.primaryAccent : colors.textSecondary,
-                  side: BorderSide(
-                    color:
-                        _isReady
-                            ? colors.primaryAccent
-                            : colors.textSecondary,
                   ),
                 ),
-                onPressed: () {
-                  setState(() => _isReady = !_isReady);
-                  ref
-                      .read(lobbyProvider.notifier)
-                      .sendReadyToHost(ready: _isReady);
-                },
-                icon: Icon(Icons.check_rounded, size: 32),
-              ),
+              ],
             ],
           ),
         ),
       ],
+    );
+  }
+}
+
+class _JoinLobbyActionButton extends StatelessWidget {
+  const _JoinLobbyActionButton({
+    required this.label,
+    required this.onPressed,
+    this.highlighted = false,
+    this.filled = false,
+  });
+
+  final String label;
+  final VoidCallback onPressed;
+  final bool highlighted;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColorTokens.of(context);
+    final accent = colors.primaryAccent;
+
+    Color? bg;
+    Color fg;
+    Color border;
+
+    if (filled && highlighted) {
+      bg = accent;
+      fg = ColorTokens.onAccent;
+      border = accent;
+    } else if (highlighted) {
+      bg = accent.withValues(alpha: OpacityTokens.soft);
+      fg = colors.textPrimary;
+      border = accent;
+    } else {
+      bg = colors.surface;
+      fg = colors.textPrimary;
+      border = colors.textSecondary.withValues(alpha: 0.55);
+    }
+
+    return OutlinedButton(
+      style: OutlinedButton.styleFrom(
+        minimumSize: Size(0, LayoutTokens.minTapTarget),
+        padding: EdgeInsets.symmetric(
+          horizontal: LayoutTokens.gr2,
+          vertical: LayoutTokens.gr1,
+        ),
+        backgroundColor: bg,
+        foregroundColor: fg,
+        side: BorderSide(color: border, width: highlighted ? 1.5 : 1),
+        shape: RoundedRectangleBorder(
+          borderRadius: RadiusTokens.radiusControlSm,
+        ),
+      ),
+      onPressed: onPressed,
+      child: Text(
+        label,
+        textAlign: TextAlign.center,
+        style: TextStyle(fontWeight: FontWeight.w700, fontSize: FontTokens.sm),
+      ),
     );
   }
 }

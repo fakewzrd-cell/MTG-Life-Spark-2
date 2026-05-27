@@ -155,6 +155,16 @@ class WsHostService implements BleService {
       return;
     }
 
+    if (message.type == BleMessageType.lobbyPlayerReady) {
+      final playerId = message.payload['pid'] as String? ?? '';
+      final verifiedId = _verified[clientKey];
+      if (verifiedId != null && verifiedId != playerId) {
+        return;
+      }
+      _messageController.add(message);
+      return;
+    }
+
     final verifiedId = _verified[clientKey];
     if (verifiedId == null) {
       return;

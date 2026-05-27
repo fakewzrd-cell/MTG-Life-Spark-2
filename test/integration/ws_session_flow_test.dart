@@ -154,6 +154,67 @@ void main() {
       await connectionSub.cancel();
     });
 
+    test('host forwards lobbyPlayerReady from verified client', () async {
+      final client = WsClientService(
+        localPlayerId: 'guest',
+        localUsername: 'Guest',
+      );
+      addTearDown(client.dispose);
+      await client.initialize();
+
+      final connected = Completer<void>();
+      final connectionSub = client.connectionStream.listen((event) {
+        if (event.status == BleConnectionStatus.connected &&
+            !connected.isCompleted) {
+          connected.complete();
+        }
+      });
+
+      await client.connectToHost(
+        'ws://127.0.0.1:${host.port}',
+        joinToken: host.joinToken,
+      );
+      await connected.future.timeout(const Duration(seconds: 5));
+      await connectionSub.cancel();
+
+      final readySeen = Completer<BleMessage>();
+      final hostSub = host.messageStream.listen((message) {
+        if (message.type == BleMessageType.lobbyPlayerReady &&
+            !readySeen.isCompleted) {
+          readySeen.complete(message);
+        }
+      });
+
+      await client.send(
+        BleMessage(
+          type: BleMessageType.lobbyPlayerReady,
+          payload: {
+            'pid': 'guest',
+            'ready': true,
+            'slot': {
+              'playerId': 'guest',
+              'username': 'Guest',
+              'playerColor': 0xFF000000,
+              'isHost': false,
+              'isReady': true,
+              'commanderName': 'Atraxa',
+            },
+          },
+          seqNum: 1,
+        ),
+      );
+
+      final ready = await readySeen.future.timeout(const Duration(seconds: 5));
+      expect(ready.payload['ready'], isTrue);
+      expect(ready.payload['slot'], isA<Map>());
+      expect(
+        (ready.payload['slot'] as Map)['commanderName'],
+        'Atraxa',
+      );
+
+      await hostSub.cancel();
+    });
+
     test('host rejects client with invalid join token', () async {
       final client = WsClientService(
         localPlayerId: 'guest',

@@ -62,11 +62,11 @@ class _DialMetrics {
     double r4(double x) => (x / 4).round() * 4.0;
     return _DialMetrics(
       pillHeaderHeight: r4(lerp(32, 36)),
-      stepTapHeight: r4(lerp(28, 32)),
+      stepTapHeight: r4(lerp(32, 36)),
       wheelHeight: r4(lerp(48, 64)),
       itemExtent: r4(lerp(18, 22)),
       leadingSize: r4(lerp(16, 20)),
-      stepIconSize: r4(lerp(18, 22)),
+      stepIconSize: r4(lerp(20, 24)),
       wheelFontSize: r4(lerp(12, 15)),
       addIconSize: r4(lerp(22, 26)),
     );
@@ -1055,11 +1055,19 @@ class _GameplayDialPillState extends State<_GameplayDialPill> {
               children: [
                 SizedBox(
                   height: widget.metrics.pillHeaderHeight,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: widget.onHeaderTap,
-                    onLongPress: widget.onHeaderLongPress,
-                    child: Center(child: widget.headerLeading),
+                  child: Center(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: widget.onHeaderTap,
+                      onLongPress: widget.onHeaderLongPress,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        child: widget.headerLeading,
+                      ),
+                    ),
                   ),
                 ),
                 Divider(
@@ -1199,7 +1207,7 @@ class _GameplayDialPillState extends State<_GameplayDialPill> {
           child: Center(
             child: Icon(
               icon,
-              size: widget.metrics.stepIconSize,
+              size: widget.metrics.stepIconSize + 2,
               color: dim ? ColorTokens.textSecondary : ColorTokens.primaryAccent,
             ),
           ),
