@@ -2,10 +2,10 @@
 class AppIcons {
   AppIcons._();
 
-  // ── Game counters (SVG — tint via [GameIcon] color) ─────────────────────
-  static const String poison = 'assets/icons/Poison.svg';
-  static const String energy = 'assets/icons/Energy.svg';
-  static const String experience = 'assets/icons/Experience.svg';
+  // ── Game counters (raster silhouettes — tint via [GameIcon] color) ──────
+  static const String poison = 'assets/icons/Poison.png';
+  static const String energy = 'assets/icons/Energy.png';
+  static const String experience = 'assets/icons/Experience.png';
   static const String radiation = 'assets/icons/Radiation.svg';
   /// Treasure: raster only until a Treasure.svg is added to assets/icons.
   static const String treasure = 'assets/icons/Treasure.png';

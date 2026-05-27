@@ -3,7 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../constants/app_icons.dart';
 
-/// Displays a game icon from assets. Prefer SVG so [color] tints via SVG.
+/// Displays a game icon from assets. SVG and single-color PNGs tint via [color].
 class GameIcon extends StatelessWidget {
   final String assetPath;
   final double size;

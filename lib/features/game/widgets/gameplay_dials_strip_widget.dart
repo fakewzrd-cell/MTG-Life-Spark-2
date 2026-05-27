@@ -130,23 +130,32 @@ class GameplayDialsStripWidget extends StatelessWidget {
   static Color _defaultGlyphColor({Color? tintColor}) =>
       tintColor ?? _listIconColor();
 
-  /// SVG counters accept [tintColor]; strip uses artwork defaults (rad = green).
+  /// Visual scale per counter artwork so mixed aspect ratios read evenly.
+  static double _glyphVisualScale(String field) => switch (field) {
+    'poison' => 1.08,
+    'energy' => 1.0,
+    'experience' => 0.94,
+    _ => 1.0,
+  };
+
+  /// Counter artwork accepts [tintColor]; strip/list default to secondary text.
   static Widget _leadingGlyph(
     String field,
     double size, {
     Color? tintColor,
   }) {
     final tone = _defaultGlyphColor(tintColor: tintColor);
+    final iconSize = size * _glyphVisualScale(field);
     return switch (field) {
-      'poison' => GameIcon.poison(size: size, color: tintColor),
-      'energy' => GameIcon.energy(size: size, color: tintColor),
-      'experience' => GameIcon.experience(size: size, color: tintColor),
+      'poison' => GameIcon.poison(size: iconSize, color: tone),
+      'energy' => GameIcon.energy(size: iconSize, color: tone),
+      'experience' => GameIcon.experience(size: iconSize, color: tone),
       'rad' => GameIcon.radiation(
-        size: size,
+        size: iconSize,
         color: tintColor ?? ColorTokens.success,
       ),
-      GameplayDialIds.treasure => GameIcon.treasure(size: size, color: tone),
-      _ => Icon(_iconForField(field), size: size, color: tone),
+      GameplayDialIds.treasure => GameIcon.treasure(size: iconSize, color: tone),
+      _ => Icon(_iconForField(field), size: iconSize, color: tone),
     };
   }
 
@@ -642,10 +651,11 @@ class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
           (id) => ListTile(
             leading: SizedBox(
               width: 36,
+              height: 28,
               child: Center(
                 child: GameplayDialsStripWidget._leadingGlyph(
                   id,
-                  18,
+                  20,
                   tintColor: GameplayDialsStripWidget._listIconColor(),
                 ),
               ),
