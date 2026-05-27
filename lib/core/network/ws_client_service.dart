@@ -6,6 +6,8 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import '../bluetooth/ble_message.dart';
 import '../bluetooth/ble_protocol.dart';
 import '../bluetooth/ble_service.dart';
+import 'ws_client_connect_stub.dart'
+    if (dart.library.io) 'ws_client_connect_io.dart';
 
 /// WebSocket-based client service.
 ///
@@ -62,11 +64,48 @@ class WsClientService implements BleService {
 
   // ── Connection ────────────────────────────────────────────────────────────
 
+  static const _connectTimeout = Duration(seconds: 12);
+
   /// Connects to the WebSocket server at [wsUri] (e.g. `ws://192.168.1.5:27315`).
   /// [joinToken] must match the token embedded in the host QR code.
   Future<void> connectToHost(String wsUri, {required String joinToken}) async {
     _hostUri = wsUri;
     _joinToken = joinToken;
+    await disconnect();
+    try {
+      await _openChannel(wsUri);
+    } catch (e) {
+      await disconnect();
+      _connectionController.add(BleConnectionEvent(
+        playerId: wsUri,
+        status: BleConnectionStatus.error,
+        errorMessage: e is TimeoutException
+            ? e.message
+            : 'Cannot reach host: $e',
+      ));
+    }
+  }
+
+  Future<void> _openChannel(String wsUri) async {
+    _channel = connectClientChannel(
+      Uri.parse(wsUri),
+      connectTimeout: _connectTimeout,
+    );
+    await _channel!.ready;
+
+    _sub = _channel!.stream.listen(
+      _onData,
+      onDone: _onDone,
+      onError: _onError,
+      cancelOnError: false,
+    );
+
+    // Kick off handshake
+    _sendRaw(BleMessage.hello(_nextSeq(), joinToken: _joinToken));
+  }
+
+  /// Closes any open socket without tearing down stream controllers.
+  Future<void> disconnect() async {
     await _sub?.cancel();
     _sub = null;
     try {
@@ -74,29 +113,6 @@ class WsClientService implements BleService {
     } catch (_) {}
     _channel = null;
     _ready = false;
-    try {
-      _channel = WebSocketChannel.connect(Uri.parse(wsUri));
-
-      // WebSocketChannel.connect is synchronous; we need to await the ready
-      // future to detect immediate failures (e.g. connection refused).
-      await _channel!.ready;
-
-      _sub = _channel!.stream.listen(
-        _onData,
-        onDone: _onDone,
-        onError: _onError,
-        cancelOnError: false,
-      );
-
-      // Kick off handshake
-      _sendRaw(BleMessage.hello(_nextSeq(), joinToken: _joinToken));
-    } catch (e) {
-      _connectionController.add(BleConnectionEvent(
-        playerId: wsUri,
-        status: BleConnectionStatus.error,
-        errorMessage: 'Cannot reach host: $e',
-      ));
-    }
   }
 
   // ── Incoming data ─────────────────────────────────────────────────────────
@@ -127,8 +143,12 @@ class WsClientService implements BleService {
     }
 
     if (message.type == BleMessageType.hello) {
-      // Host acknowledged → send join announcement, mark ready
+      // Host acknowledged → mark ready, notify UI, then announce lobby join.
       _ready = true;
+      _connectionController.add(BleConnectionEvent(
+        playerId: _hostUri ?? '',
+        status: BleConnectionStatus.connected,
+      ));
       _sendRaw(BleMessage(
         type: BleMessageType.lobbyPlayerJoined,
         payload: {
@@ -136,10 +156,6 @@ class WsClientService implements BleService {
           'username': localUsername,
         },
         seqNum: _nextSeq(),
-      ));
-      _connectionController.add(BleConnectionEvent(
-        playerId: _hostUri ?? '',
-        status: BleConnectionStatus.connected,
       ));
       return;
     }

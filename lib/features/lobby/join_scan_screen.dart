@@ -38,6 +38,8 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
   _JoinPhase _phase = _JoinPhase.scanning;
   bool _cameraPermissionGranted = false;
   bool _scanned = false;
+  int _connectAttempt = 0;
+  Timer? _connectTimeout;
 
   StreamSubscription<BleConnectionEvent>? _connectionSub;
   MobileScannerController? _scannerController;
@@ -57,6 +59,7 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _connectTimeout?.cancel();
     _connectionSub?.cancel();
     unawaited(_stopScanner());
     super.dispose();
@@ -146,6 +149,7 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
 
     if (granted) {
       await startClientSession(ref);
+      ref.read(lobbyProvider.notifier).initAsClient();
     } else {
       _showSnackbar(
         'Camera permission is required to scan the host QR code.',
@@ -184,9 +188,20 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
 
   // ── Connection ────────────────────────────────────────────────────────────
 
+  Future<void> _cancelConnectAttempt() async {
+    _connectAttempt++;
+    _connectTimeout?.cancel();
+    _connectTimeout = null;
+    await _connectionSub?.cancel();
+    _connectionSub = null;
+    await _client?.disconnect();
+  }
+
   Future<void> _connectTo(String wsUri, {required String joinToken}) async {
     await _stopScanner();
     if (!mounted) return;
+
+    final attempt = ++_connectAttempt;
     setState(() => _phase = _JoinPhase.connecting);
 
     final client = _client;
@@ -195,42 +210,65 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
         'Could not start join session. Finish profile setup and try again.',
         isError: true,
       );
-      _resetToScan();
+      await _resetToScan();
       return;
     }
 
+    await _connectionSub?.cancel();
     _connectionSub = ref
         .read(sessionServiceProvider)!
         .connectionStream
         .listen(_onConnectionEvent);
 
+    _connectTimeout?.cancel();
+    _connectTimeout = Timer(const Duration(seconds: 15), () {
+      unawaited(_onConnectTimedOut(attempt));
+    });
+
     await client.connectToHost(wsUri, joinToken: joinToken);
+    if (!mounted || attempt != _connectAttempt) return;
+  }
+
+  Future<void> _onConnectTimedOut(int attempt) async {
+    if (!mounted || attempt != _connectAttempt) return;
+    if (_phase != _JoinPhase.connecting) return;
+    _showSnackbar(
+      'Timed out connecting to the host. Make sure you are on the same Wi‑Fi '
+      'and the host lobby is still open, then try again.',
+      isError: true,
+    );
+    await _resetToScan();
   }
 
   void _onConnectionEvent(BleConnectionEvent event) {
     if (!mounted) return;
     switch (event.status) {
       case BleConnectionStatus.connected:
+        _connectTimeout?.cancel();
+        _connectTimeout = null;
         unawaited(_stopScanner());
-        ref.read(lobbyProvider.notifier).initAsClient();
         setState(() => _phase = _JoinPhase.waitingRoom);
 
       case BleConnectionStatus.rejected:
+        _connectTimeout?.cancel();
+        _connectTimeout = null;
         _showSnackbar(
           event.errorMessage ?? 'Host rejected connection (version mismatch).',
           isError: true,
         );
-        _resetToScan();
+        unawaited(_resetToScan());
 
       case BleConnectionStatus.disconnected:
         if (_phase == _JoinPhase.waitingRoom) {
           _showSnackbar('Disconnected from host.');
-          _resetToScan();
+          unawaited(_resetToScan());
         }
 
       case BleConnectionStatus.error:
+        _connectTimeout?.cancel();
+        _connectTimeout = null;
         _showSnackbar(event.errorMessage ?? 'Connection error.', isError: true);
-        _resetToScan();
+        unawaited(_resetToScan());
 
       default:
         break;
@@ -238,6 +276,7 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
   }
 
   Future<void> _resetToScan() async {
+    await _cancelConnectAttempt();
     await _stopScanner();
     if (!mounted) return;
     setState(() {
@@ -245,6 +284,13 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
       _scanned = false;
     });
     await _syncCameraPermission();
+  }
+
+  Future<void> _leaveJoinFlow() async {
+    await _cancelConnectAttempt();
+    await _stopScanner();
+    await endSession(ref);
+    if (mounted) context.pop();
   }
 
   void _showSnackbar(String msg, {bool isError = false}) {
@@ -267,11 +313,7 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
         title: 'Join a Game',
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
-          onPressed: () async {
-            await _stopScanner();
-            await endSession(ref);
-            if (context.mounted) context.go(AppRoutes.home);
-          },
+          onPressed: () => unawaited(_leaveJoinFlow()),
         ),
       ),
       body: switch (_phase) {

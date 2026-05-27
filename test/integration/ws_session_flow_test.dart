@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mgt_life_spark/core/bluetooth/ble_message.dart';
 import 'package:mgt_life_spark/core/bluetooth/ble_protocol.dart';
 import 'package:mgt_life_spark/core/bluetooth/ble_service.dart';
+import 'package:mgt_life_spark/core/game/lobby_state.dart';
 import 'package:mgt_life_spark/core/network/session_join_uri.dart';
 import 'package:mgt_life_spark/core/network/ws_client_service.dart';
 import 'package:mgt_life_spark/core/network/ws_host_service.dart';
@@ -62,6 +64,93 @@ void main() {
       expect(joinMessage.payload['pid'], 'guest');
       expect(joinMessage.payload['username'], 'Guest');
 
+      await connectionSub.cancel();
+    });
+
+    test('connected event is emitted before lobby join is announced', () async {
+      final client = WsClientService(
+        localPlayerId: 'guest',
+        localUsername: 'Guest',
+      );
+      addTearDown(client.dispose);
+      await client.initialize();
+
+      final order = <String>[];
+      final connectionSub = client.connectionStream.listen((event) {
+        if (event.status == BleConnectionStatus.connected) {
+          order.add('connected');
+        }
+      });
+      final hostJoin = host.messageStream.listen((message) {
+        if (message.type == BleMessageType.lobbyPlayerJoined) {
+          order.add('join');
+        }
+      });
+
+      await client.connectToHost(
+        'ws://127.0.0.1:${host.port}',
+        joinToken: host.joinToken,
+      );
+
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+      expect(order, ['connected', 'join']);
+
+      await connectionSub.cancel();
+      await hostJoin.cancel();
+    });
+
+    test('client listener attached before connect receives host messages', () async {
+      final client = WsClientService(
+        localPlayerId: 'guest',
+        localUsername: 'Guest',
+      );
+      addTearDown(client.dispose);
+      await client.initialize();
+
+      final snapshots = <BleMessage>[];
+      final messageSub = client.messageStream.listen((message) {
+        if (message.type == BleMessageType.stateSnapshot) {
+          snapshots.add(message);
+        }
+      });
+
+      final connected = Completer<void>();
+      final connectionSub = client.connectionStream.listen((event) {
+        if (event.status == BleConnectionStatus.connected &&
+            !connected.isCompleted) {
+          connected.complete();
+        }
+      });
+
+      await client.connectToHost(
+        'ws://127.0.0.1:${host.port}',
+        joinToken: host.joinToken,
+      );
+      await connected.future.timeout(const Duration(seconds: 5));
+
+      await host.send(
+        BleMessage(
+          type: BleMessageType.stateSnapshot,
+          payload: {
+            'config': const LobbyConfig().toJson(),
+            'players': [
+              {
+                'playerId': 'host',
+                'username': 'Host',
+                'playerColor': 0xFF000000,
+                'isHost': true,
+                'isReady': false,
+              },
+            ],
+          },
+          seqNum: 0,
+        ),
+      );
+
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      expect(snapshots, hasLength(1));
+
+      await messageSub.cancel();
       await connectionSub.cancel();
     });
 

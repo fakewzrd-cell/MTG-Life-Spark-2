@@ -46,8 +46,14 @@ Future<bool> startHostSession(WidgetRef ref) async {
 /// Creates a WebSocket client session ready to connect.
 /// Call [WsClientService.connectToHost] with the URI from the QR code.
 Future<void> startClientSession(WidgetRef ref) async {
-  // Reuse existing client service if already created.
   if (ref.read(sessionServiceProvider) is WsClientService) return;
+
+  final existing = ref.read(sessionServiceProvider);
+  if (existing != null) {
+    await existing.dispose();
+    ref.read(sessionServiceProvider.notifier).state = null;
+    ref.read(sessionRoleProvider.notifier).state = SessionRole.none;
+  }
 
   final profile = ref.read(profileRepositoryProvider).getProfile();
   if (profile == null) return;
