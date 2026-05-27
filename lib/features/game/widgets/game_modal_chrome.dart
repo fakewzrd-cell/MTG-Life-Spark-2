@@ -183,10 +183,11 @@ Future<T?> showGameBottomSheet<T>({
   bool isScrollControlled = false,
   bool showDragHandle = false,
   bool enableDrag = true,
+  Color? backgroundColor,
 }) {
   return showModalBottomSheet<T>(
     context: context,
-    backgroundColor: ColorTokens.surface,
+    backgroundColor: backgroundColor ?? ColorTokens.surface,
     isScrollControlled: isScrollControlled,
     showDragHandle: showDragHandle,
     enableDrag: enableDrag,

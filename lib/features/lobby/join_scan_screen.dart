@@ -55,8 +55,42 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen> {
   @override
   void dispose() {
     _connectionSub?.cancel();
-    _scannerController?.dispose();
+    unawaited(_stopScanner());
     super.dispose();
+  }
+
+  Future<void> _startScanner() async {
+    if (!_cameraPermissionGranted || _scannerController != null) return;
+    final controller = MobileScannerController(
+      detectionSpeed: DetectionSpeed.normal,
+      facing: CameraFacing.back,
+      torchEnabled: false,
+    );
+    _scannerController = controller;
+    try {
+      await controller.start();
+    } catch (_) {
+      _scannerController = null;
+      await controller.dispose();
+    }
+    if (mounted) setState(() {});
+  }
+
+  /// Fully releases the camera when leaving the QR scan step.
+  Future<void> _stopScanner() async {
+    final controller = _scannerController;
+    if (controller == null) return;
+    _scannerController = null;
+    try {
+      await controller.stop();
+    } catch (_) {
+      // Already stopped or detached.
+    }
+    try {
+      await controller.dispose();
+    } catch (_) {
+      // Controller may already be disposed.
+    }
   }
 
   // ── Init ──────────────────────────────────────────────────────────────────
@@ -69,12 +103,7 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen> {
     if (status.isGranted) {
       setState(() => _cameraPermissionGranted = true);
       await startClientSession(ref);
-      _scannerController = MobileScannerController(
-        detectionSpeed: DetectionSpeed.normal,
-        facing: CameraFacing.back,
-        torchEnabled: false,
-      );
-      setState(() {}); // rebuild to show scanner
+      await _startScanner();
     } else {
       _showSnackbar('Camera permission is required to scan the host QR code.',
           isError: true);
@@ -99,8 +128,11 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen> {
         return;
       }
       _scanned = true;
-      _scannerController?.stop();
-      _connectTo(parsed.wsUri, joinToken: parsed.token!);
+      unawaited(_stopScanner().then((_) {
+        if (mounted) {
+          _connectTo(parsed.wsUri, joinToken: parsed.token!);
+        }
+      }));
     } on FormatException {
       _showSnackbar('Not a valid MTG Life Spark QR code.', isError: true);
     }
@@ -109,6 +141,8 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen> {
   // ── Connection ────────────────────────────────────────────────────────────
 
   Future<void> _connectTo(String wsUri, {required String joinToken}) async {
+    await _stopScanner();
+    if (!mounted) return;
     setState(() => _phase = _JoinPhase.connecting);
 
     final client = _client;
@@ -133,6 +167,7 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen> {
     if (!mounted) return;
     switch (event.status) {
       case BleConnectionStatus.connected:
+        unawaited(_stopScanner());
         ref.read(lobbyProvider.notifier).initAsClient();
         setState(() => _phase = _JoinPhase.waitingRoom);
 
@@ -158,12 +193,14 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen> {
     }
   }
 
-  void _resetToScan() {
+  Future<void> _resetToScan() async {
+    await _stopScanner();
+    if (!mounted) return;
     setState(() {
       _phase = _JoinPhase.scanning;
       _scanned = false;
     });
-    _scannerController?.start();
+    await _startScanner();
   }
 
   void _showSnackbar(String msg, {bool isError = false}) {
@@ -187,6 +224,7 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () async {
+            await _stopScanner();
             await endSession(ref);
             if (context.mounted) context.go(AppRoutes.home);
           },

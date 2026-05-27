@@ -304,7 +304,9 @@ class GameplayDialsStripWidget extends StatelessWidget {
     await showGameBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      showDragHandle: true,
+      showDragHandle: false,
+      enableDrag: false,
+      backgroundColor: Colors.transparent,
       builder: (sheetCtx) {
         void pick(String field) {
           final added = onAddDialToStrip(field);
@@ -496,57 +498,48 @@ class _AddCounterSheetScaffold extends StatefulWidget {
 }
 
 class _AddCounterSheetScaffoldState extends State<_AddCounterSheetScaffold> {
-  /// Below this height fraction after a drag ends, the sheet animates closed.
-  static const _dismissExtent = 0.24;
+  /// Pop once the user drags the sheet below this fraction of the viewport.
+  static const _dismissExtent = 0.22;
 
   final DraggableScrollableController _sheetController =
       DraggableScrollableController();
   bool _dismissing = false;
 
   @override
+  void initState() {
+    super.initState();
+    _sheetController.addListener(_onSheetSizeChanged);
+  }
+
+  @override
   void dispose() {
+    _sheetController.removeListener(_onSheetSizeChanged);
     _sheetController.dispose();
     super.dispose();
   }
 
-  Future<void> _dismissSheet() async {
+  void _onSheetSizeChanged() {
     if (_dismissing || !_sheetController.isAttached) return;
-    _dismissing = true;
-    try {
-      await _sheetController.animateTo(
-        0,
-        duration: MotionTokens.slow,
-        curve: MotionTokens.easeOut,
-      );
-    } catch (_) {
-      // Detached mid-animation — still close the route.
+    if (_sheetController.size <= _dismissExtent) {
+      _dismissing = true;
+      Navigator.of(context).pop();
     }
-    if (mounted) Navigator.of(context).pop();
-  }
-
-  bool _onScrollNotification(ScrollNotification notification) {
-    if (_dismissing || !_sheetController.isAttached) return false;
-    if (notification is ScrollEndNotification &&
-        _sheetController.size < _dismissExtent) {
-      _dismissSheet();
-    }
-    return false;
   }
 
   @override
   Widget build(BuildContext context) {
-    return NotificationListener<ScrollNotification>(
-      onNotification: _onScrollNotification,
-      child: DraggableScrollableSheet(
-        controller: _sheetController,
-        initialChildSize: 0.58,
-        minChildSize: 0,
-        maxChildSize: 0.92,
-        expand: false,
-        snap: true,
-        snapSizes: const [0.58, 0.92],
-        snapAnimationDuration: MotionTokens.slow,
-        builder: (_, scrollController) => _AddCounterChooserSheet(
+    final colors = context.gameColors;
+    return DraggableScrollableSheet(
+      controller: _sheetController,
+      initialChildSize: 0.62,
+      minChildSize: 0,
+      maxChildSize: 0.92,
+      expand: false,
+      builder: (_, scrollController) => Material(
+        color: colors.surface,
+        borderRadius: RadiusTokens.radiusSheetTop,
+        clipBehavior: Clip.antiAlias,
+        child: _AddCounterChooserSheet(
           scrollController: scrollController,
           sheetExtentListenable: _sheetController,
           player: widget.player,
@@ -700,6 +693,15 @@ class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    LayoutTokens.gr3,
+                    LayoutTokens.gr2,
+                    LayoutTokens.gr3,
+                    LayoutTokens.gr1,
+                  ),
+                  child: const Center(child: GameSheetHandle()),
+                ),
                 Padding(
                   padding: EdgeInsets.fromLTRB(
                     LayoutTokens.gr3,
