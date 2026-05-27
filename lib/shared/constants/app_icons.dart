@@ -1,21 +1,25 @@
 /// Central reference for game-related icon assets.
-/// Icons are stored in assets/icons/ (SVG format).
 class AppIcons {
   AppIcons._();
 
-  // ── Game counters ────────────────────────────────────────────────────────
-  /// Poison counter (replaces ☠ emoji)
+  // ── Game counters (SVG — tint via [GameIcon] color) ─────────────────────
   static const String poison = 'assets/icons/Poison.svg';
-  /// Energy counter (replaces ⚡ emoji)
   static const String energy = 'assets/icons/Energy.svg';
-  /// Radiation counter (replaces ☢ emoji)
-  static const String radiation = 'assets/icons/Radiation.svg';
-  /// Experience counter (replaces ★ emoji)
   static const String experience = 'assets/icons/Experience.svg';
+  static const String radiation = 'assets/icons/Radiation.svg';
+  /// Treasure: raster only until a Treasure.svg is added to assets/icons.
+  static const String treasure = 'assets/icons/Treasure.png';
 
   // ── Variant modes ────────────────────────────────────────────────────────
   /// Bounty variant mode
   static const String bounty = 'assets/icons/Bounty.svg';
+
+  /// Fanned cards — Play tab (in-game) and Decks tab (shell nav).
+  static const String playTabCards = 'assets/icons/game_play_tab.png';
+
+  /// Profile hero banner when no custom banner is chosen.
+  static const String defaultProfileBanner =
+      'assets/images/default_profile_banner.png';
 
   // ── Mana symbols (WUBRG) ────────────────────────────────────────────────
   static const String manaW = 'assets/icons/W.svg';

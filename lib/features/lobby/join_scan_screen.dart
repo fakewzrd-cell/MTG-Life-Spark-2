@@ -105,7 +105,14 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen> {
     setState(() => _phase = _JoinPhase.connecting);
 
     final client = _client;
-    if (client == null) return;
+    if (client == null) {
+      _showSnackbar(
+        'Could not start join session. Finish profile setup and try again.',
+        isError: true,
+      );
+      _resetToScan();
+      return;
+    }
 
     _connectionSub = ref
         .read(bleServiceProvider)!

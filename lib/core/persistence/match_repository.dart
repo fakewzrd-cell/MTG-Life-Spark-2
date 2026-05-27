@@ -1,4 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
+
+import '../../shared/utils/commander_image_resolver.dart';
 import '../models/match_record.dart';
 
 class MatchRepository {
@@ -21,13 +23,19 @@ class MatchRepository {
   List<MatchRecord> getRecentMatches() {
     final cutoff = DateTime.now().subtract(const Duration(days: 30));
     return _box.values
-        .where((m) => m.date.isAfter(cutoff))
+        .where(
+          (m) =>
+              !isPreviewPlaceholderMatchId(m.matchId) &&
+              m.date.isAfter(cutoff),
+        )
         .toList()
       ..sort((a, b) => b.date.compareTo(a.date));
   }
 
   List<MatchRecord> getAllMatches() {
-    return _box.values.toList()
+    return _box.values
+        .where((m) => !isPreviewPlaceholderMatchId(m.matchId))
+        .toList()
       ..sort((a, b) => b.date.compareTo(a.date));
   }
 

@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -23,6 +24,8 @@ import '../../ui/tokens/typography_tokens.dart';
 import '../../ui/components/ui_app_bar.dart';
 import '../../ui/tokens/opacity_tokens.dart';
 
+enum _QrHostLoadState { loading, ready, unavailable, error }
+
 class LobbyScreen extends ConsumerStatefulWidget {
   const LobbyScreen({super.key});
 
@@ -32,25 +35,104 @@ class LobbyScreen extends ConsumerStatefulWidget {
 
 class _LobbyScreenState extends ConsumerState<LobbyScreen> {
   String? _qrData;
+  _QrHostLoadState _qrLoadState = _QrHostLoadState.loading;
+  String? _qrErrorMessage;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await startHostSession(ref);
-      ref.read(lobbyProvider.notifier).initAsHost();
-      _buildQrData();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _prepareHostQr());
   }
 
-  Future<void> _buildQrData() async {
-    final host = ref.read(bleServiceProvider);
-    if (host is! WsHostService) return;
-    final ip = await getLocalIpAddress();
-    if (ip == null || !mounted) return;
+  Future<void> _prepareHostQr() async {
+    if (!mounted) return;
+
+    if (kIsWeb) {
+      ref.read(lobbyProvider.notifier).initAsHost();
+      setState(() {
+        _qrLoadState = _QrHostLoadState.unavailable;
+        _qrData = null;
+        _qrErrorMessage =
+            'Hosting needs the mobile app (iOS or Android) on the same Wi‑Fi. '
+            'The browser can join games by scanning a QR code, but cannot host.';
+      });
+      return;
+    }
+
     setState(() {
-      _qrData = 'mgtlifespark://$ip:${host.port}';
+      _qrLoadState = _QrHostLoadState.loading;
+      _qrData = null;
+      _qrErrorMessage = null;
     });
+
+    final started = await startHostSession(ref);
+    if (!mounted) return;
+    if (!started) {
+      final hasProfile = ref.read(profileRepositoryProvider).hasProfile;
+      setState(() {
+        if (kIsWeb) {
+          _qrLoadState = _QrHostLoadState.unavailable;
+          _qrErrorMessage =
+              'Hosting needs the mobile app (iOS or Android) on the same Wi‑Fi. '
+              'The browser can join games by scanning a QR code, but cannot host.';
+        } else if (!hasProfile) {
+          _qrLoadState = _QrHostLoadState.error;
+          _qrErrorMessage =
+              'Create your profile first (Home → set username), then tap Retry.';
+        } else {
+          _qrLoadState = _QrHostLoadState.error;
+          _qrErrorMessage =
+              'Could not start the host server on this device. Tap Retry.';
+        }
+      });
+      return;
+    }
+
+    ref.read(lobbyProvider.notifier).initAsHost();
+
+    const maxAttempts = 12;
+    for (var attempt = 0; attempt < maxAttempts; attempt++) {
+      if (!mounted) return;
+      final host = ref.read(bleServiceProvider);
+      if (host is! WsHostService) {
+        setState(() {
+          _qrLoadState = _QrHostLoadState.error;
+          _qrErrorMessage = 'Host session did not start. Tap Retry.';
+        });
+        return;
+      }
+      if (!host.isReady) {
+        if (attempt == maxAttempts - 1) {
+          setState(() {
+            _qrLoadState = _QrHostLoadState.unavailable;
+            _qrErrorMessage = null;
+          });
+        } else {
+          await Future.delayed(const Duration(milliseconds: 250));
+        }
+        continue;
+      }
+
+      final ip = await getLocalIpAddress();
+      if (!mounted) return;
+      if (ip != null && host.port > 0) {
+        setState(() {
+          _qrLoadState = _QrHostLoadState.ready;
+          _qrData = 'mgtlifespark://$ip:${host.port}';
+        });
+        return;
+      }
+
+      if (attempt == maxAttempts - 1) {
+        setState(() {
+          _qrLoadState = _QrHostLoadState.unavailable;
+          _qrErrorMessage =
+              'Connect this device to Wi‑Fi (same network as guests), then tap Retry.';
+        });
+        return;
+      }
+      await Future.delayed(const Duration(milliseconds: 400));
+    }
   }
 
   @override
@@ -84,7 +166,13 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
             LayoutTokens.gr5 + MediaQuery.paddingOf(context).bottom,
           ),
           children: [
-          _QrHeader(qrData: _qrData, playerCount: lobby.players.length),
+          _QrHeader(
+            qrData: _qrData,
+            loadState: _qrLoadState,
+            errorMessage: _qrErrorMessage,
+            onRetry: _prepareHostQr,
+            playerCount: lobby.players.length,
+          ),
           SizedBox(height: LayoutTokens.gr4),
           ...lobby.players.map((slot) => _PlayerSlotCard(slot: slot)),
           if (lobby.players.length < lobby.config.maxPlayers)
@@ -242,8 +330,17 @@ class _PodSection extends ConsumerWidget {
 
 class _QrHeader extends StatelessWidget {
   final String? qrData;
+  final _QrHostLoadState loadState;
+  final String? errorMessage;
+  final VoidCallback onRetry;
   final int playerCount;
-  const _QrHeader({required this.qrData, required this.playerCount});
+  const _QrHeader({
+    required this.qrData,
+    required this.loadState,
+    required this.errorMessage,
+    required this.onRetry,
+    required this.playerCount,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -279,7 +376,43 @@ class _QrHeader extends StatelessWidget {
             ],
           ),
           SizedBox(height: LayoutTokens.gr3),
-          if (qrData == null)
+          if (loadState == _QrHostLoadState.unavailable)
+            SizedBox(
+              height: qrSize,
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr2),
+                child: Text(
+                  errorMessage ??
+                      'Hosting needs the mobile app or a local dev build on your '
+                      'computer (same Wi‑Fi). Browser hosting is not supported.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: colors.textSecondary,
+                    fontSize: compact ? 12 : 13,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            )
+          else if (loadState == _QrHostLoadState.error)
+            SizedBox(
+              height: qrSize,
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr2),
+                child: Center(
+                  child: Text(
+                    errorMessage ?? 'Could not show join QR code.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: colors.textSecondary,
+                      fontSize: compact ? 12 : 13,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ),
+            )
+          else if (loadState == _QrHostLoadState.loading)
             SizedBox(
               height: qrSize,
               child: Center(
@@ -307,7 +440,7 @@ class _QrHeader extends StatelessWidget {
                 backgroundColor: Colors.white,
               ),
             ),
-          if (qrData != null)
+          if (loadState == _QrHostLoadState.ready && qrData != null) ...[
             Padding(
               padding: EdgeInsets.only(top: LayoutTokens.gr1),
               child: Text(
@@ -321,6 +454,13 @@ class _QrHeader extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
             ),
+          ] else if (loadState == _QrHostLoadState.unavailable ||
+              loadState == _QrHostLoadState.error) ...[
+            Padding(
+              padding: EdgeInsets.only(top: LayoutTokens.gr2),
+              child: TextButton(onPressed: onRetry, child: const Text('Retry')),
+            ),
+          ],
         ],
       ),
     );

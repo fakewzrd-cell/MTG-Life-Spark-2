@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/game/scryfall_service.dart';
 import '../../core/persistence/providers.dart';
+import '../../shared/utils/app_router.dart';
 import '../../ui/components/ui_app_bar.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/color_tokens.dart';
@@ -70,23 +71,33 @@ class _ProfileBannerPickerScreenState
     }
   }
 
-  Future<void> _onCardTap(ScryfallCard card) async {
-    if (card.imageUrl == null || card.imageUrl!.isEmpty) return;
+  void _returnToProfile() {
+    if (!mounted) return;
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go(AppRoutes.home);
+    }
+  }
+
+  Future<void> _applyBannerAndReturn(String? imageUrl) async {
     final profile = ref.read(profileRepositoryProvider).getProfile();
     if (profile == null) return;
-    profile.profileBannerImageUrl = card.imageUrl;
+    profile.profileBannerImageUrl = imageUrl;
     await ref.read(profileRepositoryProvider).saveProfile(profile);
+    if (!mounted) return;
+    // Navigate home before refreshing router listeners (avoids stack glitch).
+    context.go(AppRoutes.home);
     bumpProfileRevision(ref);
-    if (mounted) context.pop();
+  }
+
+  Future<void> _onCardTap(ScryfallCard card) async {
+    if (card.imageUrl == null || card.imageUrl!.isEmpty) return;
+    await _applyBannerAndReturn(card.imageUrl);
   }
 
   Future<void> _clearBanner() async {
-    final profile = ref.read(profileRepositoryProvider).getProfile();
-    if (profile == null) return;
-    profile.profileBannerImageUrl = null;
-    await ref.read(profileRepositoryProvider).saveProfile(profile);
-    bumpProfileRevision(ref);
-    if (mounted) context.pop();
+    await _applyBannerAndReturn(null);
   }
 
   @override
@@ -95,6 +106,10 @@ class _ProfileBannerPickerScreenState
     return Scaffold(
       appBar: UiAppBar(
         title: 'Profile banner',
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: _returnToProfile,
+        ),
         actions: [
           TextButton(
             onPressed: _clearBanner,

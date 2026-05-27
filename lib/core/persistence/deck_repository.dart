@@ -1,5 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
 
+import '../../shared/utils/commander_image_resolver.dart';
 import '../models/player_deck.dart';
 
 class DeckRepository {
@@ -14,7 +15,8 @@ class DeckRepository {
   Box<PlayerDeck> get _box => Hive.box<PlayerDeck>(_boxName);
 
   List<PlayerDeck> getAll() {
-    final list = _box.values.toList();
+    final list =
+        _box.values.where((d) => !isPreviewPlaceholderDeck(d)).toList();
     list.sort(
       (a, b) => a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()),
     );

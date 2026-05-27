@@ -113,5 +113,11 @@ String? resolvePlayerPartnerImageUrl({
   return null;
 }
 
+bool isPreviewPlaceholderDeckId(String id) =>
+    id.startsWith('__preview_placeholder_deck');
+
 bool isPreviewPlaceholderDeck(PlayerDeck deck) =>
-    deck.id.startsWith('__preview_placeholder_deck');
+    isPreviewPlaceholderDeckId(deck.id);
+
+bool isPreviewPlaceholderMatchId(String matchId) =>
+    matchId.startsWith('__preview_placeholder');

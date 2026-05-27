@@ -101,9 +101,21 @@
         if (hint) {
           hint.hidden = false;
           hint.textContent =
-            'Still loading… First open on phone can take 30–60s in release mode. Avoid debug builds on mobile.';
+            'Still loading? Hard-refresh (Cmd+Shift+R). If stuck, clear site data for this URL. Use release server, not debug.';
         }
-      }, 20000);
+      }, 15000);
+      setTimeout(function () {
+        var el = document.getElementById('app-loading');
+        if (!el) return;
+        if (text) {
+          text.textContent = 'Load failed or very slow.';
+        }
+        if (hint) {
+          hint.hidden = false;
+          hint.textContent =
+            'Clear browser site data for this address, then reload. Debug web builds often hang here.';
+        }
+      }, 35000);
     })();
   </script>
 </body>

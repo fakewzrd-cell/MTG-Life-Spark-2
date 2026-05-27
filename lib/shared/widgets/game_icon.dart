@@ -3,8 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../constants/app_icons.dart';
 
-/// Displays a game icon from assets (SVG).
-/// Use for bounty, radiation, mana symbols, etc.
+/// Displays a game icon from assets. Prefer SVG so [color] tints via SVG.
 class GameIcon extends StatelessWidget {
   final String assetPath;
   final double size;
@@ -29,6 +28,9 @@ class GameIcon extends StatelessWidget {
   /// Experience counter icon
   factory GameIcon.experience({double size = 24, Color? color}) =>
       GameIcon(assetPath: AppIcons.experience, size: size, color: color);
+  /// Treasure counter icon
+  factory GameIcon.treasure({double size = 24, Color? color}) =>
+      GameIcon(assetPath: AppIcons.treasure, size: size, color: color);
 
   /// Bounty variant icon
   factory GameIcon.bounty({double size = 24, Color? color}) =>
@@ -40,8 +42,28 @@ class GameIcon extends StatelessWidget {
     return GameIcon(assetPath: path ?? AppIcons.manaW, size: size);
   }
 
+  bool get _isRaster =>
+      assetPath.endsWith('.png') ||
+      assetPath.endsWith('.jpg') ||
+      assetPath.endsWith('.jpeg') ||
+      assetPath.endsWith('.webp');
+
   @override
   Widget build(BuildContext context) {
+    if (_isRaster) {
+      final image = Image.asset(
+        assetPath,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.medium,
+      );
+      if (color == null) return image;
+      return ColorFiltered(
+        colorFilter: ColorFilter.mode(color!, BlendMode.srcIn),
+        child: image,
+      );
+    }
     return SvgPicture.asset(
       assetPath,
       width: size,

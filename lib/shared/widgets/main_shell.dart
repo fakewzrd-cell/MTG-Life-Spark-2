@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
 import '../../core/bluetooth/ble_providers.dart';
 import '../../ui/components/app_bottom_nav_bar.dart';
 import 'session_leave_dialog.dart';
@@ -35,6 +37,7 @@ class MainShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      extendBody: true,
       body: navigationShell,
       bottomNavigationBar: AppBottomNavBar(
         selectedIndex: navigationShell.currentIndex,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../shared/theme/app_theme.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
+import '../../../ui/tokens/motion_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
 
 /// Shared dialog and bottom-sheet chrome for in-game modals.
@@ -177,11 +178,21 @@ Future<T?> showGameBottomSheet<T>({
   required BuildContext context,
   required WidgetBuilder builder,
   bool isScrollControlled = false,
+  bool showDragHandle = false,
+  bool enableDrag = true,
 }) {
   return showModalBottomSheet<T>(
     context: context,
     backgroundColor: AppTheme.card,
     isScrollControlled: isScrollControlled,
+    showDragHandle: showDragHandle,
+    enableDrag: enableDrag,
+    sheetAnimationStyle: AnimationStyle(
+      duration: MotionTokens.slow,
+      reverseDuration: MotionTokens.standard,
+      curve: MotionTokens.easeOut,
+      reverseCurve: MotionTokens.exit,
+    ),
     shape: const RoundedRectangleBorder(
       borderRadius: RadiusTokens.radiusSheetTop,
     ),

@@ -61,6 +61,8 @@ Widget _buildCommanderSelect(GoRouterState state) {
   );
 }
 
+final _rootNavigatorKey = GlobalKey<NavigatorState>();
+
 /// Notifies [GoRouter] when auth/profile/settings state changes.
 class _RouterRefreshNotifier extends ChangeNotifier {
   _RouterRefreshNotifier(this._ref) {
@@ -76,6 +78,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   ref.onDispose(refresh.dispose);
 
   return GoRouter(
+    navigatorKey: _rootNavigatorKey,
     initialLocation: AppRoutes.home,
     refreshListenable: refresh,
     routes: [
@@ -100,11 +103,13 @@ final routerProvider = Provider<GoRouter>((ref) {
                 routes: [
                   GoRoute(
                     path: 'banner',
+                    parentNavigatorKey: _rootNavigatorKey,
                     builder: (context, state) =>
                         const ProfileBannerPickerScreen(),
                   ),
                   GoRoute(
                     path: 'pods',
+                    parentNavigatorKey: _rootNavigatorKey,
                     builder: (context, state) => const PodsManageScreen(),
                   ),
                 ],

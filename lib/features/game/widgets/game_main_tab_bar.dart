@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../../../shared/constants/app_icons.dart';
 import '../../../shared/theme/app_theme.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
+
+/// Asset for the Play tab (fanned cards) — replaces generic controller icon.
+const String kGamePlayTabIconAsset = AppIcons.playTabCards;
 
 /// Play · Stack · History row — use inside [GameHudHeader].
 class GameMainTabBarStrip extends StatelessWidget {
@@ -17,10 +21,10 @@ class GameMainTabBarStrip extends StatelessWidget {
   final ValueChanged<int> onSelected;
   final Color? accentColor;
 
-  static const _segments = <(int, String, IconData)>[
-    (0, 'Play', Icons.sports_esports_rounded),
-    (1, 'Stack', Icons.layers_rounded),
-    (2, 'History', Icons.history_rounded),
+  static const _segments = <_GameMainTabSpec>[
+    _GameMainTabSpec(index: 0, label: 'Play', iconAsset: kGamePlayTabIconAsset),
+    _GameMainTabSpec(index: 1, label: 'Stack', icon: Icons.layers_rounded),
+    _GameMainTabSpec(index: 2, label: 'History', icon: Icons.history_rounded),
   ];
 
   @override
@@ -38,11 +42,12 @@ class GameMainTabBarStrip extends StatelessWidget {
               VerticalDivider(width: 1, thickness: 1, color: dividerColor),
             Expanded(
               child: _GameMainTab(
-                label: _segments[i].$2,
-                icon: _segments[i].$3,
-                selected: selectedIndex == _segments[i].$1,
+                label: _segments[i].label,
+                icon: _segments[i].icon,
+                iconAsset: _segments[i].iconAsset,
+                selected: selectedIndex == _segments[i].index,
                 accentColor: resolvedAccent,
-                onTap: () => onSelected(_segments[i].$1),
+                onTap: () => onSelected(_segments[i].index),
               ),
             ),
           ],
@@ -52,20 +57,54 @@ class GameMainTabBarStrip extends StatelessWidget {
   }
 }
 
+class _GameMainTabSpec {
+  const _GameMainTabSpec({
+    required this.index,
+    required this.label,
+    this.icon,
+    this.iconAsset,
+  });
+
+  final int index;
+  final String label;
+  final IconData? icon;
+  final String? iconAsset;
+}
+
 class _GameMainTab extends StatelessWidget {
   const _GameMainTab({
     required this.label,
-    required this.icon,
+    this.icon,
+    this.iconAsset,
     required this.selected,
     required this.accentColor,
     required this.onTap,
   });
 
   final String label;
-  final IconData icon;
+  final IconData? icon;
+  final String? iconAsset;
   final bool selected;
   final Color accentColor;
   final VoidCallback onTap;
+
+  static const double _iconSize = 18;
+
+  Widget _buildIcon(Color fg) {
+    final asset = iconAsset;
+    if (asset != null) {
+      return Image.asset(
+        asset,
+        width: _iconSize,
+        height: _iconSize,
+        fit: BoxFit.contain,
+        color: fg,
+        colorBlendMode: BlendMode.srcIn,
+        filterQuality: FilterQuality.medium,
+      );
+    }
+    return Icon(icon ?? Icons.help_outline, size: _iconSize, color: fg);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,7 +133,7 @@ class _GameMainTab extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(icon, size: 18, color: fg),
+                    _buildIcon(fg),
                     const SizedBox(width: LayoutTokens.gr0),
                     Text(
                       label,

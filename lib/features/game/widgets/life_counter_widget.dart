@@ -3,7 +3,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import '../../../ui/tokens/color_tokens.dart';
-import '../../../ui/tokens/opacity_tokens.dart';
 import '../../../ui/tokens/motion_tokens.dart';
 import 'package:flutter/services.dart';
 
@@ -230,199 +229,183 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
                     final prev = widget.life - 1;
                     final next = widget.life + 1;
 
+                    final stepDivider = AppTheme.textSecondary.withValues(
+                      alpha: 0.12,
+                    );
+
                     return Semantics(
                       label: widget.isEliminated
                           ? 'Eliminated at ${widget.life} life'
                           : '${widget.life} life total',
                       value: '${widget.life}',
                       child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Positioned(
-                          left: 0,
-                          top: 0,
-                          width: tapEdge,
-                          height: hBody,
-                          child: Semantics(
-                            button: true,
-                            label: 'Decrease life',
-                            enabled: !widget.isEliminated,
-                            child: GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onTap: () => _change(-1),
-                              onLongPressStart: (_) => _startHold(-1),
-                              onLongPressEnd: (_) => _stopHold(),
-                              onLongPressCancel: _stopHold,
-                              child: const ColoredBox(color: Colors.transparent),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          right: 0,
-                          top: 0,
-                          width: tapEdge,
-                          height: hBody,
-                          child: Semantics(
-                            button: true,
-                            label: 'Increase life',
-                            enabled: !widget.isEliminated,
-                            child: GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onTap: () => _change(1),
-                              onLongPressStart: (_) => _startHold(1),
-                              onLongPressEnd: (_) => _stopHold(),
-                              onLongPressCancel: _stopHold,
-                              child: const ColoredBox(color: Colors.transparent),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: 0,
-                          width: tapEdge,
-                          top: 0,
-                          bottom: 0,
-                          child: Center(
-                            child: IgnorePointer(
-                              child: _LifeEdgeStepGlyph(
+                        clipBehavior: Clip.none,
+                        children: [
+                          SizedBox(
+                            height: hBody,
+                            width: double.infinity,
+                            child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _LifeEdgeStepStrip(
+                                width: tapEdge,
                                 icon: Icons.remove_rounded,
+                                semanticsLabel: 'Decrease life',
+                                innerDividerOnRight: true,
+                                dividerColor: stepDivider,
+                                onTap: () => _change(-1),
+                                onLongPressStart: () => _startHold(-1),
+                                onLongPressEnd: _stopHold,
+                                onLongPressCancel: _stopHold,
                               ),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          right: 0,
-                          width: tapEdge,
-                          top: 0,
-                          bottom: 0,
-                          child: Center(
-                            child: IgnorePointer(
-                              child: _LifeEdgeStepGlyph(
+                              Expanded(
+                                child: GestureDetector(
+                                  onHorizontalDragUpdate: (d) =>
+                                      _feedHorizontalDrag(d.delta.dx),
+                                  onHorizontalDragEnd: (_) =>
+                                      _wheelDragAccum = 0,
+                                  onHorizontalDragCancel: () =>
+                                      _wheelDragAccum = 0,
+                                  behavior: HitTestBehavior.translucent,
+                                  child: Container(
+                                    color: AppTheme.primary.withValues(
+                                      alpha: 0.12,
+                                    ),
+                                    child: ClipRect(
+                                      child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          Expanded(
+                                            child: FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              alignment: Alignment.centerRight,
+                                              child: Text(
+                                                '$prev',
+                                                maxLines: 1,
+                                                textAlign: TextAlign.right,
+                                                style: TextStyle(
+                                                  fontSize: neighborFontSize,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: neighborColor,
+                                                  letterSpacing: -0.5,
+                                                  height: 1.0,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(width: gap),
+                                          Expanded(
+                                            flex: 2,
+                                            child: FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              alignment: Alignment.center,
+                                              child: Text(
+                                                '${widget.life}',
+                                                maxLines: 1,
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(
+                                                  fontSize: baseFontSize,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: _lifeColor,
+                                                  letterSpacing: -2,
+                                                  height: 1.0,
+                                                  shadows: [
+                                                    Shadow(
+                                                      color: _lifeColor
+                                                          .withValues(
+                                                        alpha: 0.35,
+                                                      ),
+                                                      blurRadius: 24,
+                                                      offset: const Offset(
+                                                        0,
+                                                        LayoutTokens.gr0,
+                                                      ),
+                                                    ),
+                                                    Shadow(
+                                                      color: Colors.black
+                                                          .withValues(
+                                                        alpha: 0.2,
+                                                      ),
+                                                      blurRadius:
+                                                          LayoutTokens.gr0,
+                                                      offset: const Offset(
+                                                        0,
+                                                        LayoutTokens.gr0,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(width: gap),
+                                          Expanded(
+                                            child: FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              alignment: Alignment.centerLeft,
+                                              child: Text(
+                                                '$next',
+                                                maxLines: 1,
+                                                textAlign: TextAlign.left,
+                                                style: TextStyle(
+                                                  fontSize: neighborFontSize,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: neighborColor,
+                                                  letterSpacing: -0.5,
+                                                  height: 1.0,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              _LifeEdgeStepStrip(
+                                width: tapEdge,
                                 icon: Icons.add_rounded,
+                                semanticsLabel: 'Increase life',
+                                innerDividerOnRight: false,
+                                dividerColor: stepDivider,
+                                onTap: () => _change(1),
+                                onLongPressStart: () => _startHold(1),
+                                onLongPressEnd: _stopHold,
+                                onLongPressCancel: _stopHold,
                               ),
-                            ),
+                            ],
                           ),
-                        ),
-                        Positioned(
-                          left: tapEdge,
-                          right: tapEdge,
-                          top: 0,
-                          bottom: 0,
-                          child: GestureDetector(
-                            onHorizontalDragUpdate: (d) =>
-                                _feedHorizontalDrag(d.delta.dx),
-                            onHorizontalDragEnd: (_) => _wheelDragAccum = 0,
-                            onHorizontalDragCancel: () => _wheelDragAccum = 0,
-                            behavior: HitTestBehavior.translucent,
-                            child: ClipRect(
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Expanded(
-                                    child: FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      alignment: Alignment.centerRight,
-                                      child: Text(
-                                        '$prev',
-                                        maxLines: 1,
-                                        textAlign: TextAlign.right,
-                                        style: TextStyle(
-                                          fontSize: neighborFontSize,
-                                          fontWeight: FontWeight.w700,
-                                          color: neighborColor,
-                                          letterSpacing: -0.5,
-                                          height: 1.0,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(width: gap),
-                                  Expanded(
-                                    flex: 2,
-                                    child: FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        '${widget.life}',
-                                        maxLines: 1,
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontSize: baseFontSize,
-                                          fontWeight: FontWeight.w800,
-                                          color: _lifeColor,
-                                          letterSpacing: -2,
-                                          height: 1.0,
-                                          shadows: [
-                                            Shadow(
-                                              color: _lifeColor.withValues(
-                                                alpha: 0.35,
-                                              ),
-                                              blurRadius: 24,
-                                              offset: const Offset(0, LayoutTokens.gr0),
-                                            ),
-                                            Shadow(
-                                              color: Colors.black.withValues(
-                                                alpha: 0.2,
-                                              ),
-                                              blurRadius: LayoutTokens.gr0,
-                                              offset: Offset(0, LayoutTokens.gr0),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(width: gap),
-                                  Expanded(
-                                    child: FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      alignment: Alignment.centerLeft,
-                                      child: Text(
-                                        '$next',
-                                        maxLines: 1,
-                                        textAlign: TextAlign.left,
-                                        style: TextStyle(
-                                          fontSize: neighborFontSize,
-                                          fontWeight: FontWeight.w700,
-                                          color: neighborColor,
-                                          letterSpacing: -0.5,
-                                          height: 1.0,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
                           ),
-                        ),
-                        Center(
-                          child: IgnorePointer(
-                            child:
-                                _lastDelta == null
-                                    ? const SizedBox.shrink()
-                                    : FadeTransition(
-                                      opacity: Tween(
-                                        begin: 1.0,
-                                        end: 0.0,
-                                      ).animate(_deltaFade),
-                                      child: SlideTransition(
-                                        position: _deltaSlide,
-                                        child: Text(
-                                          _lastDelta! > 0
-                                              ? '+$_lastDelta'
-                                              : '$_lastDelta',
-                                          style: TextStyle(
-                                            fontSize: deltaFontSize,
-                                            fontWeight: FontWeight.bold,
-                                            color: _deltaColor,
+                          Center(
+                            child: IgnorePointer(
+                              child:
+                                  _lastDelta == null
+                                      ? const SizedBox.shrink()
+                                      : FadeTransition(
+                                        opacity: Tween(
+                                          begin: 1.0,
+                                          end: 0.0,
+                                        ).animate(_deltaFade),
+                                        child: SlideTransition(
+                                          position: _deltaSlide,
+                                          child: Text(
+                                            _lastDelta! > 0
+                                                ? '+$_lastDelta'
+                                                : '$_lastDelta',
+                                            style: TextStyle(
+                                              fontSize: deltaFontSize,
+                                              fontWeight: FontWeight.bold,
+                                              color: _deltaColor,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
                     );
                   },
                 ),
@@ -435,34 +418,66 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
   }
 }
 
-class _LifeEdgeStepGlyph extends StatelessWidget {
-  final IconData icon;
+/// Flat ± step control — matches custom counter dial step rows (no circle).
+class _LifeEdgeStepStrip extends StatelessWidget {
+  const _LifeEdgeStepStrip({
+    required this.width,
+    required this.icon,
+    required this.semanticsLabel,
+    required this.innerDividerOnRight,
+    required this.dividerColor,
+    required this.onTap,
+    required this.onLongPressStart,
+    required this.onLongPressEnd,
+    required this.onLongPressCancel,
+  });
 
-  const _LifeEdgeStepGlyph({required this.icon});
+  final double width;
+  final IconData icon;
+  final String semanticsLabel;
+  final bool innerDividerOnRight;
+  final Color dividerColor;
+  final VoidCallback onTap;
+  final VoidCallback onLongPressStart;
+  final VoidCallback onLongPressEnd;
+  final VoidCallback onLongPressCancel;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white.withValues(alpha: 0.14),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.28),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: OpacityTokens.soft),
-            blurRadius: LayoutTokens.gr0,
-            offset: const Offset(0, LayoutTokens.gr0),
+    return SizedBox(
+      width: width,
+      child: Semantics(
+        button: true,
+        label: semanticsLabel,
+        child: GestureDetector(
+          onLongPressStart: (_) => onLongPressStart(),
+          onLongPressEnd: (_) => onLongPressEnd(),
+          onLongPressCancel: onLongPressCancel,
+          child: Material(
+            color: AppTheme.card.withValues(alpha: 0.92),
+            child: InkWell(
+              onTap: onTap,
+              child: DecoratedBox(
+              decoration: BoxDecoration(
+                border: Border(
+                  right: innerDividerOnRight
+                      ? BorderSide(color: dividerColor)
+                      : BorderSide.none,
+                  left: innerDividerOnRight
+                      ? BorderSide.none
+                      : BorderSide(color: dividerColor),
+                ),
+              ),
+              child: Center(
+                child: Icon(
+                  icon,
+                  size: 22,
+                  color: AppTheme.accent,
+                ),
+              ),
+            ),
+            ),
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(LayoutTokens.gr0),
-        child: Icon(
-          icon,
-          size: LayoutTokens.gr5 + LayoutTokens.gr0,
-          color: AppTheme.textPrimary.withValues(alpha: 0.82),
         ),
       ),
     );

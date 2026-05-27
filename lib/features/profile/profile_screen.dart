@@ -1,6 +1,4 @@
-import 'dart:convert';
 import 'dart:math' as math;
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +10,7 @@ import '../../core/models/match_record.dart';
 import '../../core/models/player_deck.dart';
 import '../../core/models/player_profile.dart';
 import '../../core/persistence/providers.dart';
+import '../../shared/constants/app_icons.dart';
 import '../../shared/utils/app_router.dart';
 import '../../shared/utils/commander_image_resolver.dart';
 import '../../shared/widgets/deck_tile_visual.dart';
@@ -32,12 +31,8 @@ const double _kBentoCardPaddingPx = LayoutTokens.gr2;
 /// Outline strength shared by all profile carousel [Card]s.
 const double _kBentoCardBorderAlpha = 0.55;
 
-/// When true, profile sections show rich sample data for layout review.
-/// Set to false once you want only real Hive data.
-const bool _kProfileForcePlaceholderPreview = false;
-
-/// Bundled MTG art when no custom banner is set (from project mana assets).
-const String _kDefaultBannerPlaceholderAsset = 'assets/mana/MYB/fullManaCost.png';
+/// Empty copy for profile modules before the first recorded match.
+const String _kProfileUntilFirstGameMessage = 'Until you play your first game.';
 
 BorderRadius get _kBentoRadius => RadiusTokens.radiusBento;
 
@@ -96,6 +91,21 @@ Widget _defaultBannerFill(BuildContext context) {
   );
 }
 
+/// Bundled profile / commander art when no network image is available.
+Widget _defaultProfileBannerArt(
+  BuildContext context, {
+  double? height,
+}) {
+  return Image.asset(
+    AppIcons.defaultProfileBanner,
+    fit: BoxFit.cover,
+    width: double.infinity,
+    height: height,
+    alignment: const Alignment(0, -0.15),
+    errorBuilder: (ctx, _, __) => _defaultBannerFill(ctx),
+  );
+}
+
 Widget _recentMatchCommanderArt(BuildContext context, String? imageUrl) {
   if (imageUrl != null && imageUrl.isNotEmpty) {
     return CachedNetworkImage(
@@ -107,7 +117,7 @@ Widget _recentMatchCommanderArt(BuildContext context, String? imageUrl) {
       errorWidget: (_, __, ___) => _defaultBannerFill(context),
     );
   }
-  return _defaultBannerFill(context);
+  return _defaultProfileBannerArt(context);
 }
 
 /// Dark tint over commander art for text legibility on recent match cards.
@@ -228,20 +238,36 @@ class ProfileScreen extends ConsumerWidget {
     final matchRepo = ref.watch(matchRepositoryProvider);
 
     if (profile == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        backgroundColor: AppColorTokens.of(context).backgroundPrimary,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Set up your profile to continue.',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: () => context.go(AppRoutes.profileSetup),
+                  child: const Text('Create profile'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
     }
 
-    final storedMatches = matchRepo.getAllMatches().toList();
-    final hasStoredMatches = storedMatches.isNotEmpty;
-    final hasStoredDecks =
-        ref.read(deckRepositoryProvider).getAll().isNotEmpty;
-    final usePreview = _kProfileForcePlaceholderPreview;
-    final displayProfile =
-        usePreview ? _previewPlaceholderProfile(profile) : profile;
-    final allMatches = (usePreview || !hasStoredMatches)
-        ? _previewPlaceholderMatches()
-        : storedMatches;
-    final isExampleProfile = usePreview;
+    final allMatches =
+        matchRepo
+            .getAllMatches()
+            .where((m) => !m.matchId.startsWith('__preview_placeholder'))
+            .toList();
 
     final colors = AppColorTokens.of(context);
     return Scaffold(
@@ -274,7 +300,7 @@ class ProfileScreen extends ConsumerWidget {
                     // Match horizontal inset so the banner isn’t flush under SafeArea.
                     padding: EdgeInsets.fromLTRB(hPad, hPad, hPad, 0),
                     child: _ProfileHeroCard(
-                      profile: displayProfile,
+                      profile: profile,
                       colors: colors,
                     ),
                   ),
@@ -285,27 +311,19 @@ class ProfileScreen extends ConsumerWidget {
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
                       _PlayerStatsSection(
-                        profile: displayProfile,
+                        profile: profile,
                         colors: colors,
                         listMaxHeight: sectionCardListMaxHeight,
-                        isExampleData: isExampleProfile,
-                        previewTopCommander: usePreview
-                            ? _previewPlaceholderTopCommander()
-                            : null,
-                        previewWorstDeck: usePreview
-                            ? _previewPlaceholderWorstDeck()
-                            : null,
+                        hasPlayedGames: allMatches.isNotEmpty,
                       ),
                       SizedBox(height: LayoutTokens.gr4),
                       _DeckPerformanceSection(
                         colors: colors,
                         listMaxHeight: sectionCardListMaxHeight,
-                        usePlaceholderDecks: usePreview || !hasStoredDecks,
                       ),
                       SizedBox(height: LayoutTokens.gr4),
                       _RecentGamesModule(
                         matches: allMatches,
-                        isExampleData: isExampleProfile || !hasStoredMatches,
                         colors: colors,
                         listMaxHeight: sectionCardListMaxHeight,
                       ),
@@ -333,6 +351,30 @@ class ProfileScreen extends ConsumerWidget {
 
 String _formatProfileStat(int n) => NumberFormat.decimalPattern().format(n);
 
+/// Subtle tint over the full hero banner so text stays legible without blurring art.
+class _ProfileHeroFrostVeil extends StatelessWidget {
+  const _ProfileHeroFrostVeil();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.black.withValues(alpha: 0.22),
+            Colors.black.withValues(alpha: 0.30),
+            Colors.black.withValues(alpha: 0.52),
+          ],
+          stops: const [0.0, 0.55, 1.0],
+        ),
+      ),
+      child: const SizedBox.expand(),
+    );
+  }
+}
+
 /// Rounded hero card: banner art, banner action, floating stats pill.
 class _ProfileHeroCard extends StatelessWidget {
   const _ProfileHeroCard({
@@ -357,17 +399,13 @@ class _ProfileHeroCard extends StatelessWidget {
           fit: BoxFit.cover,
           width: double.infinity,
           height: cardHeight,
-          placeholder: (ctx, _) => _defaultBannerFill(ctx),
-          errorWidget: (ctx, _, __) => _defaultBannerFill(ctx),
+          placeholder: (ctx, _) =>
+              _defaultProfileBannerArt(ctx, height: cardHeight),
+          errorWidget: (ctx, _, __) =>
+              _defaultProfileBannerArt(ctx, height: cardHeight),
         );
       }
-      return Image.asset(
-        _kDefaultBannerPlaceholderAsset,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: cardHeight,
-        errorBuilder: (ctx, _, __) => _defaultBannerFill(ctx),
-      );
+      return _defaultProfileBannerArt(context, height: cardHeight);
     }
 
     return ClipRRect(
@@ -380,24 +418,7 @@ class _ProfileHeroCard extends StatelessWidget {
           clipBehavior: Clip.hardEdge,
           children: [
             Positioned.fill(child: background()),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              height: (cardHeight * 0.52).clamp(96.0, 200.0),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withValues(alpha: 0.75),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+            const Positioned.fill(child: _ProfileHeroFrostVeil()),
             Positioned(
               top: 10,
               right: 10,
@@ -681,36 +702,35 @@ class _PlayerStatsBentoTile extends StatelessWidget {
   }
 }
 
-/// Rich sample profile for layout preview ([_kProfileForcePlaceholderPreview]).
-PlayerProfile _previewPlaceholderProfile(PlayerProfile real) {
-  return PlayerProfile(
-    username: real.username.trim().isNotEmpty ? real.username : 'Planeswalker',
-    level: 24,
-    xp: 1650,
-    tier: 'Gold',
-    totalWins: 47,
-    totalLosses: 31,
-    totalGamesPlayed: 78,
-    likesReceived: 42,
-    dislikesReceived: 9,
-    honorsMvpReceived: 6,
-    honorsTeamPlayerReceived: 4,
-    honorsUnderdogReceived: 3,
-    lifetimePoisonDealt: 18,
-    lifetimeCommanderKills: 11,
-    currentWinStreak: 3,
-    profileBannerImageUrl: _kMostPlayedPlaceholderImageUrl,
-    selectedCommanderName: _kMostPlayedPlaceholderCommander,
-    selectedCommanderImageUrl: _kMostPlayedPlaceholderImageUrl,
+Widget _mostPlayedTile({
+  required bool hasPlayedGames,
+  required PlayerProfile profile,
+  required AppColorTokens colors,
+  required CommanderStats? top,
+}) {
+  const info =
+      'Commander you have played the most games with across recorded matches.';
+  if (!hasPlayedGames) {
+    return _PlayerStatsEmptyBentoCard(
+      title: 'Most played',
+      infoMessage: info,
+      colors: colors,
+    );
+  }
+  if (top != null) {
+    return _MostPlayedBentoCard(
+      profile: profile,
+      colors: colors,
+      top: top,
+    );
+  }
+  return _PlayerStatsEmptyBentoCard(
+    title: 'Most played',
+    infoMessage: info,
+    colors: colors,
+    message: 'No commander stats yet.',
   );
 }
-
-CommanderStats _previewPlaceholderTopCommander() => CommanderStats(
-      commanderName: _kMostPlayedPlaceholderCommander,
-      wins: 12,
-      losses: 7,
-      gamesPlayed: 19,
-    );
 
 /// Deck with the lowest win rate among decks with at least one recorded game.
 PlayerDeck? _pickWorstDeck(Iterable<PlayerDeck> decks) {
@@ -731,22 +751,23 @@ class _PlayerStatsSection extends ConsumerWidget {
     required this.profile,
     required this.colors,
     required this.listMaxHeight,
-    this.isExampleData = false,
-    this.previewTopCommander,
-    this.previewWorstDeck,
+    required this.hasPlayedGames,
   });
 
   final PlayerProfile profile;
   final AppColorTokens colors;
   final double listMaxHeight;
-  final bool isExampleData;
-  final CommanderStats? previewTopCommander;
-  final PlayerDeck? previewWorstDeck;
+  final bool hasPlayedGames;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(deckListRevisionProvider);
-    final repoDecks = ref.watch(deckRepositoryProvider).getAll();
+    final repoDecks =
+        ref
+            .watch(deckRepositoryProvider)
+            .getAll()
+            .where((d) => !isPreviewPlaceholderDeck(d))
+            .toList();
     final xpNeeded = _xpNeededForLevel(profile.level);
     final xpInLevel = profile.xp % xpNeeded;
     final xpProgress =
@@ -760,17 +781,14 @@ class _PlayerStatsSection extends ConsumerWidget {
           if (g != 0) return g;
           return b.wins.compareTo(a.wins);
         });
-    CommanderStats? top = previewTopCommander;
-    if (top == null &&
+    CommanderStats? top;
+    if (hasPlayedGames &&
         stats.isNotEmpty &&
         stats.first.gamesPlayed > 0) {
       top = stats.first;
     }
 
-    PlayerDeck? worst = previewWorstDeck;
-    if (worst == null) {
-      worst = _pickWorstDeck(repoDecks);
-    }
+    final worst = hasPlayedGames ? _pickWorstDeck(repoDecks) : null;
 
     final titleStyle = TypographyTokens.sectionTitle(colors.textPrimary);
 
@@ -805,7 +823,8 @@ class _PlayerStatsSection extends ConsumerWidget {
           _PlayerStatsBentoTile(
             width: cardWidth,
             height: cardHeight,
-            child: _MostPlayedBentoCard(
+            child: _mostPlayedTile(
+              hasPlayedGames: hasPlayedGames,
               profile: profile,
               colors: colors,
               top: top,
@@ -814,11 +833,23 @@ class _PlayerStatsSection extends ConsumerWidget {
           _PlayerStatsBentoTile(
             width: cardWidth,
             height: cardHeight,
-            child: _WorstDeckBentoCard(
-              profile: profile,
-              colors: colors,
-              deck: worst,
-            ),
+            child:
+                hasPlayedGames && worst != null
+                    ? _WorstDeckBentoCard(
+                      profile: profile,
+                      colors: colors,
+                      deck: worst,
+                    )
+                    : _PlayerStatsEmptyBentoCard(
+                      title: 'Tough record',
+                      infoMessage:
+                          'Saved deck with the lowest win rate among decks with at least one recorded game.',
+                      colors: colors,
+                      message:
+                          hasPlayedGames
+                              ? 'No deck stats yet.'
+                              : _kProfileUntilFirstGameMessage,
+                    ),
           ),
         ];
 
@@ -826,15 +857,6 @@ class _PlayerStatsSection extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text('Player stats', style: titleStyle),
-            if (isExampleData) ...[
-              SizedBox(height: LayoutTokens.gr0),
-              Text(
-                'Example stats — play games to track your real progress.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: colors.textSecondary,
-                ),
-              ),
-            ],
             SizedBox(height: LayoutTokens.gr2),
             SizedBox(
               height: cardHeight,
@@ -855,17 +877,51 @@ class _PlayerStatsSection extends ConsumerWidget {
   }
 }
 
-/// Preview art/stats for Most played when no commander history exists yet.
-const String _kMostPlayedPlaceholderImageUrl =
-    'https://cards.scryfall.io/art_crop/front/1/0/10d42b35-844f-4a64-9981-c6118d45e826.jpg?1689999317';
-const String _kMostPlayedPlaceholderCommander = 'The Ur-Dragon';
-const String _kMostPlayedPlaceholderStatsLine = '12W · 7L · 19 games';
+/// Stats bento tile before match history exists (or no commander/deck data yet).
+class _PlayerStatsEmptyBentoCard extends StatelessWidget {
+  const _PlayerStatsEmptyBentoCard({
+    required this.title,
+    required this.infoMessage,
+    required this.colors,
+    this.message = _kProfileUntilFirstGameMessage,
+  });
 
-/// Preview art/stats for Worst deck when no deck record qualifies yet.
-const String _kWorstDeckPlaceholderImageUrl =
-    'https://cards.scryfall.io/art_crop/front/f/e/fe9be3e0-076c-4703-9750-2a6b0a178bc9.jpg?1761053654';
-const String _kWorstDeckPlaceholderLabel = 'Yuriko turns';
-const String _kWorstDeckPlaceholderStatsLine = '6W · 5L · 11 games';
+  final String title;
+  final String infoMessage;
+  final AppColorTokens colors;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _BentoSectionHeader(
+          title: title,
+          colors: colors,
+          infoMessage: infoMessage,
+        ),
+        SizedBox(height: LayoutTokens.gr2),
+        Expanded(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: LayoutTokens.gr2),
+              child: Text(
+                message,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                  height: 1.35,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
 
 /// Shared layout for Most played / Worst deck player-stats tiles.
 class _PlayerStatsHighlightBentoCard extends StatelessWidget {
@@ -918,7 +974,7 @@ class _PlayerStatsHighlightBentoCard extends StatelessWidget {
                               _defaultBannerFill(context),
                         )
                       else
-                        _defaultBannerFill(context),
+                        _defaultProfileBannerArt(context),
                       DecoratedBox(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
@@ -979,17 +1035,18 @@ class _MostPlayedBentoCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isPlaceholder = top == null;
     final commander = top;
 
     String? imageUrl;
-    if (isPlaceholder) {
-      imageUrl = _kMostPlayedPlaceholderImageUrl;
-    } else {
-      final decks = ref.watch(deckRepositoryProvider).getAll();
+    if (commander != null) {
+      final decks =
+          ref
+              .watch(deckRepositoryProvider)
+              .getAll()
+              .where((d) => !isPreviewPlaceholderDeck(d));
       for (final d in decks) {
         if (d.commanderName.toLowerCase() ==
-            commander!.commanderName.toLowerCase()) {
+            commander.commanderName.toLowerCase()) {
           imageUrl = resolveDeckCommanderImageUrl(deck: d, profile: profile);
           break;
         }
@@ -997,11 +1054,11 @@ class _MostPlayedBentoCard extends ConsumerWidget {
       imageUrl ??= profile.selectedCommanderImageUrl;
     }
 
-    final commanderName =
-        commander?.commanderName ?? _kMostPlayedPlaceholderCommander;
-    final statsLine = commander != null
-        ? '${commander.wins}W · ${commander.losses}L · ${commander.gamesPlayed} games'
-        : _kMostPlayedPlaceholderStatsLine;
+    final commanderName = commander?.commanderName ?? 'No data yet';
+    final statsLine =
+        commander != null
+            ? '${commander.wins}W · ${commander.losses}L · ${commander.gamesPlayed} games'
+            : 'Play games to see stats';
 
     return _PlayerStatsHighlightBentoCard(
       title: 'Most played',
@@ -1029,14 +1086,15 @@ class _WorstDeckBentoCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final d = deck;
-    final isPlaceholder = d == null;
-    final String? imageUrl = isPlaceholder
-        ? _kWorstDeckPlaceholderImageUrl
-        : resolveDeckCommanderImageUrl(deck: d!, profile: profile);
-    final primaryLabel = d?.displayName ?? _kWorstDeckPlaceholderLabel;
-    final statsLine = d != null
-        ? '${d.wins}W · ${d.losses}L · ${d.gamesPlayed} games'
-        : _kWorstDeckPlaceholderStatsLine;
+    final String? imageUrl =
+        d == null
+            ? null
+            : resolveDeckCommanderImageUrl(deck: d, profile: profile);
+    final primaryLabel = d?.displayName ?? 'No data yet';
+    final statsLine =
+        d != null
+            ? '${d.wins}W · ${d.losses}L · ${d.gamesPlayed} games'
+            : 'Add a deck and play matches';
 
     return _PlayerStatsHighlightBentoCard(
       title: 'Tough record',
@@ -1765,13 +1823,11 @@ Widget _recentMatchDetailRow(
 
 class _RecentGamesModule extends StatefulWidget {
   final List<MatchRecord> matches;
-  final bool isExampleData;
   final AppColorTokens colors;
   final double listMaxHeight;
 
   const _RecentGamesModule({
     required this.matches,
-    this.isExampleData = false,
     required this.colors,
     required this.listMaxHeight,
   });
@@ -1822,7 +1878,7 @@ class _RecentGamesModuleState extends State<_RecentGamesModule> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (showFilterMenu && !widget.isExampleData)
+              if (showFilterMenu)
                 PopupMenuButton<_RecentGamesTimeFilter>(
                   tooltip: 'Filter: ${_filter.menuLabel}',
                   padding: EdgeInsets.zero,
@@ -1847,16 +1903,6 @@ class _RecentGamesModuleState extends State<_RecentGamesModule> {
                 ),
             ],
           ),
-          if (widget.isExampleData)
-            Padding(
-              padding: const EdgeInsets.only(top: LayoutTokens.gr0),
-              child: Text(
-                'Example matches — play a game to see your real history.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: c.textSecondary,
-                ),
-              ),
-            ),
         ],
       );
     }
@@ -1883,7 +1929,7 @@ class _RecentGamesModuleState extends State<_RecentGamesModule> {
         children: [
           titleRow(),
           SizedBox(height: LayoutTokens.gr2),
-          emptyBody('No recent matches.'),
+          emptyBody(_kProfileUntilFirstGameMessage),
         ],
       );
     }
@@ -2233,7 +2279,7 @@ class _RecentMatchCardState extends ConsumerState<_RecentMatchCard> {
       profile,
     );
 
-    Widget summaryView() {
+    Widget summaryForeground() {
       final overlayFormatStyle = formatStyle!.copyWith(
         color: Colors.white,
         fontSize: 17,
@@ -2255,80 +2301,73 @@ class _RecentMatchCardState extends ConsumerState<_RecentMatchCard> {
         shadows: _recentMatchOverlayShadow,
       );
 
-      return Stack(
-        fit: StackFit.expand,
-        children: [
-          _recentMatchCommanderArt(context, commanderImageUrl),
-          _recentMatchCardVignette(expanded: false),
-          Padding(
-            padding: EdgeInsets.all(LayoutTokens.gr3),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [resultPill],
+      return Padding(
+        padding: EdgeInsets.all(LayoutTokens.gr3),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [resultPill],
+            ),
+            const Spacer(),
+            Text(
+              m.format,
+              style: overlayFormatStyle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            SizedBox(height: LayoutTokens.gr1),
+            Text(
+              playerLine,
+              style: overlayMetaStyle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            SizedBox(height: LayoutTokens.gr1),
+            Text(
+              '$dateStr · $timeStr',
+              style: overlayDateStyle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            SizedBox(height: LayoutTokens.gr3),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () {
+                  if (!_expanded) setState(() => _expanded = true);
+                },
+                style: OutlinedButton.styleFrom(
+                  visualDensity: VisualDensity.standard,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: LayoutTokens.gr3,
+                    vertical: LayoutTokens.gr2,
+                  ),
+                  minimumSize: const Size(double.infinity, 44),
+                  tapTargetSize: MaterialTapTargetSize.padded,
+                  shape: const StadiumBorder(),
+                  side: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.72),
+                    width: 1.25,
+                  ),
+                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.black.withValues(alpha: 0.38),
                 ),
-                const Spacer(),
-                Text(
-                  m.format,
-                  style: overlayFormatStyle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: LayoutTokens.gr1),
-                Text(
-                  playerLine,
-                  style: overlayMetaStyle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: LayoutTokens.gr1),
-                Text(
-                  '$dateStr · $timeStr',
-                  style: overlayDateStyle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: LayoutTokens.gr3),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () {
-                      if (!_expanded) setState(() => _expanded = true);
-                    },
-                    style: OutlinedButton.styleFrom(
-                      visualDensity: VisualDensity.standard,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: LayoutTokens.gr3,
-                        vertical: LayoutTokens.gr2,
-                      ),
-                      minimumSize: const Size(double.infinity, 44),
-                      tapTargetSize: MaterialTapTargetSize.padded,
-                      shape: const StadiumBorder(),
-                      side: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.72),
-                        width: 1.25,
-                      ),
-                      foregroundColor: Colors.white,
-                      backgroundColor: Colors.black.withValues(alpha: 0.38),
-                    ),
-                    child: Text(
-                      'Show more',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 15,
-                        letterSpacing: 0.2,
-                        color: Colors.white,
-                        shadows: _recentMatchOverlayShadow,
-                      ),
-                    ),
+                child: Text(
+                  'Show more',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                    letterSpacing: 0.2,
+                    color: Colors.white,
+                    shadows: _recentMatchOverlayShadow,
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       );
     }
 
@@ -2527,35 +2566,53 @@ class _RecentMatchCardState extends ConsumerState<_RecentMatchCard> {
                 ? null
                 : () => setState(() => _expanded = true),
             borderRadius: _kBentoRadius,
-            child: AnimatedCrossFade(
-              firstChild: SizedBox(
-                height: widget.height,
-                width: double.infinity,
-                child: summaryView(),
-              ),
-              secondChild: Stack(
+            child: SizedBox(
+              height: widget.height,
+              width: double.infinity,
+              child: Stack(
                 fit: StackFit.expand,
                 children: [
                   _recentMatchCommanderArt(context, commanderImageUrl),
-                  _recentMatchCardVignette(expanded: true),
-                  Padding(
-                    padding: EdgeInsets.all(innerPad),
-                    child: SizedBox(
-                      height: expandedInnerH,
-                      width: double.infinity,
-                      child: ClipRect(
-                        child: detailsColumn(expandedInnerH),
-                      ),
+                  AnimatedSwitcher(
+                    duration: MotionTokens.standard,
+                    switchInCurve: Curves.easeOut,
+                    switchOutCurve: Curves.easeIn,
+                    // Only paint the active overlay — avoids double-vignette flash on close.
+                    layoutBuilder: (current, _) =>
+                        current ?? const SizedBox.shrink(),
+                    transitionBuilder: (child, animation) => FadeTransition(
+                      opacity: animation,
+                      child: child,
                     ),
+                    child: _expanded
+                        ? Stack(
+                            key: const ValueKey('recent_match_expanded'),
+                            fit: StackFit.expand,
+                            children: [
+                              _recentMatchCardVignette(expanded: true),
+                              Padding(
+                                padding: EdgeInsets.all(innerPad),
+                                child: SizedBox(
+                                  height: expandedInnerH,
+                                  width: double.infinity,
+                                  child: ClipRect(
+                                    child: detailsColumn(expandedInnerH),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : Stack(
+                            key: const ValueKey('recent_match_summary'),
+                            fit: StackFit.expand,
+                            children: [
+                              _recentMatchCardVignette(expanded: false),
+                              summaryForeground(),
+                            ],
+                          ),
                   ),
                 ],
               ),
-              crossFadeState: _expanded
-                  ? CrossFadeState.showSecond
-                  : CrossFadeState.showFirst,
-              duration: MotionTokens.standard,
-              sizeCurve: Curves.easeInOut,
-              alignment: Alignment.topCenter,
             ),
           ),
         ),
@@ -2577,175 +2634,6 @@ class _RecentMatchCardState extends ConsumerState<_RecentMatchCard> {
   }
 }
 
-/// Sample rows for Recent Games when there is no local history yet.
-List<MatchRecord> _previewPlaceholderMatches() {
-  final now = DateTime.now();
-
-  final duel = [
-    MatchParticipantSnapshot(
-      playerId: 'local',
-      username: 'You',
-      commanderName: 'The Ur-Dragon',
-      commanderImageUrl: _kMostPlayedPlaceholderImageUrl,
-      teamIndex: 0,
-    ),
-    const MatchParticipantSnapshot(
-      playerId: 'opp1',
-      username: 'Alex',
-      commanderName: 'Niv-Mizzet, Parun',
-      teamIndex: 0,
-    ),
-  ];
-
-  final fourPlayer = [
-    MatchParticipantSnapshot(
-      playerId: 'local',
-      username: 'You',
-      commanderName: 'Atraxa, Praetors\' Voice',
-      commanderImageUrl:
-          'https://cards.scryfall.io/art_crop/front/d/0/d0d33d52-3d28-4635-b985-51e126289259.jpg?1599707796',
-      teamIndex: 0,
-    ),
-    MatchParticipantSnapshot(
-      playerId: 'p2',
-      username: 'Sam',
-      commanderName: 'Yuriko, the Tiger\'s Shadow',
-      commanderImageUrl:
-          'https://cards.scryfall.io/art_crop/front/f/e/fe9be3e0-076c-4703-9750-2a6b0a178bc9.jpg?1761053654',
-      teamIndex: 0,
-    ),
-    const MatchParticipantSnapshot(
-      playerId: 'p3',
-      username: 'Jordan',
-      commanderName: 'Kinnan, Bonder Prodigy',
-      teamIndex: 0,
-    ),
-    const MatchParticipantSnapshot(
-      playerId: 'p4',
-      username: 'Taylor',
-      commanderName: 'Winota, Joiner of Forces',
-      teamIndex: 0,
-    ),
-  ];
-
-  final podOfThree = [
-    const MatchParticipantSnapshot(
-      playerId: 'local',
-      username: 'You',
-      commanderName: 'Wilhelt, the Rotcleaver',
-      teamIndex: 0,
-    ),
-    const MatchParticipantSnapshot(
-      playerId: 'a',
-      username: 'Morgan',
-      commanderName: 'Lathril, Blade of Elves',
-      teamIndex: 0,
-    ),
-    const MatchParticipantSnapshot(
-      playerId: 'b',
-      username: 'Riley',
-      commanderName: 'Meren of Clan Nel Toth',
-      teamIndex: 0,
-    ),
-  ];
-
-  final olderDuel = [
-    const MatchParticipantSnapshot(
-      playerId: 'local',
-      username: 'You',
-      commanderName: 'Kinnan, Bonder Prodigy',
-      teamIndex: 0,
-    ),
-    const MatchParticipantSnapshot(
-      playerId: 'opp_casey',
-      username: 'Casey',
-      commanderName: 'Krark, the Thumbless',
-      teamIndex: 0,
-    ),
-  ];
-
-  return [
-    MatchRecord(
-      matchId: '__preview_placeholder_1__',
-      date: now.subtract(const Duration(days: 1, hours: 2)),
-      commanderName: 'The Ur-Dragon',
-      partnerCommanderName: null,
-      opponentNames: const ['Alex'],
-      result: 'win',
-      eliminationReason: 'survived',
-      format: 'Commander',
-      durationMinutes: 90,
-      startingLifeTotal: 40,
-      playerCount: 2,
-      durationSeconds: 90 * 60 + 30,
-      participantsJson: jsonEncode(duel.map((e) => e.toJson()).toList()),
-      podNameSnapshot: 'Friday Night',
-      locationSnapshot: 'Game shop',
-      localDeckIdSnapshot: null,
-    ),
-    MatchRecord(
-      matchId: '__preview_placeholder_2__',
-      date: now.subtract(const Duration(days: 5, hours: 4)),
-      commanderName: 'Atraxa, Praetors\' Voice',
-      partnerCommanderName: null,
-      opponentNames: const ['Sam', 'Jordan', 'Taylor'],
-      result: 'loss',
-      eliminationReason: 'life',
-      format: 'Commander',
-      durationMinutes: 127,
-      startingLifeTotal: 40,
-      playerCount: 4,
-      durationSeconds: 127 * 60 + 12,
-      participantsJson: jsonEncode(
-        fourPlayer.map((e) => e.toJson()).toList(),
-      ),
-      podNameSnapshot: 'Game Store League',
-      locationSnapshot: null,
-      localDeckIdSnapshot: null,
-    ),
-    MatchRecord(
-      matchId: '__preview_placeholder_3__',
-      date: now.subtract(const Duration(days: 14, hours: 1)),
-      commanderName: 'Wilhelt, the Rotcleaver',
-      partnerCommanderName: null,
-      opponentNames: const ['Morgan', 'Riley'],
-      result: 'concede',
-      eliminationReason: 'concede',
-      format: 'Commander',
-      durationMinutes: 52,
-      startingLifeTotal: 40,
-      playerCount: 3,
-      durationSeconds: 52 * 60 + 45,
-      participantsJson: jsonEncode(
-        podOfThree.map((e) => e.toJson()).toList(),
-      ),
-      podNameSnapshot: 'Kitchen table',
-      locationSnapshot: 'Home',
-      localDeckIdSnapshot: null,
-    ),
-    MatchRecord(
-      matchId: '__preview_placeholder_4__',
-      date: now.subtract(const Duration(days: 21, hours: 3)),
-      commanderName: 'Kinnan, Bonder Prodigy',
-      partnerCommanderName: null,
-      opponentNames: const ['Casey'],
-      result: 'loss',
-      eliminationReason: 'commanderDamage',
-      format: 'Commander',
-      durationMinutes: 74,
-      startingLifeTotal: 40,
-      playerCount: 2,
-      durationSeconds: 74 * 60 + 6,
-      participantsJson: jsonEncode(
-        olderDuel.map((e) => e.toJson()).toList(),
-      ),
-      podNameSnapshot: 'Commander night',
-      locationSnapshot: null,
-      localDeckIdSnapshot: null,
-    ),
-  ];
-}
-
 bool _deckHasManaForProfile(PlayerDeck d) {
   final c = d.commanderManaCost?.trim();
   final p = d.partnerManaCost?.trim();
@@ -2761,83 +2649,14 @@ double _deckPerfCardMinHeightPx(BuildContext context) {
   return (atUnitScale * scale.clamp(1.0, 1.45)).clamp(318.0, 480.0);
 }
 
-/// Sample rows for Deck performance when there are no saved decks yet.
-/// Mana strings use bundled `assets/mana/` symbols (WUBRG, hybrids, numbers).
-List<PlayerDeck> _previewPlaceholderDecks() {
-  return [
-    PlayerDeck(
-      id: '__preview_placeholder_deck__',
-      displayName: "Ur-Dragon's Horde",
-      commanderName: 'The Ur-Dragon',
-      commanderManaCost: '{2}{W}{U}{B}{R}{G}',
-      commanderImageUrl:
-          'https://cards.scryfall.io/art_crop/front/1/0/10d42b35-844f-4a64-9981-c6118d45e826.jpg?1689999317',
-      partnerCommanderName: null,
-      partnerCommanderImageUrl: null,
-      partnerManaCost: null,
-      wins: 12,
-      losses: 7,
-      gamesPlayed: 19,
-    ),
-    PlayerDeck(
-      id: '__preview_placeholder_deck_2__',
-      displayName: 'Rograkh / Silas artifacts',
-      commanderName: 'Rograkh, Son of Rohgahh',
-      commanderManaCost: '{R}',
-      commanderImageUrl:
-          'https://cards.scryfall.io/art_crop/front/a/4/a4fab67f-00c2-4125-9262-d21a29411797.jpg?1769437009',
-      partnerCommanderName: 'Silas Renn, Seeker Adept',
-      partnerCommanderImageUrl:
-          'https://cards.scryfall.io/art_crop/front/4/e/4e3fe912-1374-47c7-b73f-89ef55c479c1.jpg?1562399367',
-      partnerManaCost: '{U}{B}',
-      wins: 8,
-      losses: 4,
-      gamesPlayed: 12,
-    ),
-    PlayerDeck(
-      id: '__preview_placeholder_deck_3__',
-      displayName: 'Feather storm',
-      commanderName: 'Feather, the Redeemed',
-      commanderManaCost: '{3}{R/W}{R}',
-      commanderImageUrl:
-          'https://cards.scryfall.io/art_crop/front/e/4/e4a2d2c6-8eaa-4760-b620-921b807baa2e.jpg?1557577142',
-      partnerCommanderName: null,
-      partnerCommanderImageUrl: null,
-      partnerManaCost: null,
-      wins: 15,
-      losses: 6,
-      gamesPlayed: 21,
-    ),
-    PlayerDeck(
-      id: '__preview_placeholder_deck_4__',
-      displayName: 'Yuriko turns',
-      commanderName: 'Yuriko, the Tiger\'s Shadow',
-      commanderManaCost: '{1}{U}{B}',
-      commanderImageUrl:
-          'https://cards.scryfall.io/art_crop/front/f/e/fe9be3e0-076c-4703-9750-2a6b0a178bc9.jpg?1761053654',
-      partnerCommanderName: null,
-      partnerCommanderImageUrl: null,
-      partnerManaCost: null,
-      wins: 6,
-      losses: 5,
-      gamesPlayed: 11,
-    ),
-  ];
-}
-
-PlayerDeck? _previewPlaceholderWorstDeck() =>
-    _pickWorstDeck(_previewPlaceholderDecks());
-
 class _DeckPerformanceSection extends ConsumerStatefulWidget {
   final AppColorTokens colors;
   /// When null, list uses remaining flex height (one-screen layout).
   final double? listMaxHeight;
-  final bool usePlaceholderDecks;
 
   const _DeckPerformanceSection({
     required this.colors,
     this.listMaxHeight,
-    this.usePlaceholderDecks = false,
   });
 
   @override
@@ -2903,18 +2722,36 @@ class _DeckPerformanceSectionState
   @override
   Widget build(BuildContext context) {
     ref.watch(deckListRevisionProvider);
-    final repoDecks = List<PlayerDeck>.from(
-      ref.read(deckRepositoryProvider).getAll(),
-    )..sort((a, b) => b.gamesPlayed.compareTo(a.gamesPlayed));
+    final repoDecks =
+        List<PlayerDeck>.from(
+            ref
+                .read(deckRepositoryProvider)
+                .getAll()
+                .where((d) => !isPreviewPlaceholderDeck(d)),
+          )
+          ..sort((a, b) => b.gamesPlayed.compareTo(a.gamesPlayed));
 
-    final isExampleDecks = widget.usePlaceholderDecks || repoDecks.isEmpty;
-    final decks = isExampleDecks ? _previewPlaceholderDecks() : repoDecks;
     final colors = widget.colors;
     final lh = widget.listMaxHeight;
 
     final deckTitleStyle = TypographyTokens.sectionTitle(colors.textPrimary);
 
-    Widget horizontalList(double cardHeight) {
+    Widget emptyBody(String message) {
+      return SizedBox(
+        height: 148,
+        child: Center(
+          child: Text(
+            message,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: colors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
+    Widget horizontalList(double cardHeight, List<PlayerDeck> decks) {
       return SizedBox(
         height: cardHeight,
         child: ListView.separated(
@@ -2963,16 +2800,6 @@ class _DeckPerformanceSectionState
               ),
             ],
           ),
-          if (isExampleDecks)
-            Padding(
-              padding: const EdgeInsets.only(top: LayoutTokens.gr0),
-              child: Text(
-                'Example decks — create a deck to track real performance.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: colors.textSecondary,
-                ),
-              ),
-            ),
         ],
       );
     }
@@ -2981,13 +2808,24 @@ class _DeckPerformanceSectionState
       builder: (context, c) {
         final double cardHeight =
             _profileSectionHorizontalCardHeight(context, lh);
+        if (repoDecks.isEmpty) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              titleRow(),
+              SizedBox(height: LayoutTokens.gr2),
+              emptyBody('No decks yet. Open Decks to add one.'),
+            ],
+          );
+        }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
             titleRow(),
             SizedBox(height: LayoutTokens.gr2),
-            horizontalList(cardHeight),
+            horizontalList(cardHeight, repoDecks),
           ],
         );
       },

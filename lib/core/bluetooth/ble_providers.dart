@@ -29,9 +29,10 @@ final bleClientServiceProvider = Provider<WsClientService?>((ref) {
 });
 
 /// Creates and starts a host WebSocket server session.
-Future<void> startHostSession(WidgetRef ref) async {
+/// Returns false when profile is missing or the socket server could not start.
+Future<bool> startHostSession(WidgetRef ref) async {
   final profile = ref.read(profileRepositoryProvider).getProfile();
-  if (profile == null) return;
+  if (profile == null) return false;
 
   final existing = ref.read(bleServiceProvider);
   if (existing != null) {
@@ -45,9 +46,11 @@ Future<void> startHostSession(WidgetRef ref) async {
     hostUsername: profile.username,
   );
   await host.initialize();
+  if (!host.isReady) return false;
 
   ref.read(bleServiceProvider.notifier).state = host;
   ref.read(bleRoleProvider.notifier).state = BleRole.host;
+  return true;
 }
 
 /// Creates a WebSocket client session ready to connect.
