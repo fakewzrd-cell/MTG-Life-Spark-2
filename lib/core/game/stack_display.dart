@@ -32,11 +32,14 @@ class StackApnapGroup {
 }
 
 abstract final class StackDisplay {
-  /// Clockwise turn order starting at the active player (AP → NAP…).
+  /// Clockwise turn order starting at the stack APNAP anchor (or active player).
   static List<String> apnapPlayerOrder(GameState game) {
     if (game.turnOrder.isEmpty) return [];
     final n = game.turnOrder.length;
-    final start = game.activePlayerIndex % n;
+    final anchorId =
+        game.stackApnapAnchorPlayerId ?? game.activePlayerId;
+    var start = game.turnOrder.indexOf(anchorId);
+    if (start < 0) start = game.activePlayerIndex % n;
     return List.generate(n, (i) => game.turnOrder[(start + i) % n]);
   }
 

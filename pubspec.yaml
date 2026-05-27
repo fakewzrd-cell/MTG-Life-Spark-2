@@ -20,9 +20,6 @@ dependencies:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
 
-  # Bluetooth (kept for reference; connection now uses QR + WebSocket)
-  flutter_reactive_ble: ^5.3.1
-
   # QR code display
   qr_flutter: ^4.1.0
 
@@ -52,9 +49,6 @@ dependencies:
 
   # Screen wake lock
   wakelock_plus: ^1.2.9
-
-  # Background BLE (Android foreground service)
-  flutter_foreground_task: ^9.2.2
 
   # Utilities
   uuid: ^4.5.1

@@ -1,3 +1,4 @@
+import '../../../ui/tokens/color_tokens.dart';
 import 'dart:math' as math;
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -8,7 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/game/game_providers.dart';
 import '../../../core/game/game_format.dart';
 import '../../../core/game/player_game_state.dart';
-import '../../../shared/theme/app_theme.dart';
+import 'game_colors.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/motion_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
@@ -75,10 +76,10 @@ int maxCommanderDamageDealtTrack(
 enum CommanderDamageDirection { received, dealt }
 
 Color commanderDamageColor(int damage) {
-  if (damage >= 21) return AppTheme.danger;
-  if (damage >= 18) return AppTheme.dangerAmber;
-  if (damage >= 10) return AppTheme.accent.withValues(alpha: 0.95);
-  return AppTheme.textPrimary;
+  if (damage >= 21) return ColorTokens.danger;
+  if (damage >= 18) return ColorTokens.warning;
+  if (damage >= 10) return ColorTokens.primaryAccent.withValues(alpha: 0.95);
+  return ColorTokens.textPrimary;
 }
 
 /// True when this session uses Commander rules.
@@ -180,6 +181,7 @@ class CommanderDamageBarButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     final urgent = maxTrackDamage >= 18;
     final lethal = maxTrackDamage >= 21;
     final accent = commanderDamageColor(maxTrackDamage);
@@ -208,12 +210,12 @@ class CommanderDamageBarButton extends StatelessWidget {
             decoration: BoxDecoration(
               color: urgent
                   ? accent.withValues(alpha: 0.12)
-                  : AppTheme.surface.withValues(alpha: 0.65),
+                  : colors.backgroundSecondary.withValues(alpha: 0.65),
               borderRadius: RadiusTokens.radiusControlSm,
               border: Border.all(
                 color: urgent
                     ? accent.withValues(alpha: lethal ? 0.95 : 0.65)
-                    : AppTheme.textSecondary.withValues(alpha: 0.28),
+                    : colors.textSecondary.withValues(alpha: 0.28),
                 width: lethal ? 2 : 1,
               ),
             ),
@@ -223,13 +225,13 @@ class CommanderDamageBarButton extends StatelessWidget {
                 Icon(
                   lethal ? Icons.warning_amber_rounded : Icons.shield_outlined,
                   size: LayoutTokens.gr3,
-                  color: enabled ? accent : AppTheme.textSecondary,
+                  color: enabled ? accent : colors.textSecondary,
                 ),
                 SizedBox(height: LayoutTokens.gr0),
                 Text(
                   displayTotal > 0 ? '$displayTotal' : '—',
                   style: TextStyle(
-                    color: enabled ? accent : AppTheme.textSecondary,
+                    color: enabled ? accent : colors.textSecondary,
                     fontWeight: FontWeight.w800,
                     fontSize: 13,
                     height: 1,
@@ -239,8 +241,8 @@ class CommanderDamageBarButton extends StatelessWidget {
                   'IN',
                   style: TextStyle(
                     color: enabled
-                        ? AppTheme.textSecondary.withValues(alpha: 0.9)
-                        : AppTheme.textSecondary.withValues(alpha: 0.55),
+                        ? colors.textSecondary.withValues(alpha: 0.9)
+                        : colors.textSecondary.withValues(alpha: 0.55),
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.6,
@@ -383,6 +385,7 @@ class _CommanderDamagePanelState extends State<CommanderDamagePanel> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     final opponents = _trackableOpponents;
     final received = _direction == CommanderDamageDirection.received;
     final selected = _selectedOpponent;
@@ -419,7 +422,7 @@ class _CommanderDamagePanelState extends State<CommanderDamagePanel> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,
-                color: AppTheme.textSecondary.withValues(alpha: 0.9),
+                color: colors.textSecondary.withValues(alpha: 0.9),
                 height: 1.35,
               ),
             ),
@@ -428,7 +431,7 @@ class _CommanderDamagePanelState extends State<CommanderDamagePanel> {
           Text(
             pickerPrompt,
             style: TextStyle(
-              color: AppTheme.textPrimary,
+              color: colors.textPrimary,
               fontWeight: FontWeight.w700,
               fontSize: 13,
             ),
@@ -467,12 +470,13 @@ class _CommanderDamageModeToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppTheme.surface.withValues(alpha: 0.55),
+        color: colors.backgroundSecondary.withValues(alpha: 0.55),
         borderRadius: RadiusTokens.radiusMd,
         border: Border.all(
-          color: AppTheme.textSecondary.withValues(alpha: 0.14),
+          color: colors.textSecondary.withValues(alpha: 0.14),
         ),
       ),
       child: Row(
@@ -510,6 +514,7 @@ class _ModeToggleChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     return Semantics(
       button: true,
       selected: selected,
@@ -524,7 +529,7 @@ class _ModeToggleChip extends StatelessWidget {
             padding: EdgeInsets.symmetric(vertical: LayoutTokens.gr2),
             decoration: BoxDecoration(
               color: selected
-                  ? AppTheme.accent.withValues(alpha: 0.16)
+                  ? colors.primaryAccent.withValues(alpha: 0.16)
                   : Colors.transparent,
               borderRadius: RadiusTokens.radiusMd,
             ),
@@ -532,7 +537,7 @@ class _ModeToggleChip extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                color: selected ? AppTheme.accent : AppTheme.textSecondary,
+                color: selected ? colors.primaryAccent : colors.textSecondary,
                 fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                 fontSize: 13,
               ),
@@ -692,7 +697,7 @@ class _CommanderDamageSummary extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [
             color.withValues(alpha: 0.35),
-            AppTheme.primary.withValues(alpha: 0.92),
+            ColorTokens.backgroundPrimary.withValues(alpha: 0.92),
           ],
         ),
       ),
@@ -724,6 +729,7 @@ class _OpponentPickerStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     return SizedBox(
       height: 76,
       child: ListView.separated(
@@ -752,13 +758,13 @@ class _OpponentPickerStrip extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: selected
-                        ? AppTheme.accent.withValues(alpha: 0.12)
-                        : AppTheme.surface.withValues(alpha: 0.55),
+                        ? colors.primaryAccent.withValues(alpha: 0.12)
+                        : colors.backgroundSecondary.withValues(alpha: 0.55),
                     borderRadius: RadiusTokens.radiusMd,
                     border: Border.all(
                       color: selected
-                          ? AppTheme.accent.withValues(alpha: 0.85)
-                          : AppTheme.textSecondary.withValues(alpha: 0.18),
+                          ? colors.primaryAccent.withValues(alpha: 0.85)
+                          : colors.textSecondary.withValues(alpha: 0.18),
                       width: selected ? 2 : 1,
                     ),
                   ),
@@ -772,7 +778,7 @@ class _OpponentPickerStrip extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: AppTheme.textPrimary,
+                          color: colors.textPrimary,
                           fontWeight:
                               selected ? FontWeight.w800 : FontWeight.w600,
                           fontSize: 11,
@@ -934,6 +940,7 @@ class _DamageTrack extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     final color = commanderDamageColor(damage);
     final progress = (damage / 21).clamp(0.0, 1.0);
 
@@ -948,7 +955,7 @@ class _DamageTrack extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: AppTheme.textSecondary,
+                  color: colors.textSecondary,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
@@ -960,7 +967,7 @@ class _DamageTrack extends StatelessWidget {
                 child: Icon(
                   Icons.warning_amber_rounded,
                   size: LayoutTokens.gr2,
-                  color: AppTheme.danger,
+                  color: colors.error,
                 ),
               ),
           ],
@@ -971,7 +978,7 @@ class _DamageTrack extends StatelessWidget {
           child: LinearProgressIndicator(
             value: progress,
             minHeight: 4,
-            backgroundColor: AppTheme.textSecondary.withValues(alpha: 0.1),
+            backgroundColor: colors.textSecondary.withValues(alpha: 0.1),
             color: color.withValues(alpha: 0.85),
           ),
         ),
@@ -1030,16 +1037,17 @@ class _DmgStepButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     final enabled = onTap != null;
     final fill = isAdd
-        ? AppTheme.accent.withValues(alpha: enabled ? 0.22 : 0.08)
-        : AppTheme.success.withValues(alpha: enabled ? 0.2 : 0.08);
+        ? colors.primaryAccent.withValues(alpha: enabled ? 0.22 : 0.08)
+        : colors.success.withValues(alpha: enabled ? 0.2 : 0.08);
     final border = isAdd
-        ? AppTheme.accent.withValues(alpha: enabled ? 0.75 : 0.25)
-        : AppTheme.success.withValues(alpha: enabled ? 0.7 : 0.25);
+        ? colors.primaryAccent.withValues(alpha: enabled ? 0.75 : 0.25)
+        : colors.success.withValues(alpha: enabled ? 0.7 : 0.25);
     final iconColor = enabled
-        ? (isAdd ? AppTheme.accent : AppTheme.success)
-        : AppTheme.textSecondary.withValues(alpha: 0.45);
+        ? (isAdd ? colors.primaryAccent : colors.success)
+        : colors.textSecondary.withValues(alpha: 0.45);
 
     return Semantics(
       button: true,
@@ -1066,7 +1074,7 @@ class _DmgStepButton extends StatelessWidget {
               boxShadow: enabled
                   ? [
                       BoxShadow(
-                        color: (isAdd ? AppTheme.accent : AppTheme.success)
+                        color: (isAdd ? colors.primaryAccent : colors.success)
                             .withValues(alpha: 0.18),
                         blurRadius: LayoutTokens.gr1,
                         offset: const Offset(0, 2),

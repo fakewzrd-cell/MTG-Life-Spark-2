@@ -2,15 +2,16 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import '../../../ui/theme/app_color_tokens.dart';
 import '../../../ui/tokens/color_tokens.dart';
 import '../../../ui/tokens/motion_tokens.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/game/commander_identity_colors.dart';
-import '../../../shared/theme/app_theme.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
 import '../../../ui/tokens/spacing_tokens.dart';
+import 'game_colors.dart';
 import 'game_modal_chrome.dart';
 
 /// The main life counter — occupies the center of the personal view.
@@ -140,20 +141,21 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
 
   // ── Colors ─────────────────────────────────────────────────────────────
 
-  Color get _lifeColor {
-    if (widget.isEliminated) return AppTheme.textSecondary;
-    if (widget.life <= 5) return AppTheme.danger;
-    if (widget.life <= 10) return AppTheme.accentGold;
-    return AppTheme.textPrimary;
+  Color _lifeColor(AppColorTokens colors) {
+    if (widget.isEliminated) return colors.textSecondary;
+    if (widget.life <= 5) return colors.error;
+    if (widget.life <= 10) return colors.emphasis;
+    return colors.textPrimary;
   }
 
-  Color get _deltaColor =>
-      (_lastDelta ?? 0) > 0 ? AppTheme.success : AppTheme.textSecondary;
+  Color _deltaColor(AppColorTokens colors) =>
+      (_lastDelta ?? 0) > 0 ? colors.success : colors.textSecondary;
 
   // ── Build ──────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     return LayoutBuilder(
       builder: (context, constraints) {
         final halo = CommanderIdentityColors.emphasisBorder(
@@ -182,7 +184,7 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
               RadiusTokens.bento - LayoutTokens.gr0,
             ),
             child: Container(
-              color: AppTheme.primary.withValues(alpha: 0.88),
+              color: colors.backgroundPrimary.withValues(alpha: 0.88),
               child: GestureDetector(
                 onDoubleTap: widget.isEliminated ? null : _showNumberPad,
                 behavior: HitTestBehavior.deferToChild,
@@ -202,7 +204,7 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
                           style: TextStyle(
                             fontSize: (hBody * 0.45).clamp(40.0, 96.0),
                             fontWeight: FontWeight.w800,
-                            color: AppTheme.textSecondary,
+                            color: colors.textSecondary,
                           ),
                         ),
                       );
@@ -221,7 +223,7 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
 
                     final neighborFontSize =
                         (baseFontSize * 0.34).clamp(14.0, 26.0);
-                    final neighborColor = AppTheme.textSecondary.withValues(
+                    final neighborColor = colors.textSecondary.withValues(
                       alpha: 0.42,
                     );
                     final gap = LayoutTokens.gr2;
@@ -229,7 +231,7 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
                     final prev = widget.life - 1;
                     final next = widget.life + 1;
 
-                    final stepDivider = AppTheme.textSecondary.withValues(
+                    final stepDivider = colors.textSecondary.withValues(
                       alpha: 0.12,
                     );
 
@@ -268,7 +270,7 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
                                       _wheelDragAccum = 0,
                                   behavior: HitTestBehavior.translucent,
                                   child: Container(
-                                    color: AppTheme.primary.withValues(
+                                    color: colors.backgroundPrimary.withValues(
                                       alpha: 0.12,
                                     ),
                                     child: ClipRect(
@@ -307,12 +309,12 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
                                                 style: TextStyle(
                                                   fontSize: baseFontSize,
                                                   fontWeight: FontWeight.w800,
-                                                  color: _lifeColor,
+                                                  color: _lifeColor(colors),
                                                   letterSpacing: -2,
                                                   height: 1.0,
                                                   shadows: [
                                                     Shadow(
-                                                      color: _lifeColor
+                                                      color: _lifeColor(colors)
                                                           .withValues(
                                                         alpha: 0.35,
                                                       ),
@@ -397,7 +399,7 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
                                             style: TextStyle(
                                               fontSize: deltaFontSize,
                                               fontWeight: FontWeight.bold,
-                                              color: _deltaColor,
+                                              color: _deltaColor(colors),
                                             ),
                                           ),
                                         ),
@@ -444,6 +446,7 @@ class _LifeEdgeStepStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     return SizedBox(
       width: width,
       child: Semantics(
@@ -454,7 +457,7 @@ class _LifeEdgeStepStrip extends StatelessWidget {
           onLongPressEnd: (_) => onLongPressEnd(),
           onLongPressCancel: onLongPressCancel,
           child: Material(
-            color: AppTheme.card.withValues(alpha: 0.92),
+            color: colors.surface.withValues(alpha: 0.92),
             child: InkWell(
               onTap: onTap,
               child: DecoratedBox(
@@ -472,7 +475,7 @@ class _LifeEdgeStepStrip extends StatelessWidget {
                 child: Icon(
                   icon,
                   size: 22,
-                  color: AppTheme.accent,
+                  color: colors.primaryAccent,
                 ),
               ),
             ),
@@ -516,23 +519,28 @@ class _LifeInputDialogState extends State<_LifeInputDialog> {
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.all(LayoutTokens.gr0),
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.surface,
-            foregroundColor: AppTheme.textPrimary,
-            minimumSize: const Size(0, LayoutTokens.gr6),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(RadiusTokens.sm),
-            ),
-          ),
-          onPressed: onTap ?? () => _press(label),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: LayoutTokens.gr4 - LayoutTokens.gr0 / 2,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+        child: Builder(
+          builder: (context) {
+            final colors = context.gameColors;
+            return ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colors.backgroundSecondary,
+                foregroundColor: colors.textPrimary,
+                minimumSize: const Size(0, LayoutTokens.gr6),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(RadiusTokens.sm),
+                ),
+              ),
+              onPressed: onTap ?? () => _press(label),
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: LayoutTokens.gr4 - LayoutTokens.gr0 / 2,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -540,14 +548,15 @@ class _LifeInputDialogState extends State<_LifeInputDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     return AlertDialog(
-      backgroundColor: AppTheme.card,
+      backgroundColor: colors.surface,
       title: GameDialogTitleRow(
         titleWidget: Text(
           _input.isEmpty ? 'Set Life Total' : _input,
           style: TextStyle(
             color:
-                _input.isEmpty ? AppTheme.textSecondary : AppTheme.textPrimary,
+                _input.isEmpty ? colors.textSecondary : colors.textPrimary,
             fontSize: _input.isEmpty ? LayoutTokens.gr3 : LayoutTokens.gr5,
             fontWeight: FontWeight.bold,
           ),
@@ -577,7 +586,7 @@ class _LifeInputDialogState extends State<_LifeInputDialog> {
                           padding: const EdgeInsets.all(LayoutTokens.gr0),
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.accent,
+                              backgroundColor: colors.primaryAccent,
                               minimumSize: const Size(0, LayoutTokens.gr6),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(

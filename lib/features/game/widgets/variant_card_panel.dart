@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/game/game_providers.dart';
 import '../../../core/game/game_state.dart';
 import '../../../core/game/scryfall_service.dart';
-import '../../../shared/theme/app_theme.dart';
+import 'game_colors.dart';
 import '../../../shared/widgets/game_icon.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
@@ -21,6 +21,7 @@ class VariantCardPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.gameColors;
     final variantFlags = ref.watch(
       gameProvider.select(
         (g) => (
@@ -69,7 +70,7 @@ class VariantCardPanel extends ConsumerWidget {
             Text(
               'Loading variant decks…',
               style: TextStyle(
-                color: AppTheme.textSecondary,
+                color: colors.textSecondary,
                 fontSize: LayoutTokens.gr3,
               ),
             ),
@@ -81,7 +82,7 @@ class VariantCardPanel extends ConsumerWidget {
           child: Text(
             'Could not load decks (internet required)',
             style: TextStyle(
-              color: AppTheme.textSecondary,
+              color: colors.textSecondary,
               fontSize: LayoutTokens.gr2,
             ),
           ),
@@ -103,6 +104,7 @@ class _VariantContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     final children = <Widget>[];
 
     if (game.planechaseEnabled) {
@@ -143,7 +145,7 @@ class _VariantContent extends StatelessWidget {
         children.add(
           _VariantTile(
             title: 'Bounty',
-            iconWidget: GameIcon.bounty(size: 20, color: AppTheme.accent),
+            iconWidget: GameIcon.bounty(size: 20, color: colors.primaryAccent),
             card: bounty[game.currentBountyIndex % bounty.length],
             deckSize: bounty.length,
             onAdvance: () => notifier.advanceBounty(bounty.length),
@@ -183,6 +185,7 @@ class _VariantTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     final pad = LayoutTokens.gr3;
     final narrow = MediaQuery.sizeOf(context).width < 360;
     final thumbW = narrow ? 56.0 : 72.0;
@@ -190,9 +193,9 @@ class _VariantTile extends StatelessWidget {
     return Container(
       margin: EdgeInsets.only(bottom: pad),
       decoration: BoxDecoration(
-        color: AppTheme.card,
+        color: colors.surface,
         borderRadius: RadiusTokens.radiusMd,
-        border: Border.all(color: AppTheme.surface, width: 1),
+        border: Border.all(color: colors.backgroundSecondary, width: 1),
       ),
       child: Material(
         color: Colors.transparent,
@@ -214,28 +217,28 @@ class _VariantTile extends StatelessWidget {
                             imageUrl: card.imageUrl!,
                             fit: BoxFit.cover,
                             placeholder: (_, __) => Container(
-                              color: AppTheme.surface,
+                              color: colors.backgroundSecondary,
                               child: Center(
                                 child: Icon(
                                   Icons.image_outlined,
-                                  color: AppTheme.textSecondary,
+                                  color: colors.textSecondary,
                                   size: 24,
                                 ),
                               ),
                             ),
                             errorWidget: (_, __, ___) => Container(
-                              color: AppTheme.surface,
+                              color: colors.backgroundSecondary,
                               child: Icon(
                                 Icons.broken_image_outlined,
-                                color: AppTheme.textSecondary,
+                                color: colors.textSecondary,
                               ),
                             ),
                           )
                         : Container(
-                            color: AppTheme.surface,
+                            color: colors.backgroundSecondary,
                             child: Icon(
                               Icons.help_outline,
-                              color: AppTheme.textSecondary,
+                              color: colors.textSecondary,
                             ),
                           ),
                   ),
@@ -251,12 +254,12 @@ class _VariantTile extends StatelessWidget {
                           if (iconWidget != null)
                             iconWidget!
                           else if (icon != null)
-                            Icon(icon, size: 20, color: AppTheme.accent),
+                            Icon(icon, size: 20, color: colors.primaryAccent),
                           const SizedBox(width: 8),
                           Text(
                             title,
                             style: TextStyle(
-                              color: AppTheme.textSecondary,
+                              color: colors.textSecondary,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -267,7 +270,7 @@ class _VariantTile extends StatelessWidget {
                       Text(
                         card.name,
                         style: TextStyle(
-                          color: AppTheme.textPrimary,
+                          color: colors.textPrimary,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
@@ -280,7 +283,7 @@ class _VariantTile extends StatelessWidget {
                         Text(
                           card.oracleText!,
                           style: TextStyle(
-                            color: AppTheme.textSecondary,
+                            color: colors.textSecondary,
                             fontSize: 12,
                           ),
                           maxLines: 2,
@@ -295,9 +298,9 @@ class _VariantTile extends StatelessWidget {
                   icon: Icon(Icons.skip_next),
                   onPressed: onAdvance,
                   tooltip: 'Next card',
-                  color: AppTheme.accent,
+                  color: colors.primaryAccent,
                   style: IconButton.styleFrom(
-                    backgroundColor: AppTheme.accent.withValues(alpha: 0.2),
+                    backgroundColor: colors.primaryAccent.withValues(alpha: 0.2),
                   ),
                 ),
               ],
@@ -328,7 +331,7 @@ class _VariantTile extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppTheme.textSecondary.withValues(alpha: 0.22),
+                    color: ColorTokens.textSecondary.withValues(alpha: 0.22),
                     borderRadius: RadiusTokens.radiusPill,
                   ),
                 ),
@@ -355,7 +358,7 @@ class _VariantTile extends StatelessWidget {
                 Text(
                   card.oracleText!,
                   style: TextStyle(
-                    color: AppTheme.textSecondary,
+                    color: ColorTokens.textSecondary,
                     fontSize: 16,
                     height: 1.4,
                   ),

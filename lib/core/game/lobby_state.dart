@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../bluetooth/ble_message.dart';
 import '../bluetooth/ble_protocol.dart';
-import '../bluetooth/ble_providers.dart';
+import '../network/session_providers.dart';
 import '../bluetooth/ble_service.dart';
 import '../models/player_slot.dart';
 import '../models/player_deck.dart';
@@ -219,7 +219,7 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
       config: state.config,
     );
 
-    _listenToBle();
+    _listenToSession();
   }
 
   /// Call when a client joins an existing session.
@@ -230,7 +230,7 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
     _connectionSub = null;
     _seqNum = 0;
     state = const LobbyState(isHost: false);
-    _listenToBle();
+    _listenToSession();
   }
 
   /// Clears lobby state when leaving a game or session.
@@ -243,11 +243,11 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
     state = const LobbyState();
   }
 
-  void _listenToBle() {
-    final service = _ref.read(bleServiceProvider);
+  void _listenToSession() {
+    final service = _ref.read(sessionServiceProvider);
     if (service == null) return;
 
-    _messageSub = service.messageStream.listen(_onBleMessage);
+    _messageSub = service.messageStream.listen(_onSessionMessage);
     _connectionSub = service.connectionStream.listen(_onConnectionEvent);
   }
 
@@ -406,23 +406,9 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
     ));
   }
 
-  /// Client announces itself after a successful BLE connection.
-  void sendJoinAnnouncement() {
-    final profile = _ref.read(profileRepositoryProvider).getProfile();
-    if (profile == null) return;
-    _send(BleMessage(
-      type: BleMessageType.lobbyPlayerJoined,
-      payload: {
-        'pid': profile.username,
-        'username': profile.username,
-      },
-      seqNum: _nextSeq(),
-    ));
-  }
-
   // ── BLE inbound handling ─────────────────────────────────────────────────
 
-  void _onBleMessage(BleMessage message) {
+  void _onSessionMessage(BleMessage message) {
     switch (message.type) {
       case BleMessageType.lobbyPlayerJoined:
         if (state.isHost) _hostHandlePlayerJoined(message.payload);
@@ -554,7 +540,7 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
   }
 
   void _send(BleMessage message) {
-    final service = _ref.read(bleServiceProvider);
+    final service = _ref.read(sessionServiceProvider);
     service?.send(message);
   }
 

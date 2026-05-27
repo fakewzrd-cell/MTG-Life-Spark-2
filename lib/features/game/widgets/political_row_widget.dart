@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/game/game_providers.dart';
 import '../../../core/game/game_state.dart';
 import '../../../core/game/player_game_state.dart';
-import '../../../shared/theme/app_theme.dart';
+import 'game_colors.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/color_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
@@ -29,6 +29,7 @@ class PoliticalRowWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.gameColors;
     final notifier = ref.read(gameProvider.notifier);
 
     return DecoratedBox(
@@ -37,18 +38,18 @@ class PoliticalRowWidget extends ConsumerWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppTheme.accentGold.withValues(alpha: 0.14),
-            AppTheme.card,
+            colors.emphasis.withValues(alpha: 0.14),
+            colors.surface,
           ],
         ),
         borderRadius: RadiusTokens.radiusMd,
         border: Border.all(
-          color: AppTheme.accentGold.withValues(alpha: 0.45),
+          color: colors.emphasis.withValues(alpha: 0.45),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.accentGold.withValues(alpha: 0.08),
+            color: colors.emphasis.withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -61,13 +62,13 @@ class PoliticalRowWidget extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.public, color: AppTheme.accentGold, size: 18),
+                Icon(Icons.public, color: colors.emphasis, size: 18),
                 SizedBox(width: LayoutTokens.gr1),
                 Expanded(
                   child: Text(
                     'Table politics',
                     style: TextStyle(
-                      color: AppTheme.textPrimary,
+                      color: colors.textPrimary,
                       fontSize: FontTokens.hudSm,
                       fontWeight: FontWeight.w800,
                       height: 1.2,
@@ -81,7 +82,7 @@ class PoliticalRowWidget extends ConsumerWidget {
               Text(
                 'Host assigns monarch, initiative, and day/night.',
                 style: TextStyle(
-                  color: AppTheme.textSecondary,
+                  color: colors.textSecondary,
                   fontSize: FontTokens.hudXs,
                   height: 1.2,
                 ),
@@ -204,6 +205,7 @@ class _PoliticalBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     final holder = holderId != null
         ? players.where((p) => p.playerId == holderId).firstOrNull
         : null;
@@ -218,7 +220,7 @@ class _PoliticalBadge extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: AppTheme.textSecondary,
+            color: colors.textSecondary,
             fontSize: FontTokens.hudXs,
             fontWeight: FontWeight.w700,
             height: 1.15,
@@ -232,10 +234,10 @@ class _PoliticalBadge extends StatelessWidget {
             onPressed: canAssign ? onTap : null,
             filled: hasHolder,
             fillColor: hasHolder
-                ? AppTheme.accentGold.withValues(alpha: 0.88)
-                : AppTheme.surface.withValues(alpha: 0.9),
+                ? colors.emphasis.withValues(alpha: 0.88)
+                : colors.backgroundSecondary.withValues(alpha: 0.9),
             foregroundColor:
-                hasHolder ? AppTheme.primary : AppTheme.textSecondary,
+                hasHolder ? colors.backgroundPrimary : colors.textSecondary,
             value: holder != null
                 ? overviewShortPlayerName(holder.username)
                 : 'None',
@@ -259,10 +261,11 @@ class _DayNightToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     final (valueLabel, color) = switch (dayNight) {
-      DayNightState.none => ('None', AppTheme.textSecondary),
-      DayNightState.day => ('Day', AppTheme.accentGold),
-      DayNightState.night => ('Night', AppTheme.accent),
+      DayNightState.none => ('None', colors.textSecondary),
+      DayNightState.day => ('Day', colors.emphasis),
+      DayNightState.night => ('Night', colors.primaryAccent),
     };
     final isActive = dayNight != DayNightState.none;
 
@@ -275,7 +278,7 @@ class _DayNightToggle extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: AppTheme.textSecondary,
+            color: colors.textSecondary,
             fontSize: FontTokens.hudXs,
             fontWeight: FontWeight.w700,
             height: 1.15,
@@ -290,8 +293,8 @@ class _DayNightToggle extends StatelessWidget {
             filled: isActive,
             fillColor: isActive
                 ? color.withValues(alpha: 0.88)
-                : AppTheme.surface.withValues(alpha: 0.9),
-            foregroundColor: isActive ? AppTheme.primary : AppTheme.textSecondary,
+                : colors.backgroundSecondary.withValues(alpha: 0.9),
+            foregroundColor: isActive ? colors.backgroundPrimary : colors.textSecondary,
             value: valueLabel,
           ),
         ),
@@ -319,6 +322,7 @@ class _OverviewFilledMarkerButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     return FilledButton(
       onPressed: enabled ? onPressed : null,
       style: FilledButton.styleFrom(
@@ -329,16 +333,16 @@ class _OverviewFilledMarkerButton extends StatelessWidget {
         ),
         backgroundColor: fillColor,
         foregroundColor: foregroundColor,
-        disabledBackgroundColor: AppTheme.surface.withValues(alpha: 0.6),
+        disabledBackgroundColor: colors.backgroundSecondary.withValues(alpha: 0.6),
         disabledForegroundColor:
-            AppTheme.textSecondary.withValues(alpha: 0.5),
+            colors.textSecondary.withValues(alpha: 0.5),
         elevation: filled ? 1 : 0,
         shape: RoundedRectangleBorder(
           borderRadius: RadiusTokens.radiusControlMd,
           side: BorderSide(
             color: filled
-                ? AppTheme.accentGold.withValues(alpha: 0.35)
-                : AppTheme.textSecondary.withValues(alpha: 0.15),
+                ? colors.emphasis.withValues(alpha: 0.35)
+                : colors.textSecondary.withValues(alpha: 0.15),
           ),
         ),
       ),
@@ -375,6 +379,7 @@ class _PlayerPickerSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     return GameSheetBody(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -383,14 +388,14 @@ class _PlayerPickerSheet extends StatelessWidget {
           GameSheetHeader(title: title),
           ListTile(
             tileColor: currentHolderId == null
-                ? AppTheme.accent.withValues(alpha: 0.1)
-                : AppTheme.surface,
+                ? colors.primaryAccent.withValues(alpha: 0.1)
+                : colors.backgroundSecondary,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(RadiusTokens.sm),
             ),
             title: Text(
               'None',
-              style: TextStyle(color: AppTheme.textSecondary),
+              style: TextStyle(color: colors.textSecondary),
             ),
             onTap: () => onSelected(null),
           ),
@@ -401,7 +406,7 @@ class _PlayerPickerSheet extends StatelessWidget {
               child: ListTile(
                 tileColor: p.playerId == currentHolderId
                     ? p.playerColor.withValues(alpha: 0.15)
-                    : AppTheme.surface,
+                    : colors.backgroundSecondary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(RadiusTokens.sm),
                 ),
@@ -421,12 +426,12 @@ class _PlayerPickerSheet extends StatelessWidget {
                 ),
                 title: Text(
                   p.username,
-                  style: TextStyle(color: AppTheme.textPrimary),
+                  style: TextStyle(color: colors.textPrimary),
                 ),
                 trailing: p.playerId == currentHolderId
                     ? Icon(
                         Icons.check_circle,
-                        color: AppTheme.success,
+                        color: colors.success,
                         size: 18,
                       )
                     : null,

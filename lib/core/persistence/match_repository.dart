@@ -46,6 +46,7 @@ class MatchRepository {
     final cutoff = DateTime.now().subtract(const Duration(days: 30));
     final oldKeys = <dynamic>[];
     for (final record in _box.values) {
+      if (isPreviewPlaceholderMatchId(record.matchId)) continue;
       if (record.date.isBefore(cutoff)) {
         oldKeys.add(record.matchId);
       }

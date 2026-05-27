@@ -1,9 +1,13 @@
 # Environment (secrets - never commit)
 .env
 .env.*
+android/keystore.properties
+android/*.jks
+android/*.keystore
 
 # Miscellaneous
 *.class
+tmp/
 *.log
 *.pyc
 *.swp

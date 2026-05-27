@@ -6,7 +6,6 @@ import 'package:mgt_life_spark/core/game/scryfall_service.dart';
 import 'package:mgt_life_spark/core/game/game_state.dart';
 import 'package:mgt_life_spark/core/game/game_state_notifier.dart';
 import 'package:mgt_life_spark/core/game/player_game_state.dart';
-import 'package:mgt_life_spark/core/game/stack_item.dart';
 import 'package:mgt_life_spark/features/game/widgets/stack_tracker_tab.dart';
 import 'package:mgt_life_spark/shared/theme/app_theme.dart';
 // AppTheme.dark() includes AppColorTokens for ManaCostPips on stack tiles.
@@ -122,6 +121,7 @@ void main() {
           }),
         ],
         child: MaterialApp(
+          theme: AppTheme.dark(),
           home: Scaffold(
             body: Consumer(
               builder: (context, ref, _) {

@@ -1,3 +1,4 @@
+import '../../../ui/tokens/color_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,12 +7,12 @@ import '../../../core/game/alliance_ui_events.dart';
 import '../../../core/game/game_providers.dart';
 import '../../../core/game/game_state.dart';
 import '../../../core/game/player_game_state.dart';
-import '../../../shared/theme/app_theme.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
 import 'game_modal_chrome.dart';
+import 'game_colors.dart';
 import 'game_ui_tokens.dart';
 
 /// Shows alliance-related dialogs when [allianceUiEventProvider] updates.
@@ -128,7 +129,7 @@ Future<void> showProposeAllianceSheet({
                           Text(
                             'Duration',
                             style: TextStyle(
-                              color: AppTheme.textSecondary,
+                              color: ColorTokens.textSecondary,
                               fontSize: FontTokens.label,
                               fontWeight: FontWeight.w600,
                             ),
@@ -140,8 +141,8 @@ Future<void> showProposeAllianceSheet({
                               padding: EdgeInsets.only(bottom: LayoutTokens.gr1),
                               child: ListTile(
                                 tileColor: selected
-                                    ? AppTheme.accentGold.withValues(alpha: 0.12)
-                                    : AppTheme.surface,
+                                    ? ColorTokens.emphasis.withValues(alpha: 0.12)
+                                    : ColorTokens.backgroundSecondary,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: RadiusTokens.radiusControlSm,
                                 ),
@@ -149,7 +150,7 @@ Future<void> showProposeAllianceSheet({
                                 trailing: selected
                                     ? Icon(
                                         Icons.check_circle,
-                                        color: AppTheme.accentGold,
+                                        color: ColorTokens.emphasis,
                                       )
                                     : null,
                                 onTap: () => setState(() => duration = d),
@@ -160,7 +161,7 @@ Future<void> showProposeAllianceSheet({
                           Text(
                             'When to deliver',
                             style: TextStyle(
-                              color: AppTheme.textSecondary,
+                              color: ColorTokens.textSecondary,
                               fontSize: FontTokens.label,
                               fontWeight: FontWeight.w600,
                             ),
@@ -208,7 +209,9 @@ Future<void> showProposeAllianceSheet({
                   ),
                   SizedBox(height: LayoutTokens.gr2),
                   FilledButton(
-                    style: GameUiTokens.sheetPrimaryButton(AppTheme.accentGold),
+                    style: GameUiTokens.sheetPrimaryButton(
+                      context.gameColors.emphasis,
+                    ),
                     onPressed: sendWhisper,
                     child: Text('Send'),
                   ),
@@ -232,18 +235,18 @@ Future<void> showAllianceInviteDialog({
     context: context,
     barrierDismissible: false,
     builder: (dialogContext) => AlertDialog(
-      backgroundColor: AppTheme.card,
+      backgroundColor: ColorTokens.surface,
       shape: RoundedRectangleBorder(borderRadius: RadiusTokens.radiusMd),
       title: Row(
         children: [
-          Icon(Icons.handshake, color: AppTheme.accentGold),
+          Icon(Icons.handshake, color: ColorTokens.emphasis),
           SizedBox(width: LayoutTokens.gr1),
           const Expanded(child: Text('Secret offer')),
         ],
       ),
       content: Text(
         '$fromUsername proposes a secret alliance.\n\nDuration: $durationLabel\n\nOnly you can see this.',
-        style: TextStyle(color: AppTheme.textSecondary, height: 1.4),
+        style: TextStyle(color: ColorTokens.textSecondary, height: 1.4),
       ),
       actions: [
         TextButton(
@@ -255,7 +258,7 @@ Future<void> showAllianceInviteDialog({
           child: Text('Decline'),
         ),
         FilledButton(
-          style: GameUiTokens.sheetPrimaryButton(AppTheme.accentGold),
+          style: GameUiTokens.sheetPrimaryButton(context.gameColors.emphasis),
           onPressed: () {
             final localId = ref.read(gameProvider).localPlayerId;
             ref.read(gameProvider.notifier).respondToAlliance(localId, true);
@@ -276,11 +279,11 @@ Future<void> showAllianceFormedDialog({
   return showDialog<void>(
     context: context,
     builder: (dialogContext) => AlertDialog(
-      backgroundColor: AppTheme.card,
+      backgroundColor: ColorTokens.surface,
       shape: RoundedRectangleBorder(borderRadius: RadiusTokens.radiusMd),
       title: Row(
         children: [
-          Icon(Icons.handshake, color: AppTheme.accentGold, size: 28),
+          Icon(Icons.handshake, color: ColorTokens.emphasis, size: 28),
           SizedBox(width: LayoutTokens.gr1),
           const Expanded(child: Text('Alliance formed')),
         ],
@@ -289,7 +292,7 @@ Future<void> showAllianceFormedDialog({
         'You and $allyUsername are now secretly allied'
         '${durationLabel != null ? ' ($durationLabel)' : ''}.\n\n'
         'The table does not know — unless you reveal or betray.',
-        style: TextStyle(color: AppTheme.textSecondary, height: 1.4),
+        style: TextStyle(color: ColorTokens.textSecondary, height: 1.4),
       ),
       actions: [
         FilledButton(
@@ -309,7 +312,7 @@ Future<void> showAllianceRevealedDialog({
   return showDialog<void>(
     context: context,
     builder: (dialogContext) => AlertDialog(
-      backgroundColor: AppTheme.card,
+      backgroundColor: ColorTokens.surface,
       title: Text('Alliance revealed'),
       content: Text(
         '$playerA and $playerB have revealed their secret alliance to the table.',
@@ -332,8 +335,8 @@ Future<void> showAllianceBetrayalDialog({
   return showDialog<void>(
     context: context,
     builder: (dialogContext) => AlertDialog(
-      backgroundColor: AppTheme.card,
-      title: Text('Betrayal!', style: TextStyle(color: AppTheme.danger)),
+      backgroundColor: ColorTokens.surface,
+      title: Text('Betrayal!', style: TextStyle(color: ColorTokens.danger)),
       content: Text(
         'The secret alliance between $playerA and $playerB has been broken by betrayal.',
       ),
@@ -388,16 +391,16 @@ class OverviewPlayerMarkerBadges extends StatelessWidget {
         vertical: LayoutTokens.gr0 - 1,
       ),
       decoration: BoxDecoration(
-        color: AppTheme.accentGold.withValues(alpha: OpacityTokens.subtle),
+        color: ColorTokens.emphasis.withValues(alpha: OpacityTokens.subtle),
         borderRadius: RadiusTokens.radiusControlSm,
         border: Border.all(
-          color: AppTheme.accentGold.withValues(alpha: OpacityTokens.soft),
+          color: ColorTokens.emphasis.withValues(alpha: OpacityTokens.soft),
         ),
       ),
       child: Text(
         label,
         style: TextStyle(
-          color: AppTheme.accentGold,
+          color: ColorTokens.emphasis,
           fontSize: FontTokens.hudXs,
           fontWeight: FontWeight.w700,
           height: 1.1,

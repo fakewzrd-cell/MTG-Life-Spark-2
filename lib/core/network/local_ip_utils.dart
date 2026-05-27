@@ -34,7 +34,7 @@ int _privateLanScore(String ip) {
   final parts = ip.split('.');
   if (parts.length != 4) return -1;
   final octets = parts.map(int.tryParse).toList();
-  if (octets.any((o) => o == null || o! < 0 || o > 255)) return -1;
+  if (octets.any((o) => o == null || o < 0 || o > 255)) return -1;
   final a = octets[0]!;
   final b = octets[1]!;
   if (a == 10) return 30;

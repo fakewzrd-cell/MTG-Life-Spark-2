@@ -1,6 +1,7 @@
+import '../../../ui/tokens/color_tokens.dart';
 import 'package:flutter/material.dart';
 
-import '../../../shared/theme/app_theme.dart';
+import 'game_colors.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/motion_tokens.dart';
@@ -16,19 +17,19 @@ abstract final class GameModalChrome {
           : LayoutTokens.gr4;
 
   static TextStyle get dialogTitleStyle => TextStyle(
-        color: AppTheme.textPrimary,
+        color: ColorTokens.textPrimary,
         fontSize: FontTokens.title,
         fontWeight: FontWeight.w700,
       );
 
   static TextStyle get dialogBodyStyle => TextStyle(
-        color: AppTheme.textSecondary.withValues(alpha: 0.9),
+        color: ColorTokens.textSecondary.withValues(alpha: 0.9),
         fontSize: FontTokens.hudSm,
         height: 1.4,
       );
 
   static TextStyle get sheetTitleStyle => TextStyle(
-        color: AppTheme.textPrimary,
+        color: ColorTokens.textPrimary,
         fontSize: FontTokens.title,
         fontWeight: FontWeight.w700,
       );
@@ -48,11 +49,12 @@ class GameDialogCloseButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     return Semantics(
       button: true,
       label: 'Close',
       child: Material(
-        color: AppTheme.surface.withValues(alpha: 0.92),
+        color: colors.backgroundSecondary.withValues(alpha: 0.92),
         shape: const CircleBorder(),
         clipBehavior: Clip.antiAlias,
         child: IconButton(
@@ -60,7 +62,7 @@ class GameDialogCloseButton extends StatelessWidget {
           icon: Icon(
             Icons.close_rounded,
             size: 20,
-            color: AppTheme.textSecondary.withValues(alpha: 0.9),
+            color: colors.textSecondary.withValues(alpha: 0.9),
           ),
           tooltip: 'Close',
           padding: EdgeInsets.zero,
@@ -108,12 +110,13 @@ class GameSheetHandle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     return Center(
       child: Container(
         width: 40,
         height: 4,
         decoration: BoxDecoration(
-          color: AppTheme.textSecondary.withValues(alpha: 0.22),
+          color: colors.textSecondary.withValues(alpha: 0.22),
           borderRadius: RadiusTokens.radiusPill,
         ),
       ),
@@ -183,7 +186,7 @@ Future<T?> showGameBottomSheet<T>({
 }) {
   return showModalBottomSheet<T>(
     context: context,
-    backgroundColor: AppTheme.card,
+    backgroundColor: ColorTokens.surface,
     isScrollControlled: isScrollControlled,
     showDragHandle: showDragHandle,
     enableDrag: enableDrag,
@@ -211,7 +214,7 @@ Future<bool?> showGameConfirmDialog({
   return showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      backgroundColor: AppTheme.card,
+      backgroundColor: ColorTokens.surface,
       title: GameDialogTitleRow(
         title: title,
         onClose: () => Navigator.pop(ctx, false),
@@ -221,7 +224,7 @@ Future<bool?> showGameConfirmDialog({
         FilledButton(
           onPressed: () => Navigator.pop(ctx, true),
           style: destructive
-              ? FilledButton.styleFrom(backgroundColor: AppTheme.danger)
+              ? FilledButton.styleFrom(backgroundColor: ColorTokens.danger)
               : null,
           child: Text(confirmLabel),
         ),
@@ -242,7 +245,7 @@ Future<bool?> showGameChoiceDialog({
   return showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      backgroundColor: AppTheme.card,
+      backgroundColor: ColorTokens.surface,
       title: GameDialogTitleRow(
         title: title,
         onClose: () => Navigator.pop(ctx, false),
@@ -254,13 +257,13 @@ Future<bool?> showGameChoiceDialog({
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(
               secondaryLabel,
-              style: TextStyle(color: AppTheme.textSecondary),
+              style: TextStyle(color: ColorTokens.textSecondary),
             ),
           ),
         FilledButton(
           onPressed: () => Navigator.pop(ctx, true),
           style: primaryDestructive
-              ? FilledButton.styleFrom(backgroundColor: AppTheme.danger)
+              ? FilledButton.styleFrom(backgroundColor: ColorTokens.danger)
               : null,
           child: Text(primaryLabel),
         ),

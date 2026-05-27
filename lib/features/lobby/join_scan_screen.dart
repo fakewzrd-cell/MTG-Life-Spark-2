@@ -7,10 +7,11 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-import '../../core/bluetooth/ble_providers.dart';
+import '../../core/network/session_providers.dart';
 import '../../core/bluetooth/ble_service.dart';
 import '../../core/game/lobby_state.dart';
 import '../../core/models/player_slot.dart';
+import '../../core/network/session_join_uri.dart';
 import '../../core/network/ws_client_service.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/utils/app_router.dart';
@@ -39,7 +40,7 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen> {
   MobileScannerController? _scannerController;
 
   WsClientService? get _client {
-    final svc = ref.read(bleServiceProvider);
+    final svc = ref.read(sessionServiceProvider);
     return svc is WsClientService ? svc : null;
   }
 
@@ -86,22 +87,26 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen> {
     final raw = barcode?.rawValue;
     if (raw == null) return;
 
-    // Expected format: mgtlifespark://<ip>:<port>
-    if (!raw.startsWith('mgtlifespark://')) {
+    try {
+      final parsed = SessionJoinUri.parse(raw);
+      if (parsed.token == null || parsed.token!.isEmpty) {
+        _showSnackbar(
+          'This QR code is missing a join token. Ask the host to refresh their QR.',
+          isError: true,
+        );
+        return;
+      }
+      _scanned = true;
+      _scannerController?.stop();
+      _connectTo(parsed.wsUri, joinToken: parsed.token!);
+    } on FormatException {
       _showSnackbar('Not a valid MTG Life Spark QR code.', isError: true);
-      return;
     }
-
-    _scanned = true;
-    _scannerController?.stop();
-
-    final wsUri = raw.replaceFirst('mgtlifespark://', 'ws://');
-    _connectTo(wsUri);
   }
 
   // ── Connection ────────────────────────────────────────────────────────────
 
-  Future<void> _connectTo(String wsUri) async {
+  Future<void> _connectTo(String wsUri, {required String joinToken}) async {
     setState(() => _phase = _JoinPhase.connecting);
 
     final client = _client;
@@ -115,11 +120,11 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen> {
     }
 
     _connectionSub = ref
-        .read(bleServiceProvider)!
+        .read(sessionServiceProvider)!
         .connectionStream
         .listen(_onConnectionEvent);
 
-    await client.connectToHost(wsUri);
+    await client.connectToHost(wsUri, joinToken: joinToken);
   }
 
   void _onConnectionEvent(BleConnectionEvent event) {

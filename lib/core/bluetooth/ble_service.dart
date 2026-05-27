@@ -40,5 +40,10 @@ abstract class BleService {
   Future<void> dispose();
 
   /// Send a message. [targetPlayerId] = null broadcasts to all.
-  Future<void> send(BleMessage message, {String? targetPlayerId});
+  /// [excludePlayerId] skips that verified player (host rebroadcast echo guard).
+  Future<void> send(
+    BleMessage message, {
+    String? targetPlayerId,
+    String? excludePlayerId,
+  });
 }

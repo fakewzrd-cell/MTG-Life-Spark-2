@@ -5,10 +5,15 @@ import '../bluetooth/ble_service.dart';
 
 /// Web stub — hosting requires a native device with [dart:io] HttpServer.
 class WsHostService implements BleService {
-  WsHostService({required this.hostPlayerId, required this.hostUsername});
+  WsHostService({
+    required this.hostPlayerId,
+    required this.hostUsername,
+    required this.joinToken,
+  });
 
   final String hostPlayerId;
   final String hostUsername;
+  final String joinToken;
 
   final _messageController = StreamController<BleMessage>.broadcast();
   final _connectionController = StreamController<BleConnectionEvent>.broadcast();
@@ -46,5 +51,9 @@ class WsHostService implements BleService {
   }
 
   @override
-  Future<void> send(BleMessage message, {String? targetPlayerId}) async {}
+  Future<void> send(
+    BleMessage message, {
+    String? targetPlayerId,
+    String? excludePlayerId,
+  }) async {}
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../shared/theme/app_theme.dart';
+import 'game_colors.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import 'game_modal_chrome.dart';
 
@@ -23,6 +23,7 @@ class StackHelpSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     return GameSheetBody(
       scrollable: true,
       child: Column(
@@ -53,7 +54,7 @@ class StackHelpSheet extends StatelessWidget {
             'Example: You cast a pump spell on your creature. Your opponent casts Lightning Bolt in response. Bolt resolves first, then your pump spell (if its target is still legal).',
             style: TextStyle(
               fontSize: FontTokens.hudSm,
-              color: AppTheme.textSecondary.withValues(alpha: 0.95),
+              color: colors.textSecondary.withValues(alpha: 0.95),
               height: 1.4,
             ),
           ),
@@ -87,6 +88,7 @@ class _Bullet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     return Padding(
       padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
       child: Row(
@@ -97,7 +99,7 @@ class _Bullet extends StatelessWidget {
             child: Icon(
               Icons.circle,
               size: 6,
-              color: AppTheme.accent,
+              color: colors.primaryAccent,
             ),
           ),
           Expanded(
@@ -105,7 +107,7 @@ class _Bullet extends StatelessWidget {
               text.replaceAll('**', ''),
               style: TextStyle(
                 fontSize: FontTokens.hudSm,
-                color: AppTheme.textPrimary.withValues(alpha: 0.92),
+                color: colors.textPrimary.withValues(alpha: 0.92),
                 height: 1.45,
               ),
             ),

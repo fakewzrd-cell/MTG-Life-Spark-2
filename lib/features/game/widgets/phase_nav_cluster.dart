@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/game/game_phase.dart';
 import '../../../core/game/game_state.dart';
-import '../../../shared/theme/app_theme.dart';
+import 'game_colors.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
@@ -28,11 +28,12 @@ class PhaseNavCluster extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     final borderColor = accentColor.withValues(alpha: 0.45);
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppTheme.card.withValues(alpha: 0.94),
+        color: colors.surface.withValues(alpha: 0.94),
         borderRadius: RadiusTokens.radiusControlSm,
         border: Border.all(color: borderColor),
         boxShadow: [
@@ -77,7 +78,8 @@ class PhaseNavClusterStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dividerColor = AppTheme.textSecondary.withValues(alpha: 0.14);
+    final colors = context.gameColors;
+    final dividerColor = colors.textSecondary.withValues(alpha: 0.14);
 
     return SizedBox(
       height: LayoutTokens.minTapTarget,
@@ -140,10 +142,11 @@ class _PhaseNavSideButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     final fg =
         enabled
-            ? AppTheme.textPrimary
-            : AppTheme.textSecondary.withValues(alpha: 0.45);
+            ? colors.textPrimary
+            : colors.textSecondary.withValues(alpha: 0.45);
     final iconWidget = Icon(icon, size: 20, color: fg);
     final labelWidget = Text(
       label,
@@ -194,8 +197,9 @@ class _PhaseNavCenter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     final phaseColor =
-        game.isLocalPlayersTurn ? AppTheme.accent : AppTheme.textSecondary;
+        game.isLocalPlayersTurn ? colors.primaryAccent : colors.textSecondary;
 
     final label = FittedBox(
       fit: BoxFit.scaleDown,
@@ -237,7 +241,7 @@ class _PhaseNavCenter extends StatelessWidget {
       button: true,
       label: 'Choose phase, ${game.currentPhase.displayName}',
       child: Material(
-        color: AppTheme.primary.withValues(alpha: 0.08),
+        color: colors.backgroundPrimary.withValues(alpha: 0.08),
         child: InkWell(
           onTap:
               () => showPhasePickerSheet(

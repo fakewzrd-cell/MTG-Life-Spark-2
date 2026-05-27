@@ -22,16 +22,27 @@ class BleMessage {
       };
 
   factory BleMessage.fromJson(Map<String, dynamic> json) {
+    final typeName = json['t'] as String?;
+    BleMessageType? type;
+    for (final candidate in BleMessageType.values) {
+      if (candidate.name == typeName) {
+        type = candidate;
+        break;
+      }
+    }
+    if (type == null) {
+      throw FormatException('Unknown BLE message type: $typeName');
+    }
     return BleMessage(
-      type: BleMessageType.values.firstWhere(
-        (e) => e.name == json['t'],
-        orElse: () => BleMessageType.stateDelta,
-      ),
+      type: type,
       payload: Map<String, dynamic>.from(json['p'] as Map? ?? {}),
       seqNum: (json['seq'] as num?)?.toInt() ?? 0,
       targetPlayerId: json['to'] as String?,
     );
   }
+
+  /// Player that initiated this message (stamped by [GameStateNotifier._send]).
+  String? get originPlayerId => payload['origin'] as String?;
 
   List<int> toBytes() => utf8.encode(jsonEncode(toJson()));
 
@@ -43,13 +54,19 @@ class BleMessage {
 
   // ── Convenience factories ──────────────────────────────────────────────────
 
-  static BleMessage hello(int seqNum) => BleMessage(
+  static BleMessage hello(int seqNum, {String? joinToken}) => BleMessage(
         type: BleMessageType.hello,
-        payload: {'version': kBleProtocolVersion},
+        payload: {
+          'version': kBleProtocolVersion,
+          if (joinToken != null && joinToken.isNotEmpty) 'token': joinToken,
+        },
         seqNum: seqNum,
       );
 
-  static BleMessage reject(int seqNum, {String reason = 'versionMismatch'}) =>
+  static BleMessage reject(
+    int seqNum, {
+    String reason = 'versionMismatch',
+  }) =>
       BleMessage(
         type: BleMessageType.reject,
         payload: {'reason': reason, 'requiredVersion': kBleProtocolVersion},

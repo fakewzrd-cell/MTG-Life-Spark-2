@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/game/game_phase.dart';
-import '../../../shared/theme/app_theme.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
 import 'game_modal_chrome.dart';
+import 'game_colors.dart';
 import 'game_ui_tokens.dart';
 
 /// Scrollable phase list for host / active player to jump to any step.
@@ -70,6 +70,7 @@ class _PhasePickerSheetState extends State<PhasePickerSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     const itemExtent = 48.0;
 
     return GameSheetBody(
@@ -86,10 +87,10 @@ class _PhasePickerSheetState extends State<PhasePickerSheet> {
             height: itemExtent * 5,
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: AppTheme.primary.withValues(alpha: 0.35),
+                color: colors.backgroundPrimary.withValues(alpha: 0.35),
                 borderRadius: RadiusTokens.radiusSm,
                 border: Border.all(
-                  color: AppTheme.surface.withValues(alpha: 0.6),
+                  color: colors.backgroundSecondary.withValues(alpha: 0.6),
                 ),
               ),
               child: ClipRRect(
@@ -134,7 +135,7 @@ class _PhasePickerSheetState extends State<PhasePickerSheet> {
                                   color:
                                       centered
                                           ? widget.accentColor
-                                          : AppTheme.textSecondary,
+                                          : colors.textSecondary,
                                 ),
                               ),
                             ),
@@ -153,7 +154,7 @@ class _PhasePickerSheetState extends State<PhasePickerSheet> {
               Expanded(
                 child: OutlinedButton(
                   onPressed: () => Navigator.pop(context),
-                  style: GameUiTokens.sheetCancelButton,
+                  style: GameUiTokens.sheetCancelButton(context.gameColors),
                   child: Text('Cancel'),
                 ),
               ),

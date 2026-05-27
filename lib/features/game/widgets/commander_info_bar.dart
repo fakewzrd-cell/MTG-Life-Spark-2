@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/game/player_game_state.dart';
-import '../../../shared/theme/app_theme.dart';
+import 'game_colors.dart';
 import '../../../ui/tokens/color_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
@@ -32,6 +32,7 @@ class CommanderInfoBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     final w = MediaQuery.sizeOf(context).width;
     final isCompact = w < GameLayoutBreakpoints.compact;
     final isVeryNarrow = w < GameLayoutBreakpoints.narrow;
@@ -88,7 +89,7 @@ class CommanderInfoBar extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: AppTheme.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                     fontSize: isVeryNarrow
                         ? LayoutTokens.gr2
@@ -101,7 +102,7 @@ class CommanderInfoBar extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: AppTheme.textSecondary,
+                      color: colors.textSecondary,
                       fontSize: LayoutTokens.gr2,
                     ),
                   ),
@@ -116,7 +117,7 @@ class CommanderInfoBar extends StatelessWidget {
                   Text(
                     'Round $roundNumber',
                     style: TextStyle(
-                      color: AppTheme.textSecondary,
+                      color: colors.textSecondary,
                       fontSize: LayoutTokens.gr2,
                     ),
                   ),
@@ -138,13 +139,13 @@ class CommanderInfoBar extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(LayoutTokens.gr1),
                 decoration: BoxDecoration(
-                  color: AppTheme.accentGold.withValues(alpha: 0.12),
+                  color: colors.emphasis.withValues(alpha: 0.12),
                   borderRadius: RadiusTokens.radiusControlMd,
                   border: Border.all(
-                      color: AppTheme.accentGold.withValues(alpha: 0.6)),
+                      color: colors.emphasis.withValues(alpha: 0.6)),
                 ),
                 child: Icon(Icons.handshake,
-                    size: LayoutTokens.gr3, color: AppTheme.accentGold),
+                    size: LayoutTokens.gr3, color: colors.emphasis),
               ),
             ),
           ],
@@ -178,6 +179,7 @@ class _CastableCommanderAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     return Semantics(
       button: true,
       enabled: enabled,
@@ -213,10 +215,10 @@ class _CastableCommanderAvatar extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(LayoutTokens.gr0),
                           decoration: BoxDecoration(
-                            color: AppTheme.accent,
+                            color: colors.primaryAccent,
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: AppTheme.card,
+                              color: colors.surface,
                               width: 2,
                             ),
                             boxShadow: [
@@ -260,11 +262,12 @@ class _CommanderTaxBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     final fs = compact ? 11.0 : 12.0;
     if (castCount == 0) {
       return Text(
         'No tax yet',
-        style: TextStyle(color: AppTheme.textSecondary, fontSize: fs),
+        style: TextStyle(color: colors.textSecondary, fontSize: fs),
       );
     }
     return Row(
@@ -276,15 +279,15 @@ class _CommanderTaxBadge extends StatelessWidget {
             vertical: compact ? 3 : 4,
           ),
           decoration: BoxDecoration(
-            color: AppTheme.textSecondary.withValues(alpha: 0.15),
+            color: colors.textSecondary.withValues(alpha: 0.15),
             borderRadius: RadiusTokens.radiusControlMd,
             border: Border.all(
-                color: AppTheme.textSecondary.withValues(alpha: 0.6)),
+                color: colors.textSecondary.withValues(alpha: 0.6)),
           ),
           child: Text(
             'Tax +$tax',
             style: TextStyle(
-              color: AppTheme.textSecondary,
+              color: colors.textSecondary,
               fontSize: fs,
               fontWeight: FontWeight.bold,
             ),
@@ -296,7 +299,7 @@ class _CommanderTaxBadge extends StatelessWidget {
             '(cast $castCount×)',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(color: AppTheme.textSecondary, fontSize: fs),
+            style: TextStyle(color: colors.textSecondary, fontSize: fs),
           ),
         ),
       ],

@@ -20,6 +20,7 @@ class WsClientService implements BleService {
   StreamSubscription<dynamic>? _sub;
 
   String? _hostUri;
+  String? _joinToken;
   int _seqNum = 0;
   bool _ready = false;
 
@@ -62,8 +63,17 @@ class WsClientService implements BleService {
   // ── Connection ────────────────────────────────────────────────────────────
 
   /// Connects to the WebSocket server at [wsUri] (e.g. `ws://192.168.1.5:27315`).
-  Future<void> connectToHost(String wsUri) async {
+  /// [joinToken] must match the token embedded in the host QR code.
+  Future<void> connectToHost(String wsUri, {required String joinToken}) async {
     _hostUri = wsUri;
+    _joinToken = joinToken;
+    await _sub?.cancel();
+    _sub = null;
+    try {
+      await _channel?.sink.close();
+    } catch (_) {}
+    _channel = null;
+    _ready = false;
     try {
       _channel = WebSocketChannel.connect(Uri.parse(wsUri));
 
@@ -79,7 +89,7 @@ class WsClientService implements BleService {
       );
 
       // Kick off handshake
-      _sendRaw(BleMessage.hello(_nextSeq()));
+      _sendRaw(BleMessage.hello(_nextSeq(), joinToken: _joinToken));
     } catch (e) {
       _connectionController.add(BleConnectionEvent(
         playerId: wsUri,
@@ -104,11 +114,14 @@ class WsClientService implements BleService {
 
     if (message.type == BleMessageType.reject) {
       _ready = false;
+      final reason = message.payload['reason'] as String? ?? 'versionMismatch';
+      final messageText = reason == 'invalidJoinToken'
+          ? 'Invalid or expired join code. Scan the host QR again.'
+          : 'Protocol version mismatch. Required: ${message.payload['requiredVersion']}';
       _connectionController.add(BleConnectionEvent(
         playerId: _hostUri ?? '',
         status: BleConnectionStatus.rejected,
-        errorMessage:
-            'Protocol version mismatch. Required: ${message.payload['requiredVersion']}',
+        errorMessage: messageText,
       ));
       return;
     }
@@ -154,7 +167,11 @@ class WsClientService implements BleService {
   // ── Sending ───────────────────────────────────────────────────────────────
 
   @override
-  Future<void> send(BleMessage message, {String? targetPlayerId}) async {
+  Future<void> send(
+    BleMessage message, {
+    String? targetPlayerId,
+    String? excludePlayerId,
+  }) async {
     _sendRaw(message);
   }
 

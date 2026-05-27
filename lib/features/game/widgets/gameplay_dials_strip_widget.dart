@@ -5,7 +5,7 @@ import '../../../ui/tokens/font_tokens.dart';
 import 'package:flutter/services.dart';
 import '../../../core/game/gameplay_dial_ids.dart';
 import '../../../core/game/player_game_state.dart';
-import '../../../shared/theme/app_theme.dart';
+import 'game_colors.dart';
 import '../../../ui/tokens/color_tokens.dart';
 import 'game_modal_chrome.dart';
 import '../../../shared/widgets/game_icon.dart';
@@ -125,7 +125,7 @@ class GameplayDialsStripWidget extends StatelessWidget {
   }
 
   static Color _listIconColor() =>
-      AppTheme.textSecondary.withValues(alpha: 0.95);
+      ColorTokens.textSecondary.withValues(alpha: 0.95);
 
   static Color _defaultGlyphColor({Color? tintColor}) =>
       tintColor ?? _listIconColor();
@@ -145,11 +145,7 @@ class GameplayDialsStripWidget extends StatelessWidget {
         size: size,
         color: tintColor ?? ColorTokens.success,
       ),
-      GameplayDialIds.treasure => Icon(
-        _iconForField(field),
-        size: size,
-        color: tone,
-      ),
+      GameplayDialIds.treasure => GameIcon.treasure(size: size, color: tone),
       _ => Icon(_iconForField(field), size: size, color: tone),
     };
   }
@@ -267,19 +263,19 @@ class GameplayDialsStripWidget extends StatelessWidget {
         children: [
           TextField(
             controller: keyCtl,
-            style: TextStyle(color: AppTheme.textPrimary),
+            style: TextStyle(color: ColorTokens.textPrimary),
             decoration: InputDecoration(
               labelText: 'Id (letters/numbers)',
-              labelStyle: TextStyle(color: AppTheme.textSecondary),
+              labelStyle: TextStyle(color: ColorTokens.textSecondary),
             ),
           ),
           SizedBox(height: LayoutTokens.gr2),
           TextField(
             controller: labelCtl,
-            style: TextStyle(color: AppTheme.textPrimary),
+            style: TextStyle(color: ColorTokens.textPrimary),
             decoration: InputDecoration(
               labelText: 'Label',
-              labelStyle: TextStyle(color: AppTheme.textSecondary),
+              labelStyle: TextStyle(color: ColorTokens.textSecondary),
             ),
           ),
         ],
@@ -645,7 +641,7 @@ class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
               fontSize: FontTokens.hudXs,
               fontWeight: FontWeight.w800,
               letterSpacing: 1.1,
-              color: AppTheme.textSecondary.withValues(alpha: 0.75),
+              color: ColorTokens.textSecondary.withValues(alpha: 0.75),
             ),
           ),
         ),
@@ -664,7 +660,7 @@ class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
             title: Text(
               GameplayDialsStripWidget._labelFor(widget.player, id),
               style: TextStyle(
-                color: AppTheme.textPrimary,
+                color: ColorTokens.textPrimary,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -677,6 +673,7 @@ class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     final bottomPad = MediaQuery.paddingOf(context).bottom;
     final canAddCustom = widget.onCustomDial != null;
     final addableBuiltIn =
@@ -723,7 +720,7 @@ class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
                     style: TextStyle(
                       fontSize: FontTokens.hudSm,
                       height: 1.35,
-                      color: AppTheme.textSecondary.withValues(alpha: 0.88),
+                      color: colors.textSecondary.withValues(alpha: 0.88),
                     ),
                   ),
                 ),
@@ -743,8 +740,8 @@ class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
                       Icons.edit_note_rounded,
                       color:
                           canAddCustom
-                              ? AppTheme.accent
-                              : AppTheme.textSecondary,
+                              ? colors.primaryAccent
+                              : colors.textSecondary,
                     ),
                     label: Text(
                       canAddCustom
@@ -754,8 +751,8 @@ class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
                         fontWeight: FontWeight.w700,
                         color:
                             canAddCustom
-                                ? AppTheme.accent
-                                : AppTheme.textSecondary,
+                                ? colors.primaryAccent
+                                : colors.textSecondary,
                       ),
                     ),
                   ),
@@ -775,7 +772,7 @@ class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
                       style: TextStyle(
                         fontSize: FontTokens.hudSm,
                         height: 1.35,
-                        color: AppTheme.textSecondary.withValues(alpha: 0.88),
+                        color: colors.textSecondary.withValues(alpha: 0.88),
                       ),
                     ),
                   ),
@@ -787,7 +784,7 @@ class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
                       'Use Custom dial for anything else.',
                       style: TextStyle(
                         fontSize: 12,
-                        color: AppTheme.textSecondary.withValues(alpha: 0.75),
+                        color: colors.textSecondary.withValues(alpha: 0.75),
                       ),
                     ),
                   ),
@@ -811,9 +808,9 @@ class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      AppTheme.card.withValues(alpha: 0),
-                      AppTheme.card.withValues(alpha: 0.92),
-                      AppTheme.card,
+                      colors.surface.withValues(alpha: 0),
+                      colors.surface.withValues(alpha: 0.92),
+                      colors.surface,
                     ],
                     stops: const [0.0, 0.55, 1.0],
                   ),
@@ -835,7 +832,7 @@ class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
                 child: Icon(
                   Icons.keyboard_arrow_down_rounded,
                   size: 22,
-                  color: AppTheme.textSecondary.withValues(alpha: 0.55),
+                  color: colors.textSecondary.withValues(alpha: 0.55),
                 ),
               ),
             ),
@@ -861,6 +858,7 @@ class _AddCounterPillTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     return Tooltip(
       message: 'Add counter',
       child: Material(
@@ -872,17 +870,17 @@ class _AddCounterPillTile extends StatelessWidget {
             width: width,
             height: metrics.tileStackHeight,
             decoration: BoxDecoration(
-              color: AppTheme.card.withValues(alpha: 0.92),
+              color: colors.surface.withValues(alpha: 0.92),
               borderRadius: BorderRadius.circular(_kDialPillCornerRadius),
               border: Border.all(
-                color: AppTheme.accent.withValues(alpha: 0.45),
+                color: colors.primaryAccent.withValues(alpha: 0.45),
               ),
             ),
             child: Center(
               child: Icon(
                 Icons.add_rounded,
                 size: metrics.addIconSize,
-                color: isEliminated ? AppTheme.textSecondary : AppTheme.accent,
+                color: isEliminated ? colors.textSecondary : colors.primaryAccent,
               ),
             ),
           ),
@@ -899,6 +897,7 @@ class _DialStripRemoveButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     return Semantics(
       button: true,
       label: 'Remove from strip',
@@ -912,12 +911,12 @@ class _DialStripRemoveButton extends StatelessWidget {
             alignment: Alignment.topRight,
             children: [
               Material(
-                color: AppTheme.card,
+                color: colors.surface,
                 elevation: 2,
                 shadowColor: Colors.black.withValues(alpha: 0.22),
                 shape: CircleBorder(
                   side: BorderSide(
-                    color: AppTheme.surface.withValues(alpha: 0.95),
+                    color: colors.backgroundSecondary.withValues(alpha: 0.95),
                     width: 1.5,
                   ),
                 ),
@@ -931,7 +930,7 @@ class _DialStripRemoveButton extends StatelessWidget {
                     child: Icon(
                       Icons.close_rounded,
                       size: 13,
-                      color: AppTheme.textSecondary.withValues(alpha: 0.98),
+                      color: colors.textSecondary.withValues(alpha: 0.98),
                     ),
                   ),
                 ),
@@ -1010,8 +1009,9 @@ class _GameplayDialPillState extends State<_GameplayDialPill> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     final dim = widget.isEliminated;
-    final borderColor = AppTheme.surface.withValues(alpha: 0.65);
+    final borderColor = colors.backgroundSecondary.withValues(alpha: 0.65);
 
     return Material(
       color: Colors.transparent,
@@ -1025,7 +1025,7 @@ class _GameplayDialPillState extends State<_GameplayDialPill> {
           width: widget.width,
           height: widget.metrics.tileStackHeight,
           decoration: BoxDecoration(
-            color: AppTheme.card.withValues(alpha: dim ? 0.55 : 0.92),
+            color: colors.surface.withValues(alpha: dim ? 0.55 : 0.92),
             borderRadius: BorderRadius.circular(_kDialPillCornerRadius),
             border: Border.all(color: borderColor),
             boxShadow: [
@@ -1053,7 +1053,7 @@ class _GameplayDialPillState extends State<_GameplayDialPill> {
                 Divider(
                   height: 1,
                   thickness: 1,
-                  color: AppTheme.textSecondary.withValues(alpha: 0.12),
+                  color: colors.textSecondary.withValues(alpha: 0.12),
                 ),
                 Expanded(
                   child: LayoutBuilder(
@@ -1082,7 +1082,7 @@ class _GameplayDialPillState extends State<_GameplayDialPill> {
                             width: double.infinity,
                             child: Container(
                               decoration: BoxDecoration(
-                                color: AppTheme.primary.withValues(alpha: 0.12),
+                                color: colors.backgroundPrimary.withValues(alpha: 0.12),
                               ),
                               child: IgnorePointer(
                                 ignoring: widget.isEliminated,
@@ -1132,8 +1132,8 @@ class _GameplayDialPillState extends State<_GameplayDialPill> {
                                               fontWeight: FontWeight.w700,
                                               color:
                                                   dim
-                                                      ? AppTheme.textSecondary
-                                                      : AppTheme.textPrimary
+                                                      ? colors.textSecondary
+                                                      : colors.textPrimary
                                                           .withValues(
                                                         alpha: 0.88,
                                                       ),
@@ -1188,7 +1188,7 @@ class _GameplayDialPillState extends State<_GameplayDialPill> {
             child: Icon(
               icon,
               size: widget.metrics.stepIconSize,
-              color: dim ? AppTheme.textSecondary : AppTheme.accent,
+              color: dim ? ColorTokens.textSecondary : ColorTokens.primaryAccent,
             ),
           ),
         ),

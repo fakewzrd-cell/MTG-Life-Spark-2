@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/constants/app_icons.dart';
-import '../../../shared/theme/app_theme.dart';
+import 'game_colors.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 
@@ -29,8 +29,9 @@ class GameMainTabBarStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dividerColor = AppTheme.textSecondary.withValues(alpha: 0.12);
-    final resolvedAccent = accentColor ?? AppTheme.accent;
+    final colors = context.gameColors;
+    final dividerColor = colors.textSecondary.withValues(alpha: 0.12);
+    final resolvedAccent = accentColor ?? colors.primaryAccent;
 
     return SizedBox(
       height: LayoutTokens.minTapTarget,
@@ -108,10 +109,11 @@ class _GameMainTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     final fg =
         selected
             ? accentColor
-            : AppTheme.textSecondary.withValues(alpha: 0.88);
+            : colors.textSecondary.withValues(alpha: 0.88);
     final bg =
         selected
             ? accentColor.withValues(alpha: 0.16)

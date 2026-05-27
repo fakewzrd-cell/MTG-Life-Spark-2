@@ -5,12 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-import '../../core/bluetooth/ble_providers.dart';
+import '../../core/network/session_providers.dart';
 import '../../core/game/game_format.dart';
 import '../../core/game/lobby_state.dart';
 import '../../core/models/player_slot.dart';
 import '../../core/models/pod_preset.dart';
 import '../../core/network/local_ip.dart';
+import '../../core/network/session_join_uri.dart';
 import '../../core/network/ws_host_service.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/utils/app_router.dart';
@@ -93,7 +94,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     const maxAttempts = 12;
     for (var attempt = 0; attempt < maxAttempts; attempt++) {
       if (!mounted) return;
-      final host = ref.read(bleServiceProvider);
+      final host = ref.read(sessionServiceProvider);
       if (host is! WsHostService) {
         setState(() {
           _qrLoadState = _QrHostLoadState.error;
@@ -118,7 +119,11 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
       if (ip != null && host.port > 0) {
         setState(() {
           _qrLoadState = _QrHostLoadState.ready;
-          _qrData = 'mgtlifespark://$ip:${host.port}';
+          _qrData = SessionJoinUri.buildQrPayload(
+            hostIp: ip,
+            port: host.port,
+            token: host.joinToken,
+          );
         });
         return;
       }

@@ -127,6 +127,44 @@ class ProfileRepository {
 
   CommanderStats? getCommanderStats(String name) => _statsBox.get(name);
 
+  /// XP required to advance from [level] to the next level.
+  static int xpRequiredForLevel(int level) {
+    const thresholds = [
+      (10, 500),
+      (25, 1000),
+      (50, 2000),
+      (75, 3500),
+      (100, 5000),
+    ];
+    for (final (max, xp) in thresholds) {
+      if (level <= max) return xp;
+    }
+    return 5000;
+  }
+
+  /// Progress within the current level band derived from lifetime [totalXp].
+  (int xpInLevel, int xpNeeded) computeXpProgress(int totalXp) {
+    const thresholds = [
+      (10, 500),
+      (25, 1000),
+      (50, 2000),
+      (75, 3500),
+      (100, 5000),
+    ];
+
+    var level = 1;
+    var remaining = totalXp;
+    for (final (maxLevel, xpPerLevel) in thresholds) {
+      while (level < maxLevel && remaining >= xpPerLevel) {
+        remaining -= xpPerLevel;
+        level++;
+      }
+      if (remaining < xpPerLevel && level <= maxLevel) break;
+    }
+
+    return (remaining, xpRequiredForLevel(level));
+  }
+
   int _calculateLevel(int xp) {
     // Bronze 1-10: 500 XP each = 5000 total
     // Silver 11-25: 1000 XP each = 15000 total

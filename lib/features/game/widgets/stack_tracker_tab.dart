@@ -7,7 +7,8 @@ import '../../../core/game/game_state_notifier.dart';
 import '../../../core/game/stack_display.dart';
 import '../../../core/game/scryfall_service.dart';
 import '../../../core/game/stack_item.dart';
-import '../../../shared/theme/app_theme.dart';
+import '../../../ui/theme/app_color_tokens.dart';
+import 'game_colors.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/motion_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
@@ -65,6 +66,7 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     final game = widget.game;
     final notifier = ref.read(gameProvider.notifier);
     final allItems = game.stackItems;
@@ -82,7 +84,7 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
             resolvesNext,
             activeRoots,
           )
-        : _apnapChildren(game, visible, resolvesNext);
+        : _apnapChildren(game, visible, resolvesNext, colors);
 
     return CustomScrollView(
       slivers: [
@@ -107,7 +109,7 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: FontTokens.body,
-                          color: AppTheme.textPrimary,
+                          color: colors.textPrimary,
                         ),
                       ),
                     ),
@@ -124,7 +126,7 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
                         ),
                         icon: Icon(
                           Icons.add_circle_outline_rounded,
-                          color: AppTheme.accent,
+                          color: colors.primaryAccent,
                         ),
                         onPressed: () =>
                             _showAddDialog(context, parentId: null),
@@ -143,7 +145,7 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
                         ),
                         icon: Icon(
                           Icons.help_outline_rounded,
-                          color: AppTheme.textSecondary.withValues(alpha: 0.9),
+                          color: colors.textSecondary.withValues(alpha: 0.9),
                         ),
                         onPressed: () => StackHelpSheet.show(context),
                       ),
@@ -200,7 +202,7 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
                 'Who added what (active player first)',
                 style: TextStyle(
                   fontSize: FontTokens.caption,
-                  color: AppTheme.textSecondary.withValues(alpha: 0.9),
+                  color: colors.textSecondary.withValues(alpha: 0.9),
                 ),
               ),
             ),
@@ -292,6 +294,7 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
     GameState game,
     List<StackItem> visible,
     StackItem? resolvesNext,
+    AppColorTokens colors,
   ) {
     final filteredGame = game.copyWith(stackItems: visible);
     final groups = StackDisplay.apnapGroups(filteredGame);
@@ -309,7 +312,7 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
                 height: 8,
                 decoration: BoxDecoration(
                   color: game.playerById(g.playerId)?.playerColor ??
-                      AppTheme.accent,
+                      colors.primaryAccent,
                   shape: BoxShape.circle,
                 ),
               ),
@@ -321,8 +324,8 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: g.isActivePlayer
-                      ? AppTheme.accent
-                      : AppTheme.textPrimary,
+                      ? colors.primaryAccent
+                      : colors.textPrimary,
                   fontSize: FontTokens.hudSm,
                 ),
               ),
@@ -418,11 +421,12 @@ class _TipBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     return Padding(
       padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: AppTheme.accent.withValues(alpha: 0.12),
+          color: colors.primaryAccent.withValues(alpha: 0.12),
           borderRadius: RadiusTokens.radiusMd,
         ),
         child: Padding(
@@ -435,7 +439,7 @@ class _TipBanner extends StatelessWidget {
                 style: TextStyle(
                   fontSize: FontTokens.caption,
                   height: 1.4,
-                  color: AppTheme.textPrimary.withValues(alpha: 0.9),
+                  color: colors.textPrimary.withValues(alpha: 0.9),
                 ),
               ),
               Align(
@@ -468,6 +472,7 @@ class _EmptyStackState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     return Center(
       child: Padding(
         padding: EdgeInsets.all(LayoutTokens.gr4),
@@ -477,7 +482,7 @@ class _EmptyStackState extends StatelessWidget {
             Icon(
               Icons.layers_outlined,
               size: 48,
-              color: AppTheme.textSecondary.withValues(alpha: 0.5),
+              color: colors.textSecondary.withValues(alpha: 0.5),
             ),
             SizedBox(height: LayoutTokens.gr3),
             Text(
@@ -485,13 +490,13 @@ class _EmptyStackState extends StatelessWidget {
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: FontTokens.body,
-                color: AppTheme.textPrimary,
+                color: colors.textPrimary,
               ),
             ),
             SizedBox(height: LayoutTokens.gr2),
-            _emptyBullet('Put spells and abilities here before they resolve.'),
-            _emptyBullet('The last one added resolves first.'),
-            _emptyBullet('Load the 4-player example to preview a full pod stack.'),
+            _emptyBullet(context, 'Put spells and abilities here before they resolve.'),
+            _emptyBullet(context, 'The last one added resolves first.'),
+            _emptyBullet(context, 'Load the 4-player example to preview a full pod stack.'),
             SizedBox(height: LayoutTokens.gr4),
             FilledButton.icon(
               onPressed: onPutOnStack,
@@ -522,7 +527,8 @@ class _EmptyStackState extends StatelessWidget {
     );
   }
 
-  Widget _emptyBullet(String text) {
+  Widget _emptyBullet(BuildContext context, String text) {
+    final colors = context.gameColors;
     return Padding(
       padding: EdgeInsets.only(bottom: LayoutTokens.gr1),
       child: Row(
@@ -531,7 +537,7 @@ class _EmptyStackState extends StatelessWidget {
           Text(
             '• ',
             style: TextStyle(
-              color: AppTheme.textSecondary.withValues(alpha: 0.9),
+              color: colors.textSecondary.withValues(alpha: 0.9),
               fontSize: FontTokens.hudSm,
             ),
           ),
@@ -540,7 +546,7 @@ class _EmptyStackState extends StatelessWidget {
               text,
               style: TextStyle(
                 fontSize: FontTokens.hudSm,
-                color: AppTheme.textSecondary.withValues(alpha: 0.9),
+                color: colors.textSecondary.withValues(alpha: 0.9),
                 height: 1.35,
               ),
             ),
@@ -844,6 +850,7 @@ class _StackItemCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.gameColors;
     final notifier = ref.read(gameProvider.notifier);
     final owner = game.playerById(item.playerId);
     final canEdit = notifier.canEditStackItem(item);
@@ -866,15 +873,15 @@ class _StackItemCard extends ConsumerWidget {
       StackItemStatus.active => null,
     };
     final statusColor = switch (item.status) {
-      StackItemStatus.resolved => AppTheme.success,
-      StackItemStatus.countered => AppTheme.danger,
-      StackItemStatus.fizzled => AppTheme.dangerAmber,
+      StackItemStatus.resolved => colors.success,
+      StackItemStatus.countered => colors.error,
+      StackItemStatus.fizzled => colors.warning,
       StackItemStatus.active => null,
     };
 
     final borderColor = isResolvesNext
-        ? AppTheme.accent
-        : AppTheme.textSecondary.withValues(alpha: 0.14);
+        ? colors.primaryAccent
+        : colors.textSecondary.withValues(alpha: 0.14);
     final showActions = showFizzleToggle || (item.isActive && canStatus);
 
     final actions = showActions
@@ -894,17 +901,17 @@ class _StackItemCard extends ConsumerWidget {
 
     return Material(
       color: isFizzled
-          ? AppTheme.card.withValues(alpha: 0.72)
+          ? colors.surface.withValues(alpha: 0.72)
           : isResolved
-              ? AppTheme.success.withValues(alpha: 0.14)
-              : AppTheme.card,
+              ? colors.success.withValues(alpha: 0.14)
+              : colors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: RadiusTokens.radiusMd,
         side: BorderSide(
           color: isFizzled
-              ? AppTheme.dangerAmber.withValues(alpha: 0.35)
+              ? colors.warning.withValues(alpha: 0.35)
               : isResolved
-                  ? AppTheme.success.withValues(alpha: 0.55)
+                  ? colors.success.withValues(alpha: 0.55)
                   : borderColor,
           width: isResolvesNext ? 2 : 1,
         ),
@@ -933,7 +940,7 @@ class _StackItemCard extends ConsumerWidget {
                 ],
                 _buildCardBody(
                   context,
-                  ownerColor: owner?.playerColor ?? AppTheme.textSecondary,
+                  ownerColor: owner?.playerColor ?? colors.textSecondary,
                   isFizzled: isFizzled,
                   isResolved: isResolved,
                   parentName: parentName,
@@ -1011,6 +1018,7 @@ class _StackItemCard extends ConsumerWidget {
     WidgetRef ref,
     StackItem item,
   ) async {
+    final colors = context.gameColors;
     final notifier = ref.read(gameProvider.notifier);
     final action = await showGameBottomSheet<String>(
       context: context,
@@ -1031,7 +1039,7 @@ class _StackItemCard extends ConsumerWidget {
               ListTile(
                 leading: Icon(
                   Icons.not_interested_rounded,
-                  color: AppTheme.dangerAmber,
+                  color: colors.warning,
                 ),
                 title: Text(
                   item.status == StackItemStatus.fizzled
@@ -1103,6 +1111,7 @@ class _StackItemCard extends ConsumerWidget {
   }
 
   void _showOracleText(BuildContext context, StackItem item) {
+    final colors = context.gameColors;
     final text = item.oracleText?.trim();
     if (text == null || text.isEmpty) return;
     showGameBottomSheet<void>(
@@ -1117,7 +1126,7 @@ class _StackItemCard extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: FontTokens.headline,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.textPrimary,
+                  color: colors.textPrimary,
                 ),
               ),
               if (item.typeLine != null && item.typeLine!.isNotEmpty) ...[
@@ -1127,7 +1136,7 @@ class _StackItemCard extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: FontTokens.hudSm,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.textSecondary.withValues(alpha: 0.9),
+                    color: colors.textSecondary.withValues(alpha: 0.9),
                   ),
                 ),
               ],
@@ -1137,7 +1146,7 @@ class _StackItemCard extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: FontTokens.hudSm,
                   height: 1.45,
-                  color: AppTheme.textPrimary.withValues(alpha: 0.92),
+                  color: colors.textPrimary.withValues(alpha: 0.92),
                 ),
               ),
             ],
@@ -1150,6 +1159,7 @@ class _StackItemCard extends ConsumerWidget {
 class _ResolvesNextBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     return Row(
       children: [
         Container(
@@ -1158,7 +1168,7 @@ class _ResolvesNextBadge extends StatelessWidget {
             vertical: LayoutTokens.gr0,
           ),
           decoration: BoxDecoration(
-            color: AppTheme.accent.withValues(alpha: 0.25),
+            color: colors.primaryAccent.withValues(alpha: 0.25),
             borderRadius: RadiusTokens.radiusControlSm,
           ),
           child: Text(
@@ -1166,7 +1176,7 @@ class _ResolvesNextBadge extends StatelessWidget {
             style: TextStyle(
               fontSize: FontTokens.hudXs,
               fontWeight: FontWeight.w700,
-              color: AppTheme.accent,
+              color: colors.primaryAccent,
             ),
           ),
         ),
@@ -1176,7 +1186,7 @@ class _ResolvesNextBadge extends StatelessWidget {
           style: TextStyle(
             fontSize: FontTokens.hudXs,
             fontWeight: FontWeight.w600,
-            color: AppTheme.textSecondary.withValues(alpha: 0.8),
+            color: colors.textSecondary.withValues(alpha: 0.8),
           ),
         ),
       ],
@@ -1211,6 +1221,7 @@ class _StackCardInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     final metaLines = <Widget>[
       if (showWaitsHint)
         Text(
@@ -1218,7 +1229,7 @@ class _StackCardInfo extends StatelessWidget {
           style: TextStyle(
             fontSize: FontTokens.hudXs,
             height: 1.35,
-            color: AppTheme.textSecondary.withValues(alpha: 0.75),
+            color: colors.textSecondary.withValues(alpha: 0.75),
           ),
         ),
       if (targetInvalid && item.isActive)
@@ -1228,7 +1239,7 @@ class _StackCardInfo extends StatelessWidget {
             fontSize: FontTokens.hudXs,
             height: 1.35,
             fontWeight: FontWeight.w600,
-            color: AppTheme.dangerAmber,
+            color: colors.warning,
           ),
         ),
       if (statusLabel != null && statusColor != null)
@@ -1257,7 +1268,7 @@ class _StackCardInfo extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                   fontSize: FontTokens.body,
                   height: 1.3,
-                  color: AppTheme.textPrimary,
+                  color: colors.textPrimary,
                   decoration: (isFizzled || isResolved)
                       ? null
                       : (item.isActive
@@ -1278,7 +1289,7 @@ class _StackCardInfo extends StatelessWidget {
                 icon: Icon(
                   Icons.menu_book_outlined,
                   size: LayoutTokens.gr3,
-                  color: AppTheme.textSecondary.withValues(alpha: 0.9),
+                  color: colors.textSecondary.withValues(alpha: 0.9),
                 ),
                 onPressed: onShowRules,
               ),
@@ -1294,7 +1305,7 @@ class _StackCardInfo extends StatelessWidget {
                 vertical: LayoutTokens.gr0,
               ),
               decoration: BoxDecoration(
-                color: AppTheme.textSecondary.withValues(alpha: 0.12),
+                color: colors.textSecondary.withValues(alpha: 0.12),
                 borderRadius: RadiusTokens.radiusControlSm,
               ),
               child: Text(
@@ -1303,7 +1314,7 @@ class _StackCardInfo extends StatelessWidget {
                   fontSize: FontTokens.hudXs,
                   height: 1.35,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.textSecondary.withValues(alpha: 0.95),
+                  color: colors.textSecondary.withValues(alpha: 0.95),
                 ),
               ),
             ),
@@ -1317,7 +1328,7 @@ class _StackCardInfo extends StatelessWidget {
               fontSize: FontTokens.caption,
               height: 1.35,
               fontStyle: FontStyle.italic,
-              color: AppTheme.textSecondary.withValues(alpha: 0.85),
+              color: colors.textSecondary.withValues(alpha: 0.85),
             ),
           ),
         ],
@@ -1327,7 +1338,7 @@ class _StackCardInfo extends StatelessWidget {
           style: TextStyle(
             fontSize: FontTokens.caption,
             height: 1.35,
-            color: AppTheme.textSecondary.withValues(alpha: 0.85),
+            color: colors.textSecondary.withValues(alpha: 0.85),
           ),
         ),
         if (metaLines.isNotEmpty) ...[
@@ -1436,6 +1447,7 @@ class _StackItemActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     final slots = <Widget>[
       if (showResolveRespond) ...[
         Expanded(
@@ -1445,8 +1457,8 @@ class _StackItemActions extends StatelessWidget {
               itemId,
               StackItemStatus.resolved,
             ),
-            foreground: AppTheme.success,
-            background: AppTheme.success,
+            foreground: colors.success,
+            background: colors.success,
           ),
         ),
         SizedBox(width: _StackPillMetrics.gap),
@@ -1454,9 +1466,9 @@ class _StackItemActions extends StatelessWidget {
           child: _StackPillButton(
             label: 'Respond',
             onPressed: onRespond,
-            foreground: AppTheme.accent,
-            background: AppTheme.accent,
-            border: AppTheme.accent.withValues(alpha: 0.55),
+            foreground: colors.primaryAccent,
+            background: colors.primaryAccent,
+            border: colors.primaryAccent.withValues(alpha: 0.55),
           ),
         ),
       ],
@@ -1466,8 +1478,8 @@ class _StackItemActions extends StatelessWidget {
           child: _StackPillButton(
             label: isFizzled ? 'Fizzled' : 'Fizzle',
             onPressed: _toggleFizzle,
-            foreground: AppTheme.dangerAmber,
-            background: AppTheme.dangerAmber,
+            foreground: colors.warning,
+            background: colors.warning,
             filled: isFizzled,
           ),
         ),

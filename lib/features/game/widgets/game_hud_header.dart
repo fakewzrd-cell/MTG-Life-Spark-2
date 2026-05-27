@@ -1,6 +1,7 @@
+import '../../../ui/tokens/color_tokens.dart';
 import 'package:flutter/material.dart';
 
-import '../../../shared/theme/app_theme.dart';
+import 'game_colors.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
@@ -24,16 +25,17 @@ class GameHudHeader extends StatelessWidget {
   final bool tightVertical;
 
   static final Color _dividerColor =
-      AppTheme.textSecondary.withValues(alpha: 0.12);
+      ColorTokens.textSecondary.withValues(alpha: 0.12);
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppTheme.card,
+        color: colors.surface,
         borderRadius: RadiusTokens.radiusMd,
         border: Border.all(
-          color: AppTheme.textSecondary.withValues(alpha: 0.14),
+          color: colors.textSecondary.withValues(alpha: 0.14),
         ),
         boxShadow: [
           BoxShadow(

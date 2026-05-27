@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/bluetooth/ble_providers.dart';
+import '../../core/network/session_providers.dart';
 import '../../ui/theme/app_color_tokens.dart';
 
 /// Confirms leaving an active host/join session (WebSocket + lobby state).

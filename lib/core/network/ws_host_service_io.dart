@@ -30,8 +30,13 @@ class WsHostService implements BleService {
 
   final String hostPlayerId;
   final String hostUsername;
+  final String joinToken;
 
-  WsHostService({required this.hostPlayerId, required this.hostUsername});
+  WsHostService({
+    required this.hostPlayerId,
+    required this.hostUsername,
+    required this.joinToken,
+  });
 
   /// Port the server is bound to; available after [initialize].
   int get port => _server?.port ?? 0;
@@ -116,7 +121,20 @@ class WsHostService implements BleService {
     if (message.type == BleMessageType.hello) {
       final version = message.payload['version'] as String?;
       if (version != kBleProtocolVersion) {
-        _sendToKey(BleMessage.reject(_nextSeq()), clientKey);
+        _sendToKey(
+          BleMessage.reject(_nextSeq(), reason: 'versionMismatch'),
+          clientKey,
+        );
+        _sockets[clientKey]?.close();
+        _sockets.remove(clientKey);
+        return;
+      }
+      final token = message.payload['token'] as String?;
+      if (token == null || token != joinToken) {
+        _sendToKey(
+          BleMessage.reject(_nextSeq(), reason: 'invalidJoinToken'),
+          clientKey,
+        );
         _sockets[clientKey]?.close();
         _sockets.remove(clientKey);
         return;
@@ -133,9 +151,45 @@ class WsHostService implements BleService {
         playerId: playerId,
         status: BleConnectionStatus.connected,
       ));
+      _messageController.add(message);
+      return;
+    }
+
+    final verifiedId = _verified[clientKey];
+    if (verifiedId == null) {
+      return;
+    }
+    if (!_actorMatchesVerifiedPlayer(message, verifiedId)) {
+      return;
     }
 
     _messageController.add(message);
+  }
+
+  bool _actorMatchesVerifiedPlayer(BleMessage message, String verifiedId) {
+    final origin = message.originPlayerId;
+    if (origin != null) return origin == verifiedId;
+
+    final pid = message.payload['pid'] as String?;
+    if (pid != null &&
+        (message.type == BleMessageType.stateDelta ||
+            message.type == BleMessageType.undoAction ||
+            message.type == BleMessageType.playerEliminated ||
+            message.type == BleMessageType.commanderCastFromZone ||
+            message.type == BleMessageType.priorityHold ||
+            message.type == BleMessageType.firstPlayerRollSubmit)) {
+      return pid == verifiedId;
+    }
+
+    final from = message.payload['from'] as String?;
+    if (from != null &&
+        (message.type == BleMessageType.commanderDamage ||
+            message.type == BleMessageType.allianceDeclined)) {
+      return from == verifiedId;
+    }
+
+    // Messages without an actor field must include origin (e.g. proliferate).
+    return false;
   }
 
   void _onDisconnect(String clientKey) {
@@ -160,15 +214,23 @@ class WsHostService implements BleService {
   // ── Sending ───────────────────────────────────────────────────────────────
 
   @override
-  Future<void> send(BleMessage message, {String? targetPlayerId}) async {
+  Future<void> send(
+    BleMessage message, {
+    String? targetPlayerId,
+    String? excludePlayerId,
+  }) async {
     final encoded = jsonEncode(message.toJson());
-    if (targetPlayerId == null) {
-      for (final ws in _sockets.values) {
-        _trySend(ws, encoded);
-      }
-    } else {
+    if (targetPlayerId != null) {
       final key = _keyFor(targetPlayerId);
       if (key != null) _trySend(_sockets[key]!, encoded);
+      return;
+    }
+    for (final entry in _sockets.entries) {
+      if (excludePlayerId != null &&
+          _verified[entry.key] == excludePlayerId) {
+        continue;
+      }
+      _trySend(entry.value, encoded);
     }
   }
 

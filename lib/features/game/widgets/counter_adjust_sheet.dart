@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../shared/theme/app_theme.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import 'game_modal_chrome.dart';
 import 'game_ui_tokens.dart';
+import 'game_colors.dart';
 
 Future<void> showCounterAdjustSheet(
   BuildContext context, {
@@ -55,6 +55,7 @@ class _CounterAdjustSheetState extends State<CounterAdjustSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     return GameSheetBody(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -71,7 +72,7 @@ class _CounterAdjustSheetState extends State<CounterAdjustSheet> {
               Text(
                 '$_value',
                 style: TextStyle(
-                  color: AppTheme.textPrimary,
+                  color: colors.textPrimary,
                   fontSize: LayoutTokens.gr2 * 3,
                   fontWeight: FontWeight.bold,
                 ),
@@ -85,7 +86,7 @@ class _CounterAdjustSheetState extends State<CounterAdjustSheet> {
           SizedBox(height: LayoutTokens.gr3),
           TextButton(
             onPressed: () => Navigator.pop(context),
-            style: GameUiTokens.sheetSecondaryButton,
+            style: GameUiTokens.sheetSecondaryButton(context.gameColors),
             child: Text('Done'),
           ),
         ],
@@ -102,6 +103,7 @@ class _AdjBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     return Semantics(
       button: true,
       label: label,
@@ -116,9 +118,9 @@ class _AdjBtn extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: AppTheme.textSecondary.withValues(alpha: 0.5),
+                color: colors.textSecondary.withValues(alpha: 0.5),
               ),
-              color: AppTheme.surface,
+              color: colors.backgroundSecondary,
             ),
             child: Center(
               child: Text(
@@ -126,7 +128,7 @@ class _AdjBtn extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary,
+                  color: colors.textPrimary,
                 ),
               ),
             ),

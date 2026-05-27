@@ -1,3 +1,4 @@
+import '../../../ui/tokens/color_tokens.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -5,7 +6,7 @@ import '../../../ui/tokens/font_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/game/scryfall_service.dart';
-import '../../../shared/theme/app_theme.dart';
+import 'game_colors.dart';
 import '../../../shared/mana/mana_symbol_assets.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import 'game_modal_chrome.dart';
@@ -143,11 +144,12 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     final canAdd = !_confirming &&
         (_selected != null || _searchController.text.trim().isNotEmpty);
 
     return AlertDialog(
-      backgroundColor: AppTheme.card,
+      backgroundColor: colors.surface,
       title: GameDialogTitleRow(
         title: widget.title,
         onClose: () => Navigator.pop(context),
@@ -193,7 +195,7 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
               SizedBox(height: LayoutTokens.gr1),
               Text(
                 _error!,
-                style: TextStyle(fontSize: 12, color: AppTheme.danger),
+                style: TextStyle(fontSize: 12, color: colors.error),
               ),
             ],
             SizedBox(height: LayoutTokens.gr2),
@@ -210,7 +212,7 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
                   height: 18,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: AppTheme.textPrimary,
+                    color: colors.textPrimary,
                   ),
                 )
               : Text('Add'),
@@ -234,7 +236,7 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
       overflow: TextOverflow.ellipsis,
       style: TextStyle(
         fontSize: FontTokens.hudXs,
-        color: AppTheme.textSecondary.withValues(alpha: 0.85),
+        color: ColorTokens.textSecondary.withValues(alpha: 0.85),
       ),
     );
   }
@@ -248,7 +250,7 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
         child: Text(
           'Type to search cards',
           style: TextStyle(
-            color: AppTheme.textSecondary.withValues(alpha: 0.8),
+            color: ColorTokens.textSecondary.withValues(alpha: 0.8),
             fontSize: FontTokens.hudSm,
           ),
         ),
@@ -267,7 +269,7 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
             card.name,
             style: TextStyle(
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              color: AppTheme.textPrimary,
+              color: ColorTokens.textPrimary,
             ),
           ),
           subtitle: _cardSubtitle(card),
@@ -277,7 +279,7 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.textSecondary,
+                    color: ColorTokens.textSecondary,
                   ),
                 )
               : null,

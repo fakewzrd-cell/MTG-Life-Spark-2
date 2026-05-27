@@ -4,11 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 
-import '../../core/bluetooth/ble_providers.dart';
+import '../../core/network/session_providers.dart';
 import '../../core/game/game_providers.dart';
 import '../../core/game/game_state.dart';
 import '../../core/game/lobby_state.dart';
 import '../../core/game/player_game_state.dart';
+import '../../core/game/game_session_events.dart';
 import '../../core/game/progression_service.dart';
 import '../../core/persistence/providers.dart';
 import '../../core/models/game_feedback.dart';
@@ -45,6 +46,13 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _saveMatch());
+  }
+
+  Future<void> _joinRematchLobby() async {
+    final game = ref.read(gameProvider);
+    await quitActiveGame(ref);
+    if (!context.mounted) return;
+    context.go(game.isHost ? AppRoutes.lobbyHost : AppRoutes.lobby);
   }
 
   Future<void> _saveMatch() async {
@@ -113,6 +121,11 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
   @override
   Widget build(BuildContext context) {
     final game = ref.watch(gameProvider);
+    ref.listen<int>(rematchProposedProvider, (prev, next) {
+      if (next > 0 && next != prev && mounted) {
+        _joinRematchLobby();
+      }
+    });
     final winner = game.winnerPlayerId != null
         ? game.playerById(game.winnerPlayerId!)
         : null;

@@ -77,6 +77,9 @@ class GameState {
   /// Stack tracker entries (shared across players via BLE / snapshot).
   final List<StackItem> stackItems;
 
+  /// Active player when the stack went from empty → non-empty (APNAP anchor).
+  final String? stackApnapAnchorPlayerId;
+
   const GameState({
     this.players = const [],
     this.turnOrder = const [],
@@ -119,6 +122,7 @@ class GameState {
     this.sessionTurnCounter = 1,
     this.sessionActionLog = const [],
     this.stackItems = const [],
+    this.stackApnapAnchorPlayerId,
   });
 
   factory GameState.empty() => const GameState();
@@ -167,6 +171,7 @@ class GameState {
     int? sessionTurnCounter,
     List<GameLogEntry>? sessionActionLog,
     List<StackItem>? stackItems,
+    Object? stackApnapAnchorPlayerId = _sentinel,
   }) {
     return GameState(
       players: players ?? this.players,
@@ -231,6 +236,9 @@ class GameState {
       sessionTurnCounter: sessionTurnCounter ?? this.sessionTurnCounter,
       sessionActionLog: sessionActionLog ?? this.sessionActionLog,
       stackItems: stackItems ?? this.stackItems,
+      stackApnapAnchorPlayerId: identical(stackApnapAnchorPlayerId, _sentinel)
+          ? this.stackApnapAnchorPlayerId
+          : stackApnapAnchorPlayerId as String?,
     );
   }
 
@@ -344,6 +352,8 @@ class GameState {
         'sessionActionLog':
             sessionActionLog.map((e) => e.toJson()).toList(),
         'stackItems': stackItems.map((e) => e.toJson()).toList(),
+        if (stackApnapAnchorPlayerId != null)
+          'stackApnapAnchorPlayerId': stackApnapAnchorPlayerId,
       };
 
   factory GameState.fromSnapshotJson(
@@ -425,6 +435,7 @@ class GameState {
               ?.map((e) => StackItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
+      stackApnapAnchorPlayerId: json['stackApnapAnchorPlayerId'] as String?,
     );
   }
 }
