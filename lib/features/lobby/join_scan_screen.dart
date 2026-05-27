@@ -18,6 +18,8 @@ import '../../shared/utils/app_router.dart';
 import 'deck_picker_sheet.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
+import '../../ui/tokens/layout_tokens.dart';
+import '../../ui/tokens/opacity_tokens.dart';
 import '../../ui/tokens/color_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import '../../ui/components/ui_app_bar.dart';
@@ -382,7 +384,7 @@ class _WaitingRoomViewState extends ConsumerState<_WaitingRoomView> {
               const SizedBox(height: 12),
               IconButton(
                 style: IconButton.styleFrom(
-                  minimumSize: const Size(
+                  minimumSize: Size(
                     LayoutTokens.minTapTarget,
                     LayoutTokens.minTapTarget,
                   ),
