@@ -130,6 +130,11 @@ class ProfileScreen extends ConsumerWidget {
                 raw.isFinite && raw > 0 ? raw : screenW.clamp(320.0, 2000.0);
             final isNarrow = bodyW < _kProfileStatsRowBreakpoint;
             final hPad = isNarrow ? LayoutTokens.gr2 : LayoutTokens.gr3;
+            // MainShell uses extendBody; reserve space so bottom sections clear the dock.
+            final scrollBottomPad =
+                LayoutTokens.bottomNavHeight +
+                MediaQuery.paddingOf(context).bottom +
+                LayoutTokens.gr2;
 
             final maxH = constraints.maxHeight;
             final layoutTs = _profileLayoutTextScale(context);
@@ -154,7 +159,7 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 SliverToBoxAdapter(child: SizedBox(height: LayoutTokens.gr4)),
                 SliverPadding(
-                  padding: EdgeInsets.fromLTRB(hPad, 0, hPad, hPad),
+                  padding: EdgeInsets.fromLTRB(hPad, 0, hPad, scrollBottomPad),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
                       ProfilePlayerStatsSection(

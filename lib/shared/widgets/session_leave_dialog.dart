@@ -22,11 +22,11 @@ Future<bool> confirmLeaveActiveSession(BuildContext context) async {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: Text('Stay'),
+          child: const Text('No'),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(ctx, true),
-          child: Text('Leave'),
+          child: const Text('Yes'),
         ),
       ],
     ),

@@ -163,14 +163,21 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
         ),
       ),
       body: SafeArea(
-        child: ListView(
-          padding: EdgeInsets.fromLTRB(
-            LayoutTokens.gr3,
-            LayoutTokens.gr2,
-            LayoutTokens.gr3,
-            LayoutTokens.gr5 + MediaQuery.paddingOf(context).bottom,
-          ),
-          children: [
+        bottom: false,
+        child: Builder(
+          builder: (context) {
+            final scrollBottomPad =
+                LayoutTokens.bottomNavHeight +
+                MediaQuery.paddingOf(context).bottom +
+                LayoutTokens.gr2;
+            return ListView(
+              padding: EdgeInsets.fromLTRB(
+                LayoutTokens.gr3,
+                LayoutTokens.gr2,
+                LayoutTokens.gr3,
+                scrollBottomPad,
+              ),
+              children: [
           _QrHeader(
             qrData: _qrData,
             loadState: _qrLoadState,
@@ -197,8 +204,9 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
                     ? 'Everyone must be ready'
                     : 'Start Game',
           ),
-          SizedBox(height: LayoutTokens.gr5),
-        ],
+              ],
+            );
+          },
         ),
       ),
     );
@@ -490,7 +498,7 @@ class _PlayerSlotCard extends ConsumerWidget {
         : null;
 
     final borderColor = isMe
-        ? (slot.isReady ? ColorTokens.success : colors.primaryAccent)
+        ? colors.primaryAccent
         : slot.playerColor.withValues(alpha: 0.25);
 
     final compact = MediaQuery.sizeOf(context).width < 360;
@@ -663,12 +671,12 @@ class _SlotReadyButton extends ConsumerWidget {
         ),
         backgroundColor:
             slot.isReady
-                ? ColorTokens.success.withValues(alpha: OpacityTokens.soft)
+                ? colors.primaryAccent.withValues(alpha: OpacityTokens.soft)
                 : colors.surface,
         foregroundColor:
-            slot.isReady ? ColorTokens.success : colors.textSecondary,
+            slot.isReady ? colors.primaryAccent : colors.textSecondary,
         side: BorderSide(
-          color: slot.isReady ? ColorTokens.success : colors.textSecondary,
+          color: slot.isReady ? colors.primaryAccent : colors.textSecondary,
         ),
       ),
       onPressed: () {
@@ -1335,7 +1343,7 @@ class _StartGameButtonState extends ConsumerState<_StartGameButton> {
     final canStart = widget.canStart && !_isStarting;
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        backgroundColor: canStart ? ColorTokens.success : colors.textSecondary,
+        backgroundColor: canStart ? colors.primaryAccent : colors.textSecondary,
         disabledBackgroundColor: colors.textSecondary.withValues(alpha: OpacityTokens.moderate),
         minimumSize: const Size(double.infinity, 52),
         padding: const EdgeInsets.symmetric(vertical: 14),

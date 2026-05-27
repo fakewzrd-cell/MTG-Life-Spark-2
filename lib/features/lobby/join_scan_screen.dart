@@ -380,12 +380,26 @@ class _WaitingRoomViewState extends ConsumerState<_WaitingRoomView> {
                 ],
               ),
               const SizedBox(height: 12),
-              IconButton.filled(
+              IconButton(
                 style: IconButton.styleFrom(
+                  minimumSize: const Size(
+                    LayoutTokens.minTapTarget,
+                    LayoutTokens.minTapTarget,
+                  ),
                   backgroundColor:
-                      _isReady ? ColorTokens.success : colors.primaryAccent,
-                  minimumSize: const Size(56, 56),
-                  padding: const EdgeInsets.all(16),
+                      _isReady
+                          ? colors.primaryAccent.withValues(
+                            alpha: OpacityTokens.soft,
+                          )
+                          : colors.surface,
+                  foregroundColor:
+                      _isReady ? colors.primaryAccent : colors.textSecondary,
+                  side: BorderSide(
+                    color:
+                        _isReady
+                            ? colors.primaryAccent
+                            : colors.textSecondary,
+                  ),
                 ),
                 onPressed: () {
                   setState(() => _isReady = !_isReady);
@@ -393,11 +407,7 @@ class _WaitingRoomViewState extends ConsumerState<_WaitingRoomView> {
                       .read(lobbyProvider.notifier)
                       .sendReadyToHost(ready: _isReady);
                 },
-                icon: Icon(
-                  Icons.check,
-                  size: 32,
-                  color: ColorTokens.onAccent,
-                ),
+                icon: Icon(Icons.check_rounded, size: 32),
               ),
             ],
           ),
@@ -469,20 +479,23 @@ class _WaitingSlotRow extends StatelessWidget {
                 const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color:
-                  (slot.isReady ? ColorTokens.success : colors.textSecondary)
+                  (slot.isReady ? colors.primaryAccent : colors.textSecondary)
                       .withValues(alpha: 0.15),
               borderRadius: RadiusTokens.radiusXs,
               border: Border.all(
-                  color: slot.isReady
-                      ? ColorTokens.success
-                      : colors.textSecondary),
+                color:
+                    slot.isReady
+                        ? colors.primaryAccent
+                        : colors.textSecondary,
+              ),
             ),
             child: Text(
               slot.isReady ? 'Ready' : 'Waiting',
               style: TextStyle(
-                color: slot.isReady
-                    ? ColorTokens.success
-                    : colors.textSecondary,
+                color:
+                    slot.isReady
+                        ? colors.primaryAccent
+                        : colors.textSecondary,
                 fontSize: FontTokens.sm,
                 fontWeight: FontWeight.w600,
               ),
