@@ -33,7 +33,8 @@ class JoinScanScreen extends ConsumerStatefulWidget {
   ConsumerState<JoinScanScreen> createState() => _JoinScanScreenState();
 }
 
-class _JoinScanScreenState extends ConsumerState<JoinScanScreen> {
+class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
+    with WidgetsBindingObserver {
   _JoinPhase _phase = _JoinPhase.scanning;
   bool _cameraPermissionGranted = false;
   bool _scanned = false;
@@ -49,31 +50,35 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) => _init());
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _connectionSub?.cancel();
     unawaited(_stopScanner());
     super.dispose();
   }
 
-  Future<void> _startScanner() async {
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed &&
+        _phase == _JoinPhase.scanning &&
+        mounted) {
+      unawaited(_syncCameraPermission());
+    }
+  }
+
+  /// Creates the scanner controller; [MobileScanner] starts the camera once mounted.
+  void _ensureScannerController() {
     if (!_cameraPermissionGranted || _scannerController != null) return;
-    final controller = MobileScannerController(
+    _scannerController = MobileScannerController(
       detectionSpeed: DetectionSpeed.normal,
       facing: CameraFacing.back,
       torchEnabled: false,
     );
-    _scannerController = controller;
-    try {
-      await controller.start();
-    } catch (_) {
-      _scannerController = null;
-      await controller.dispose();
-    }
-    if (mounted) setState(() {});
   }
 
   /// Fully releases the camera when leaving the QR scan step.
@@ -95,18 +100,57 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen> {
 
   // ── Init ──────────────────────────────────────────────────────────────────
 
+  Future<bool> _syncCameraPermission({bool requestIfNeeded = false}) async {
+    var status = await Permission.camera.status;
+    if (!status.isGranted &&
+        !status.isLimited &&
+        requestIfNeeded &&
+        !status.isPermanentlyDenied) {
+      status = await Permission.camera.request();
+    }
+    if (!mounted) return false;
+
+    final granted = status.isGranted || status.isLimited;
+    if (granted) {
+      if (!_cameraPermissionGranted) {
+        setState(() => _cameraPermissionGranted = true);
+      } else {
+        setState(() {});
+      }
+      _ensureScannerController();
+      final controller = _scannerController;
+      if (controller != null && controller.value.isInitialized) {
+        try {
+          await controller.start();
+        } catch (_) {
+          // MobileScanner will retry on the next resume/build cycle.
+        }
+      }
+      return true;
+    }
+
+    if (_cameraPermissionGranted || _scannerController != null) {
+      await _stopScanner();
+      if (mounted) {
+        setState(() => _cameraPermissionGranted = false);
+      }
+    } else if (mounted) {
+      setState(() => _cameraPermissionGranted = false);
+    }
+    return false;
+  }
+
   Future<void> _init() async {
-    // Request camera permission
-    final status = await Permission.camera.request();
+    final granted = await _syncCameraPermission(requestIfNeeded: true);
     if (!mounted) return;
 
-    if (status.isGranted) {
-      setState(() => _cameraPermissionGranted = true);
+    if (granted) {
       await startClientSession(ref);
-      await _startScanner();
     } else {
-      _showSnackbar('Camera permission is required to scan the host QR code.',
-          isError: true);
+      _showSnackbar(
+        'Camera permission is required to scan the host QR code.',
+        isError: true,
+      );
     }
   }
 
@@ -200,7 +244,7 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen> {
       _phase = _JoinPhase.scanning;
       _scanned = false;
     });
-    await _startScanner();
+    await _syncCameraPermission();
   }
 
   void _showSnackbar(String msg, {bool isError = false}) {
@@ -231,13 +275,15 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen> {
         ),
       ),
       body: switch (_phase) {
-        _JoinPhase.scanning => _cameraPermissionGranted &&
-                _scannerController != null
-            ? _QrScanView(
-                controller: _scannerController!,
-                onDetect: _onDetect,
-              )
-            : const _PermissionDeniedView(),
+        _JoinPhase.scanning =>
+          _cameraPermissionGranted && _scannerController != null
+              ? _QrScanView(
+                  controller: _scannerController!,
+                  onDetect: _onDetect,
+                )
+              : _PermissionDeniedView(
+                  onRetry: () => _syncCameraPermission(requestIfNeeded: true),
+                ),
         _JoinPhase.connecting => const _ConnectingView(),
         _JoinPhase.waitingRoom => const _WaitingRoomView(),
       },
@@ -290,7 +336,9 @@ class _QrScanView extends StatelessWidget {
 }
 
 class _PermissionDeniedView extends StatelessWidget {
-  const _PermissionDeniedView();
+  const _PermissionDeniedView({required this.onRetry});
+
+  final Future<void> Function() onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -305,14 +353,20 @@ class _PermissionDeniedView extends StatelessWidget {
                 size: 64, color: colors.textSecondary),
             const SizedBox(height: 16),
             Text(
-              'Camera permission denied.\nGo to Settings → App → Permissions to enable.',
+              'Camera access is needed to scan the host QR code.\n'
+              'If you already allowed it in Settings, tap Try again.',
               textAlign: TextAlign.center,
               style:
                   TextStyle(color: colors.textSecondary, fontSize: FontTokens.body),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () => openAppSettings(),
+              onPressed: () => unawaited(onRetry()),
+              child: Text('Try again'),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton(
+              onPressed: () => unawaited(openAppSettings()),
               child: Text('Open Settings'),
             ),
           ],
