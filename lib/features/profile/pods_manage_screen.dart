@@ -101,11 +101,21 @@ class _PodsManageScreenState extends ConsumerState<PodsManageScreen> {
     ref.listen(podPresetsRevisionProvider, (_, __) => _reload());
     final colors = AppColorTokens.of(context);
     final repo = ref.read(podRepositoryProvider);
+    final fabBottomPad =
+        LayoutTokens.bottomNavHeight +
+        MediaQuery.paddingOf(context).bottom +
+        LayoutTokens.gr2;
+    const extendedFabHeight = 56.0;
 
     return Scaffold(
       appBar: const UiAppBar(title: 'My pods'),
       body: ListView.builder(
-        padding: EdgeInsets.all(LayoutTokens.gr3),
+        padding: EdgeInsets.fromLTRB(
+          LayoutTokens.gr3,
+          LayoutTokens.gr3,
+          LayoutTokens.gr3,
+          fabBottomPad + extendedFabHeight + LayoutTokens.gr2,
+        ),
         itemCount: _pods.length + 1,
         itemBuilder: (context, i) {
           if (i == 0) {
@@ -213,10 +223,13 @@ class _PodsManageScreenState extends ConsumerState<PodsManageScreen> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _editPod(repo, null),
-        icon: Icon(Icons.add),
-        label: Text('Add pod'),
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(bottom: fabBottomPad),
+        child: FloatingActionButton.extended(
+          onPressed: () => _editPod(repo, null),
+          icon: const Icon(Icons.add),
+          label: const Text('Add pod'),
+        ),
       ),
     );
   }

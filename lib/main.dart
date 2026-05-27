@@ -21,10 +21,12 @@ import 'shared/theme/theme_provider.dart';
 import 'shared/utils/app_router.dart';
 import 'shared/utils/commander_image_resolver.dart';
 import 'ui/tokens/color_tokens.dart';
+import 'ui/theme/app_system_ui.dart';
 
 Future<void> main() async {
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
+    await AppSystemUi.bootstrap();
 
     FlutterError.onError = (details) {
       FlutterError.presentError(details);
@@ -283,6 +285,9 @@ class MgtLifeSparkApp extends ConsumerWidget {
       theme: theme,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
+      builder: (context, child) => AppSystemUiScope(
+        child: child ?? const SizedBox.shrink(),
+      ),
     );
   }
 }

@@ -279,11 +279,21 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
     ref.listen(deckListRevisionProvider, (_, __) => _reload());
     final colors = AppColorTokens.of(context);
     final repo = ref.read(deckRepositoryProvider);
+    final fabBottomPad =
+        LayoutTokens.bottomNavHeight +
+        MediaQuery.paddingOf(context).bottom +
+        LayoutTokens.gr2;
+    const extendedFabHeight = 56.0;
 
     return Scaffold(
       appBar: const UiAppBar(title: 'My decks'),
       body: ListView.builder(
-        padding: EdgeInsets.all(LayoutTokens.gr3),
+        padding: EdgeInsets.fromLTRB(
+          LayoutTokens.gr3,
+          LayoutTokens.gr3,
+          LayoutTokens.gr3,
+          fabBottomPad + extendedFabHeight + LayoutTokens.gr2,
+        ),
         itemCount: _decks.length + 1,
         itemBuilder: (context, i) {
           if (i == 0) {
@@ -378,10 +388,13 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _promptNewDeckName,
-        icon: Icon(Icons.add),
-        label: Text('Add deck'),
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(bottom: fabBottomPad),
+        child: FloatingActionButton.extended(
+          onPressed: _promptNewDeckName,
+          icon: const Icon(Icons.add),
+          label: const Text('Add deck'),
+        ),
       ),
     );
   }
