@@ -150,10 +150,7 @@ class GameplayDialsStripWidget extends StatelessWidget {
       'poison' => GameIcon.poison(size: iconSize, color: tone),
       'energy' => GameIcon.energy(size: iconSize, color: tone),
       'experience' => GameIcon.experience(size: iconSize, color: tone),
-      'rad' => GameIcon.radiation(
-        size: iconSize,
-        color: tintColor ?? ColorTokens.success,
-      ),
+      'rad' => GameIcon.radiation(size: iconSize, color: tone),
       GameplayDialIds.treasure => GameIcon.treasure(size: iconSize, color: tone),
       _ => Icon(_iconForField(field), size: iconSize, color: tone),
     };

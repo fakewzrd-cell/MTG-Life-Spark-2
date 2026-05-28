@@ -257,7 +257,7 @@ class _GameOverviewLifeBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minWidth: 44, minHeight: 36),
+      constraints: const BoxConstraints(minWidth: 52, minHeight: 36),
       padding: EdgeInsets.symmetric(
         horizontal: LayoutTokens.gr1 + 2,
         vertical: LayoutTokens.gr0 + 2,
@@ -270,15 +270,36 @@ class _GameOverviewLifeBadge extends StatelessWidget {
         border: Border.all(color: _borderColor),
       ),
       alignment: Alignment.center,
-      child: Text(
-        eliminated ? 'OUT' : '$life',
-        style: TextStyle(
-          color: _textColor,
-          fontWeight: FontWeight.w800,
-          fontSize: FontTokens.hudSm,
-          height: 1,
-        ),
-      ),
+      child: eliminated
+          ? Text(
+            'OUT',
+            style: TextStyle(
+              color: _textColor,
+              fontWeight: FontWeight.w800,
+              fontSize: FontTokens.hudSm,
+              height: 1,
+            ),
+          )
+          : Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.favorite_rounded,
+                size: 15,
+                color: _textColor.withValues(alpha: 0.9),
+              ),
+              SizedBox(width: LayoutTokens.gr0),
+              Text(
+                '$life',
+                style: TextStyle(
+                  color: _textColor,
+                  fontWeight: FontWeight.w800,
+                  fontSize: FontTokens.hudSm,
+                  height: 1,
+                ),
+              ),
+            ],
+          ),
     );
   }
 }

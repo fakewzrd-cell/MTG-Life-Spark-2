@@ -10,7 +10,16 @@ class AppIcons {
   /// Treasure: raster only until a Treasure.svg is added to assets/icons.
   static const String treasure = 'assets/icons/Treasure.png';
 
+  // ── Table politics (overview) — raster silhouettes, tint via [GameIcon] ───
+  static const String monarch = 'assets/icons/Monarch.png';
+  static const String initiative = 'assets/icons/Initiative.png';
+  static const String day = 'assets/icons/Day.png';
+  static const String night = 'assets/icons/Night.png';
+
   // ── Variant modes ────────────────────────────────────────────────────────
+  /// Commander damage (status bar — damage taken toward 21).
+  static const String commanderDamage = 'assets/icons/CommanderDamage.svg';
+
   /// Bounty variant mode
   static const String bounty = 'assets/icons/Bounty.svg';
 

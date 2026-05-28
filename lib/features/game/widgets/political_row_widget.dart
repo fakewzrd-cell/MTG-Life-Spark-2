@@ -4,12 +4,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/game/game_providers.dart';
 import '../../../core/game/game_state.dart';
 import '../../../core/game/player_game_state.dart';
+import '../../../shared/widgets/game_icon.dart';
 import 'game_colors.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/color_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import 'game_modal_chrome.dart';
 import '../../../ui/tokens/radius_tokens.dart';
+
+/// Matches gameplay dial / counter glyph tint on the strip.
+Color politicsIconTone(BuildContext context) =>
+    ColorTokens.textSecondary.withValues(alpha: 0.95);
 
 /// Truncates long player names for compact overview chips.
 String overviewShortPlayerName(String name, {int maxChars = 9}) {
@@ -85,7 +90,10 @@ class PoliticalRowWidget extends ConsumerWidget {
                   Expanded(
                     child: _PoliticalBadge(
                       label: 'Monarch',
-                      icon: '👑',
+                      headerIcon: GameIcon.monarch(
+                        size: 16,
+                        color: politicsIconTone(context),
+                      ),
                       holderId: game.monarchPlayerId,
                       players: game.players,
                       canAssign: true,
@@ -102,7 +110,10 @@ class PoliticalRowWidget extends ConsumerWidget {
                   Expanded(
                     child: _PoliticalBadge(
                       label: 'Initiative',
-                      icon: '⚔️',
+                      headerIcon: GameIcon.initiative(
+                        size: 16,
+                        color: politicsIconTone(context),
+                      ),
                       holderId: game.initiativePlayerId,
                       players: game.players,
                       canAssign: true,
@@ -171,7 +182,7 @@ class PoliticalRowWidget extends ConsumerWidget {
 
 class _PoliticalBadge extends StatelessWidget {
   final String label;
-  final String icon;
+  final Widget headerIcon;
   final String? holderId;
   final List<PlayerGameState> players;
   final bool canAssign;
@@ -179,7 +190,7 @@ class _PoliticalBadge extends StatelessWidget {
 
   const _PoliticalBadge({
     required this.label,
-    required this.icon,
+    required this.headerIcon,
     required this.holderId,
     required this.players,
     required this.canAssign,
@@ -197,19 +208,7 @@ class _PoliticalBadge extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          '$icon $label',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: colors.textSecondary,
-            fontSize: FontTokens.hudXs,
-            fontWeight: FontWeight.w700,
-            height: 1.15,
-            letterSpacing: 0.1,
-          ),
-        ),
+        _PoliticsColumnHeader(icon: headerIcon, label: label),
         SizedBox(height: LayoutTokens.gr1),
         Expanded(
           child: _OverviewFilledMarkerButton(
@@ -252,22 +251,20 @@ class _DayNightToggle extends StatelessWidget {
     };
     final isActive = dayNight != DayNightState.none;
 
+    final iconTone = politicsIconTone(context);
+    final headerIcon = switch (dayNight) {
+      DayNightState.day => GameIcon.day(size: 16, color: iconTone),
+      DayNightState.night => GameIcon.night(size: 16, color: iconTone),
+      DayNightState.none => GameIcon.day(
+        size: 16,
+        color: iconTone.withValues(alpha: 0.45),
+      ),
+    };
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          '🌓 Day/Night',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: colors.textSecondary,
-            fontSize: FontTokens.hudXs,
-            fontWeight: FontWeight.w700,
-            height: 1.15,
-            letterSpacing: 0.1,
-          ),
-        ),
+        _PoliticsColumnHeader(icon: headerIcon, label: 'Day/Night'),
         SizedBox(height: LayoutTokens.gr1),
         Expanded(
           child: _OverviewFilledMarkerButton(
@@ -279,6 +276,42 @@ class _DayNightToggle extends StatelessWidget {
                 : colors.backgroundSecondary.withValues(alpha: 0.9),
             foregroundColor: isActive ? colors.backgroundPrimary : colors.textSecondary,
             value: valueLabel,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PoliticsColumnHeader extends StatelessWidget {
+  final Widget icon;
+  final String label;
+
+  const _PoliticsColumnHeader({
+    required this.icon,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.gameColors;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        icon,
+        SizedBox(width: LayoutTokens.gr0),
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: colors.textSecondary,
+              fontSize: FontTokens.hudXs,
+              fontWeight: FontWeight.w700,
+              height: 1.15,
+              letterSpacing: 0.1,
+            ),
           ),
         ),
       ],

@@ -30,7 +30,6 @@ class StackTrackerTab extends ConsumerStatefulWidget {
 class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
   StackSortMode _sortMode = StackSortMode.stackOrder;
   bool _showCountered = false;
-  bool _tipBannerVisible = true;
   final Set<String> _enteredStackIds = {};
 
   @override
@@ -212,15 +211,6 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
                   fontSize: FontTokens.caption,
                   color: colors.textSecondary.withValues(alpha: 0.9),
                 ),
-              ),
-            ),
-          ),
-        if (_tipBannerVisible)
-          SliverPadding(
-            padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr3),
-            sliver: SliverToBoxAdapter(
-              child: _TipBanner(
-                onHide: () => setState(() => _tipBannerVisible = false),
               ),
             ),
           ),
@@ -424,53 +414,6 @@ void scheduleStackAddItem(
           typeLine: card.typeLine,
         );
   });
-}
-
-class _TipBanner extends StatelessWidget {
-  final VoidCallback onHide;
-
-  const _TipBanner({required this.onHide});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.gameColors;
-    return Padding(
-      padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: colors.primaryAccent.withValues(alpha: 0.12),
-          borderRadius: RadiusTokens.radiusMd,
-        ),
-        child: Padding(
-          padding: EdgeInsets.all(LayoutTokens.gr2),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Top spell resolves first. Add newest on top. Search Scryfall when adding cards so names and rules are correct.',
-                style: TextStyle(
-                  fontSize: FontTokens.caption,
-                  height: 1.4,
-                  color: colors.textPrimary.withValues(alpha: 0.9),
-                ),
-              ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: onHide,
-                  style: TextButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                  ),
-                  child: Text('Hide tip'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class _EmptyStackState extends StatelessWidget {

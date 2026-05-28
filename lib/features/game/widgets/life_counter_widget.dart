@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import '../../../ui/theme/app_color_tokens.dart';
@@ -59,6 +58,9 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
 
   /// Stride (px) of horizontal drag before committing ±1 life.
   static const double _kDragStride = 36;
+
+  /// Width of − / + edge strips — wider than [LayoutTokens.minTapTarget] for thumbs.
+  static const double _kStepStripWidth = 56;
 
   double _wheelDragAccum = 0;
 
@@ -192,10 +194,7 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
                   builder: (context, constraints) {
                     final wBody = constraints.maxWidth;
                     final hBody = constraints.maxHeight;
-                    final tapEdge = math.max(
-                      LayoutTokens.minTapTarget,
-                      LayoutTokens.gr5 + LayoutTokens.gr0,
-                    );
+                    final tapEdge = _kStepStripWidth;
 
                     if (widget.isEliminated) {
                       return Center(
@@ -474,7 +473,7 @@ class _LifeEdgeStepStrip extends StatelessWidget {
               child: Center(
                 child: Icon(
                   icon,
-                  size: 22,
+                  size: 26,
                   color: colors.primaryAccent,
                 ),
               ),

@@ -32,6 +32,26 @@ class GameIcon extends StatelessWidget {
   factory GameIcon.treasure({double size = 24, Color? color}) =>
       GameIcon(assetPath: AppIcons.treasure, size: size, color: color);
 
+  /// Table politics — Monarch
+  factory GameIcon.monarch({double size = 24, Color? color}) =>
+      GameIcon(assetPath: AppIcons.monarch, size: size, color: color);
+
+  /// Table politics — Initiative
+  factory GameIcon.initiative({double size = 24, Color? color}) =>
+      GameIcon(assetPath: AppIcons.initiative, size: size, color: color);
+
+  /// Table politics — Day
+  factory GameIcon.day({double size = 24, Color? color}) =>
+      GameIcon(assetPath: AppIcons.day, size: size, color: color);
+
+  /// Table politics — Night
+  factory GameIcon.night({double size = 24, Color? color}) =>
+      GameIcon(assetPath: AppIcons.night, size: size, color: color);
+
+  /// Commander damage taken (status bar).
+  factory GameIcon.commanderDamage({double size = 24, Color? color}) =>
+      GameIcon(assetPath: AppIcons.commanderDamage, size: size, color: color);
+
   /// Bounty variant icon
   factory GameIcon.bounty({double size = 24, Color? color}) =>
       GameIcon(assetPath: AppIcons.bounty, size: size, color: color);

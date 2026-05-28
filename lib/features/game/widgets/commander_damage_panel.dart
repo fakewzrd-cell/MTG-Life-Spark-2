@@ -6,9 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/game/game_constants.dart';
 import '../../../core/game/game_providers.dart';
 import '../../../core/game/game_format.dart';
 import '../../../core/game/player_game_state.dart';
+import '../../../shared/widgets/game_icon.dart';
 import 'game_colors.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/motion_tokens.dart';
@@ -76,8 +78,9 @@ int maxCommanderDamageDealtTrack(
 enum CommanderDamageDirection { received, dealt }
 
 Color commanderDamageColor(int damage) {
-  if (damage >= 21) return ColorTokens.danger;
-  if (damage >= 18) return ColorTokens.warning;
+  final ko = GameConstants.commanderDamageKo;
+  if (damage >= ko) return ColorTokens.danger;
+  if (damage >= ko - 3) return ColorTokens.warning;
   if (damage >= 10) return ColorTokens.primaryAccent.withValues(alpha: 0.95);
   return ColorTokens.textPrimary;
 }
@@ -182,71 +185,76 @@ class CommanderDamageBarButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
-    final urgent = maxTrackDamage >= 18;
-    final lethal = maxTrackDamage >= 21;
+    final ko = GameConstants.commanderDamageKo;
+    final urgent = maxTrackDamage >= ko - 3;
+    final lethal = maxTrackDamage >= ko;
     final accent = commanderDamageColor(maxTrackDamage);
-    final displayTotal = totalDamage;
 
     return Semantics(
       button: true,
       enabled: enabled,
       label:
-          'Commander damage taken, $displayTotal total, highest single track $maxTrackDamage',
+          'Commander damage, highest track $maxTrackDamage of $ko, '
+          '$totalDamage total received, tap to manage',
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: enabled ? onTap : null,
           borderRadius: RadiusTokens.radiusControlSm,
-        child: AnimatedContainer(
-          duration: MotionTokens.standard,
-          curve: Curves.easeOutCubic,
-          constraints: const BoxConstraints(
-            minHeight: LayoutTokens.minTapTarget,
-          ),
-          padding: EdgeInsets.symmetric(
-            horizontal: LayoutTokens.gr2,
-            vertical: LayoutTokens.gr1,
-          ),
+          child: AnimatedContainer(
+            duration: MotionTokens.standard,
+            curve: Curves.easeOutCubic,
+            constraints: const BoxConstraints(
+              minHeight: LayoutTokens.minTapTarget,
+            ),
+            padding: EdgeInsets.symmetric(
+              horizontal: LayoutTokens.gr2,
+              vertical: LayoutTokens.gr1,
+            ),
             decoration: BoxDecoration(
               color: urgent
                   ? accent.withValues(alpha: 0.12)
-                  : colors.backgroundSecondary.withValues(alpha: 0.65),
+                  : colors.primaryAccent.withValues(alpha: 0.08),
               borderRadius: RadiusTokens.radiusControlSm,
               border: Border.all(
                 color: urgent
                     ? accent.withValues(alpha: lethal ? 0.95 : 0.65)
-                    : colors.textSecondary.withValues(alpha: 0.28),
+                    : colors.primaryAccent.withValues(alpha: 0.45),
                 width: lethal ? 2 : 1,
               ),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  lethal ? Icons.warning_amber_rounded : Icons.shield_outlined,
+                GameIcon.commanderDamage(
                   size: LayoutTokens.gr3,
                   color: enabled ? accent : colors.textSecondary,
                 ),
                 SizedBox(height: LayoutTokens.gr0),
-                Text(
-                  displayTotal > 0 ? '$displayTotal' : '—',
-                  style: TextStyle(
-                    color: enabled ? accent : colors.textSecondary,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
-                    height: 1,
-                  ),
-                ),
-                Text(
-                  'IN',
-                  style: TextStyle(
-                    color: enabled
-                        ? colors.textSecondary.withValues(alpha: 0.9)
-                        : colors.textSecondary.withValues(alpha: 0.55),
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.6,
-                    height: 1.1,
+                Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: '$maxTrackDamage',
+                        style: TextStyle(
+                          color: enabled ? accent : colors.textSecondary,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                          height: 1,
+                        ),
+                      ),
+                      TextSpan(
+                        text: '/$ko',
+                        style: TextStyle(
+                          color: enabled
+                              ? colors.textSecondary.withValues(alpha: 0.85)
+                              : colors.textSecondary.withValues(alpha: 0.55),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 10,
+                          height: 1,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
