@@ -11,10 +11,21 @@ import '../../shared/utils/app_router.dart';
 import '../../ui/components/ui_app_bar.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/color_tokens.dart';
+import '../../ui/tokens/layout_tokens.dart';
 
-/// Pick MTG card art for the profile header banner.
+/// Which profile image field [ProfileBannerPickerScreen] updates.
+enum ProfileImagePickerKind { banner, avatar }
+
+/// Pick MTG card art for the profile banner or circular avatar.
 class ProfileBannerPickerScreen extends ConsumerStatefulWidget {
-  const ProfileBannerPickerScreen({super.key});
+  const ProfileBannerPickerScreen({
+    super.key,
+    this.kind = ProfileImagePickerKind.banner,
+  });
+
+  final ProfileImagePickerKind kind;
+
+  bool get _isAvatar => kind == ProfileImagePickerKind.avatar;
 
   @override
   ConsumerState<ProfileBannerPickerScreen> createState() =>
@@ -80,10 +91,14 @@ class _ProfileBannerPickerScreenState
     }
   }
 
-  Future<void> _applyBannerAndReturn(String? imageUrl) async {
+  Future<void> _applyAndReturn(String? imageUrl) async {
     final profile = ref.read(profileRepositoryProvider).getProfile();
     if (profile == null) return;
-    profile.profileBannerImageUrl = imageUrl;
+    if (widget._isAvatar) {
+      profile.profileAvatarImageUrl = imageUrl;
+    } else {
+      profile.profileBannerImageUrl = imageUrl;
+    }
     await ref.read(profileRepositoryProvider).saveProfile(profile);
     if (!mounted) return;
     // Navigate home before refreshing router listeners (avoids stack glitch).
@@ -91,28 +106,53 @@ class _ProfileBannerPickerScreenState
     bumpProfileRevision(ref);
   }
 
-  Future<void> _onCardTap(ScryfallCard card) async {
-    if (card.imageUrl == null || card.imageUrl!.isEmpty) return;
-    await _applyBannerAndReturn(card.imageUrl);
+  Future<void> _useCommanderPortrait() async {
+    final profile = ref.read(profileRepositoryProvider).getProfile();
+    final url = profile?.selectedCommanderImageUrl;
+    if (url == null || url.isEmpty) return;
+    await _applyAndReturn(url);
   }
 
-  Future<void> _clearBanner() async {
-    await _applyBannerAndReturn(null);
+  Future<void> _onCardTap(ScryfallCard card) async {
+    if (card.imageUrl == null || card.imageUrl!.isEmpty) return;
+    await _applyAndReturn(card.imageUrl);
+  }
+
+  Future<void> _clearImage() async {
+    await _applyAndReturn(null);
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final profile = ref.watch(profileRepositoryProvider).getProfile();
+    final commanderUrl = profile?.selectedCommanderImageUrl;
+    final canUseCommander =
+        widget._isAvatar &&
+        commanderUrl != null &&
+        commanderUrl.isNotEmpty;
+
     return Scaffold(
       appBar: UiAppBar(
-        title: 'Profile banner',
+        title: widget._isAvatar ? 'Profile picture' : 'Profile banner',
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: _returnToProfile,
         ),
         actions: [
+          if (canUseCommander)
+            TextButton(
+              onPressed: _useCommanderPortrait,
+              child: Text(
+                'Commander',
+                style: TextStyle(
+                  color: colors.primaryAccent,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
           TextButton(
-            onPressed: _clearBanner,
+            onPressed: _clearImage,
             child: Text(
               'Remove',
               style: TextStyle(
@@ -127,12 +167,14 @@ class _ProfileBannerPickerScreenState
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(LayoutTokens.gr3),
             child: TextField(
               controller: _searchController,
               autofocus: true,
               decoration: InputDecoration(
-                hintText: 'Search MTG cards for banner art…',
+                hintText: widget._isAvatar
+                    ? 'Search MTG cards for profile picture…'
+                    : 'Search MTG cards for banner art…',
                 prefixIcon: Icon(
                   Icons.search,
                   color: colors.textSecondary,
@@ -173,7 +215,7 @@ class _ProfileBannerPickerScreenState
     if (_error != null) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(LayoutTokens.gr4),
           child: Text(
             _error!,
             style: TextStyle(color: colors.textSecondary),
@@ -185,9 +227,11 @@ class _ProfileBannerPickerScreenState
     if (_results.isEmpty && _searchController.text.isEmpty) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(LayoutTokens.gr4),
           child: Text(
-            'Search for a card—its art will fill the banner behind your profile.',
+            widget._isAvatar
+                ? 'Search for a card—its art becomes your profile picture.'
+                : 'Search for a card—its art will fill the banner behind your profile.',
             style: TextStyle(color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
@@ -199,7 +243,12 @@ class _ProfileBannerPickerScreenState
     final aspectRatio = w < 320 ? 0.75 : (w < 360 ? 0.68 : 0.72);
 
     return GridView.builder(
-      padding: EdgeInsets.fromLTRB(w < 360 ? 12 : 16, 0, w < 360 ? 12 : 16, 24),
+      padding: EdgeInsets.fromLTRB(
+        w < 360 ? LayoutTokens.gr2 : LayoutTokens.gr3,
+        0,
+        w < 360 ? LayoutTokens.gr2 : LayoutTokens.gr3,
+        LayoutTokens.gr4,
+      ),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,
         childAspectRatio: aspectRatio,

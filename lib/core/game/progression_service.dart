@@ -168,8 +168,12 @@ class ProgressionService {
     );
     final deckId = local.selectedDeckId;
     if (deckId != null && deckId.isNotEmpty) {
-      await _deckRepo.recordMatchResult(deckId, won);
-      await _backfillDeckCommanderArt(deckId, local);
+      final deck = _deckRepo.getById(deckId);
+      final lobbyFormat = lobbyState.config.format;
+      if (deck != null && deck.matchesLobbyFormat(lobbyFormat)) {
+        await _deckRepo.recordMatchResult(deckId, won);
+        await _backfillDeckCommanderArt(deckId, local);
+      }
     }
 
     // ── Check achievements ────────────────────────────────────────────────

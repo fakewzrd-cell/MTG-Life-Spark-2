@@ -9,6 +9,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../../core/game/alliance_ui_events.dart';
 import '../../../core/game/commander_identity_colors.dart';
+import '../../../core/game/game_format.dart';
 import '../../../core/game/game_providers.dart';
 import '../../../core/game/lobby_state.dart';
 import '../../../core/persistence/providers.dart';
@@ -332,12 +333,14 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
         .where((o) => !o.isEliminated || o.commanderName != null)
         .toList();
     final lobbyConfig = ref.read(lobbyProvider).config;
-    final showCommanderDamage = isCommanderGameSession(
-      local: local,
-      allPlayers: game.players,
-      gameFormat: lobbyConfig.format,
-      startingLife: lobbyConfig.startingLife,
-    );
+    final showCommanderHud = lobbyConfig.format.isCommanderStyle;
+    final showCommanderDamage = showCommanderHud &&
+        isCommanderGameSession(
+          local: local,
+          allPlayers: game.players,
+          gameFormat: lobbyConfig.format,
+          startingLife: lobbyConfig.startingLife,
+        );
     final maxCmdDamage = maxCommanderDamageTrack(
       local,
       opponentsWithCommanders,
@@ -362,24 +365,27 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
             accentColor: chromeAccent,
             selectedTabIndex: _mainTabIndex,
             onTabSelected: (index) => setState(() => _mainTabIndex = index),
-            commander: CommanderInfoBar(
-              player: local,
-              onCastCommander:
-                  () => notifier.castCommanderFromZone(local.playerId),
-              embeddedInCard: true,
-              roundNumber: game.roundNumber,
-              allyUsername: local.allyPlayerId == null
-                  ? null
-                  : game.playerById(local.allyPlayerId!)?.username,
-              statusTrailing: showCommanderDamage
-                  ? CommanderDamageBarButton(
-                      totalDamage: local.totalCommanderDamageReceived,
-                      maxTrackDamage: maxCmdDamage,
-                      enabled: !local.isEliminated,
-                      onTap: () => showCommanderDamageSheet(context, ref),
-                    )
-                  : null,
-            ),
+            statusStrip: showCommanderHud
+                ? CommanderInfoBar(
+                    player: local,
+                    onCastCommander: () =>
+                        notifier.castCommanderFromZone(local.playerId),
+                    embeddedInCard: true,
+                    roundNumber: game.roundNumber,
+                    allyUsername: local.allyPlayerId == null
+                        ? null
+                        : game.playerById(local.allyPlayerId!)?.username,
+                    statusTrailing: showCommanderDamage
+                        ? CommanderDamageBarButton(
+                            totalDamage: local.totalCommanderDamageReceived,
+                            maxTrackDamage: maxCmdDamage,
+                            enabled: !local.isEliminated,
+                            onTap: () =>
+                                showCommanderDamageSheet(context, ref),
+                          )
+                        : null,
+                  )
+                : null,
           ),
         ),
         Expanded(

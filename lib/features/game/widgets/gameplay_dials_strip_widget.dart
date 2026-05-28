@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import '../../../core/game/gameplay_dial_ids.dart';
 import '../../../core/game/player_game_state.dart';
 import 'game_colors.dart';
-import '../../../ui/tokens/color_tokens.dart';
+import '../../../ui/theme/app_color_tokens.dart';
 import 'game_modal_chrome.dart';
 import '../../../shared/widgets/game_icon.dart';
 import '../../../ui/tokens/layout_tokens.dart';
@@ -124,11 +124,8 @@ class GameplayDialsStripWidget extends StatelessWidget {
     };
   }
 
-  static Color _listIconColor() =>
-      ColorTokens.textSecondary.withValues(alpha: 0.95);
-
-  static Color _defaultGlyphColor({Color? tintColor}) =>
-      tintColor ?? _listIconColor();
+  static Color _listIconColor(AppColorTokens colors) =>
+      colors.textSecondary.withValues(alpha: 0.95);
 
   /// Visual scale per counter artwork so mixed aspect ratios read evenly.
   static double _glyphVisualScale(String field) => switch (field) {
@@ -141,10 +138,11 @@ class GameplayDialsStripWidget extends StatelessWidget {
   /// Counter artwork accepts [tintColor]; strip/list default to secondary text.
   static Widget _leadingGlyph(
     String field,
-    double size, {
+    double size,
+    AppColorTokens colors, {
     Color? tintColor,
   }) {
-    final tone = _defaultGlyphColor(tintColor: tintColor);
+    final tone = tintColor ?? _listIconColor(colors);
     final iconSize = size * _glyphVisualScale(field);
     return switch (field) {
       'poison' => GameIcon.poison(size: iconSize, color: tone),
@@ -261,6 +259,7 @@ class GameplayDialsStripWidget extends StatelessWidget {
     }
     final keyCtl = TextEditingController();
     final labelCtl = TextEditingController();
+    final dialogColors = context.gameColors;
     final ok = await showGameChoiceDialog(
       context: context,
       title: 'Custom dial',
@@ -269,19 +268,19 @@ class GameplayDialsStripWidget extends StatelessWidget {
         children: [
           TextField(
             controller: keyCtl,
-            style: TextStyle(color: ColorTokens.textPrimary),
+            style: TextStyle(color: dialogColors.textPrimary),
             decoration: InputDecoration(
               labelText: 'Id (letters/numbers)',
-              labelStyle: TextStyle(color: ColorTokens.textSecondary),
+              labelStyle: TextStyle(color: dialogColors.textSecondary),
             ),
           ),
           SizedBox(height: LayoutTokens.gr2),
           TextField(
             controller: labelCtl,
-            style: TextStyle(color: ColorTokens.textPrimary),
+            style: TextStyle(color: dialogColors.textPrimary),
             decoration: InputDecoration(
               labelText: 'Label',
-              labelStyle: TextStyle(color: ColorTokens.textSecondary),
+              labelStyle: TextStyle(color: dialogColors.textSecondary),
             ),
           ),
         ],
@@ -359,6 +358,7 @@ class GameplayDialsStripWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     final fields = _orderedStripFields();
 
     return LayoutBuilder(
@@ -417,6 +417,7 @@ class GameplayDialsStripWidget extends StatelessWidget {
                             headerLeading: _leadingGlyph(
                               fields[i],
                               metrics.leadingSize,
+                              colors,
                             ),
                             onHeaderTap:
                                 isEliminated
@@ -620,7 +621,7 @@ class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
     }
   }
 
-  Widget _section(String title, List<String> ids) {
+  Widget _section(AppColorTokens colors, String title, List<String> ids) {
     final choices =
         ids.where((id) => !widget.visible.contains(id)).toList(growable: false);
     if (choices.isEmpty) return const SizedBox.shrink();
@@ -640,7 +641,7 @@ class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
               fontSize: FontTokens.hudXs,
               fontWeight: FontWeight.w800,
               letterSpacing: 1.1,
-              color: ColorTokens.textSecondary.withValues(alpha: 0.75),
+              color: colors.textSecondary.withValues(alpha: 0.75),
             ),
           ),
         ),
@@ -653,14 +654,15 @@ class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
                 child: GameplayDialsStripWidget._leadingGlyph(
                   id,
                   20,
-                  tintColor: GameplayDialsStripWidget._listIconColor(),
+                  colors,
+                  tintColor: GameplayDialsStripWidget._listIconColor(colors),
                 ),
               ),
             ),
             title: Text(
               GameplayDialsStripWidget._labelFor(widget.player, id),
               style: TextStyle(
-                color: ColorTokens.textPrimary,
+                color: colors.textPrimary,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -734,8 +736,8 @@ class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
                   ),
                 ),
                 SizedBox(height: LayoutTokens.gr2),
-                _section('Common', widget.coreOrdered),
-                _section('Tokens & zones', [...GameplayDialIds.presets]),
+                _section(colors, 'Common', widget.coreOrdered),
+                _section(colors, 'Tokens & zones', [...GameplayDialIds.presets]),
                 Padding(
                   padding: EdgeInsets.fromLTRB(
                     LayoutTokens.gr3,
@@ -1084,6 +1086,7 @@ class _GameplayDialPillState extends State<_GameplayDialPill> {
                       return Column(
                         children: [
                           _stepButton(
+                            colors: colors,
                             dim: dim,
                             icon: Icons.add_rounded,
                             onTap:
@@ -1165,6 +1168,7 @@ class _GameplayDialPillState extends State<_GameplayDialPill> {
                             ),
                           ),
                           _stepButton(
+                            colors: colors,
                             dim: dim,
                             icon: Icons.remove_rounded,
                             onTap:
@@ -1190,6 +1194,7 @@ class _GameplayDialPillState extends State<_GameplayDialPill> {
   }
 
   Widget _stepButton({
+    required AppColorTokens colors,
     required bool dim,
     required IconData icon,
     required VoidCallback? onTap,
@@ -1205,7 +1210,7 @@ class _GameplayDialPillState extends State<_GameplayDialPill> {
             child: Icon(
               icon,
               size: widget.metrics.stepIconSize + 2,
-              color: dim ? ColorTokens.textSecondary : ColorTokens.primaryAccent,
+              color: dim ? colors.textSecondary : colors.primaryAccent,
             ),
           ),
         ),

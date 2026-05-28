@@ -11,6 +11,7 @@ import 'core/models/match_record.dart';
 import 'core/models/achievement_record.dart';
 import 'core/models/app_settings.dart';
 import 'core/models/pod_preset.dart';
+import 'core/game/game_format.dart';
 import 'core/models/player_deck.dart';
 import 'core/persistence/deck_repository.dart';
 import 'core/persistence/feedback_repository.dart';
@@ -268,6 +269,18 @@ Future<void> _purgePreviewPlaceholderData() async {
   // Drop commander stats left from preview matches when history is empty.
   if (matchRepo.getAllMatches().isEmpty && Hive.isBoxOpen('commanderStats')) {
     await Hive.box<CommanderStats>('commanderStats').clear();
+  }
+
+  await _migrateDeckFormats(deckBox);
+}
+
+/// Backfill [PlayerDeck.format] for decks saved before format categorization.
+Future<void> _migrateDeckFormats(Box<PlayerDeck> deckBox) async {
+  for (final deck in deckBox.values) {
+    if (deck.format.isEmpty) {
+      deck.format = GameFormat.commander.name;
+      await deck.save();
+    }
   }
 }
 

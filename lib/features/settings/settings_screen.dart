@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/game/game_format.dart';
 import '../../core/models/app_settings.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/theme/theme_provider.dart';
@@ -47,7 +48,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       appBar: const UiAppBar(title: 'Settings'),
       backgroundColor: colors.backgroundPrimary,
       body: ListView(
-        padding: EdgeInsets.all(LayoutTokens.gr4),
+        padding: LayoutTokens.shellListPadding(context, top: LayoutTokens.gr4),
         children: [
           _SectionHeader('Gameplay'),
           _SettingTile(
@@ -57,6 +58,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               final picked = await _pickFormat(context);
               if (picked != null && mounted) {
                 _settings.defaultFormat = picked;
+                final fmt = GameFormatDetails.fromDisplayName(picked);
+                if (fmt != null) {
+                  _settings.defaultStartingLife = fmt.defaultStartingLife;
+                }
                 await _save();
               }
             },
@@ -156,7 +161,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               });
             },
           ),
-          SizedBox(height: LayoutTokens.gr5),
         ],
       ),
     );
@@ -166,14 +170,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return UiDialog.show<String>(
       context,
       title: 'Default Format',
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: ['Commander', 'Standard'].map((f) {
-          return ListTile(
-            title: Text(f),
-            onTap: () => Navigator.pop(context, f),
+      content: Builder(
+        builder: (dialogContext) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: GameFormatDetails.lobbyPickerOrder.map((f) {
+              final label = f.displayName;
+              return ListTile(
+                title: Text(label),
+                onTap: () => Navigator.pop(dialogContext, label),
+              );
+            }).toList(),
           );
-        }).toList(),
+        },
       ),
     );
   }
@@ -182,14 +191,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return UiDialog.show<int>(
       context,
       title: 'Default Starting Life',
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [20, 30, 40, 50].map((l) {
-          return ListTile(
-            title: Text('$l life'),
-            onTap: () => Navigator.pop(context, l),
+      content: Builder(
+        builder: (dialogContext) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [20, 30, 40, 50].map((l) {
+              return ListTile(
+                title: Text('$l life'),
+                onTap: () => Navigator.pop(dialogContext, l),
+              );
+            }).toList(),
           );
-        }).toList(),
+        },
       ),
     );
   }

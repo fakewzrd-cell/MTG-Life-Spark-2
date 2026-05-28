@@ -1,4 +1,3 @@
-import '../../../ui/tokens/color_tokens.dart';
 import 'dart:math' as math;
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -10,7 +9,7 @@ import '../../../core/game/game_constants.dart';
 import '../../../core/game/game_providers.dart';
 import '../../../core/game/game_format.dart';
 import '../../../core/game/player_game_state.dart';
-import '../../../shared/widgets/game_icon.dart';
+import '../../../ui/theme/app_color_tokens.dart';
 import 'game_colors.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/motion_tokens.dart';
@@ -77,12 +76,12 @@ int maxCommanderDamageDealtTrack(
 
 enum CommanderDamageDirection { received, dealt }
 
-Color commanderDamageColor(int damage) {
+Color commanderDamageColor(AppColorTokens colors, int damage) {
   final ko = GameConstants.commanderDamageKo;
-  if (damage >= ko) return ColorTokens.danger;
-  if (damage >= ko - 3) return ColorTokens.warning;
-  if (damage >= 10) return ColorTokens.primaryAccent.withValues(alpha: 0.95);
-  return ColorTokens.textPrimary;
+  if (damage >= ko) return colors.error;
+  if (damage >= ko - 3) return colors.warning;
+  if (damage >= 10) return colors.primaryAccent.withValues(alpha: 0.95);
+  return colors.textPrimary;
 }
 
 /// True when this session uses Commander rules.
@@ -186,16 +185,18 @@ class CommanderDamageBarButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.gameColors;
     final ko = GameConstants.commanderDamageKo;
-    final urgent = maxTrackDamage >= ko - 3;
-    final lethal = maxTrackDamage >= ko;
-    final accent = commanderDamageColor(maxTrackDamage);
+    final remaining =
+        (ko - maxTrackDamage).clamp(0, ko);
+    final urgent = remaining <= 3;
+    final lethal = remaining == 0 && maxTrackDamage >= ko;
+    final accent = commanderDamageColor(colors, maxTrackDamage);
 
     return Semantics(
       button: true,
       enabled: enabled,
       label:
-          'Commander damage, highest track $maxTrackDamage of $ko, '
-          '$totalDamage total received, tap to manage',
+          'Commander damage life $remaining of $ko remaining, '
+          '$maxTrackDamage taken on worst track, tap to manage',
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -226,35 +227,21 @@ class CommanderDamageBarButton extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                GameIcon.commanderDamage(
-                  size: LayoutTokens.gr3,
+                Icon(
+                  lethal
+                      ? Icons.warning_amber_rounded
+                      : Icons.shield_outlined,
+                  size: LayoutTokens.gr3 + 2,
                   color: enabled ? accent : colors.textSecondary,
                 ),
                 SizedBox(height: LayoutTokens.gr0),
-                Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text: '$maxTrackDamage',
-                        style: TextStyle(
-                          color: enabled ? accent : colors.textSecondary,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14,
-                          height: 1,
-                        ),
-                      ),
-                      TextSpan(
-                        text: '/$ko',
-                        style: TextStyle(
-                          color: enabled
-                              ? colors.textSecondary.withValues(alpha: 0.85)
-                              : colors.textSecondary.withValues(alpha: 0.55),
-                          fontWeight: FontWeight.w600,
-                          fontSize: 10,
-                          height: 1,
-                        ),
-                      ),
-                    ],
+                Text(
+                  '$remaining',
+                  style: TextStyle(
+                    color: enabled ? accent : colors.textSecondary,
+                    fontWeight: FontWeight.w800,
+                    fontSize: remaining >= ko ? 18 : 16,
+                    height: 1,
                   ),
                 ),
               ],
@@ -574,7 +561,8 @@ class _CommanderDamageSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = commanderDamageColor(damage);
+    final colors = context.gameColors;
+    final accent = commanderDamageColor(colors, damage);
     final received = direction == CommanderDamageDirection.received;
     final label = received ? 'Damage Taken' : 'Damage Dealt';
     final hasArt =
@@ -593,10 +581,11 @@ class _CommanderDamageSummary extends StatelessWidget {
                 imageUrl: commanderImageUrl!,
                 fit: BoxFit.cover,
                 alignment: Alignment.center,
-                errorWidget: (_, __, ___) => _summaryFallbackArt(playerColor),
+                errorWidget: (_, __, ___) =>
+                    _summaryFallbackArt(playerColor, colors),
               )
             else
-              _summaryFallbackArt(playerColor),
+              _summaryFallbackArt(playerColor, colors),
             DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -697,7 +686,7 @@ class _CommanderDamageSummary extends StatelessWidget {
     );
   }
 
-  Widget _summaryFallbackArt(Color color) {
+  Widget _summaryFallbackArt(Color color, AppColorTokens themeColors) {
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -705,7 +694,7 @@ class _CommanderDamageSummary extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [
             color.withValues(alpha: 0.35),
-            ColorTokens.backgroundPrimary.withValues(alpha: 0.92),
+            themeColors.backgroundPrimary.withValues(alpha: 0.92),
           ],
         ),
       ),
@@ -949,7 +938,7 @@ class _DamageTrack extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
-    final color = commanderDamageColor(damage);
+    final color = commanderDamageColor(colors, damage);
     final progress = (damage / 21).clamp(0.0, 1.0);
 
     return Column(

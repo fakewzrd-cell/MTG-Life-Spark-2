@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/game/game_format.dart';
 import '../../core/game/lobby_state.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/utils/app_router.dart';
@@ -14,7 +15,13 @@ Future<void> showDeckPickerSheet(
   WidgetRef ref,
   String playerId,
 ) async {
-  final decks = ref.read(deckRepositoryProvider).getAll();
+  final lobbyFormat = ref.read(lobbyProvider).config.format;
+  final isCommanderLobby = lobbyFormat.isCommanderStyle;
+  final decks = ref
+      .read(deckRepositoryProvider)
+      .getAll()
+      .where((d) => d.matchesLobbyFormat(lobbyFormat))
+      .toList();
   await showModalBottomSheet<void>(
     context: context,
     backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
@@ -43,22 +50,25 @@ Future<void> showDeckPickerSheet(
                   ),
                 ),
               ),
-              ListTile(
-                leading: Icon(Icons.person_outline, color: colors.textSecondary),
-                title: Text(
-                  'Manual commander only',
-                  style: TextStyle(color: colors.textPrimary),
+              if (isCommanderLobby)
+                ListTile(
+                  leading:
+                      Icon(Icons.person_outline, color: colors.textSecondary),
+                  title: Text(
+                    'Manual commander only',
+                    style: TextStyle(color: colors.textPrimary),
+                  ),
+                  subtitle: Text(
+                    'Keep commanders as-is; do not attribute to a saved deck',
+                    style: TextStyle(color: colors.textSecondary, fontSize: 12),
+                  ),
+                  onTap: () {
+                    ref.read(lobbyProvider.notifier).clearSelectedDeck(playerId);
+                    Navigator.pop(ctx);
+                  },
                 ),
-                subtitle: Text(
-                  'Keep commanders as-is; do not attribute to a saved deck',
-                  style: TextStyle(color: colors.textSecondary, fontSize: 12),
-                ),
-                onTap: () {
-                  ref.read(lobbyProvider.notifier).clearSelectedDeck(playerId);
-                  Navigator.pop(ctx);
-                },
-              ),
-              Divider(color: colors.borderSubtle, height: 1),
+              if (isCommanderLobby)
+                Divider(color: colors.borderSubtle, height: 1),
               if (decks.isEmpty)
                 Padding(
                   padding: EdgeInsets.all(LayoutTokens.gr3),
@@ -66,8 +76,12 @@ Future<void> showDeckPickerSheet(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'No saved decks yet. Create one from the Decks tab and assign a commander.',
-                        style: TextStyle(color: colors.textSecondary, fontSize: 13),
+                        'No ${lobbyFormat.displayName} decks saved yet. '
+                        'Create one from the Decks tab.',
+                        style: TextStyle(
+                          color: colors.textSecondary,
+                          fontSize: 13,
+                        ),
                       ),
                       SizedBox(height: LayoutTokens.gr2),
                       TextButton(
@@ -75,7 +89,7 @@ Future<void> showDeckPickerSheet(
                           Navigator.pop(ctx);
                           ctx.go(AppRoutes.decks);
                         },
-                        child: Text('Open Decks'),
+                        child: const Text('Open Decks'),
                       ),
                     ],
                   ),
@@ -95,7 +109,10 @@ Future<void> showDeckPickerSheet(
                       d.hasPartner
                           ? '${d.commanderName} // ${d.partnerCommanderName}'
                           : d.commanderName,
-                      style: TextStyle(color: colors.textSecondary, fontSize: 12),
+                      style: TextStyle(
+                        color: colors.textSecondary,
+                        fontSize: 12,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),

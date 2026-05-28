@@ -40,13 +40,15 @@ class PlayerProfileAdapter extends TypeAdapter<PlayerProfile> {
       honorsTeamPlayerReceived: fields[20] as int,
       honorsUnderdogReceived: fields[21] as int,
       profileBannerImageUrl: fields[22] as String?,
+      profileExtraStatIds:
+          fields[23] == null ? [] : (fields[23] as List?)?.cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, PlayerProfile obj) {
     writer
-      ..writeByte(23)
+      ..writeByte(24)
       ..writeByte(0)
       ..write(obj.username)
       ..writeByte(1)
@@ -92,7 +94,9 @@ class PlayerProfileAdapter extends TypeAdapter<PlayerProfile> {
       ..writeByte(21)
       ..write(obj.honorsUnderdogReceived)
       ..writeByte(22)
-      ..write(obj.profileBannerImageUrl);
+      ..write(obj.profileBannerImageUrl)
+      ..writeByte(23)
+      ..write(obj.profileExtraStatIds);
   }
 
   @override

@@ -23,6 +23,9 @@ import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import '../../ui/tokens/typography_tokens.dart';
 import '../../ui/components/ui_app_bar.dart';
+import '../../ui/components/ui_dialog.dart';
+import '../../ui/components/ui_dialog_actions.dart';
+import '../../ui/components/ui_button.dart';
 import '../../ui/tokens/opacity_tokens.dart';
 
 enum _QrHostLoadState { loading, ready, unavailable, error }
@@ -166,10 +169,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
         bottom: false,
         child: Builder(
           builder: (context) {
-            final scrollBottomPad =
-                LayoutTokens.bottomNavHeight +
-                MediaQuery.paddingOf(context).bottom +
-                LayoutTokens.gr2;
+            final scrollBottomPad = LayoutTokens.shellBottomInset(context);
             return ListView(
               padding: EdgeInsets.fromLTRB(
                 LayoutTokens.gr3,
@@ -496,6 +496,8 @@ class _PlayerSlotCard extends ConsumerWidget {
       profileRepositoryProvider.select((r) => r.getProfile()?.username),
     );
     final isMe = slot.playerId == isLocalHost;
+    final lobbyFormat = ref.watch(lobbyProvider).config.format;
+    final isCommanderLobby = lobbyFormat.isCommanderStyle;
     final linkedDeck = isMe && slot.selectedDeckId != null
         ? ref.read(deckRepositoryProvider).getById(slot.selectedDeckId!)
         : null;
@@ -562,18 +564,29 @@ class _PlayerSlotCard extends ConsumerWidget {
                     ),
                     SizedBox(height: LayoutTokens.gr1),
                     Text(
-                      slot.commanderName ?? 'No commander selected',
+                      isCommanderLobby
+                          ? (slot.commanderName ?? 'No commander selected')
+                          : (linkedDeck != null
+                              ? linkedDeck.commanderName
+                              : slot.commanderName ??
+                                  'No deck selected'),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color:
-                            slot.commanderName != null
+                            (isCommanderLobby
+                                    ? slot.commanderName
+                                    : linkedDeck?.commanderName ??
+                                        slot.commanderName) !=
+                                null
                                 ? colors.textSecondary
                                 : colors.primaryAccent,
                         fontSize: FontTokens.caption,
                       ),
                     ),
-                    if (slot.hasPartner && slot.partnerCommanderName != null)
+                    if (isCommanderLobby &&
+                        slot.hasPartner &&
+                        slot.partnerCommanderName != null)
                       Text(
                         '+ ${slot.partnerCommanderName}',
                         style: TextStyle(
@@ -606,7 +619,10 @@ class _PlayerSlotCard extends ConsumerWidget {
           ),
           if (isMe) ...[
             SizedBox(height: LayoutTokens.gr2),
-            _SlotCommanderControls(slot: slot),
+            _SlotCommanderControls(
+              slot: slot,
+              isCommanderLobby: isCommanderLobby,
+            ),
           ],
         ],
       ),
@@ -617,12 +633,25 @@ class _PlayerSlotCard extends ConsumerWidget {
 /// Partner / Deck / Commander actions for the local player's slot (full-width row).
 class _SlotCommanderControls extends ConsumerWidget {
   final PlayerSlot slot;
+  final bool isCommanderLobby;
 
-  const _SlotCommanderControls({required this.slot});
+  const _SlotCommanderControls({
+    required this.slot,
+    required this.isCommanderLobby,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final gap = LayoutTokens.gr1;
+
+    if (!isCommanderLobby) {
+      return _SlotActionButton(
+        label: 'Deck',
+        highlighted: slot.selectedDeckId != null,
+        filled: true,
+        onPressed: () => showDeckPickerSheet(context, ref, slot.playerId),
+      );
+    }
 
     return Row(
       children: [
@@ -1048,54 +1077,32 @@ class _StartingLifeDropdown extends StatelessWidget {
     required ValueChanged<int> onChanged,
   }) {
     final controller = TextEditingController(text: current.toString());
-    showDialog<void>(
-      context: context,
-      builder: (ctx) {
-        final colors = AppColorTokens.of(ctx);
-        return AlertDialog(
-          title: Text(
-            'Custom Starting Life',
-            style: TextStyle(color: colors.textPrimary),
-          ),
-          content: TextField(
-            controller: controller,
-            keyboardType: TextInputType.number,
-            autofocus: true,
-            style: TextStyle(color: colors.textPrimary),
-            decoration: InputDecoration(
-              hintText: 'Enter life total (1–999)',
-              hintStyle: TextStyle(color: colors.textSecondary),
-            ),
-            onSubmitted: (s) {
-              final v = int.tryParse(s);
-              if (v != null && v >= 1 && v <= 999) {
-                onChanged(v);
-                Navigator.pop(ctx);
-              }
-            },
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(
-                'Cancel',
-                style: TextStyle(color: colors.textSecondary),
-              ),
-            ),
-            FilledButton(
-              onPressed: () {
-                final v = int.tryParse(controller.text);
-                if (v != null && v >= 1 && v <= 999) {
-                  onChanged(v);
-                  Navigator.pop(ctx);
-                }
-              },
-              child: Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
+    void submit(BuildContext dialogContext) {
+      final v = int.tryParse(controller.text);
+      if (v != null && v >= 1 && v <= 999) {
+        onChanged(v);
+        Navigator.pop(dialogContext);
+      }
+    }
+
+    UiDialog.show<void>(
+      context,
+      title: 'Custom Starting Life',
+      content: TextField(
+        controller: controller,
+        keyboardType: TextInputType.number,
+        autofocus: true,
+        decoration: const InputDecoration(
+          hintText: 'Enter life total (1–999)',
+        ),
+        onSubmitted: (_) => submit(context),
+      ),
+      actions: UiDialogActions.cancelConfirm(
+        context: context,
+        confirmLabel: 'OK',
+        onConfirm: () => submit(context),
+      ),
+    ).whenComplete(controller.dispose);
   }
 
   @override
@@ -1345,15 +1352,11 @@ class _StartGameButtonState extends ConsumerState<_StartGameButton> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = AppColorTokens.of(context);
     final canStart = widget.canStart && !_isStarting;
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: canStart ? colors.primaryAccent : colors.textSecondary,
-        disabledBackgroundColor: colors.textSecondary.withValues(alpha: OpacityTokens.moderate),
-        minimumSize: const Size(double.infinity, 52),
-        padding: const EdgeInsets.symmetric(vertical: 14),
-      ),
+    return UiButton(
+      label: widget.canStart ? 'Start Game' : widget.hint,
+      enabled: widget.canStart,
+      loading: _isStarting,
       onPressed: canStart
           ? () async {
               setState(() => _isStarting = true);
@@ -1365,25 +1368,6 @@ class _StartGameButtonState extends ConsumerState<_StartGameButton> {
               }
             }
           : null,
-      child: _isStarting
-          ? const SizedBox(
-              height: 24,
-              width: 24,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: ColorTokens.onAccent,
-              ),
-            )
-          : Text(
-              widget.canStart ? 'Start Game' : widget.hint,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: MediaQuery.sizeOf(context).width < 360 ? FontTokens.title : FontTokens.bodyLg,
-                color: ColorTokens.onAccent,
-              ),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-            ),
     );
   }
 }

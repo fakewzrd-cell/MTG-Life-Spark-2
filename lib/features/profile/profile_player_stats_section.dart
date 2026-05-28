@@ -8,6 +8,7 @@ import '../../core/models/commander_stats.dart';
 import '../../core/models/player_deck.dart';
 import '../../core/models/player_profile.dart';
 import '../../core/persistence/providers.dart';
+import 'profile_optional_stat_ids.dart';
 import '../../shared/constants/app_icons.dart';
 import '../../shared/utils/commander_image_resolver.dart';
 import '../../ui/theme/app_color_tokens.dart';
@@ -260,13 +261,27 @@ class ProfilePlayerStatsSection extends ConsumerWidget {
 
     final worst = hasPlayedGames ? _pickWorstDeck(repoDecks) : null;
 
+    final seenExtra = <String>{};
+    final extraStatIds = <String>[];
+    for (final id in profile.profileExtraStatIds) {
+      if (ProfileOptionalStatIds.isKnown(id) && seenExtra.add(id)) {
+        extraStatIds.add(id);
+      }
+    }
+    final addableStatIds =
+        ProfileOptionalStatIds.catalog
+            .where((id) => !seenExtra.contains(id))
+            .toList();
+
     final titleStyle = TypographyTokens.sectionTitle(colors.textPrimary);
 
     return LayoutBuilder(
       builder: (context, _) {
-        final cardHeight =
-            profilePlayerStatsCardHeight(context, listMaxHeight);
-        final cardWidth = kProfileDeckPerfCardWidth;
+        final cardHeight = profileBentoCardHeight(
+          context,
+          listMaxHeight: listMaxHeight,
+        );
+        final cardWidth = kProfileBentoCardWidth;
 
         final tiles = <Widget>[
           _PlayerStatsBentoTile(
@@ -290,50 +305,61 @@ class ProfilePlayerStatsSection extends ConsumerWidget {
               fillHeight: true,
             ),
           ),
-          _PlayerStatsBentoTile(
-            width: cardWidth,
-            height: cardHeight,
-            child: _mostPlayedTile(
-              hasPlayedGames: hasPlayedGames,
-              profile: profile,
-              colors: colors,
-              top: top,
+          for (final statId in extraStatIds)
+            _PlayerStatsBentoTile(
+              width: cardWidth,
+              height: cardHeight,
+              child: _optionalStatTile(
+                statId: statId,
+                hasPlayedGames: hasPlayedGames,
+                profile: profile,
+                colors: colors,
+                top: top,
+                worst: worst,
+              ),
             ),
-          ),
-          _PlayerStatsBentoTile(
-            width: cardWidth,
-            height: cardHeight,
-            child:
-                hasPlayedGames && worst != null
-                    ? _WorstDeckBentoCard(
-                      profile: profile,
-                      colors: colors,
-                      deck: worst,
-                    )
-                    : _PlayerStatsEmptyBentoCard(
-                      title: 'Tough record',
-                      infoMessage:
-                          'Saved deck with the lowest win rate among decks with at least one recorded game.',
-                      colors: colors,
-                      message:
-                          hasPlayedGames
-                              ? 'No deck stats yet.'
-                              : _kProfileUntilFirstGameMessage,
-                    ),
-          ),
+          if (addableStatIds.isNotEmpty)
+            SizedBox(
+              width: cardWidth,
+              height: cardHeight,
+              child: ProfileBentoCard(
+                padding: EdgeInsets.zero,
+                child: _AddPlayerStatCard(
+                  colors: colors,
+                  onTap:
+                      () => _showAddStatPicker(
+                        context,
+                        ref,
+                        profile,
+                        addableStatIds,
+                      ),
+                ),
+              ),
+            ),
         ];
+
+        final statCount = 2 + extraStatIds.length;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Player stats', style: titleStyle),
+            ProfileSectionHeader(
+              title: 'Player stats',
+              titleStyle: titleStyle,
+              colors: colors,
+              count: statCount,
+              singularUnit: 'stat',
+              pluralUnit: 'stats',
+            ),
             SizedBox(height: LayoutTokens.gr2),
             SizedBox(
               height: cardHeight,
               child: ListView.separated(
+                primary: false,
                 scrollDirection: Axis.horizontal,
                 clipBehavior: Clip.none,
-                physics: const BouncingScrollPhysics(),
+                padding: EdgeInsets.only(right: LayoutTokens.gr1),
+                physics: kProfileHorizontalCarouselPhysics,
                 itemCount: tiles.length,
                 separatorBuilder: (_, __) =>
                     SizedBox(width: LayoutTokens.gr2),
@@ -343,6 +369,181 @@ class ProfilePlayerStatsSection extends ConsumerWidget {
           ],
         );
       },
+    );
+  }
+}
+
+Widget _optionalStatTile({
+  required String statId,
+  required bool hasPlayedGames,
+  required PlayerProfile profile,
+  required AppColorTokens colors,
+  required CommanderStats? top,
+  required PlayerDeck? worst,
+}) {
+  switch (statId) {
+    case ProfileOptionalStatIds.mostPlayed:
+      return _mostPlayedTile(
+        hasPlayedGames: hasPlayedGames,
+        profile: profile,
+        colors: colors,
+        top: top,
+      );
+    case ProfileOptionalStatIds.toughRecord:
+      return hasPlayedGames && worst != null
+          ? _WorstDeckBentoCard(
+            profile: profile,
+            colors: colors,
+            deck: worst,
+          )
+          : _PlayerStatsEmptyBentoCard(
+            title: 'Tough record',
+            infoMessage: ProfileOptionalStatIds.description(statId),
+            colors: colors,
+            message:
+                hasPlayedGames
+                    ? 'No deck stats yet.'
+                    : _kProfileUntilFirstGameMessage,
+          );
+    default:
+      return const SizedBox.shrink();
+  }
+}
+
+Future<void> _showAddStatPicker(
+  BuildContext context,
+  WidgetRef ref,
+  PlayerProfile profile,
+  List<String> availableIds,
+) {
+  final colors = AppColorTokens.of(context);
+  return showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: colors.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (ctx) {
+      return SafeArea(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            LayoutTokens.gr3,
+            LayoutTokens.gr2,
+            LayoutTokens.gr3,
+            LayoutTokens.gr3,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Add stat card',
+                style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                  color: colors.textPrimary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              SizedBox(height: LayoutTokens.gr1),
+              Text(
+                'Choose a card to show in your player stats row.',
+                style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
+                  color: colors.textSecondary,
+                  height: 1.35,
+                ),
+              ),
+              SizedBox(height: LayoutTokens.gr2),
+              for (final id in availableIds) ...[
+                ListTile(
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: LayoutTokens.gr1,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: RadiusTokens.radiusMd,
+                  ),
+                  title: Text(
+                    ProfileOptionalStatIds.title(id),
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  subtitle: Text(
+                    ProfileOptionalStatIds.description(id),
+                    style: TextStyle(
+                      color: colors.textSecondary,
+                      height: 1.3,
+                    ),
+                  ),
+                  trailing: Icon(
+                    Icons.add_circle_outline,
+                    color: colors.primaryAccent,
+                  ),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    profile.profileExtraStatIds = [
+                      ...profile.profileExtraStatIds,
+                      id,
+                    ];
+                    await ref
+                        .read(profileRepositoryProvider)
+                        .saveProfile(profile);
+                    bumpProfileRevision(ref);
+                  },
+                ),
+                SizedBox(height: LayoutTokens.gr1),
+              ],
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+/// "+" tile — opens picker for optional stat cards (most played, tough record, …).
+class _AddPlayerStatCard extends StatelessWidget {
+  const _AddPlayerStatCard({
+    required this.colors,
+    required this.onTap,
+  });
+
+  final AppColorTokens colors;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Add stat card',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: RadiusTokens.radiusBento,
+          child: SizedBox.expand(
+            child: Center(
+              child: Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: colors.primaryAccent.withValues(alpha: 0.14),
+                  border: Border.all(
+                    color: colors.primaryAccent.withValues(alpha: 0.45),
+                    width: 2,
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  Icons.add_rounded,
+                  size: 32,
+                  color: colors.primaryAccent,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

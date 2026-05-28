@@ -8,6 +8,10 @@ import '../../core/persistence/providers.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/components/ui_app_bar.dart';
+import '../../ui/components/ui_button.dart';
+import '../../ui/components/ui_dialog.dart';
+import '../../ui/components/ui_dialog_actions.dart';
+import '../../ui/components/ui_surface.dart';
 
 class PodsManageScreen extends ConsumerStatefulWidget {
   const PodsManageScreen({super.key});
@@ -74,19 +78,15 @@ class _PodsManageScreenState extends ConsumerState<PodsManageScreen> {
   Future<void> _confirmDelete(PodRepository repo, PodPreset pod) async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Delete pod?'),
+      builder: (ctx) => UiDialog(
+        title: 'Delete pod?',
         content: Text('Remove “${pod.name}”?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Delete'),
-          ),
-        ],
+        actions: UiDialogActions.cancelConfirm(
+          context: ctx,
+          confirmLabel: 'Delete',
+          onConfirm: () => Navigator.pop(ctx, true),
+          isDestructive: true,
+        ),
       ),
     );
     if (ok == true) {
@@ -101,23 +101,23 @@ class _PodsManageScreenState extends ConsumerState<PodsManageScreen> {
     ref.listen(podPresetsRevisionProvider, (_, __) => _reload());
     final colors = AppColorTokens.of(context);
     final repo = ref.read(podRepositoryProvider);
-    final fabBottomPad =
-        LayoutTokens.bottomNavHeight +
-        MediaQuery.paddingOf(context).bottom +
-        LayoutTokens.gr2;
-    const extendedFabHeight = 56.0;
+    final bottomBarPad = LayoutTokens.shellBottomInset(context);
 
     return Scaffold(
       appBar: const UiAppBar(title: 'My pods'),
-      body: ListView.builder(
-        padding: EdgeInsets.fromLTRB(
-          LayoutTokens.gr3,
-          LayoutTokens.gr3,
-          LayoutTokens.gr3,
-          fabBottomPad + extendedFabHeight + LayoutTokens.gr2,
-        ),
-        itemCount: _pods.length + 1,
-        itemBuilder: (context, i) {
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: ListView.builder(
+              padding: EdgeInsets.fromLTRB(
+                LayoutTokens.gr3,
+                LayoutTokens.gr3,
+                LayoutTokens.gr3,
+                LayoutTokens.gr2,
+              ),
+              itemCount: _pods.length + 1,
+              itemBuilder: (context, i) {
           if (i == 0) {
             return Padding(
               padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
@@ -130,8 +130,11 @@ class _PodsManageScreenState extends ConsumerState<PodsManageScreen> {
           }
           final pod = _pods[i - 1];
           final n = pod.memberPlayerIds.length;
-          return Card(
-            child: ExpansionTile(
+          return Padding(
+            padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
+            child: UiSurface(
+              padding: EdgeInsets.zero,
+              child: ExpansionTile(
               title: Text(
                 pod.name,
                 style: TextStyle(
@@ -220,16 +223,25 @@ class _PodsManageScreenState extends ConsumerState<PodsManageScreen> {
                 ),
               ],
             ),
+            ),
           );
-        },
-      ),
-      floatingActionButton: Padding(
-        padding: EdgeInsets.only(bottom: fabBottomPad),
-        child: FloatingActionButton.extended(
-          onPressed: () => _editPod(repo, null),
-          icon: const Icon(Icons.add),
-          label: const Text('Add pod'),
-        ),
+              },
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              LayoutTokens.gr3,
+              LayoutTokens.gr2,
+              LayoutTokens.gr3,
+              bottomBarPad,
+            ),
+            child: UiButton(
+              label: 'Add pod',
+              icon: const Icon(Icons.add_rounded, size: 22),
+              onPressed: () => _editPod(repo, null),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' show DateFormat;
 
+import '../../core/game/game_format.dart';
 import '../../core/models/match_record.dart';
 import '../../core/models/player_deck.dart';
 import '../../core/models/player_profile.dart';
@@ -25,6 +26,9 @@ import '../../ui/tokens/typography_tokens.dart';
 
 const String _kProfileUntilFirstGameMessage =
     'Play your first game to unlock stats and history.';
+
+const String _kProfileAddDeckMessage =
+    'Add a deck to track commander performance here.';
 
 /// Internal padding of every profile carousel card ([LayoutTokens.gr2]).
 /// Inner element radius = RadiusTokens.bento − padding (nested radius rule).
@@ -106,9 +110,106 @@ const List<Shadow> _recentMatchOverlayShadow = [
   Shadow(color: Color(0xB3000000), blurRadius: 6, offset: Offset(0, 1)),
 ];
 
+/// Full-height bento tile with centered guidance copy (empty profile sections).
+class ProfileCarouselPlaceholderCard extends StatelessWidget {
+  const ProfileCarouselPlaceholderCard({
+    required this.message,
+    required this.colors,
+    required this.width,
+    required this.height,
+  });
+
+  final String message;
+  final AppColorTokens colors;
+  final double width;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: width,
+      height: height,
+      child: ProfileBentoCard(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: LayoutTokens.gr2),
+            child: Text(
+              message,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: colors.textSecondary,
+                fontWeight: FontWeight.w600,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "+" bento tile — full-card tap target (matches player-stats add card).
+class ProfileCarouselAddCard extends StatelessWidget {
+  const ProfileCarouselAddCard({
+    required this.colors,
+    required this.onTap,
+    required this.semanticsLabel,
+  });
+
+  final AppColorTokens colors;
+  final VoidCallback onTap;
+  final String semanticsLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: semanticsLabel,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: RadiusTokens.radiusBento,
+          child: SizedBox.expand(
+            child: Center(
+              child: Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: colors.primaryAccent.withValues(alpha: 0.14),
+                  border: Border.all(
+                    color: colors.primaryAccent.withValues(alpha: 0.45),
+                    width: 2,
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  Icons.add_rounded,
+                  size: 32,
+                  color: colors.primaryAccent,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class ProfileBentoCard extends StatelessWidget {
-  const ProfileBentoCard({super.key, required this.child});
+  const ProfileBentoCard({
+    super.key,
+    required this.child,
+    this.padding,
+  });
+
   final Widget child;
+
+  /// When null, uses standard bento inset ([_kBentoCardPaddingPx]).
+  final EdgeInsetsGeometry? padding;
 
   @override
   Widget build(BuildContext context) {
@@ -121,48 +222,137 @@ class ProfileBentoCard extends StatelessWidget {
       surfaceTintColor: scheme.surfaceTint,
       shape: _profileCarouselCardShape(scheme),
       child: Padding(
-        padding: EdgeInsets.all(_kBentoCardPaddingPx),
+        padding: padding ?? EdgeInsets.all(_kBentoCardPaddingPx),
         child: child,
       ),
     );
   }
 }
 
-const double kProfileDeckPerfCardWidth = LayoutTokens.profileCarouselCardWidth;
-const double _kDeckPerfTitleHeight = 44;
-const double _kDeckPerfCommanderPortraitMin = 108;
-const double _kDeckPerfCommanderPortraitMax = 168;
-const double _kDeckPerfCardIdealHeight = 400;
+/// Horizontal carousel physics — nested inside profile [CustomScrollView].
+const ScrollPhysics kProfileHorizontalCarouselPhysics = BouncingScrollPhysics(
+  parent: AlwaysScrollableScrollPhysics(),
+);
 
-double deckPerfCardMinHeightPx(BuildContext context) {
+/// Section title + optional count pill + optional trailing control (e.g. filter).
+class ProfileSectionHeader extends StatelessWidget {
+  const ProfileSectionHeader({
+    required this.title,
+    required this.titleStyle,
+    required this.colors,
+    this.count,
+    this.singularUnit,
+    this.pluralUnit,
+    this.trailing,
+  });
+
+  final String title;
+  final TextStyle titleStyle;
+  final AppColorTokens colors;
+  final int? count;
+  final String? singularUnit;
+  final String? pluralUnit;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: titleStyle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        if (count != null && singularUnit != null && pluralUnit != null) ...[
+          SizedBox(width: LayoutTokens.gr2),
+          ProfileSectionCountPill(
+            count: count!,
+            colors: colors,
+            singularUnit: singularUnit!,
+            pluralUnit: pluralUnit!,
+          ),
+        ],
+        if (trailing != null) ...[
+          SizedBox(width: LayoutTokens.gr1),
+          trailing!,
+        ],
+      ],
+    );
+  }
+}
+
+/// Accent count pill for profile section headers (My Decks, Deck performance, etc.).
+class ProfileSectionCountPill extends StatelessWidget {
+  const ProfileSectionCountPill({
+    required this.count,
+    required this.colors,
+    required this.singularUnit,
+    required this.pluralUnit,
+  });
+
+  final int count;
+  final AppColorTokens colors;
+  final String singularUnit;
+  final String pluralUnit;
+
+  @override
+  Widget build(BuildContext context) {
+    final label =
+        count == 1 ? '1 $singularUnit' : '$count $pluralUnit';
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: LayoutTokens.gr2,
+        vertical: LayoutTokens.gr1,
+      ),
+      decoration: BoxDecoration(
+        color: colors.primaryAccent.withValues(alpha: 0.12),
+        borderRadius: RadiusTokens.radiusChip,
+        border: Border.all(
+          color: colors.primaryAccent.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: colors.primaryAccent,
+          fontSize: FontTokens.sm,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.1,
+        ),
+      ),
+    );
+  }
+}
+
+/// Shared width for profile/My Decks horizontal bento tiles (236dp).
+const double kProfileBentoCardWidth = LayoutTokens.profileCarouselCardWidth;
+
+/// Canonical height at unit text scale (between legacy stats and deck perf).
+const double kProfileBentoCardHeight = 340;
+
+const double _kProfileBentoSectionTitleHeight = 44;
+const double _kProfileBentoDeckPortraitMin = 96;
+const double _kProfileBentoDeckPortraitMax = 148;
+
+/// Height for deck performance, recent games, player stats, and My Decks rows.
+double profileBentoCardHeight(
+  BuildContext context, {
+  double? listMaxHeight,
+}) {
   final scale = MediaQuery.textScalerOf(context).scale(12) / 12.0;
-  const double atUnitScale = 388;
-  return (atUnitScale * scale.clamp(1.0, 1.45)).clamp(318.0, 480.0);
-}
-
-double profileSectionHorizontalCardHeight(
-  BuildContext context,
-  double? listMaxHeight,
-) {
-  final double listBudget =
-      (listMaxHeight != null && listMaxHeight.isFinite && listMaxHeight > 0)
-          ? listMaxHeight - _kDeckPerfTitleHeight
-          : 240.0;
-  final double budget = math.max(180.0, listBudget);
-  final double need = deckPerfCardMinHeightPx(context);
-  final double softCap = math.max(_kDeckPerfCardIdealHeight, need);
-  return math.max(need, math.min(budget, softCap));
-}
-
-double profilePlayerStatsCardHeight(
-  BuildContext context,
-  double? listMaxHeight,
-) {
-  final full = profileSectionHorizontalCardHeight(context, listMaxHeight);
-  const scale = 0.86;
-  const softCap = 320.0;
-  const floor = 252.0;
-  return (full * scale).clamp(floor, softCap);
+  final scaled =
+      (kProfileBentoCardHeight * scale.clamp(1.0, 1.35)).clamp(300.0, 420.0);
+  if (listMaxHeight != null && listMaxHeight.isFinite && listMaxHeight > 0) {
+    final budget = listMaxHeight - _kProfileBentoSectionTitleHeight;
+    if (budget > 0) {
+      return math.min(scaled, math.max(280.0, budget));
+    }
+  }
+  return scaled;
 }
 
 bool _deckHasManaForProfile(PlayerDeck d) {
@@ -318,46 +508,37 @@ class _ProfileRecentGamesModuleState extends State<ProfileRecentGamesModule> {
     final titleStyle = TypographyTokens.sectionTitle(c.textPrimary);
 
     Widget titleRow() {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Text(
-                  'Recent games',
-                  style: titleStyle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+      return ProfileSectionHeader(
+        title: 'Recent games',
+        titleStyle: titleStyle,
+        colors: c,
+        count: filtered.length,
+        singularUnit: 'game',
+        pluralUnit: 'games',
+        trailing: showFilterMenu
+            ? PopupMenuButton<_RecentGamesTimeFilter>(
+                tooltip: 'Filter: ${_filter.menuLabel}',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: kMinInteractiveDimension,
+                  minHeight: kMinInteractiveDimension,
                 ),
-              ),
-              if (showFilterMenu)
-                PopupMenuButton<_RecentGamesTimeFilter>(
-                  tooltip: 'Filter: ${_filter.menuLabel}',
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: kMinInteractiveDimension,
-                    minHeight: kMinInteractiveDimension,
-                  ),
-                  onSelected: (v) => setState(() => _filter = v),
-                  icon: Icon(
-                    Icons.filter_list_rounded,
-                    size: 22,
-                    color: c.primaryAccent,
-                  ),
-                  itemBuilder: (context) => [
-                    for (final f in _RecentGamesTimeFilter.values)
-                      CheckedPopupMenuItem<_RecentGamesTimeFilter>(
-                        value: f,
-                        checked: f == _filter,
-                        child: Text(f.menuLabel),
-                      ),
-                  ],
+                onSelected: (v) => setState(() => _filter = v),
+                icon: Icon(
+                  Icons.filter_list_rounded,
+                  size: 22,
+                  color: c.primaryAccent,
                 ),
-            ],
-          ),
-        ],
+                itemBuilder: (context) => [
+                  for (final f in _RecentGamesTimeFilter.values)
+                    CheckedPopupMenuItem<_RecentGamesTimeFilter>(
+                      value: f,
+                      checked: f == _filter,
+                      child: Text(f.menuLabel),
+                    ),
+                ],
+              )
+            : null,
       );
     }
 
@@ -377,13 +558,30 @@ class _ProfileRecentGamesModuleState extends State<ProfileRecentGamesModule> {
     }
 
     if (widget.matches.isEmpty) {
+      final cardHeight = profileBentoCardHeight(context, listMaxHeight: lh);
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
           titleRow(),
           SizedBox(height: LayoutTokens.gr2),
-          emptyBody(_kProfileUntilFirstGameMessage),
+          SizedBox(
+            height: cardHeight,
+            child: ListView(
+              primary: false,
+              scrollDirection: Axis.horizontal,
+              clipBehavior: Clip.none,
+              physics: kProfileHorizontalCarouselPhysics,
+              children: [
+                ProfileCarouselPlaceholderCard(
+                  message: _kProfileUntilFirstGameMessage,
+                  colors: c,
+                  width: kProfileBentoCardWidth,
+                  height: cardHeight,
+                ),
+              ],
+            ),
+          ),
         ],
       );
     }
@@ -400,7 +598,7 @@ class _ProfileRecentGamesModuleState extends State<ProfileRecentGamesModule> {
       );
     }
 
-    final cardHeight = profileSectionHorizontalCardHeight(context, lh);
+    final cardHeight = profileBentoCardHeight(context, listMaxHeight: lh);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -411,11 +609,12 @@ class _ProfileRecentGamesModuleState extends State<ProfileRecentGamesModule> {
         SizedBox(
           height: cardHeight,
           child: ListView.separated(
+            primary: false,
             controller: _scrollCtrl,
             scrollDirection: Axis.horizontal,
             clipBehavior: Clip.none,
-            padding: EdgeInsets.zero,
-            physics: const BouncingScrollPhysics(),
+            padding: EdgeInsets.only(right: LayoutTokens.gr1),
+            physics: kProfileHorizontalCarouselPhysics,
             itemCount: filtered.length,
             separatorBuilder: (_, __) => SizedBox(width: LayoutTokens.gr2),
             itemBuilder: (context, i) {
@@ -423,7 +622,7 @@ class _ProfileRecentGamesModuleState extends State<ProfileRecentGamesModule> {
                 key: ValueKey<String>(filtered[i].matchId),
                 match: filtered[i],
                 colors: c,
-                width: kProfileDeckPerfCardWidth,
+                width: kProfileBentoCardWidth,
                 height: cardHeight,
               );
             },
@@ -1029,10 +1228,12 @@ class ProfileDeckPerformanceSection extends ConsumerStatefulWidget {
   final AppColorTokens colors;
   /// When null, list uses remaining flex height (one-screen layout).
   final double? listMaxHeight;
+  final bool hasPlayedGames;
 
   const ProfileDeckPerformanceSection({
     required this.colors,
     this.listMaxHeight,
+    this.hasPlayedGames = false,
   });
 
   @override
@@ -1066,97 +1267,90 @@ class _ProfileDeckPerformanceSectionState
     final lh = widget.listMaxHeight;
 
     final deckTitleStyle = TypographyTokens.sectionTitle(colors.textPrimary);
+    final showPlaceholder =
+        repoDecks.isEmpty || !widget.hasPlayedGames;
+    final placeholderMessage =
+        repoDecks.isEmpty
+            ? _kProfileAddDeckMessage
+            : _kProfileUntilFirstGameMessage;
 
-    Widget emptyBody(String message) {
-      return SizedBox(
-        height: 148,
-        child: Center(
-          child: Text(
-            message,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: colors.textSecondary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ),
+    Widget titleRow() {
+      return ProfileSectionHeader(
+        title: 'Deck performance',
+        titleStyle: deckTitleStyle,
+        colors: colors,
+        count: repoDecks.length,
+        singularUnit: 'deck',
+        pluralUnit: 'decks',
       );
     }
 
-    Widget horizontalList(double cardHeight, List<PlayerDeck> decks) {
+    Widget carouselRow(double cardHeight) {
+      final children = <Widget>[];
+      if (showPlaceholder) {
+        children.add(
+          ProfileCarouselPlaceholderCard(
+            message: placeholderMessage,
+            colors: colors,
+            width: kProfileBentoCardWidth,
+            height: cardHeight,
+          ),
+        );
+        children.add(SizedBox(width: LayoutTokens.gr2));
+      } else {
+        for (var i = 0; i < repoDecks.length; i++) {
+          if (i > 0) children.add(SizedBox(width: LayoutTokens.gr2));
+          children.add(
+            ProfileDeckBentoTile(
+              deck: repoDecks[i],
+              colors: colors,
+              width: kProfileBentoCardWidth,
+              height: cardHeight,
+            ),
+          );
+        }
+        children.add(SizedBox(width: LayoutTokens.gr2));
+      }
+      children.add(
+        SizedBox(
+          width: kProfileBentoCardWidth,
+          height: cardHeight,
+          child: ProfileBentoCard(
+            padding: EdgeInsets.zero,
+            child: ProfileCarouselAddCard(
+              colors: colors,
+              semanticsLabel: 'Add deck',
+              onTap: () => context.go(AppRoutes.decks),
+            ),
+          ),
+        ),
+      );
+
       return SizedBox(
         height: cardHeight,
-        child: ListView.separated(
+        child: ListView(
+          primary: false,
           controller: _scrollCtrl,
           scrollDirection: Axis.horizontal,
           clipBehavior: Clip.none,
-          padding: EdgeInsets.zero,
-          physics: const BouncingScrollPhysics(),
-          itemCount: decks.length,
-          separatorBuilder: (_, __) => SizedBox(width: LayoutTokens.gr2),
-          itemBuilder: (context, i) {
-            return _ProfileDeckPerfCard(
-              deck: decks[i],
-              colors: colors,
-              width: kProfileDeckPerfCardWidth,
-              height: cardHeight,
-            );
-          },
+          padding: EdgeInsets.only(right: LayoutTokens.gr1),
+          physics: kProfileHorizontalCarouselPhysics,
+          children: children,
         ),
-      );
-    }
-
-    Widget titleRow() {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Text('Deck performance', style: deckTitleStyle),
-              ),
-              IconButton(
-                icon: Icon(
-                  Icons.layers_outlined,
-                  size: 22,
-                  color: colors.primaryAccent,
-                ),
-                tooltip: 'Manage decks',
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(
-                  minWidth: kMinInteractiveDimension,
-                  minHeight: kMinInteractiveDimension,
-                ),
-                onPressed: () => context.go(AppRoutes.decks),
-              ),
-            ],
-          ),
-        ],
       );
     }
 
     return LayoutBuilder(
       builder: (context, c) {
         final double cardHeight =
-            profileSectionHorizontalCardHeight(context, lh);
-        if (repoDecks.isEmpty) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              titleRow(),
-              SizedBox(height: LayoutTokens.gr2),
-              emptyBody('No decks yet. Open Decks to add one.'),
-            ],
-          );
-        }
+            profileBentoCardHeight(context, listMaxHeight: lh);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
             titleRow(),
             SizedBox(height: LayoutTokens.gr2),
-            horizontalList(cardHeight, repoDecks),
+            carouselRow(cardHeight),
           ],
         );
       },
@@ -1164,9 +1358,9 @@ class _ProfileDeckPerformanceSectionState
   }
 }
 
-/// Vertical card showing one deck's commander art, names, mana, WR bar, and chips.
-class _ProfileDeckPerfCard extends StatelessWidget {
-  const _ProfileDeckPerfCard({
+/// Vertical bento tile for a saved deck (profile carousel + My Decks library).
+class ProfileDeckBentoTile extends StatelessWidget {
+  const ProfileDeckBentoTile({
     required this.deck,
     required this.colors,
     required this.width,
@@ -1198,8 +1392,8 @@ class _ProfileDeckPerfCard extends StatelessWidget {
                   final sz = math
                       .min(c.maxHeight, maxByWidth)
                       .clamp(
-                        _kDeckPerfCommanderPortraitMin,
-                        _kDeckPerfCommanderPortraitMax,
+                        _kProfileBentoDeckPortraitMin,
+                        _kProfileBentoDeckPortraitMax,
                       );
                   return Center(
                     child: ResolvedDeckCommanderAvatarCluster(
@@ -1223,7 +1417,7 @@ class _ProfileDeckPerfCard extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
             Text(
-              deck.hasPartner
+              deck.isCommanderDeck && deck.hasPartner
                   ? '${deck.commanderName} // ${deck.partnerCommanderName}'
                   : deck.commanderName,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -1232,7 +1426,14 @@ class _ProfileDeckPerfCard extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            if (_deckHasManaForProfile(deck)) ...[
+            Text(
+              deck.gameFormat.displayName,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: colors.primaryAccent,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (deck.isCommanderDeck && _deckHasManaForProfile(deck)) ...[
               SizedBox(height: LayoutTokens.gr1),
               DeckManaCostRows(
                 commanderManaCost: deck.commanderManaCost,

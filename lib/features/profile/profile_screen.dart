@@ -11,6 +11,7 @@ import '../../core/persistence/providers.dart';
 import '../../shared/constants/app_icons.dart';
 import '../../shared/utils/app_router.dart';
 import '../../shared/widgets/tier_badge.dart';
+import '../../ui/components/ui_button.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/color_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
@@ -20,6 +21,9 @@ import 'profile_player_stats_section.dart';
 
 /// Typical phones (≥360 logical width) use tighter horizontal page padding.
 const double _kProfileStatsRowBreakpoint = 360;
+
+/// Circular profile picture in the hero (above username).
+const double _kProfileAvatarSize = 104;
 
 /// Clamped text scale (1.0 = default) for layout reserves and hero sizing.
 double _profileLayoutTextScale(BuildContext context) {
@@ -88,7 +92,7 @@ class ProfileScreen extends ConsumerWidget {
         backgroundColor: AppColorTokens.of(context).backgroundPrimary,
         body: Center(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(LayoutTokens.gr4),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -97,10 +101,10 @@ class ProfileScreen extends ConsumerWidget {
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
-                const SizedBox(height: 16),
-                FilledButton(
+                SizedBox(height: LayoutTokens.gr4),
+                UiButton(
+                  label: 'Create profile',
                   onPressed: () => context.go(AppRoutes.profileSetup),
-                  child: const Text('Create profile'),
                 ),
               ],
             ),
@@ -119,6 +123,7 @@ class ProfileScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: colors.backgroundPrimary,
       body: SafeArea(
+        top: false,
         bottom: false,
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -130,10 +135,7 @@ class ProfileScreen extends ConsumerWidget {
             final isNarrow = bodyW < _kProfileStatsRowBreakpoint;
             final hPad = isNarrow ? LayoutTokens.gr2 : LayoutTokens.gr3;
             // MainShell uses extendBody; reserve space so bottom sections clear the dock.
-            final scrollBottomPad =
-                LayoutTokens.bottomNavHeight +
-                MediaQuery.paddingOf(context).bottom +
-                LayoutTokens.gr2;
+            final scrollBottomPad = LayoutTokens.shellBottomInset(context);
 
             final maxH = constraints.maxHeight;
             final layoutTs = _profileLayoutTextScale(context);
@@ -147,13 +149,10 @@ class ProfileScreen extends ConsumerWidget {
               key: ValueKey(profileWatch.revision),
               slivers: [
                 SliverToBoxAdapter(
-                  child: Padding(
-                    // Match horizontal inset so the banner isn’t flush under SafeArea.
-                    padding: EdgeInsets.fromLTRB(hPad, hPad, hPad, 0),
-                    child: _ProfileHeroCard(
-                      profile: profile,
-                      colors: colors,
-                    ),
+                  child: _ProfileHeroCard(
+                    profile: profile,
+                    colors: colors,
+                    overlayHPadding: hPad,
                   ),
                 ),
                 SliverToBoxAdapter(child: SizedBox(height: LayoutTokens.gr4)),
@@ -171,6 +170,7 @@ class ProfileScreen extends ConsumerWidget {
                       ProfileDeckPerformanceSection(
                         colors: colors,
                         listMaxHeight: sectionCardListMaxHeight,
+                        hasPlayedGames: allMatches.isNotEmpty,
                       ),
                       SizedBox(height: LayoutTokens.gr4),
                       ProfileRecentGamesModule(
@@ -214,7 +214,7 @@ class _ProfileHeroFrostVeil extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Colors.black.withValues(alpha: 0.22),
+            Colors.black.withValues(alpha: 0.42),
             Colors.black.withValues(alpha: 0.30),
             Colors.black.withValues(alpha: 0.52),
           ],
@@ -226,20 +226,27 @@ class _ProfileHeroFrostVeil extends StatelessWidget {
   }
 }
 
-/// Rounded hero card: banner art, banner action, floating stats pill.
+/// Full-bleed hero header: edge-to-edge banner, rounded bottom only.
 class _ProfileHeroCard extends StatelessWidget {
   const _ProfileHeroCard({
     required this.profile,
     required this.colors,
+    required this.overlayHPadding,
   });
 
   final PlayerProfile profile;
   final AppColorTokens colors;
+  final double overlayHPadding;
+
+  static final BorderRadius _heroRadius = BorderRadius.vertical(
+    bottom: Radius.circular(RadiusTokens.bento),
+  );
 
   @override
   Widget build(BuildContext context) {
     final cardHeight = _profileHeroCardHeight(context);
     void onBanner() => context.push(AppRoutes.profileBanner);
+    void onAvatar() => context.push(AppRoutes.profileAvatar);
 
     Widget background() {
       final url = profile.profileBannerImageUrl;
@@ -259,8 +266,10 @@ class _ProfileHeroCard extends StatelessWidget {
       return _defaultProfileBannerArt(context, height: cardHeight);
     }
 
+    final topInset = MediaQuery.paddingOf(context).top;
+
     return ClipRRect(
-      borderRadius: RadiusTokens.radiusBento,
+      borderRadius: _heroRadius,
       child: SizedBox(
         height: cardHeight,
         width: double.infinity,
@@ -271,8 +280,8 @@ class _ProfileHeroCard extends StatelessWidget {
             Positioned.fill(child: background()),
             const Positioned.fill(child: _ProfileHeroFrostVeil()),
             Positioned(
-              top: 10,
-              right: 10,
+              top: topInset + LayoutTokens.gr2,
+              right: overlayHPadding,
               child: Semantics(
                 button: true,
                 label: 'Change profile banner',
@@ -313,12 +322,13 @@ class _ProfileHeroCard extends StatelessWidget {
               ),
             ),
             Positioned(
-              left: 12,
-              right: 12,
-              bottom: 12,
+              left: overlayHPadding,
+              right: overlayHPadding,
+              bottom: LayoutTokens.gr3,
               child: _ProfileHeroIdentityAndStats(
                 profile: profile,
                 colors: colors,
+                onAvatarTap: onAvatar,
               ),
             ),
           ],
@@ -328,15 +338,17 @@ class _ProfileHeroCard extends StatelessWidget {
   }
 }
 
-/// Name + tier badge above the stats pill (inside hero gradient). Rank is shown under Level progress.
+/// Avatar, name, tier badge, and stats pill (inside hero gradient).
 class _ProfileHeroIdentityAndStats extends StatelessWidget {
   const _ProfileHeroIdentityAndStats({
     required this.profile,
     required this.colors,
+    required this.onAvatarTap,
   });
 
   final PlayerProfile profile;
   final AppColorTokens colors;
+  final VoidCallback onAvatarTap;
 
   @override
   Widget build(BuildContext context) {
@@ -344,6 +356,14 @@ class _ProfileHeroIdentityAndStats extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Center(
+          child: _ProfileHeroAvatar(
+            profile: profile,
+            colors: colors,
+            onTap: onAvatarTap,
+          ),
+        ),
+        SizedBox(height: LayoutTokens.gr2),
         Text(
           profile.username,
           textAlign: TextAlign.center,
@@ -367,6 +387,137 @@ class _ProfileHeroIdentityAndStats extends StatelessWidget {
         SizedBox(height: LayoutTokens.gr2),
         _ProfileFloatingStatsPill(profile: profile),
       ],
+    );
+  }
+}
+
+String? _profileAvatarImageUrl(PlayerProfile profile) {
+  final avatar = profile.profileAvatarImageUrl;
+  if (avatar != null && avatar.isNotEmpty) return avatar;
+  final commander = profile.selectedCommanderImageUrl;
+  if (commander != null && commander.isNotEmpty) return commander;
+  return null;
+}
+
+String _profileInitials(String username) {
+  final trimmed = username.trim();
+  if (trimmed.isEmpty) return '?';
+  final parts = trimmed.split(RegExp(r'\s+'));
+  if (parts.length >= 2) {
+    return '${parts.first[0]}${parts[1][0]}'.toUpperCase();
+  }
+  if (trimmed.length >= 2) {
+    return trimmed.substring(0, 2).toUpperCase();
+  }
+  return trimmed[0].toUpperCase();
+}
+
+/// Tappable circular profile picture above the username.
+class _ProfileHeroAvatar extends StatelessWidget {
+  const _ProfileHeroAvatar({
+    required this.profile,
+    required this.colors,
+    required this.onTap,
+  });
+
+  final PlayerProfile profile;
+  final AppColorTokens colors;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrl = _profileAvatarImageUrl(profile);
+    const radius = _kProfileAvatarSize / 2;
+
+    Widget avatarChild;
+    if (imageUrl != null) {
+      avatarChild = ClipOval(
+        child: CachedNetworkImage(
+          imageUrl: imageUrl,
+          width: _kProfileAvatarSize,
+          height: _kProfileAvatarSize,
+          fit: BoxFit.cover,
+          placeholder: (_, __) => _initialsAvatar(radius),
+          errorWidget: (_, __, ___) => _initialsAvatar(radius),
+        ),
+      );
+    } else {
+      avatarChild = _initialsAvatar(radius);
+    }
+
+    return Semantics(
+      button: true,
+      label: 'Change profile picture',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          child: Container(
+            width: _kProfileAvatarSize,
+            height: _kProfileAvatarSize,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.9),
+                width: 3,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.45),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: ClipOval(
+              child: Stack(
+                fit: StackFit.expand,
+                clipBehavior: Clip.none,
+                children: [
+                  avatarChild,
+                  Positioned(
+                    right: LayoutTokens.gr0,
+                    bottom: LayoutTokens.gr0,
+                    child: Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: colors.primaryAccent,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          width: 2,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.camera_alt_rounded,
+                        size: 18,
+                        color: ColorTokens.onAccent,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _initialsAvatar(double radius) {
+    return ColoredBox(
+      color: colors.primaryAccent.withValues(alpha: 0.85),
+      child: Center(
+        child: Text(
+          _profileInitials(profile.username),
+          style: TextStyle(
+            color: ColorTokens.onAccent,
+            fontWeight: FontWeight.w800,
+            fontSize: radius * 0.72,
+          ),
+        ),
+      ),
     );
   }
 }

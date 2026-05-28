@@ -76,6 +76,10 @@ class PlayerProfile extends HiveObject {
   @HiveField(22)
   String? profileBannerImageUrl;
 
+  /// User-picked optional stat bento cards (see [ProfileOptionalStatIds]).
+  @HiveField(23, defaultValue: <String>[])
+  List<String> profileExtraStatIds;
+
   PlayerProfile({
     required this.username,
     this.level = 1,
@@ -100,5 +104,6 @@ class PlayerProfile extends HiveObject {
     this.honorsTeamPlayerReceived = 0,
     this.honorsUnderdogReceived = 0,
     this.profileBannerImageUrl,
-  });
+    List<String>? profileExtraStatIds,
+  }) : profileExtraStatIds = profileExtraStatIds ?? [];
 }

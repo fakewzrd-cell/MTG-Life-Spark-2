@@ -262,11 +262,31 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
 
   void updateConfig(LobbyConfig config) {
     if (!state.isHost) return;
-    state = state.copyWith(
-      config: config.copyWith(
-        maxPlayers: LobbyConfig.clampMaxPlayers(config.maxPlayers),
-      ),
+    final newConfig = config.copyWith(
+      maxPlayers: LobbyConfig.clampMaxPlayers(config.maxPlayers),
     );
+    final wasCommander = state.config.format.isCommanderStyle;
+    final isCommander = newConfig.format.isCommanderStyle;
+    var players = state.players;
+    if (wasCommander && !isCommander) {
+      final deckRepo = _ref.read(deckRepositoryProvider);
+      players = players.map((p) {
+        var slot = p.copyWith(
+          hasPartner: false,
+          partnerCommanderName: null,
+          partnerCommanderImageUrl: null,
+        );
+        final deckId = slot.selectedDeckId;
+        if (deckId != null) {
+          final deck = deckRepo.getById(deckId);
+          if (deck == null || !deck.matchesLobbyFormat(newConfig.format)) {
+            slot = slot.copyWith(selectedDeckId: null);
+          }
+        }
+        return slot;
+      }).toList();
+    }
+    state = state.copyWith(config: newConfig, players: players);
     _broadcastLobbyUpdate();
   }
 
@@ -312,7 +332,7 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
     _publishLobbyChange();
   }
 
-  /// Apply a saved deck: fills commanders and tags the slot for win/loss tracking.
+  /// Apply a saved deck: fills cover/commander fields and tags slot for W/L.
   void applyDeck({required String playerId, required PlayerDeck deck}) {
     final profile = _ref.read(profileRepositoryProvider).getProfile();
     final commanderImageUrl = resolveDeckCommanderImageUrl(
@@ -320,20 +340,32 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
           profile: profile,
         ) ??
         deck.commanderImageUrl;
-    final partnerCommanderImageUrl = resolveDeckPartnerImageUrl(
-          deck: deck,
-          profile: profile,
-        ) ??
-        deck.partnerCommanderImageUrl;
 
     final players = state.players.map((p) {
       if (p.playerId != playerId) return p;
+      if (deck.isCommanderDeck) {
+        final partnerCommanderImageUrl = resolveDeckPartnerImageUrl(
+              deck: deck,
+              profile: profile,
+            ) ??
+            deck.partnerCommanderImageUrl;
+        return p.copyWith(
+          commanderName: deck.commanderName,
+          commanderImageUrl: commanderImageUrl,
+          partnerCommanderName: deck.partnerCommanderName,
+          partnerCommanderImageUrl: partnerCommanderImageUrl,
+          hasPartner: deck.hasPartner,
+          selectedDeckId: deck.id,
+          commanderColorIdentity:
+              List<String>.from(deck.commanderColorIdentity),
+        );
+      }
       return p.copyWith(
         commanderName: deck.commanderName,
         commanderImageUrl: commanderImageUrl,
-        partnerCommanderName: deck.partnerCommanderName,
-        partnerCommanderImageUrl: partnerCommanderImageUrl,
-        hasPartner: deck.hasPartner,
+        partnerCommanderName: null,
+        partnerCommanderImageUrl: null,
+        hasPartner: false,
         selectedDeckId: deck.id,
         commanderColorIdentity: List<String>.from(deck.commanderColorIdentity),
       );

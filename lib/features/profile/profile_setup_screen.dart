@@ -4,8 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/models/player_profile.dart';
 import '../../core/persistence/providers.dart';
-import '../../shared/theme/app_theme.dart';
+import '../../ui/theme/app_color_tokens.dart';
 import '../../shared/utils/app_router.dart';
+import '../../ui/components/ui_button.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 
@@ -48,24 +49,15 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColorTokens.of(context);
     return Scaffold(
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Align(
-              alignment: Alignment.topRight,
-              child: TextButton(
-                onPressed: _saving ? null : _skip,
-                child: Text(
-                  'Skip',
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                ),
-              ),
-            ),
             Expanded(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr5),
+                padding: EdgeInsets.symmetric(horizontal: LayoutTokens.ctaHorizontal),
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -79,13 +71,13 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                               width: 80,
                               height: 80,
                               decoration: BoxDecoration(
-                                color: AppTheme.card,
+                                color: colors.surface,
                                 borderRadius: RadiusTokens.radiusChip,
                               ),
                               child: Icon(
                                 Icons.shield,
                                 size: 48,
-                                color: AppTheme.accent,
+                                color: colors.primaryAccent,
                               ),
                             ),
                             SizedBox(height: LayoutTokens.gr4),
@@ -133,19 +125,17 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                         },
                       ),
                       const Spacer(),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: ElevatedButton(
-                          onPressed: _saving ? null : _save,
-                          child: _saving
-                              ? const SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : Text('Enter the Battlefield'),
-                        ),
+                      UiButton(
+                        label: 'Enter the Battlefield',
+                        loading: _saving,
+                        onPressed: _saving ? null : _save,
+                      ),
+                      SizedBox(height: LayoutTokens.gr2),
+                      UiButton(
+                        label: 'Skip',
+                        variant: UiButtonVariant.secondary,
+                        enabled: !_saving,
+                        onPressed: _saving ? null : _skip,
                       ),
                       SizedBox(height: LayoutTokens.gr5),
                     ],

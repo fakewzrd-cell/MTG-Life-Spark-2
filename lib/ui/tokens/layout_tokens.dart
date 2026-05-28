@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 /// Layout and proportion constants.
 ///
 /// **Spacing** uses a strict **4dp grid** (`gr0` … `gr6`) so padding, gaps, and
@@ -29,11 +31,33 @@ class LayoutTokens {
 
   // ── Named layout constants ────────────────────────────────────────────────
 
-  /// Width of a profile carousel card (deck performance, player stats). 236dp.
+  /// Width of a profile/My Decks horizontal bento tile. 236dp.
   static const double profileCarouselCardWidth = 236;
 
   /// Height of the M3 bottom navigation bar. 80dp.
   static const double bottomNavHeight = 80;
+
+  /// Horizontal inset for full-width CTAs (onboarding, setup, end-game actions).
+  static const double ctaHorizontal = gr5;
+
+  /// Bottom clearance for scrollable content under [MainShell] floating nav.
+  static double shellBottomInset(BuildContext context) {
+    return bottomNavHeight + MediaQuery.paddingOf(context).bottom + gr2;
+  }
+
+  /// Standard [ListView] padding inside shell tabs.
+  static EdgeInsets shellListPadding(
+    BuildContext context, {
+    double horizontal = gr3,
+    double top = gr3,
+  }) {
+    return EdgeInsets.fromLTRB(
+      horizontal,
+      top,
+      horizontal,
+      shellBottomInset(context),
+    );
+  }
 }
 
 /// Width / height hints for **in-game** layouts (personal view, HUD rows).

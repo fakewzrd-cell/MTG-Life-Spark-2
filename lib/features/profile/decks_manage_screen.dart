@@ -1,126 +1,22 @@
 import 'package:flutter/material.dart';
-import '../../ui/tokens/font_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/game/game_format.dart';
 import '../../core/models/player_deck.dart';
 import '../../core/persistence/deck_repository.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/utils/app_router.dart';
-import '../../shared/widgets/deck_tile_visual.dart';
-import '../../shared/widgets/mana_cost_pips.dart';
+import '../../ui/components/ui_app_bar.dart';
+import '../../ui/components/ui_button.dart';
+import '../../ui/components/ui_dialog_actions.dart';
 import '../../ui/theme/app_color_tokens.dart';
+import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
-import '../../ui/components/ui_app_bar.dart';
+import '../../ui/tokens/typography_tokens.dart';
 import '../game/widgets/game_modal_chrome.dart';
-
-ButtonStyle _deckActionButtonStyle(
-  AppColorTokens colors, {
-  Color? foreground,
-  Color? border,
-  bool expanded = false,
-}) {
-  return OutlinedButton.styleFrom(
-    foregroundColor: foreground ?? colors.textPrimary,
-    backgroundColor: colors.surface.withValues(alpha: 0.35),
-    side: BorderSide(
-      color: border ?? colors.borderSubtle,
-      width: 1.25,
-    ),
-    padding: EdgeInsets.symmetric(
-      horizontal: LayoutTokens.gr2,
-      vertical: LayoutTokens.gr2,
-    ),
-    minimumSize: Size(expanded ? double.infinity : 0, LayoutTokens.minTapTarget),
-    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-    shape: RoundedRectangleBorder(
-      borderRadius: RadiusTokens.radiusControlMd,
-    ),
-    textStyle: TextStyle(
-      fontSize: FontTokens.caption,
-      fontWeight: FontWeight.w700,
-      letterSpacing: 0.1,
-    ),
-  );
-}
-
-class _DeckCardActions extends StatelessWidget {
-  const _DeckCardActions({
-    required this.colors,
-    required this.onCommanders,
-    required this.onRename,
-    required this.onDelete,
-  });
-
-  final AppColorTokens colors;
-  final VoidCallback onCommanders;
-  final VoidCallback onRename;
-  final VoidCallback onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Divider(
-          height: LayoutTokens.gr3,
-          thickness: 1,
-          color: colors.borderSubtle.withValues(alpha: 0.65),
-        ),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: onCommanders,
-                icon: Icon(
-                  Icons.style_outlined,
-                  size: 18,
-                  color: colors.primaryAccent,
-                ),
-                label: const Text('Commanders'),
-                style: _deckActionButtonStyle(
-                  colors,
-                  foreground: colors.primaryAccent,
-                  border: colors.primaryAccent.withValues(alpha: 0.5),
-                ),
-              ),
-            ),
-            SizedBox(width: LayoutTokens.gr1),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: onRename,
-                icon: Icon(
-                  Icons.edit_outlined,
-                  size: 18,
-                  color: colors.textPrimary,
-                ),
-                label: const Text('Rename'),
-                style: _deckActionButtonStyle(colors),
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: LayoutTokens.gr1),
-        OutlinedButton.icon(
-          onPressed: onDelete,
-          icon: Icon(
-            Icons.delete_outline,
-            size: 18,
-            color: colors.error,
-          ),
-          label: const Text('Delete deck'),
-          style: _deckActionButtonStyle(
-            colors,
-            foreground: colors.error,
-            border: colors.error.withValues(alpha: 0.45),
-            expanded: true,
-          ),
-        ),
-      ],
-    );
-  }
-}
+import 'profile_carousel_sections.dart';
 
 class DecksManageScreen extends ConsumerStatefulWidget {
   const DecksManageScreen({super.key});
@@ -129,11 +25,18 @@ class DecksManageScreen extends ConsumerStatefulWidget {
   ConsumerState<DecksManageScreen> createState() => _DecksManageScreenState();
 }
 
-bool _deckHasMana(PlayerDeck d) {
-  final c = d.commanderManaCost?.trim();
-  final p = d.partnerManaCost?.trim();
-  return (c != null && c.isNotEmpty) ||
-      (d.hasPartner && p != null && p.isNotEmpty);
+Map<GameFormat, List<PlayerDeck>> _groupDecksByFormat(List<PlayerDeck> decks) {
+  final grouped = <GameFormat, List<PlayerDeck>>{};
+  for (final deck in decks) {
+    grouped.putIfAbsent(deck.gameFormat, () => []).add(deck);
+  }
+  for (final list in grouped.values) {
+    list.sort(
+      (a, b) =>
+          a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()),
+    );
+  }
+  return grouped;
 }
 
 class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
@@ -153,45 +56,80 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
 
   Future<void> _promptNewDeckName() async {
     final controller = TextEditingController();
-    final name = await showDialog<String>(
+    var selectedFormat = GameFormat.commander;
+    final result = await showDialog<({String name, GameFormat format})>(
       context: context,
       builder: (ctx) {
         final colors = AppColorTokens.of(ctx);
-        return AlertDialog(
-          title: GameDialogTitleRow(
-            title: 'Deck name',
-            onClose: () => Navigator.pop(ctx),
-          ),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            decoration: InputDecoration(
-              hintText: 'e.g. Raffine Tempo',
-              hintStyle: TextStyle(color: colors.textSecondary),
-            ),
-            style: TextStyle(color: colors.textPrimary),
-          ),
-          actions: [
-            FilledButton(
-              onPressed: () {
-                final t = controller.text.trim();
-                if (t.isEmpty) return;
-                Navigator.pop(ctx, t);
-              },
-              child: Text('Next'),
-            ),
-          ],
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: GameDialogTitleRow(
+                title: 'New deck',
+                onClose: () => Navigator.pop(ctx),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextField(
+                    controller: controller,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      labelText: 'Deck name',
+                      hintText: 'e.g. Raffine Tempo',
+                      hintStyle: TextStyle(color: colors.textSecondary),
+                    ),
+                    style: TextStyle(color: colors.textPrimary),
+                  ),
+                  SizedBox(height: LayoutTokens.gr3),
+                  DropdownButtonFormField<GameFormat>(
+                    initialValue: selectedFormat,
+                    decoration: InputDecoration(
+                      labelText: 'Format',
+                      labelStyle: TextStyle(color: colors.textSecondary),
+                    ),
+                    dropdownColor: colors.surface,
+                    style: TextStyle(color: colors.textPrimary),
+                    items: GameFormatDetails.lobbyPickerOrder
+                        .map(
+                          (f) => DropdownMenuItem(
+                            value: f,
+                            child: Text(f.displayName),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (f) {
+                      if (f == null) return;
+                      setDialogState(() => selectedFormat = f);
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                FilledButton(
+                  onPressed: () {
+                    final t = controller.text.trim();
+                    if (t.isEmpty) return;
+                    Navigator.pop(ctx, (name: t, format: selectedFormat));
+                  },
+                  child: const Text('Next'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
-    if (name == null || !mounted) return;
+    if (result == null || !mounted) return;
     final profile = ref.read(profileRepositoryProvider).getProfile();
     if (profile == null) return;
     await context.push(
       AppRoutes.commanderSelect,
       extra: {
         'playerId': profile.username,
-        'newDeckDisplayName': name,
+        'newDeckDisplayName': result.name,
+        'deckFormat': result.format.name,
       },
     );
     bumpDeckListRevision(ref);
@@ -206,6 +144,7 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
       extra: {
         'playerId': profile.username,
         'editDeckId': deck.id,
+        'deckFormat': deck.format,
       },
     );
     bumpDeckListRevision(ref);
@@ -235,13 +174,13 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
                 if (t.isEmpty) return;
                 Navigator.pop(ctx, t);
               },
-              child: Text('Save'),
+              child: const Text('Save'),
             ),
           ],
         );
       },
     );
-    if (name == null || !mounted) return;
+    if (name == null || name == deck.displayName) return;
     deck.displayName = name;
     await repo.save(deck);
     bumpDeckListRevision(ref);
@@ -249,6 +188,7 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
   }
 
   Future<void> _confirmDelete(DeckRepository repo, PlayerDeck deck) async {
+    final colors = AppColorTokens.of(context);
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -257,14 +197,16 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
           onClose: () => Navigator.pop(ctx, false),
         ),
         content: Text(
-          'Remove “${deck.displayName}”? Stats for this deck will be deleted.',
+          'Remove “${deck.displayName}” from your library? Match history stays, '
+          'but this deck will no longer appear in the lobby picker.',
+          style: TextStyle(color: colors.textSecondary),
         ),
-        actions: [
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Delete'),
-          ),
-        ],
+        actions: UiDialogActions.cancelConfirm(
+          context: ctx,
+          confirmLabel: 'Delete',
+          onConfirm: () => Navigator.pop(ctx, true),
+          isDestructive: true,
+        ),
       ),
     );
     if (ok == true) {
@@ -274,128 +216,241 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
     }
   }
 
+  void _showDeckOptionsSheet(PlayerDeck deck, DeckRepository repo) {
+    final colors = AppColorTokens.of(context);
+    final coverLabel = deck.isCommanderDeck ? 'Edit commanders' : 'Edit cover card';
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  LayoutTokens.gr3,
+                  LayoutTokens.gr1,
+                  LayoutTokens.gr3,
+                  LayoutTokens.gr2,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      deck.displayName,
+                      style: TypographyTokens.cardTitle(colors.textPrimary),
+                    ),
+                    Text(
+                      deck.gameFormat.displayName,
+                      style: TextStyle(
+                        color: colors.textSecondary,
+                        fontSize: FontTokens.sm,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ListTile(
+                leading: Icon(Icons.style_outlined, color: colors.primaryAccent),
+                title: Text(coverLabel),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _editCommanders(deck);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.edit_outlined, color: colors.textPrimary),
+                title: const Text('Rename'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _renameDeck(repo, deck);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.delete_outline, color: colors.error),
+                title: Text(
+                  'Delete deck',
+                  style: TextStyle(color: colors.error),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _confirmDelete(repo, deck);
+                },
+              ),
+              SizedBox(height: LayoutTokens.gr2),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen(deckListRevisionProvider, (_, __) => _reload());
     final colors = AppColorTokens.of(context);
     final repo = ref.read(deckRepositoryProvider);
-    final fabBottomPad =
-        LayoutTokens.bottomNavHeight +
-        MediaQuery.paddingOf(context).bottom +
-        LayoutTokens.gr2;
-    const extendedFabHeight = 56.0;
+    final bottomBarPad = LayoutTokens.shellBottomInset(context);
+    final grouped = _groupDecksByFormat(_decks);
+    final cardHeight = profileBentoCardHeight(context);
 
-    return Scaffold(
-      appBar: const UiAppBar(title: 'My decks'),
-      body: ListView.builder(
+    final isEmpty = _decks.isEmpty;
+
+    final sectionChildren = <Widget>[];
+    for (final format in GameFormatDetails.lobbyPickerOrder) {
+      final decks = grouped[format];
+      if (decks == null || decks.isEmpty) continue;
+      sectionChildren.add(
+        _DecksFormatRow(
+          format: format,
+          decks: decks,
+          cardHeight: cardHeight,
+          colors: colors,
+          onDeckTap: (deck) => _showDeckOptionsSheet(deck, repo),
+        ),
+      );
+      sectionChildren.add(SizedBox(height: LayoutTokens.gr4));
+    }
+
+    Widget scrollBody;
+    if (isEmpty) {
+      scrollBody = Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr4),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.style_outlined,
+                size: 56,
+                color: colors.primaryAccent.withValues(alpha: 0.85),
+              ),
+              SizedBox(height: LayoutTokens.gr4),
+              Text(
+                'Build your deck library',
+                textAlign: TextAlign.center,
+                style: TypographyTokens.sectionTitle(colors.textPrimary),
+              ),
+              SizedBox(height: LayoutTokens.gr2),
+              Text(
+                'Save a deck with a name, format, and cover card. '
+                'When you host or join a game, pick the right list in the lobby.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colors.textSecondary,
+                  fontSize: FontTokens.body,
+                  fontWeight: FontWeight.w500,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    } else {
+      scrollBody = ListView(
         padding: EdgeInsets.fromLTRB(
           LayoutTokens.gr3,
           LayoutTokens.gr3,
           LayoutTokens.gr3,
-          fabBottomPad + extendedFabHeight + LayoutTokens.gr2,
+          LayoutTokens.gr2,
         ),
-        itemCount: _decks.length + 1,
-        itemBuilder: (context, i) {
-          if (i == 0) {
-            return Padding(
-              padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
-              child: Text(
-                'Register a deck with a name and commander. In the lobby, tap '
-                '“Deck” to play under that deck — wins and losses update your '
-                'per-deck record.',
-                style: TextStyle(color: colors.textSecondary, fontSize: 13),
-              ),
-            );
-          }
-          final deck = _decks[i - 1];
-          return Card(
-            margin: EdgeInsets.only(bottom: LayoutTokens.gr2),
-            clipBehavior: Clip.antiAlias,
-            child: Padding(
-              padding: EdgeInsets.all(LayoutTokens.gr3),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ResolvedDeckCommanderAvatarCluster(
-                        deck: deck,
-                        colors: colors,
-                        size: 60,
-                      ),
-                      SizedBox(width: LayoutTokens.gr2),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              deck.displayName,
-                              style: TextStyle(
-                                color: colors.textPrimary,
-                                fontWeight: FontWeight.w800,
-                                fontSize: FontTokens.body,
-                                height: 1.25,
-                              ),
-                            ),
-                            SizedBox(height: LayoutTokens.gr0),
-                            Text(
-                              deck.hasPartner
-                                  ? '${deck.commanderName} // ${deck.partnerCommanderName}'
-                                  : deck.commanderName,
-                              style: TextStyle(
-                                color: colors.textSecondary,
-                                fontSize: FontTokens.hudSm,
-                                height: 1.35,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            if (_deckHasMana(deck)) ...[
-                              SizedBox(height: LayoutTokens.gr1),
-                              DeckManaCostRows(
-                                commanderManaCost: deck.commanderManaCost,
-                                partnerManaCost: deck.partnerManaCost,
-                                hasPartner: deck.hasPartner,
-                              ),
-                            ],
-                            SizedBox(height: LayoutTokens.gr2),
-                            DeckWinLossRatioBar(
-                              deck: deck,
-                              colors: colors,
-                              height: 8,
-                            ),
-                            SizedBox(height: LayoutTokens.gr2),
-                            DeckStatChips(
-                              deck: deck,
-                              colors: colors,
-                              compact: false,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  _DeckCardActions(
-                    colors: colors,
-                    onCommanders: () => _editCommanders(deck),
-                    onRename: () => _renameDeck(repo, deck),
-                    onDelete: () => _confirmDelete(repo, deck),
-                  ),
-                ],
-              ),
+        children: sectionChildren,
+      );
+    }
+
+    return Scaffold(
+      appBar: const UiAppBar(title: 'My decks'),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(child: scrollBody),
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              LayoutTokens.gr3,
+              LayoutTokens.gr2,
+              LayoutTokens.gr3,
+              bottomBarPad,
             ),
-          );
-        },
+            child: UiButton(
+              label: 'Add deck',
+              icon: const Icon(Icons.add_rounded, size: 22),
+              onPressed: _promptNewDeckName,
+            ),
+          ),
+        ],
       ),
-      floatingActionButton: Padding(
-        padding: EdgeInsets.only(bottom: fabBottomPad),
-        child: FloatingActionButton.extended(
-          onPressed: _promptNewDeckName,
-          icon: const Icon(Icons.add),
-          label: const Text('Add deck'),
+    );
+  }
+}
+
+/// One format section: title + horizontal row of profile-style deck bento cards.
+class _DecksFormatRow extends StatelessWidget {
+  const _DecksFormatRow({
+    required this.format,
+    required this.decks,
+    required this.cardHeight,
+    required this.colors,
+    required this.onDeckTap,
+  });
+
+  final GameFormat format;
+  final List<PlayerDeck> decks;
+  final double cardHeight;
+  final AppColorTokens colors;
+  final ValueChanged<PlayerDeck> onDeckTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final titleStyle = TypographyTokens.sectionTitle(colors.textPrimary);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ProfileSectionHeader(
+          title: format.displayName,
+          titleStyle: titleStyle,
+          colors: colors,
+          count: decks.length,
+          singularUnit: 'deck',
+          pluralUnit: 'decks',
         ),
-      ),
+        SizedBox(height: LayoutTokens.gr2),
+        SizedBox(
+          height: cardHeight,
+          child: ListView.separated(
+            primary: false,
+            scrollDirection: Axis.horizontal,
+            clipBehavior: Clip.none,
+            physics: kProfileHorizontalCarouselPhysics,
+            padding: EdgeInsets.only(right: LayoutTokens.gr1),
+            itemCount: decks.length,
+            separatorBuilder: (_, __) => SizedBox(width: LayoutTokens.gr2),
+            itemBuilder: (context, i) {
+              final deck = decks[i];
+              return Semantics(
+                button: true,
+                label: '${deck.displayName}, ${format.displayName}',
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => onDeckTap(deck),
+                    borderRadius: RadiusTokens.radiusBento,
+                    child: ProfileDeckBentoTile(
+                      deck: deck,
+                      colors: colors,
+                      width: kProfileBentoCardWidth,
+                      height: cardHeight,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

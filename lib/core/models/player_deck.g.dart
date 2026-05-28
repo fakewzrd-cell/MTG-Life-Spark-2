@@ -29,13 +29,14 @@ class PlayerDeckAdapter extends TypeAdapter<PlayerDeck> {
       commanderManaCost: fields[9] as String?,
       partnerManaCost: fields[10] as String?,
       commanderColorIdentity: (fields[11] as List).cast<String>(),
+      format: fields[12] == null ? 'commander' : fields[12] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, PlayerDeck obj) {
     writer
-      ..writeByte(12)
+      ..writeByte(13)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -59,7 +60,9 @@ class PlayerDeckAdapter extends TypeAdapter<PlayerDeck> {
       ..writeByte(10)
       ..write(obj.partnerManaCost)
       ..writeByte(11)
-      ..write(obj.commanderColorIdentity);
+      ..write(obj.commanderColorIdentity)
+      ..writeByte(12)
+      ..write(obj.format);
   }
 
   @override

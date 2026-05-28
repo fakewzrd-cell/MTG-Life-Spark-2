@@ -1,4 +1,3 @@
-import '../../../ui/tokens/color_tokens.dart';
 import 'package:flutter/material.dart';
 
 import 'game_colors.dart';
@@ -7,29 +6,27 @@ import '../../../ui/tokens/opacity_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
 import 'game_main_tab_bar.dart';
 
-/// Commander + Play/Stack/History in one header card.
+/// Optional status strip + Play/Stack/History in one header card.
 class GameHudHeader extends StatelessWidget {
   const GameHudHeader({
     super.key,
-    required this.commander,
+    this.statusStrip,
     required this.selectedTabIndex,
     required this.onTabSelected,
     required this.accentColor,
     required this.tightVertical,
   });
 
-  final Widget commander;
+  final Widget? statusStrip;
   final int selectedTabIndex;
   final ValueChanged<int> onTabSelected;
   final Color accentColor;
   final bool tightVertical;
 
-  static final Color _dividerColor =
-      ColorTokens.textSecondary.withValues(alpha: 0.12);
-
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final dividerColor = colors.textSecondary.withValues(alpha: 0.12);
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.surface,
@@ -51,13 +48,15 @@ class GameHudHeader extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: EdgeInsets.all(
-                tightVertical ? LayoutTokens.gr1 : LayoutTokens.gr2,
+            if (statusStrip != null) ...[
+              Padding(
+                padding: EdgeInsets.all(
+                  tightVertical ? LayoutTokens.gr1 : LayoutTokens.gr2,
+                ),
+                child: statusStrip,
               ),
-              child: commander,
-            ),
-            Divider(height: 1, thickness: 1, color: _dividerColor),
+              Divider(height: 1, thickness: 1, color: dividerColor),
+            ],
             GameMainTabBarStrip(
               selectedIndex: selectedTabIndex,
               accentColor: accentColor,

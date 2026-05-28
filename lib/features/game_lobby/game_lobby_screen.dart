@@ -17,7 +17,12 @@ class GameLobbyScreen extends StatelessWidget {
       backgroundColor: colors.backgroundPrimary,
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.all(LayoutTokens.gr4),
+          padding: EdgeInsets.fromLTRB(
+            LayoutTokens.gr4,
+            LayoutTokens.gr4,
+            LayoutTokens.gr4,
+            LayoutTokens.gr4 + LayoutTokens.shellBottomInset(context),
+          ),
           child: Column(
             children: [
               // Host button — 50% of available space

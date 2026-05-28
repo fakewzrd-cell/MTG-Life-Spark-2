@@ -9,6 +9,7 @@ import 'package:permission_handler/permission_handler.dart';
 
 import '../../core/network/session_providers.dart';
 import '../../core/bluetooth/ble_service.dart';
+import '../../core/game/game_format.dart';
 import '../../core/game/lobby_state.dart';
 import '../../core/models/player_slot.dart';
 import '../../core/network/session_join_uri.dart';
@@ -16,6 +17,7 @@ import '../../core/network/ws_client_service.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/utils/app_router.dart';
 import 'deck_picker_sheet.dart';
+import '../../ui/components/ui_button.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
@@ -387,13 +389,13 @@ class _PermissionDeniedView extends StatelessWidget {
     final colors = AppColorTokens.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: EdgeInsets.all(LayoutTokens.gr5),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.camera_alt_outlined,
                 size: 64, color: colors.textSecondary),
-            const SizedBox(height: 16),
+            SizedBox(height: LayoutTokens.gr4),
             Text(
               'Camera access is needed to scan the host QR code.\n'
               'If you already allowed it in Settings, tap Try again.',
@@ -401,15 +403,16 @@ class _PermissionDeniedView extends StatelessWidget {
               style:
                   TextStyle(color: colors.textSecondary, fontSize: FontTokens.body),
             ),
-            const SizedBox(height: 24),
-            ElevatedButton(
+            SizedBox(height: LayoutTokens.gr4),
+            UiButton(
+              label: 'Try again',
               onPressed: () => unawaited(onRetry()),
-              child: Text('Try again'),
             ),
-            const SizedBox(height: 12),
-            OutlinedButton(
+            SizedBox(height: LayoutTokens.gr2),
+            UiButton(
+              label: 'Open Settings',
+              variant: UiButtonVariant.secondary,
               onPressed: () => unawaited(openAppSettings()),
-              child: Text('Open Settings'),
             ),
           ],
         ),
@@ -474,11 +477,12 @@ class _WaitingRoomViewState extends ConsumerState<_WaitingRoomView> {
     }
 
     final colors = AppColorTokens.of(context);
+    final isCommanderLobby = lobby.config.format.isCommanderStyle;
     return Column(
       children: [
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: LayoutTokens.shellListPadding(context),
             children: [
               Text(
                 'Waiting for host to start…',
@@ -490,32 +494,50 @@ class _WaitingRoomViewState extends ConsumerState<_WaitingRoomView> {
               ...lobby.players.map((slot) => _WaitingSlotRow(slot: slot)),
               if (profile != null) ...[
                 const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _JoinLobbyActionButton(
-                        label: 'Select deck',
-                        highlighted: mySlot?.selectedDeckId != null,
-                        onPressed: () =>
-                            showDeckPickerSheet(context, ref, profile.username),
+                if (isCommanderLobby)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _JoinLobbyActionButton(
+                          label: 'Select deck',
+                          highlighted: mySlot?.selectedDeckId != null,
+                          onPressed: () => showDeckPickerSheet(
+                            context,
+                            ref,
+                            profile.username,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: LayoutTokens.gr2),
+                      Expanded(
+                        child: _JoinLobbyActionButton(
+                          label: 'Select commander',
+                          highlighted: mySlot?.commanderName != null,
+                          filled: true,
+                          onPressed: () {
+                            context.push(AppRoutes.commanderSelect, extra: {
+                              'playerId': profile.username,
+                              'hasPartner': mySlot?.hasPartner ?? false,
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  )
+                else
+                  SizedBox(
+                    width: double.infinity,
+                    child: _JoinLobbyActionButton(
+                      label: 'Select deck',
+                      highlighted: mySlot?.selectedDeckId != null,
+                      filled: true,
+                      onPressed: () => showDeckPickerSheet(
+                        context,
+                        ref,
+                        profile.username,
                       ),
                     ),
-                    SizedBox(width: LayoutTokens.gr2),
-                    Expanded(
-                      child: _JoinLobbyActionButton(
-                        label: 'Select commander',
-                        highlighted: mySlot?.commanderName != null,
-                        filled: true,
-                        onPressed: () {
-                          context.push(AppRoutes.commanderSelect, extra: {
-                            'playerId': profile.username,
-                            'hasPartner': mySlot?.hasPartner ?? false,
-                          });
-                        },
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
                 SizedBox(height: LayoutTokens.gr2),
                 SizedBox(
                   width: double.infinity,

@@ -65,7 +65,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       appBar: const UiAppBar(title: 'Feedback'),
       backgroundColor: colors.backgroundPrimary,
       body: ListView(
-        padding: EdgeInsets.all(LayoutTokens.gr4),
+        padding: LayoutTokens.shellListPadding(context, top: LayoutTokens.gr4),
         children: [
           const Center(child: Text('🛡️', style: TextStyle(fontSize: 48))),
           SizedBox(height: LayoutTokens.gr4),
@@ -119,7 +119,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             icon: Icon(Icons.star_outline, size: 20),
             onPressed: _openPlayStore,
           ),
-          SizedBox(height: LayoutTokens.gr5),
         ],
       ),
     );

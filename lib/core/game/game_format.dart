@@ -34,11 +34,21 @@ extension GameFormatDetails on GameFormat {
     GameFormat.commander,
   ];
 
+  /// Hive / lobby JSON key, e.g. `standard`, `commander`.
   static GameFormat? fromName(String? name) {
-    if (name == null) return null;
+    if (name == null || name.isEmpty) return null;
     for (final f in GameFormat.values) {
       if (f.name == name) return f;
     }
     return null;
+  }
+
+  /// Settings UI and legacy strings, e.g. `Standard`, `Commander`.
+  static GameFormat? fromDisplayName(String? displayName) {
+    if (displayName == null || displayName.isEmpty) return null;
+    for (final f in GameFormat.values) {
+      if (f.displayName == displayName) return f;
+    }
+    return fromName(displayName);
   }
 }

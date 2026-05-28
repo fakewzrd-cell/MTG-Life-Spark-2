@@ -6,6 +6,7 @@ android/*.jks
 android/*.keystore
 
 # Miscellaneous
+.attach_*.txt
 *.class
 tmp/
 *.log

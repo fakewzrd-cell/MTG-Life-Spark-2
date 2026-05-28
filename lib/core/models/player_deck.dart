@@ -1,6 +1,8 @@
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 
+import '../game/game_format.dart';
+
 part 'player_deck.g.dart';
 
 @HiveType(typeId: 6)
@@ -11,6 +13,7 @@ class PlayerDeck extends HiveObject {
   @HiveField(1)
   String displayName;
 
+  /// Cover card name (commander for EDH, signature card for constructed).
   @HiveField(2)
   String commanderName;
 
@@ -43,6 +46,10 @@ class PlayerDeck extends HiveObject {
   @HiveField(11)
   List<String> commanderColorIdentity;
 
+  /// `GameFormat.name`, e.g. `commander`, `standard`.
+  @HiveField(12, defaultValue: 'commander')
+  String format;
+
   PlayerDeck({
     required this.id,
     required this.displayName,
@@ -56,16 +63,25 @@ class PlayerDeck extends HiveObject {
     this.commanderManaCost,
     this.partnerManaCost,
     this.commanderColorIdentity = const [],
+    this.format = 'commander',
   });
 
+  GameFormat get gameFormat =>
+      GameFormatDetails.fromName(format) ?? GameFormat.commander;
+
+  bool get isCommanderDeck => gameFormat.isCommanderStyle;
+
   bool get hasPartner =>
-      partnerCommanderName != null && partnerCommanderName!.isNotEmpty;
+      isCommanderDeck &&
+      partnerCommanderName != null &&
+      partnerCommanderName!.isNotEmpty;
 
   double get winRate => gamesPlayed == 0 ? 0 : wins / gamesPlayed;
 
   factory PlayerDeck.create({
     required String displayName,
     required String commanderName,
+    required GameFormat format,
     String? commanderImageUrl,
     String? partnerCommanderName,
     String? partnerCommanderImageUrl,
@@ -78,10 +94,16 @@ class PlayerDeck extends HiveObject {
         displayName: displayName,
         commanderName: commanderName,
         commanderImageUrl: commanderImageUrl,
-        partnerCommanderName: partnerCommanderName,
-        partnerCommanderImageUrl: partnerCommanderImageUrl,
+        partnerCommanderName:
+            format.isCommanderStyle ? partnerCommanderName : null,
+        partnerCommanderImageUrl:
+            format.isCommanderStyle ? partnerCommanderImageUrl : null,
         commanderManaCost: commanderManaCost,
-        partnerManaCost: partnerManaCost,
+        partnerManaCost: format.isCommanderStyle ? partnerManaCost : null,
         commanderColorIdentity: commanderColorIdentity,
+        format: format.name,
       );
+
+  /// Saved deck format must match the lobby host format for picker and W/L.
+  bool matchesLobbyFormat(GameFormat lobbyFormat) => gameFormat == lobbyFormat;
 }

@@ -13,10 +13,11 @@ import '../../core/game/game_session_events.dart';
 import '../../core/game/progression_service.dart';
 import '../../core/persistence/providers.dart';
 import '../../core/models/game_feedback.dart';
-import '../../shared/theme/app_theme.dart';
 import '../../shared/utils/achievement_definitions.dart';
 import '../../shared/utils/app_router.dart';
 import '../../shared/utils/wizard_rank_titles.dart';
+import '../../ui/components/ui_button.dart';
+import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
@@ -120,6 +121,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColorTokens.of(context);
     final game = ref.watch(gameProvider);
     ref.listen<int>(rematchProposedProvider, (prev, next) {
       if (next > 0 && next != prev && mounted) {
@@ -132,18 +134,18 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
     final isWinner = winner?.playerId == game.localPlayerId;
 
     return Scaffold(
-      backgroundColor: AppTheme.primary,
+      backgroundColor: colors.backgroundPrimary,
       body: SafeArea(
         child: _saving
             ? Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    CircularProgressIndicator(color: AppTheme.accent),
+                    CircularProgressIndicator(color: colors.primaryAccent),
                     SizedBox(height: LayoutTokens.gr3),
                     Text(
                       'Saving match results…',
-                      style: TextStyle(color: AppTheme.textSecondary),
+                      style: TextStyle(color: colors.textSecondary),
                     ),
                   ],
                 ),
@@ -155,14 +157,13 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.error_outline, color: AppTheme.accent, size: 48),
+                          Icon(Icons.error_outline, color: colors.primaryAccent, size: 48),
                           SizedBox(height: LayoutTokens.gr3),
                           Text(
                             'Could not save match results.',
                             textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: AppTheme.textPrimary,
-                              fontSize: FontTokens.body,
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: colors.textPrimary,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -170,17 +171,18 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
                           Text(
                             'Your stats may not have updated. Try again.',
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: AppTheme.textSecondary),
+                            style: TextStyle(color: colors.textSecondary),
                           ),
                           SizedBox(height: LayoutTokens.gr4),
-                          FilledButton(
+                          UiButton(
+                            label: 'Retry',
                             onPressed: _saveMatch,
-                            child: Text('Retry'),
                           ),
                           SizedBox(height: LayoutTokens.gr2),
-                          TextButton(
+                          UiButton(
+                            label: 'Continue without saving',
+                            variant: UiButtonVariant.secondary,
                             onPressed: () => _leaveToHome(context),
-                            child: Text('Continue without saving'),
                           ),
                         ],
                       ),
@@ -254,9 +256,8 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
                         children: [
                           Text(
                             'Final Standings',
-                            style: TextStyle(
-                              color: AppTheme.textSecondary,
-                              fontSize: 12,
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: colors.textSecondary,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 1,
                             ),
@@ -331,13 +332,14 @@ class _WinnerBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColorTokens.of(context);
     if (winner == null) {
       return Padding(
-        padding: EdgeInsets.all(24),
+        padding: EdgeInsets.all(LayoutTokens.gr4),
         child: Text(
           'Game Over — No Winner',
           style: TextStyle(
-            color: AppTheme.textPrimary,
+            color: colors.textPrimary,
             fontSize: 22,
             fontWeight: FontWeight.bold,
           ),
@@ -347,13 +349,13 @@ class _WinnerBanner extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: EdgeInsets.symmetric(horizontal: LayoutTokens.ctaHorizontal),
       child: Column(
         children: [
           Text(
             isLocalWinner ? '🏆 You Win!' : '🎉 Winner',
             style: TextStyle(
-              color: AppTheme.accentGold,
+              color: colors.emphasis,
               fontSize: 28,
               fontWeight: FontWeight.bold,
             ),
@@ -426,7 +428,7 @@ class _WinnerBanner extends StatelessWidget {
             Text(
               winner!.commanderName!,
               style: TextStyle(
-                  color: AppTheme.textSecondary, fontSize: 13),
+                  color: colors.textSecondary, fontSize: 13),
             ),
         ],
       ),
@@ -443,19 +445,20 @@ class _LevelUpCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColorTokens.of(context);
     return Container(
       margin: EdgeInsets.fromLTRB(LayoutTokens.gr3, LayoutTokens.gr1, LayoutTokens.gr3, 0),
       padding: EdgeInsets.all(LayoutTokens.gr3),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.accentGold.withValues(alpha: 0.15),
-            AppTheme.accent.withValues(alpha: 0.15),
+            colors.emphasis.withValues(alpha: 0.15),
+            colors.primaryAccent.withValues(alpha: 0.15),
           ],
         ),
         borderRadius: RadiusTokens.radiusSm,
         border: Border.all(
-            color: AppTheme.accentGold.withValues(alpha: 0.5)),
+            color: colors.emphasis.withValues(alpha: 0.5)),
       ),
       child: Row(
         children: [
@@ -467,7 +470,7 @@ class _LevelUpCard extends StatelessWidget {
               repeat: true,
               errorBuilder: (_, __, ___) =>
                   Icon(Icons.arrow_upward,
-                      size: 48, color: AppTheme.accentGold),
+                      size: 48, color: colors.emphasis),
             ),
           ),
           SizedBox(width: LayoutTokens.gr3),
@@ -477,7 +480,7 @@ class _LevelUpCard extends StatelessWidget {
               Text(
                 'RANK UP!',
                 style: TextStyle(
-                  color: AppTheme.accentGold,
+                  color: colors.emphasis,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.5,
@@ -486,14 +489,14 @@ class _LevelUpCard extends StatelessWidget {
               Text(
                 'Rank ${result.oldLevel} → ${result.newLevel}',
                 style: TextStyle(
-                    color: AppTheme.textPrimary, fontSize: 14),
+                    color: colors.textPrimary, fontSize: 14),
               ),
               if (wizardRankTitle(result.oldLevel) !=
                   wizardRankTitle(result.newLevel))
                 Text(
                   '${wizardRankTitle(result.oldLevel)} → ${wizardRankTitle(result.newLevel)}',
                   style: TextStyle(
-                      color: AppTheme.textSecondary, fontSize: 12),
+                      color: colors.textSecondary, fontSize: 12),
                 ),
             ],
           ),
@@ -513,16 +516,17 @@ class _XpCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColorTokens.of(context);
     return Container(
       margin: EdgeInsets.fromLTRB(LayoutTokens.gr3, LayoutTokens.gr1, LayoutTokens.gr3, 0),
       padding: EdgeInsets.all(LayoutTokens.gr3),
       decoration: BoxDecoration(
-        color: AppTheme.card,
+        color: colors.surface,
         borderRadius: RadiusTokens.radiusSm,
       ),
       child: Row(
         children: [
-          Icon(Icons.star, color: AppTheme.accentGold, size: 24),
+          Icon(Icons.star, color: colors.emphasis, size: 24),
           const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -530,7 +534,7 @@ class _XpCard extends StatelessWidget {
               Text(
                 '+${result.xpGained} XP',
                 style: TextStyle(
-                  color: AppTheme.accentGold,
+                  color: colors.emphasis,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -538,7 +542,7 @@ class _XpCard extends StatelessWidget {
               Text(
                 isWinner ? 'Win bonus included' : 'Participation XP',
                 style: TextStyle(
-                    color: AppTheme.textSecondary, fontSize: FontTokens.hudXs),
+                    color: colors.textSecondary, fontSize: FontTokens.hudXs),
               ),
             ],
           ),
@@ -549,14 +553,14 @@ class _XpCard extends StatelessWidget {
               Text(
                 'Rank ${result.newLevel}',
                 style: TextStyle(
-                    color: AppTheme.textPrimary,
+                    color: colors.textPrimary,
                     fontSize: 16,
                     fontWeight: FontWeight.w600),
               ),
               Text(
                 wizardRankTitle(result.newLevel),
                 style: TextStyle(
-                    color: AppTheme.textSecondary,
+                    color: colors.textSecondary,
                     fontSize: FontTokens.hudXs,
                     fontWeight: FontWeight.w500),
               ),
@@ -603,6 +607,7 @@ class _FeedbackCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColorTokens.of(context);
     final others = game.players
         .where((p) => p.playerId != game.localPlayerId)
         .toList();
@@ -612,20 +617,20 @@ class _FeedbackCard extends StatelessWidget {
         margin: EdgeInsets.symmetric(horizontal: LayoutTokens.gr3),
         padding: EdgeInsets.all(LayoutTokens.gr3),
         decoration: BoxDecoration(
-          color: AppTheme.success.withValues(alpha: 0.15),
+          color: colors.success.withValues(alpha: 0.15),
           borderRadius: RadiusTokens.radiusMd,
           border: Border.all(
-              color: AppTheme.success.withValues(alpha: 0.4)),
+              color: colors.success.withValues(alpha: 0.4)),
         ),
         child: Row(
           children: [
-            Icon(Icons.check_circle, color: AppTheme.success, size: 28),
+            Icon(Icons.check_circle, color: colors.success, size: 28),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 'Thanks! Your feedback has been recorded.',
                 style: TextStyle(
-                  color: AppTheme.textPrimary,
+                  color: colors.textPrimary,
                   fontSize: FontTokens.hudSm,
                   fontWeight: FontWeight.w600,
                 ),
@@ -637,19 +642,19 @@ class _FeedbackCard extends StatelessWidget {
     }
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.symmetric(horizontal: LayoutTokens.gr3),
+      padding: EdgeInsets.all(LayoutTokens.gr3),
       decoration: BoxDecoration(
-        color: AppTheme.card,
+        color: colors.surface,
         borderRadius: RadiusTokens.radiusMd,
-        border: Border.all(color: AppTheme.surface),
+        border: Border.all(color: colors.backgroundSecondary),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Rate Your Opponents',
-            style: TypographyTokens.sectionTitle(ColorTokens.textPrimary),
+            style: TypographyTokens.sectionTitle(colors.textPrimary),
           ),
           SizedBox(height: LayoutTokens.gr2),
           if (others.isNotEmpty) ...[
@@ -688,19 +693,9 @@ class _FeedbackCard extends StatelessWidget {
             onChanged: onUnderdogChanged,
           ),
           SizedBox(height: LayoutTokens.gr3),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: onSubmit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accent,
-                foregroundColor: ColorTokens.onAccent,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999)),
-              ),
-              child: Text('Submit Feedback'),
-            ),
+          UiButton(
+            label: 'Submit Feedback',
+            onPressed: onSubmit,
           ),
         ],
       ),
@@ -725,8 +720,9 @@ class _PlayerFeedbackRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColorTokens.of(context);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.only(bottom: LayoutTokens.gr1),
       child: Row(
         children: [
           Container(
@@ -742,7 +738,7 @@ class _PlayerFeedbackRow extends StatelessWidget {
             child: Text(
               player.username,
               style: TextStyle(
-                color: AppTheme.textPrimary,
+                color: colors.textPrimary,
                 fontSize: FontTokens.hudSm,
                 fontWeight: FontWeight.w500,
               ),
@@ -753,28 +749,28 @@ class _PlayerFeedbackRow extends StatelessWidget {
             icon: Icon(
               Icons.thumb_up,
               size: 20,
-              color: isLiked ? AppTheme.success : AppTheme.textSecondary,
+              color: isLiked ? colors.success : colors.textSecondary,
             ),
             onPressed: onLike,
             style: IconButton.styleFrom(
               backgroundColor: isLiked
-                  ? AppTheme.success.withValues(alpha: 0.2)
+                  ? colors.success.withValues(alpha: 0.2)
                   : Colors.transparent,
-              minimumSize: const Size(36, 36),
+              minimumSize: const Size(LayoutTokens.minTapTarget, LayoutTokens.minTapTarget),
             ),
           ),
           IconButton(
             icon: Icon(
               Icons.thumb_down,
               size: 20,
-              color: isDisliked ? AppTheme.accent : AppTheme.textSecondary,
+              color: isDisliked ? colors.primaryAccent : colors.textSecondary,
             ),
             onPressed: onDislike,
             style: IconButton.styleFrom(
               backgroundColor: isDisliked
-                  ? AppTheme.accent.withValues(alpha: 0.2)
+                  ? colors.primaryAccent.withValues(alpha: 0.2)
                   : Colors.transparent,
-              minimumSize: const Size(36, 36),
+              minimumSize: const Size(LayoutTokens.minTapTarget, LayoutTokens.minTapTarget),
             ),
           ),
         ],
@@ -800,13 +796,14 @@ class _VoteDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColorTokens.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
           style: TextStyle(
-            color: AppTheme.textSecondary,
+            color: colors.textSecondary,
             fontSize: FontTokens.hudXs,
             fontWeight: FontWeight.w600,
           ),
@@ -818,17 +815,17 @@ class _VoteDropdown extends StatelessWidget {
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(
-              color: AppTheme.textSecondary,
+              color: colors.textSecondary,
               fontSize: 12,
             ),
             filled: true,
-            fillColor: AppTheme.surface,
+            fillColor: colors.backgroundSecondary,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: RadiusTokens.radiusLg,
             ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 10,
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: LayoutTokens.gr2,
+              vertical: LayoutTokens.gr2,
             ),
           ),
           items: [
@@ -837,7 +834,7 @@ class _VoteDropdown extends StatelessWidget {
               child: Text(
                 '— None —',
                 style: TextStyle(
-                  color: AppTheme.textSecondary,
+                  color: colors.textSecondary,
                   fontSize: FontTokens.hudSm,
                 ),
               ),
@@ -858,7 +855,7 @@ class _VoteDropdown extends StatelessWidget {
                       Text(
                         p.username,
                         style: TextStyle(
-                          color: AppTheme.textPrimary,
+                          color: colors.textPrimary,
                           fontSize: FontTokens.hudSm,
                         ),
                       ),
@@ -882,6 +879,7 @@ class _AchievementsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColorTokens.of(context);
     final defs = ids
         .map((id) => AchievementDefinitions.byId(id))
         .whereType<AchievementDef>()
@@ -893,10 +891,10 @@ class _AchievementsCard extends StatelessWidget {
       margin: EdgeInsets.fromLTRB(LayoutTokens.gr3, LayoutTokens.gr1, LayoutTokens.gr3, 0),
       padding: EdgeInsets.all(LayoutTokens.gr2),
       decoration: BoxDecoration(
-        color: AppTheme.card,
+        color: colors.surface,
         borderRadius: RadiusTokens.radiusChip,
         border: Border.all(
-            color: AppTheme.success.withValues(alpha: 0.3)),
+            color: colors.success.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -904,7 +902,7 @@ class _AchievementsCard extends StatelessWidget {
           Text(
             '🏅 New Achievements',
             style: TextStyle(
-              color: AppTheme.success,
+              color: colors.success,
               fontSize: FontTokens.hudSm,
               fontWeight: FontWeight.bold,
             ),
@@ -922,12 +920,12 @@ class _AchievementsCard extends StatelessWidget {
                       children: [
                         Text(def.title,
                             style: TextStyle(
-                                color: AppTheme.textPrimary,
+                                color: colors.textPrimary,
                                 fontSize: FontTokens.hudSm,
                                 fontWeight: FontWeight.w600)),
                         Text(def.description,
                             style: TextStyle(
-                                color: AppTheme.textSecondary,
+                                color: colors.textSecondary,
                                 fontSize: 10)),
                       ],
                     ),
@@ -955,18 +953,22 @@ class _FinalPlayerRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColorTokens.of(context);
     return Container(
       margin: EdgeInsets.only(bottom: LayoutTokens.gr1),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      padding: EdgeInsets.symmetric(
+        horizontal: LayoutTokens.gr2,
+        vertical: LayoutTokens.gr2,
+      ),
       decoration: BoxDecoration(
         color: isWinner
-            ? AppTheme.accentGold.withValues(alpha: 0.1)
-            : AppTheme.card,
+            ? colors.emphasis.withValues(alpha: 0.1)
+            : colors.surface,
         borderRadius: RadiusTokens.radiusControlSm,
         border: Border.all(
           color: isWinner
-              ? AppTheme.accentGold.withValues(alpha: 0.4)
-              : AppTheme.surface,
+              ? colors.emphasis.withValues(alpha: 0.4)
+              : colors.backgroundSecondary,
         ),
       ),
       child: Row(
@@ -992,7 +994,7 @@ class _FinalPlayerRow extends StatelessWidget {
                   child: Text(
                     p.username,
                     style: TextStyle(
-                      color: AppTheme.textPrimary,
+                      color: colors.textPrimary,
                       fontWeight:
                           isLocal ? FontWeight.bold : FontWeight.normal,
                       fontSize: FontTokens.hudSm,
@@ -1003,7 +1005,7 @@ class _FinalPlayerRow extends StatelessWidget {
                 if (isLocal)
                   Text(' (you)',
                       style: TextStyle(
-                          color: AppTheme.textSecondary, fontSize: 10)),
+                          color: colors.textSecondary, fontSize: 10)),
               ],
             ),
           ),
@@ -1012,7 +1014,7 @@ class _FinalPlayerRow extends StatelessWidget {
               child: Text(
                 p.commanderName!,
                 style: TextStyle(
-                    color: AppTheme.textSecondary, fontSize: 10),
+                    color: colors.textSecondary, fontSize: 10),
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
               ),
@@ -1023,7 +1025,7 @@ class _FinalPlayerRow extends StatelessWidget {
                 ? _reasonLabel(p.eliminationReason)
                 : '${p.life} ❤',
             style: TextStyle(
-              color: p.isEliminated ? AppTheme.accent : AppTheme.textPrimary,
+              color: p.isEliminated ? colors.primaryAccent : colors.textPrimary,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
@@ -1065,40 +1067,22 @@ class _ActionButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: EdgeInsets.symmetric(horizontal: LayoutTokens.ctaHorizontal),
       child: Column(
         children: [
-          if (isHost)
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: Icon(Icons.replay, size: 18),
-                label: Text('Rematch'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.accent,
-                  foregroundColor: ColorTokens.onAccent,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(999)),
-                ),
-                onPressed: onRematch,
-              ),
+          if (isHost) ...[
+            UiButton(
+              label: 'Rematch',
+              icon: const Icon(Icons.replay_rounded, size: 20),
+              onPressed: onRematch,
             ),
-          if (isHost) SizedBox(height: LayoutTokens.gr2),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              icon: Icon(Icons.home_outlined, size: 18),
-              label: Text('Back to Home'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppTheme.textSecondary,
-                side: BorderSide(color: AppTheme.surface),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999)),
-              ),
-              onPressed: onHome,
-            ),
+            SizedBox(height: LayoutTokens.gr2),
+          ],
+          UiButton(
+            label: 'Back to Home',
+            variant: UiButtonVariant.secondary,
+            icon: const Icon(Icons.home_outlined, size: 20),
+            onPressed: onHome,
           ),
         ],
       ),

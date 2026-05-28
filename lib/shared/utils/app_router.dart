@@ -33,6 +33,7 @@ class AppRoutes {
   /// Primary route for deck library (shell tab).
   static const decks = '/decks';
   static const profileBanner = '/home/banner';
+  static const profileAvatar = '/home/avatar';
   static const profilePods = '/home/pods';
   static const feedback = '/settings/feedback';
   static const commanderSelect = '/commander-select';
@@ -45,19 +46,23 @@ Widget _buildCommanderSelect(GoRouterState state) {
   final String playerId;
   final String? newDeckDisplayName;
   final String? editDeckId;
+  final String? deckFormat;
   if (extra is Map) {
     playerId = extra['playerId'] as String? ?? '';
     newDeckDisplayName = extra['newDeckDisplayName'] as String?;
     editDeckId = extra['editDeckId'] as String?;
+    deckFormat = extra['deckFormat'] as String?;
   } else {
     playerId = extra as String? ?? '';
     newDeckDisplayName = null;
     editDeckId = null;
+    deckFormat = null;
   }
   return CommanderSelectScreen(
     playerId: playerId,
     newDeckDisplayName: newDeckDisplayName,
     editDeckId: editDeckId,
+    deckFormat: deckFormat,
   );
 }
 
@@ -105,7 +110,17 @@ final routerProvider = Provider<GoRouter>((ref) {
                     path: 'banner',
                     parentNavigatorKey: _rootNavigatorKey,
                     builder: (context, state) =>
-                        const ProfileBannerPickerScreen(),
+                        const ProfileBannerPickerScreen(
+                          kind: ProfileImagePickerKind.banner,
+                        ),
+                  ),
+                  GoRoute(
+                    path: 'avatar',
+                    parentNavigatorKey: _rootNavigatorKey,
+                    builder: (context, state) =>
+                        const ProfileBannerPickerScreen(
+                          kind: ProfileImagePickerKind.avatar,
+                        ),
                   ),
                   GoRoute(
                     path: 'pods',

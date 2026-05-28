@@ -4,10 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/persistence/providers.dart';
-import '../../shared/theme/app_theme.dart';
-import '../../shared/utils/app_router.dart';
+import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/color_tokens.dart';
+import '../../shared/utils/app_router.dart';
 import '../../ui/tokens/layout_tokens.dart';
+import '../../ui/components/ui_button.dart';
 import '../../ui/tokens/radius_tokens.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
@@ -27,35 +28,35 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       title: 'Host or Join',
       body:
           'One player hosts a game — others scan a QR code on the same Wi‑Fi network. No internet account needed. Works for 4 to 6 players at the same table.',
-      color: AppTheme.accent,
+      color: ColorTokens.primaryAccent,
     ),
     _OnboardingSlide(
       icon: Icons.favorite,
       title: 'Track Your Life',
       body:
           'Tap +/- to change life. Hold for +5/-5 jumps. Swipe left/right for quick changes. Long-press to enter an exact number. Tap the undo button to fix mistakes.',
-      color: AppTheme.accent,
+      color: ColorTokens.primaryAccent,
     ),
     _OnboardingSlide(
       icon: Icons.timer_outlined,
       title: 'Phase Bar & Turns',
       body:
           'The phase bar shows every step of the turn — from Untap to Cleanup. Hold Priority to pause progression. Hit Timeout to pause the whole game.',
-      color: AppTheme.accent,
+      color: ColorTokens.primaryAccent,
     ),
     _OnboardingSlide(
       icon: Icons.shield_outlined,
       title: 'Commander & Counters',
       body:
           'Track commander damage per opponent — 21 kills. Track poison (10 kills), energy, experience, and rad counters. Use Proliferate to add 1 to all at once.',
-      color: AppTheme.accent,
+      color: ColorTokens.primaryAccent,
     ),
     _OnboardingSlide(
       icon: Icons.handshake_outlined,
       title: 'Alliances & Politics',
       body:
           'Propose secret alliances with other players. They expire automatically or break when you attack each other. Track the Monarch and Initiative with a single tap.',
-      color: AppTheme.accent,
+      color: ColorTokens.primaryAccent,
     ),
   ];
 
@@ -84,20 +85,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColorTokens.of(context);
     return Scaffold(
       body: SafeArea(
         child: Column(
           children: [
-            Align(
-              alignment: Alignment.topRight,
-              child: TextButton(
-                onPressed: _finish,
-                child: Text(
-                  'Skip',
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                ),
-              ),
-            ),
             Expanded(
               child: PageView.builder(
                 controller: _controller,
@@ -117,7 +109,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   decoration: BoxDecoration(
                     color: _currentPage == i
                         ? _slides[i].color
-                        : AppTheme.textSecondary.withValues(alpha: 0.4),
+                        : colors.textSecondary.withValues(alpha: 0.4),
                     borderRadius: RadiusTokens.radiusControlMd,
                   ),
                 );
@@ -125,30 +117,23 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
             SizedBox(height: LayoutTokens.gr5),
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr5),
-              child: SizedBox(
-                height: 52,
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: _next,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: _slides[_currentPage].color,
-                    foregroundColor: ColorTokens.onAccent,
-                    minimumSize: const Size(double.infinity, 52),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: RadiusTokens.radiusLg,
-                    ),
-                    textStyle: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  child: Text(
-                    _currentPage == _slides.length - 1
+              padding: EdgeInsets.symmetric(horizontal: LayoutTokens.ctaHorizontal),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  UiButton(
+                    label: _currentPage == _slides.length - 1
                         ? 'Enter the Battlefield'
                         : 'Next',
+                    onPressed: _next,
                   ),
-                ),
+                  SizedBox(height: LayoutTokens.gr2),
+                  UiButton(
+                    label: 'Skip',
+                    variant: UiButtonVariant.secondary,
+                    onPressed: _finish,
+                  ),
+                ],
               ),
             ),
             SizedBox(height: LayoutTokens.gr5),

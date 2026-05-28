@@ -596,7 +596,7 @@ class _LifeInputDialogState extends State<_LifeInputDialog> {
                             onPressed: _input.isNotEmpty ? _confirm : null,
                             child: Icon(
                               Icons.check,
-                              color: ColorTokens.onAccent,
+                              color: colors.onAccent,
                               size: LayoutTokens.gr3,
                             ),
                           ),

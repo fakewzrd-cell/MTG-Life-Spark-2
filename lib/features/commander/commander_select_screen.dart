@@ -8,12 +8,13 @@ import '../../ui/tokens/motion_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/game/game_format.dart';
 import '../../core/game/lobby_state.dart';
 import '../../core/game/scryfall_service.dart';
 import '../../core/models/player_deck.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/mana/mana_symbol_assets.dart';
-import '../../shared/theme/app_theme.dart';
+import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
@@ -31,11 +32,15 @@ class CommanderSelectScreen extends ConsumerStatefulWidget {
   final String? newDeckDisplayName;
   final String? editDeckId;
 
+  /// `GameFormat.name` when saving a new deck from My Decks.
+  final String? deckFormat;
+
   const CommanderSelectScreen({
     super.key,
     required this.playerId,
     this.newDeckDisplayName,
     this.editDeckId,
+    this.deckFormat,
   });
 
   bool get _deckMode =>
@@ -63,6 +68,22 @@ class _CommanderSelectScreenState
   ScryfallCard? _primary;
   ScryfallCard? _partner;
   bool _pickingPartner = false; // true when user is selecting the 2nd card
+
+  bool get _isCommanderPick {
+    if (!widget._deckMode) return true;
+    return _deckGameFormat.isCommanderStyle;
+  }
+
+  GameFormat get _deckGameFormat {
+    final fromRoute = GameFormatDetails.fromName(widget.deckFormat);
+    if (fromRoute != null) return fromRoute;
+    if (widget.editDeckId != null) {
+      final deck =
+          ref.read(deckRepositoryProvider).getById(widget.editDeckId!);
+      if (deck != null) return deck.gameFormat;
+    }
+    return GameFormat.commander;
+  }
 
   @override
   void initState() {
@@ -131,12 +152,18 @@ class _CommanderSelectScreenState
     });
     try {
       final service = ref.read(scryfallServiceProvider);
-      final results = await service.searchCommanders(query);
+      final results = _isCommanderPick
+          ? await service.searchCommanders(query)
+          : await service.searchCards(query);
       if (!mounted) return;
       setState(() {
         _results = results;
         _loading = false;
-        if (results.isEmpty) _error = 'No commanders found for "$query"';
+        if (results.isEmpty) {
+          _error = _isCommanderPick
+              ? 'No commanders found for "$query"'
+              : 'No cards found for "$query"';
+        }
       });
     } catch (e) {
       if (!mounted) return;
@@ -151,6 +178,14 @@ class _CommanderSelectScreenState
   // ── Selection ─────────────────────────────────────────────────────────────
 
   void _onCardTap(ScryfallCard card) {
+    if (!_isCommanderPick) {
+      setState(() {
+        _primary = card;
+        _partner = null;
+        _pickingPartner = false;
+      });
+      return;
+    }
     if (_pickingPartner) {
       setState(() {
         _partner = card;
@@ -166,7 +201,7 @@ class _CommanderSelectScreenState
 
   bool get _canConfirm {
     if (_primary == null) return false;
-    if (_hasPartner && _partner == null) return false;
+    if (_isCommanderPick && _hasPartner && _partner == null) return false;
     return true;
   }
 
@@ -174,15 +209,21 @@ class _CommanderSelectScreenState
     if (!_canConfirm) return;
     if (widget.newDeckDisplayName != null &&
         widget.newDeckDisplayName!.trim().isNotEmpty) {
-      final ci = ScryfallCard.unionColorIdentity(_primary!, _hasPartner ? _partner : null);
+      final fmt = _deckGameFormat;
+      final usePartner = fmt.isCommanderStyle && _hasPartner;
+      final ci = ScryfallCard.unionColorIdentity(
+        _primary!,
+        usePartner ? _partner : null,
+      );
       final deck = PlayerDeck.create(
         displayName: widget.newDeckDisplayName!.trim(),
+        format: fmt,
         commanderName: _primary!.name,
         commanderImageUrl: _primary!.imageUrl,
-        partnerCommanderName: _hasPartner ? _partner?.name : null,
-        partnerCommanderImageUrl: _hasPartner ? _partner?.imageUrl : null,
+        partnerCommanderName: usePartner ? _partner?.name : null,
+        partnerCommanderImageUrl: usePartner ? _partner?.imageUrl : null,
         commanderManaCost: _hiveManaCost(_primary!.manaCost),
-        partnerManaCost: _hasPartner ? _hiveManaCost(_partner?.manaCost) : null,
+        partnerManaCost: usePartner ? _hiveManaCost(_partner?.manaCost) : null,
         commanderColorIdentity: ci,
       );
       await ref.read(deckRepositoryProvider).save(deck);
@@ -197,13 +238,18 @@ class _CommanderSelectScreenState
         if (mounted) context.pop();
         return;
       }
-      final ci = ScryfallCard.unionColorIdentity(_primary!, _hasPartner ? _partner : null);
+      final usePartner = deck.isCommanderDeck && _hasPartner;
+      final ci = ScryfallCard.unionColorIdentity(
+        _primary!,
+        usePartner ? _partner : null,
+      );
       deck.commanderName = _primary!.name;
       deck.commanderImageUrl = _primary!.imageUrl;
       deck.commanderManaCost = _hiveManaCost(_primary!.manaCost);
-      deck.partnerCommanderName = _hasPartner ? _partner?.name : null;
-      deck.partnerCommanderImageUrl = _hasPartner ? _partner?.imageUrl : null;
-      deck.partnerManaCost = _hasPartner ? _hiveManaCost(_partner?.manaCost) : null;
+      deck.partnerCommanderName = usePartner ? _partner?.name : null;
+      deck.partnerCommanderImageUrl = usePartner ? _partner?.imageUrl : null;
+      deck.partnerManaCost =
+          usePartner ? _hiveManaCost(_partner?.manaCost) : null;
       deck.commanderColorIdentity = ci;
       await repo.save(deck);
       bumpDeckListRevision(ref);
@@ -227,16 +273,21 @@ class _CommanderSelectScreenState
 
   String get _title {
     if (widget._deckMode) {
-      if (widget.editDeckId != null) return 'Edit deck commanders';
-      return 'New deck — pick commander';
+      if (widget.editDeckId != null) {
+        return _isCommanderPick ? 'Edit commanders' : 'Edit cover card';
+      }
+      return _isCommanderPick
+          ? 'New deck — pick commander'
+          : 'New deck — pick cover card';
     }
     return _pickingPartner ? 'Select Partner' : 'Select Commander';
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColorTokens.of(context);
     return Scaffold(
-      backgroundColor: AppTheme.primary,
+      backgroundColor: colors.backgroundPrimary,
       appBar: UiAppBar(
         title: _pickingPartner ? 'Select Partner' : _title,
         actions: [
@@ -246,7 +297,9 @@ class _CommanderSelectScreenState
               child: Text(
                 'Confirm',
                 style: TextStyle(
-                    color: AppTheme.accent, fontWeight: FontWeight.bold),
+                  color: colors.primaryAccent,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
         ],
@@ -257,14 +310,14 @@ class _CommanderSelectScreenState
           if (_primary != null || (_hasPartner && _partner != null))
             _SelectionPreview(
               primary: _primary,
-              partner: _hasPartner ? _partner : null,
-              hasPartner: _hasPartner,
+              partner: _isCommanderPick && _hasPartner ? _partner : null,
+              hasPartner: _isCommanderPick && _hasPartner,
               onPickPartner: _primary != null
                   ? () => setState(() => _pickingPartner = !_pickingPartner)
                   : null,
               pickingPartner: _pickingPartner,
             ),
-          if (widget._deckMode)
+          if (widget._deckMode && _isCommanderPick)
             Padding(
               padding: EdgeInsets.fromLTRB(
                 LayoutTokens.gr3,
@@ -289,6 +342,22 @@ class _CommanderSelectScreenState
                 ),
               ),
             ),
+          if (widget._deckMode && !_isCommanderPick)
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                LayoutTokens.gr3,
+                LayoutTokens.gr1,
+                LayoutTokens.gr3,
+                0,
+              ),
+              child: Text(
+                'Pick any card for deck art — not your full deck list.',
+                style: TextStyle(
+                  color: colors.textSecondary,
+                  fontSize: FontTokens.sm,
+                ),
+              ),
+            ),
 
           // Search bar
           Padding(
@@ -299,13 +368,15 @@ class _CommanderSelectScreenState
               decoration: InputDecoration(
                 hintText: _pickingPartner
                     ? 'Search for partner commander…'
-                    : 'Search for a commander…',
+                    : _isCommanderPick
+                        ? 'Search for a commander…'
+                        : 'Search for a card…',
                 prefixIcon:
-                    Icon(Icons.search, color: AppTheme.textSecondary),
+                    Icon(Icons.search, color: colors.textSecondary),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
                         icon: Icon(Icons.clear,
-                            color: AppTheme.textSecondary),
+                            color: colors.textSecondary),
                         onPressed: () {
                           _searchController.clear();
                           setState(() {
@@ -319,7 +390,7 @@ class _CommanderSelectScreenState
               onChanged: _onSearchChanged,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: LayoutTokens.gr2),
 
           // Results
           Expanded(child: _buildResults()),
@@ -329,16 +400,17 @@ class _CommanderSelectScreenState
   }
 
   Widget _buildResults() {
+    final colors = AppColorTokens.of(context);
     if (_loading) {
       return Center(
-          child: CircularProgressIndicator(color: AppTheme.accent));
+          child: CircularProgressIndicator(color: colors.primaryAccent));
     }
     if (_error != null) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(LayoutTokens.gr4),
           child: Text(_error!,
-              style: TextStyle(color: AppTheme.textSecondary),
+              style: TextStyle(color: colors.textSecondary),
               textAlign: TextAlign.center),
         ),
       );
@@ -346,8 +418,10 @@ class _CommanderSelectScreenState
     if (_results.isEmpty && _searchController.text.isEmpty) {
       return Center(
         child: Text(
-          'Type a commander name to search the Scryfall database.',
-          style: TextStyle(color: AppTheme.textSecondary),
+          _isCommanderPick
+              ? 'Type a commander name to search the Scryfall database.'
+              : 'Type a card name to search the Scryfall database.',
+          style: TextStyle(color: colors.textSecondary),
           textAlign: TextAlign.center,
         ),
       );
@@ -364,7 +438,9 @@ class _CommanderSelectScreenState
       itemBuilder: (_, i) {
         final card = _results[i];
         final isSelected = card.name == _primary?.name ||
-            (card.name == _partner?.name && _hasPartner);
+            (_isCommanderPick &&
+                card.name == _partner?.name &&
+                _hasPartner);
         return _CommanderCard(
           card: card,
           isSelected: isSelected,
@@ -394,6 +470,7 @@ class _SelectionPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColorTokens.of(context);
     return Container(
       padding: EdgeInsets.fromLTRB(
         LayoutTokens.gr3,
@@ -401,7 +478,7 @@ class _SelectionPreview extends StatelessWidget {
         LayoutTokens.gr3,
         LayoutTokens.gr1,
       ),
-      color: AppTheme.surface,
+      color: colors.backgroundSecondary,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -420,13 +497,13 @@ class _SelectionPreview extends StatelessWidget {
                       height: 78,
                       decoration: BoxDecoration(
                         color: pickingPartner
-                            ? AppTheme.accent.withValues(alpha: 0.15)
-                            : AppTheme.card,
+                            ? colors.primaryAccent.withValues(alpha: 0.15)
+                            : colors.surface,
                         borderRadius: RadiusTokens.radiusControlMd,
                         border: Border.all(
                           color: pickingPartner
-                              ? AppTheme.accent
-                              : AppTheme.textSecondary.withValues(alpha: 0.4),
+                              ? colors.primaryAccent
+                              : colors.textSecondary.withValues(alpha: 0.4),
                         ),
                       ),
                       child: Column(
@@ -435,8 +512,8 @@ class _SelectionPreview extends StatelessWidget {
                           Icon(
                             Icons.add,
                             color: pickingPartner
-                                ? AppTheme.accent
-                                : AppTheme.textSecondary,
+                                ? colors.primaryAccent
+                                : colors.textSecondary,
                             size: 20,
                           ),
                           const SizedBox(height: 2),
@@ -444,8 +521,8 @@ class _SelectionPreview extends StatelessWidget {
                             'Partner',
                             style: TextStyle(
                               color: pickingPartner
-                                  ? AppTheme.accent
-                                  : AppTheme.textSecondary,
+                                  ? colors.primaryAccent
+                                  : colors.textSecondary,
                               fontSize: FontTokens.hudXs,
                             ),
                           ),
@@ -475,6 +552,7 @@ class _MiniCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColorTokens.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -486,26 +564,26 @@ class _MiniCard extends StatelessWidget {
                   width: 56,
                   height: 78,
                   fit: BoxFit.cover,
-                  errorWidget: (_, __, ___) => _placeholder(),
+                  errorWidget: (_, __, ___) => _placeholder(colors),
                 )
-              : _placeholder(),
+              : _placeholder(colors),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: LayoutTokens.gr0),
         Text(
           label,
           style:
               TextStyle(
-                  color: AppTheme.textSecondary, fontSize: FontTokens.hudXs),
+                  color: colors.textSecondary, fontSize: FontTokens.hudXs),
         ),
       ],
     );
   }
 
-  Widget _placeholder() => Container(
+  Widget _placeholder(AppColorTokens colors) => Container(
         width: 56,
         height: 78,
-        color: AppTheme.card,
-        child: Icon(Icons.style, color: AppTheme.textSecondary),
+        color: colors.surface,
+        child: Icon(Icons.style, color: colors.textSecondary),
       );
 }
 
@@ -524,21 +602,22 @@ class _CommanderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColorTokens.of(context);
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: MotionTokens.fast,
         decoration: BoxDecoration(
-          color: AppTheme.card,
+          color: colors.surface,
           borderRadius: RadiusTokens.radiusSm,
           border: Border.all(
-            color: isSelected ? AppTheme.accent : Colors.transparent,
+            color: isSelected ? colors.primaryAccent : Colors.transparent,
             width: 2,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppTheme.accent.withValues(alpha: 0.35),
+                    color: colors.primaryAccent.withValues(alpha: 0.35),
                     blurRadius: 8,
                     spreadRadius: 1,
                   ),
@@ -558,7 +637,7 @@ class _CommanderCard extends StatelessWidget {
                         fit: BoxFit.cover,
                         placeholder: (_, __) => Center(
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: AppTheme.accent),
+                              strokeWidth: 2, color: colors.primaryAccent),
                         ),
                         errorWidget: (_, __, ___) => Image.asset(
                           ScryfallCard.offlineImageAsset,
@@ -581,7 +660,7 @@ class _CommanderCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: AppTheme.textPrimary,
+                      color: colors.textPrimary,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -590,7 +669,7 @@ class _CommanderCard extends StatelessWidget {
                     Text(
                       'Partner',
                       style: TextStyle(
-                          color: AppTheme.accentGold, fontSize: FontTokens.hudXs),
+                          color: colors.emphasis, fontSize: FontTokens.hudXs),
                     ),
                 ],
               ),
@@ -598,7 +677,7 @@ class _CommanderCard extends StatelessWidget {
             if (isSelected)
               Container(
                 decoration: BoxDecoration(
-                  color: AppTheme.accent,
+                  color: colors.primaryAccent,
                   borderRadius:
                       BorderRadius.vertical(bottom: Radius.circular(10)),
                 ),
