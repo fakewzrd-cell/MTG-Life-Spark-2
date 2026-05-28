@@ -813,7 +813,8 @@ class _VoteDropdown extends StatelessWidget {
         ),
         SizedBox(height: LayoutTokens.gr0),
         DropdownButtonFormField<String>(
-          value: selectedId,
+          key: ValueKey<String?>(selectedId),
+          initialValue: selectedId,
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(

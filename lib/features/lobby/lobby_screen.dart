@@ -1007,7 +1007,8 @@ class _FormatDropdown extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
     return DropdownButtonFormField<GameFormat>(
-      value: value,
+      key: ValueKey<GameFormat>(value),
+      initialValue: value,
       isExpanded: true,
       decoration: _lobbyDropdownDecoration(context),
       dropdownColor: colors.surface,
@@ -1113,7 +1114,8 @@ class _StartingLifeDropdown extends StatelessWidget {
     ];
 
     return DropdownButtonFormField<int>(
-      value: value,
+      key: ValueKey<int>(value),
+      initialValue: value,
       isExpanded: true,
       decoration: _lobbyDropdownDecoration(context),
       dropdownColor: colors.surface,
@@ -1161,7 +1163,8 @@ class _TurnTimeLimitDropdown extends StatelessWidget {
     ];
 
     return DropdownButtonFormField<int?>(
-      value: value,
+      key: ValueKey<int?>(value),
+      initialValue: value,
       isExpanded: true,
       decoration: _lobbyDropdownDecoration(context),
       dropdownColor: colors.surface,

@@ -1,6 +1,5 @@
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
+import 'package:web/web.dart' as web;
 
 void dismissWebSplash() {
-  html.document.getElementById('app-loading')?.remove();
+  web.document.getElementById('app-loading')?.remove();
 }

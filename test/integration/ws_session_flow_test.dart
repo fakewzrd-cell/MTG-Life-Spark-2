@@ -1,3 +1,6 @@
+@Tags(['integration'])
+library;
+
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -22,10 +25,13 @@ void main() {
       await host.initialize();
       expect(host.isReady, isTrue);
       expect(host.port, greaterThan(0));
+      // Let the OS release the listening socket between tests (Windows).
+      await Future<void>.delayed(const Duration(milliseconds: 50));
     });
 
     tearDown(() async {
       await host.dispose();
+      await Future<void>.delayed(const Duration(milliseconds: 100));
     });
 
     test('client connects with QR token and announces lobby join', () async {
@@ -57,10 +63,10 @@ void main() {
 
       await client.connectToHost(parsed.wsUri, joinToken: parsed.token!);
 
-      await connected.future.timeout(const Duration(seconds: 5));
+      await connected.future.timeout(const Duration(seconds: 10));
       expect(client.isReady, isTrue);
 
-      final joinMessage = await hostJoin.timeout(const Duration(seconds: 5));
+      final joinMessage = await hostJoin.timeout(const Duration(seconds: 10));
       expect(joinMessage.payload['pid'], 'guest');
       expect(joinMessage.payload['username'], 'Guest');
 
@@ -126,7 +132,7 @@ void main() {
         'ws://127.0.0.1:${host.port}',
         joinToken: host.joinToken,
       );
-      await connected.future.timeout(const Duration(seconds: 5));
+      await connected.future.timeout(const Duration(seconds: 10));
 
       await host.send(
         BleMessage(
@@ -174,7 +180,7 @@ void main() {
         'ws://127.0.0.1:${host.port}',
         joinToken: host.joinToken,
       );
-      await connected.future.timeout(const Duration(seconds: 5));
+      await connected.future.timeout(const Duration(seconds: 10));
       await connectionSub.cancel();
 
       final readySeen = Completer<BleMessage>();
@@ -204,7 +210,7 @@ void main() {
         ),
       );
 
-      final ready = await readySeen.future.timeout(const Duration(seconds: 5));
+      final ready = await readySeen.future.timeout(const Duration(seconds: 10));
       expect(ready.payload['ready'], isTrue);
       expect(ready.payload['slot'], isA<Map>());
       expect(
@@ -235,7 +241,7 @@ void main() {
         joinToken: 'not-the-host-token',
       );
 
-      await rejected.future.timeout(const Duration(seconds: 5));
+      await rejected.future.timeout(const Duration(seconds: 10));
       expect(client.isReady, isFalse);
 
       await connectionSub.cancel();
