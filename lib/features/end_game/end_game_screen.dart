@@ -613,7 +613,7 @@ class _FeedbackCard extends StatelessWidget {
         padding: EdgeInsets.all(LayoutTokens.gr3),
         decoration: BoxDecoration(
           color: AppTheme.success.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: RadiusTokens.radiusMd,
           border: Border.all(
               color: AppTheme.success.withValues(alpha: 0.4)),
         ),
@@ -641,7 +641,7 @@ class _FeedbackCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.card,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: RadiusTokens.radiusMd,
         border: Border.all(color: AppTheme.surface),
       ),
       child: Column(
@@ -666,7 +666,7 @@ class _FeedbackCard extends StatelessWidget {
           _VoteDropdown(
             label: 'MVP',
             hint: 'Most Valuable Player',
-            players: game.players.where((p) => !p.isEliminated).toList(),
+            players: others,
             selectedId: mvpPlayerId,
             onChanged: onMvpChanged,
           ),
@@ -675,7 +675,7 @@ class _FeedbackCard extends StatelessWidget {
           _VoteDropdown(
             label: 'Team Player',
             hint: 'Best teammate',
-            players: game.players.where((p) => !p.isEliminated).toList(),
+            players: others,
             selectedId: teamPlayerId,
             onChanged: onTeamPlayerChanged,
           ),
@@ -683,7 +683,7 @@ class _FeedbackCard extends StatelessWidget {
           _VoteDropdown(
             label: 'Underdog',
             hint: 'Best comeback or underdog performance',
-            players: game.players.where((p) => !p.isEliminated).toList(),
+            players: others,
             selectedId: underdogPlayerId,
             onChanged: onUnderdogChanged,
           ),

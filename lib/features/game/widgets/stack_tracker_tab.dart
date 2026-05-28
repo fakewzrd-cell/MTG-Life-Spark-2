@@ -75,6 +75,7 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
         : allItems.where((i) => i.showsOnStack).toList();
     final resolvesNext = StackDisplay.resolvesNextItem(allItems);
     final activeRoots = StackDisplay.activeRootsNewestFirst(allItems);
+    final resolveOrderNumbers = StackDisplay.resolveOrderNumbers(allItems);
 
     final bottomSafe = MediaQuery.paddingOf(context).bottom;
     final listChildren = _sortMode == StackSortMode.stackOrder
@@ -83,8 +84,15 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
             visible,
             resolvesNext,
             activeRoots,
+            resolveOrderNumbers,
           )
-        : _apnapChildren(game, visible, resolvesNext, colors);
+        : _apnapChildren(
+            game,
+            visible,
+            resolvesNext,
+            colors,
+            resolveOrderNumbers,
+          );
 
     return CustomScrollView(
       slivers: [
@@ -269,6 +277,7 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
     List<StackItem> visible,
     StackItem? resolvesNext,
     List<StackItem> activeRoots,
+    Map<String, int> resolveOrderNumbers,
   ) {
     final tree = StackDisplay.stackOrderTree(
       visible,
@@ -284,6 +293,7 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
           resolvesNextId: resolvesNext?.id,
           activeRoots: activeRoots,
           allItems: game.stackItems,
+          resolveOrderNumbers: resolveOrderNumbers,
           shouldAnimateEnter: _shouldAnimateEnter,
           onEnterComplete: _markEntered,
         ),
@@ -295,6 +305,7 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
     List<StackItem> visible,
     StackItem? resolvesNext,
     AppColorTokens colors,
+    Map<String, int> resolveOrderNumbers,
   ) {
     final filteredGame = game.copyWith(stackItems: visible);
     final groups = StackDisplay.apnapGroups(filteredGame);
@@ -343,6 +354,7 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
             resolvesNextId: resolvesNext?.id,
             showWaitsHint: false,
             allItems: game.stackItems,
+            resolveOrderNumbers: resolveOrderNumbers,
             nestedResponses: _nestedUnder(g.items[i], visible),
             shouldAnimateEnter: _shouldAnimateEnter,
             onEnterComplete: _markEntered,
@@ -634,6 +646,7 @@ class _StackNodeTile extends ConsumerWidget {
   final String? resolvesNextId;
   final List<StackItem> activeRoots;
   final List<StackItem> allItems;
+  final Map<String, int> resolveOrderNumbers;
   final bool Function(String id) shouldAnimateEnter;
   final void Function(String id) onEnterComplete;
 
@@ -645,6 +658,7 @@ class _StackNodeTile extends ConsumerWidget {
     required this.resolvesNextId,
     required this.activeRoots,
     required this.allItems,
+    required this.resolveOrderNumbers,
     required this.shouldAnimateEnter,
     required this.onEnterComplete,
   });
@@ -665,6 +679,7 @@ class _StackNodeTile extends ConsumerWidget {
       resolvesNextId: resolvesNextId,
       showWaitsHint: showWaits,
       allItems: allItems,
+      stackOrderNumber: resolveOrderNumbers[node.item.id],
     );
 
     final cardRow = isRoot
@@ -692,6 +707,7 @@ class _StackNodeTile extends ConsumerWidget {
             resolvesNextId: resolvesNextId,
             activeRoots: activeRoots,
             allItems: allItems,
+            resolveOrderNumbers: resolveOrderNumbers,
             shouldAnimateEnter: shouldAnimateEnter,
             onEnterComplete: onEnterComplete,
           ),
@@ -718,6 +734,7 @@ class _StackItemEntry extends ConsumerWidget {
   final bool showWaitsHint;
   final List<StackItem> allItems;
   final List<StackItem> nestedResponses;
+  final Map<String, int> resolveOrderNumbers;
   final bool Function(String id) shouldAnimateEnter;
   final void Function(String id) onEnterComplete;
 
@@ -731,6 +748,7 @@ class _StackItemEntry extends ConsumerWidget {
     required this.resolvesNextId,
     required this.showWaitsHint,
     required this.allItems,
+    this.resolveOrderNumbers = const {},
     this.nestedResponses = const [],
     required this.shouldAnimateEnter,
     required this.onEnterComplete,
@@ -744,6 +762,7 @@ class _StackItemEntry extends ConsumerWidget {
       resolvesNextId: resolvesNextId,
       showWaitsHint: showWaitsHint,
       allItems: allItems,
+      stackOrderNumber: resolveOrderNumbers[item.id],
     );
 
     final cardRow = !linkToParent
@@ -773,6 +792,7 @@ class _StackItemEntry extends ConsumerWidget {
             resolvesNextId: resolvesNextId,
             showWaitsHint: false,
             allItems: allItems,
+            resolveOrderNumbers: resolveOrderNumbers,
             nestedResponses: allItems
                 .where(
                   (r) => r.parentId == nestedResponses[i].id,
@@ -839,6 +859,7 @@ class _StackItemCard extends ConsumerWidget {
   final String? resolvesNextId;
   final bool showWaitsHint;
   final List<StackItem> allItems;
+  final int? stackOrderNumber;
 
   const _StackItemCard({
     required this.game,
@@ -846,6 +867,7 @@ class _StackItemCard extends ConsumerWidget {
     required this.resolvesNextId,
     required this.showWaitsHint,
     required this.allItems,
+    this.stackOrderNumber,
   });
 
   @override
@@ -936,6 +958,9 @@ class _StackItemCard extends ConsumerWidget {
               children: [
                 if (isResolvesNext) ...[
                   _ResolvesNextBadge(),
+                  SizedBox(height: _StackCardLayout.groupGap),
+                ] else if (stackOrderNumber != null && item.isActive) ...[
+                  _StackOrderNumberBadge(number: stackOrderNumber!),
                   SizedBox(height: _StackCardLayout.groupGap),
                 ],
                 _buildCardBody(
@@ -1152,6 +1177,50 @@ class _StackItemCard extends ConsumerWidget {
             ],
         ),
       ),
+    );
+  }
+}
+
+class _StackOrderNumberBadge extends StatelessWidget {
+  final int number;
+
+  const _StackOrderNumberBadge({required this.number});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.gameColors;
+    return Row(
+      children: [
+        Container(
+          width: 28,
+          height: 28,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: colors.backgroundSecondary,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: colors.textSecondary.withValues(alpha: 0.35),
+            ),
+          ),
+          child: Text(
+            '$number',
+            style: TextStyle(
+              fontSize: FontTokens.hudSm,
+              fontWeight: FontWeight.w800,
+              color: colors.textPrimary,
+            ),
+          ),
+        ),
+        SizedBox(width: LayoutTokens.gr1),
+        Text(
+          'On stack',
+          style: TextStyle(
+            fontSize: FontTokens.hudXs,
+            fontWeight: FontWeight.w600,
+            color: colors.textSecondary.withValues(alpha: 0.85),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -82,6 +82,30 @@ class GameStateNotifier extends StateNotifier<GameState> {
     _trimAndSetLogs(_logsWithAppended(message, turnNumber: turnNumber));
   }
 
+  void _appendCommanderDamageLog(
+    String fromPlayerId,
+    String toPlayerId,
+    int appliedDelta,
+  ) {
+    if (appliedDelta == 0) return;
+    final from = _playerById(fromPlayerId);
+    final to = _playerById(toPlayerId);
+    if (from == null || to == null) return;
+
+    final sign = appliedDelta > 0 ? '+$appliedDelta' : '$appliedDelta';
+    final local = state.localPlayerId;
+    final String message;
+    if (toPlayerId == local && fromPlayerId != local) {
+      message = '${from.username} dealt you $sign commander damage';
+    } else if (fromPlayerId == local && toPlayerId != local) {
+      message = 'You dealt ${to.username} $sign commander damage';
+    } else {
+      message =
+          '${from.username} → ${to.username}: Commander damage $sign';
+    }
+    _appendGameLog(message);
+  }
+
   List<PlayerGameState> _playersWithUndoOn(
     String playerId,
     UndoAction action,
@@ -259,6 +283,15 @@ class GameStateNotifier extends StateNotifier<GameState> {
     );
   }
 
+  /// Dismiss the post-roll turn order board and enter the main game UI.
+  void dismissTurnOrderReveal() {
+    if (!state.showTurnOrderReveal) return;
+    state = state.copyWith(
+      showTurnOrderReveal: false,
+      firstPlayerRolls: const {},
+    );
+  }
+
   /// Submit local player's roll for first-player determination (d6).
   void submitFirstPlayerRoll(int roll) {
     if (!state.awaitingFirstPlayerRoll) return;
@@ -301,7 +334,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
       turnOrder: turnOrder,
       activePlayerIndex: 0,
       awaitingFirstPlayerRoll: false,
-      firstPlayerRolls: const {},
+      showTurnOrderReveal: true,
       turnStartTime: now,
     );
 
@@ -600,12 +633,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
       }).toList(),
     );
 
-    final fromP = _playerById(fromPlayerId);
-    final toP = victim;
-    final logDelta = appliedDelta > 0 ? '+$appliedDelta' : '$appliedDelta';
-    _appendGameLog(
-      '${fromP?.username ?? '?'} → ${toP.username}: Commander damage $logDelta',
-    );
+    _appendCommanderDamageLog(fromPlayerId, toPlayerId, appliedDelta);
 
     _send(BleMessage.commanderDamage(
       seqNum: _nextSeq(),
@@ -1972,7 +2000,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
             turnOrder: order,
             activePlayerIndex: 0,
             awaitingFirstPlayerRoll: false,
-            firstPlayerRolls: const {},
+            showTurnOrderReveal: true,
             turnStartTime: DateTime.now(),
           );
         }
@@ -2025,9 +2053,23 @@ class GameStateNotifier extends StateNotifier<GameState> {
     final delta = (payload['delta'] as num?)?.toInt() ?? 0;
     final synced = _playerById(pid);
     if (synced != null && delta != 0) {
+      final actorId = payload['origin'] as String?;
+      final actor = actorId != null ? _playerById(actorId) : null;
+      final local = state.localPlayerId;
       if (field == 'life') {
+        if (pid == local && actor != null && actor.playerId != local) {
+          _appendGameLog(
+            '${actor.username} changed your life ${delta > 0 ? '+' : ''}$delta',
+          );
+        } else {
+          _appendGameLog(
+            '${synced.username}: Life ${delta > 0 ? '+' : ''}$delta',
+          );
+        }
+      } else if (pid == local && actor != null && actor.playerId != local) {
         _appendGameLog(
-          '${synced.username}: Life ${delta > 0 ? '+' : ''}$delta',
+          '${actor.username} changed your ${_labelForCounterField(field)} '
+          '${delta > 0 ? '+' : ''}$delta',
         );
       } else {
         _appendGameLog(
@@ -2081,6 +2123,11 @@ class GameStateNotifier extends StateNotifier<GameState> {
         );
       }).toList(),
     );
+
+    if (amount != 0) {
+      _appendCommanderDamageLog(fromId, toId, amount);
+    }
+
     _checkLossConditions();
   }
 

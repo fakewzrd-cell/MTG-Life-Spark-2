@@ -11,6 +11,10 @@ class MatchParticipantSnapshot {
   final String? commanderName;
   final String? commanderImageUrl;
   final int teamIndex;
+  final int? finalLife;
+  final bool isWinner;
+  /// 1 = winner / best placement; higher = further from winning.
+  final int placementRank;
 
   const MatchParticipantSnapshot({
     required this.playerId,
@@ -18,6 +22,9 @@ class MatchParticipantSnapshot {
     this.commanderName,
     this.commanderImageUrl,
     this.teamIndex = 0,
+    this.finalLife,
+    this.isWinner = false,
+    this.placementRank = 0,
   });
 
   factory MatchParticipantSnapshot.fromJson(Map<String, dynamic> json) =>
@@ -27,6 +34,9 @@ class MatchParticipantSnapshot {
         commanderName: json['commanderName'] as String?,
         commanderImageUrl: json['commanderImageUrl'] as String?,
         teamIndex: (json['teamIndex'] as num?)?.toInt() ?? 0,
+        finalLife: (json['finalLife'] as num?)?.toInt(),
+        isWinner: json['isWinner'] as bool? ?? false,
+        placementRank: (json['placementRank'] as num?)?.toInt() ?? 0,
       );
 
   Map<String, dynamic> toJson() => {
@@ -35,6 +45,9 @@ class MatchParticipantSnapshot {
         'commanderName': commanderName,
         if (commanderImageUrl != null) 'commanderImageUrl': commanderImageUrl,
         'teamIndex': teamIndex,
+        if (finalLife != null) 'finalLife': finalLife,
+        'isWinner': isWinner,
+        if (placementRank > 0) 'placementRank': placementRank,
       };
 }
 

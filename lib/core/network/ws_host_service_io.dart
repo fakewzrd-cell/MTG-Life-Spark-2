@@ -118,6 +118,18 @@ class WsHostService implements BleService {
   }
 
   void _handleClientMessage(BleMessage message, String clientKey) {
+    if (message.type == BleMessageType.sessionPing) {
+      _sendToKey(
+        BleMessage(
+          type: BleMessageType.sessionPing,
+          payload: const {},
+          seqNum: _nextSeq(),
+        ),
+        clientKey,
+      );
+      return;
+    }
+
     if (message.type == BleMessageType.hello) {
       final version = message.payload['version'] as String?;
       if (version != kBleProtocolVersion) {

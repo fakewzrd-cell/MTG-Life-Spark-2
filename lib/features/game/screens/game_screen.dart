@@ -159,6 +159,22 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       );
     }
 
+    final showTurnOrderReveal = ref.watch(
+      gameProvider.select((g) => g.showTurnOrderReveal),
+    );
+    if (showTurnOrderReveal) {
+      final game = ref.watch(gameProvider);
+      return Scaffold(
+        backgroundColor: colors.backgroundPrimary,
+        body: SafeArea(
+          child: TurnOrderRevealOverlay(
+            game: game,
+            onContinue: ref.read(gameProvider.notifier).dismissTurnOrderReveal,
+          ),
+        ),
+      );
+    }
+
     final awaitingFirstPlayerRoll = ref.watch(
       gameProvider.select((g) => g.awaitingFirstPlayerRoll),
     );
@@ -373,6 +389,7 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
               entries: ref.watch(
                 gameProvider.select((g) => g.sessionActionLog),
               ),
+              localPlayerId: widget.localPlayerId,
             ),
             _ => LayoutBuilder(
               builder: (context, playViewport) {
@@ -391,17 +408,15 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
                             child: PhaseNavCluster(
                               game: game,
                               accentColor: chromeAccent,
-                              onBack: game.isHost && !game.timeoutActive
+                              onBack: !game.timeoutActive
                                   ? notifier.previousPhase
                                   : null,
-                              onNext: game.isHost && !game.timeoutActive
+                              onNext: !game.timeoutActive
                                   ? notifier.advancePhase
                                   : null,
                               onPickPhase: game.timeoutActive
                                   ? null
-                                  : (game.isHost || game.isLocalPlayersTurn)
-                                      ? notifier.setPhase
-                                      : null,
+                                  : notifier.setPhase,
                             ),
                           ),
                         ),

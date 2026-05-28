@@ -17,6 +17,7 @@ import 'core/persistence/feedback_repository.dart';
 import 'core/persistence/match_repository.dart';
 import 'core/persistence/profile_repository.dart';
 import 'core/debug/dismiss_web_splash.dart';
+import 'core/network/session_connection_guard.dart';
 import 'shared/theme/theme_provider.dart';
 import 'shared/utils/app_router.dart';
 import 'shared/utils/commander_image_resolver.dart';
@@ -285,8 +286,10 @@ class MgtLifeSparkApp extends ConsumerWidget {
       theme: theme,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
-      builder: (context, child) => AppSystemUiScope(
-        child: child ?? const SizedBox.shrink(),
+      builder: (context, child) => SessionConnectionGuard(
+        child: AppSystemUiScope(
+          child: child ?? const SizedBox.shrink(),
+        ),
       ),
     );
   }

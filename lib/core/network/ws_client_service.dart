@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../bluetooth/ble_message.dart';
@@ -25,6 +26,14 @@ class WsClientService implements BleService {
   String? _joinToken;
   int _seqNum = 0;
   bool _ready = false;
+  bool _intentionalDisconnect = false;
+  Timer? _keepAliveTimer;
+  bool _reconnecting = false;
+
+  /// Last successful host URI (for resume-after-background reconnect).
+  String? get lastHostUri => _hostUri;
+
+  String? get lastJoinToken => _joinToken;
 
   final String localPlayerId;
   final String localUsername;
@@ -54,6 +63,8 @@ class WsClientService implements BleService {
 
   @override
   Future<void> dispose() async {
+    _intentionalDisconnect = true;
+    _stopKeepAlive();
     await _sub?.cancel();
     await _channel?.sink.close();
     _channel = null;
@@ -69,6 +80,7 @@ class WsClientService implements BleService {
   /// Connects to the WebSocket server at [wsUri] (e.g. `ws://192.168.1.5:27315`).
   /// [joinToken] must match the token embedded in the host QR code.
   Future<void> connectToHost(String wsUri, {required String joinToken}) async {
+    _intentionalDisconnect = false;
     _hostUri = wsUri;
     _joinToken = joinToken;
     await disconnect();
@@ -105,7 +117,9 @@ class WsClientService implements BleService {
   }
 
   /// Closes any open socket without tearing down stream controllers.
-  Future<void> disconnect() async {
+  Future<void> disconnect({bool intentional = false}) async {
+    if (intentional) _intentionalDisconnect = true;
+    _stopKeepAlive();
     await _sub?.cancel();
     _sub = null;
     try {
@@ -113,6 +127,42 @@ class WsClientService implements BleService {
     } catch (_) {}
     _channel = null;
     _ready = false;
+  }
+
+  /// Re-opens the last host connection after the OS drops the socket in background.
+  Future<void> reconnectIfDisconnected() async {
+    if (_intentionalDisconnect || _reconnecting) return;
+    final uri = _hostUri;
+    final token = _joinToken;
+    if (uri == null || token == null) return;
+    if (_ready && _channel != null) return;
+
+    _reconnecting = true;
+    try {
+      await disconnect();
+      await connectToHost(uri, joinToken: token);
+    } catch (e, st) {
+      debugPrint('WsClientService reconnect failed: $e\n$st');
+    } finally {
+      _reconnecting = false;
+    }
+  }
+
+  void _startKeepAlive() {
+    _stopKeepAlive();
+    _keepAliveTimer = Timer.periodic(const Duration(seconds: 18), (_) {
+      if (!_ready) return;
+      _sendRaw(BleMessage(
+        type: BleMessageType.sessionPing,
+        payload: const {},
+        seqNum: _nextSeq(),
+      ));
+    });
+  }
+
+  void _stopKeepAlive() {
+    _keepAliveTimer?.cancel();
+    _keepAliveTimer = null;
   }
 
   // ── Incoming data ─────────────────────────────────────────────────────────
@@ -131,9 +181,14 @@ class WsClientService implements BleService {
     if (message.type == BleMessageType.reject) {
       _ready = false;
       final reason = message.payload['reason'] as String? ?? 'versionMismatch';
-      final messageText = reason == 'invalidJoinToken'
-          ? 'Invalid or expired join code. Scan the host QR again.'
-          : 'Protocol version mismatch. Required: ${message.payload['requiredVersion']}';
+      final messageText = switch (reason) {
+        'invalidJoinToken' =>
+          'Invalid or expired join code. Scan the host QR again.',
+        'lobbyFull' =>
+          'This lobby is full (6 players max). Wait for a slot or start a new game.',
+        _ =>
+          'Protocol version mismatch. Required: ${message.payload['requiredVersion']}',
+      };
       _connectionController.add(BleConnectionEvent(
         playerId: _hostUri ?? '',
         status: BleConnectionStatus.rejected,
@@ -142,9 +197,12 @@ class WsClientService implements BleService {
       return;
     }
 
+    if (message.type == BleMessageType.sessionPing) return;
+
     if (message.type == BleMessageType.hello) {
       // Host acknowledged → mark ready, notify UI, then announce lobby join.
       _ready = true;
+      _startKeepAlive();
       _connectionController.add(BleConnectionEvent(
         playerId: _hostUri ?? '',
         status: BleConnectionStatus.connected,

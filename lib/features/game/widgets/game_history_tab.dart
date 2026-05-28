@@ -8,8 +8,12 @@ import 'game_colors.dart';
 
 class GameHistoryTab extends StatelessWidget {
   final List<GameLogEntry> entries;
+  final String localPlayerId;
 
-  const GameHistoryTab({required this.entries});
+  const GameHistoryTab({
+    required this.entries,
+    required this.localPlayerId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -64,39 +68,89 @@ class GameHistoryTab extends StatelessWidget {
               ),
               SizedBox(height: LayoutTokens.gr1),
               ...rows.map(
-                (e) => Padding(
-                  padding: EdgeInsets.only(bottom: LayoutTokens.gr1),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _formatTime(e.time),
-                        style: TextStyle(
-                          fontSize: FontTokens.hudXs,
-                          color: colors.textSecondary.withValues(alpha: 0.85),
-                          fontFeatures: const [FontFeature.tabularFigures()],
+                (e) {
+                  final affectsYou = _entryAffectsLocalPlayer(
+                    e.message,
+                    localPlayerId,
+                  );
+                  return Padding(
+                    padding: EdgeInsets.only(bottom: LayoutTokens.gr1),
+                    child: Container(
+                      decoration: affectsYou
+                          ? BoxDecoration(
+                              color: colors.emphasis.withValues(
+                                alpha: 0.1,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: colors.emphasis.withValues(
+                                  alpha: 0.35,
+                                ),
+                              ),
+                            )
+                          : null,
+                      padding: affectsYou
+                          ? EdgeInsets.all(LayoutTokens.gr1)
+                          : EdgeInsets.zero,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (affectsYou) ...[
+                              Icon(
+                                Icons.person_pin,
+                                size: 16,
+                                color: colors.emphasis,
+                              ),
+                              SizedBox(width: LayoutTokens.gr1),
+                            ],
+                            Text(
+                              _formatTime(e.time),
+                              style: TextStyle(
+                                fontSize: FontTokens.hudXs,
+                                color: colors.textSecondary.withValues(
+                                  alpha: 0.85,
+                                ),
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
+                              ),
+                            ),
+                            SizedBox(width: LayoutTokens.gr2),
+                            Expanded(
+                              child: Text(
+                                e.message,
+                                style: TextStyle(
+                                  color: affectsYou
+                                      ? colors.textPrimary
+                                      : colors.textPrimary,
+                                  fontSize: FontTokens.hudSm,
+                                  fontWeight: affectsYou
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                  height: 1.25,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      SizedBox(width: LayoutTokens.gr2),
-                      Expanded(
-                        child: Text(
-                          e.message,
-                          style: TextStyle(
-                            color: colors.textPrimary,
-                            fontSize: FontTokens.hudSm,
-                            height: 1.25,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                    );
+                },
               ),
             ],
           ),
         );
       },
     );
+  }
+
+  static bool _entryAffectsLocalPlayer(String message, String localPlayerId) {
+    if (localPlayerId.isEmpty) return false;
+    final lower = message.toLowerCase();
+    return lower.contains('dealt you') ||
+        lower.contains('changed your') ||
+        lower.contains('(you)') ||
+        lower.startsWith('you ');
   }
 
   static String _formatTime(DateTime t) {

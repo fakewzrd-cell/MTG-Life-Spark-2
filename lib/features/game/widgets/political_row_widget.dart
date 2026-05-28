@@ -77,17 +77,6 @@ class PoliticalRowWidget extends ConsumerWidget {
                 ),
               ],
             ),
-            if (!game.isHost) ...[
-              SizedBox(height: LayoutTokens.gr0),
-              Text(
-                'Host assigns monarch, initiative, and day/night.',
-                style: TextStyle(
-                  color: colors.textSecondary,
-                  fontSize: FontTokens.hudXs,
-                  height: 1.2,
-                ),
-              ),
-            ],
             SizedBox(height: LayoutTokens.gr2),
             IntrinsicHeight(
               child: Row(
@@ -99,16 +88,14 @@ class PoliticalRowWidget extends ConsumerWidget {
                       icon: '👑',
                       holderId: game.monarchPlayerId,
                       players: game.players,
-                      canAssign: game.isHost,
-                      onTap: game.isHost
-                          ? () => _showAssignPicker(
-                                context,
-                                ref,
-                                'Assign Monarch',
-                                game.monarchPlayerId,
-                                (pid) => notifier.setMonarch(pid),
-                              )
-                          : null,
+                      canAssign: true,
+                      onTap: () => _showAssignPicker(
+                        context,
+                        ref,
+                        'Assign Monarch',
+                        game.monarchPlayerId,
+                        (pid) => notifier.setMonarch(pid),
+                      ),
                     ),
                   ),
                   SizedBox(width: LayoutTokens.gr1),
@@ -118,29 +105,25 @@ class PoliticalRowWidget extends ConsumerWidget {
                       icon: '⚔️',
                       holderId: game.initiativePlayerId,
                       players: game.players,
-                      canAssign: game.isHost,
-                      onTap: game.isHost
-                          ? () => _showAssignPicker(
-                                context,
-                                ref,
-                                'Assign Initiative',
-                                game.initiativePlayerId,
-                                (pid) => notifier.setInitiative(pid),
-                              )
-                          : null,
+                      canAssign: true,
+                      onTap: () => _showAssignPicker(
+                        context,
+                        ref,
+                        'Assign Initiative',
+                        game.initiativePlayerId,
+                        (pid) => notifier.setInitiative(pid),
+                      ),
                     ),
                   ),
                   SizedBox(width: LayoutTokens.gr1),
                   Expanded(
                     child: _DayNightToggle(
                       dayNight: game.dayNight,
-                      isHost: game.isHost,
-                      onTap: game.isHost
-                          ? () {
-                              final next = _nextDayNight(game.dayNight);
-                              notifier.setDayNight(next);
-                            }
-                          : null,
+                      isHost: true,
+                      onTap: () {
+                        final next = _nextDayNight(game.dayNight);
+                        notifier.setDayNight(next);
+                      },
                     ),
                   ),
                 ],

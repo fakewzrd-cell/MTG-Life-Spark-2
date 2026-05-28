@@ -467,12 +467,32 @@ int _recentMatchPlayerCount(MatchRecord m) {
 
 /// Best-effort winner row for profile recent-game tiles ([MatchRecord.result]
 /// is from the local player's perspective).
+List<MatchParticipantSnapshot> _participantsByPlacement(
+  List<MatchParticipantSnapshot> snaps,
+) {
+  final list = List<MatchParticipantSnapshot>.from(snaps);
+  list.sort((a, b) {
+    final ar = a.placementRank > 0 ? a.placementRank : 999;
+    final br = b.placementRank > 0 ? b.placementRank : 999;
+    if (ar != br) return ar.compareTo(br);
+    if (a.isWinner != b.isWinner) return a.isWinner ? -1 : 1;
+    final al = a.finalLife ?? 0;
+    final bl = b.finalLife ?? 0;
+    return bl.compareTo(al);
+  });
+  return list;
+}
+
 MatchParticipantSnapshot? _winnerParticipantForRecentCard(
   MatchRecord m,
   PlayerProfile? profile,
 ) {
   final snaps = m.participantSnapshots;
   if (snaps.isEmpty) return null;
+
+  for (final p in snaps) {
+    if (p.isWinner) return p;
+  }
 
   MatchParticipantSnapshot? localSnap;
   final un = profile?.username.trim().toLowerCase();
@@ -792,7 +812,7 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
             Wrap(
               spacing: LayoutTokens.gr1,
               runSpacing: LayoutTokens.gr1,
-              children: participants.map((p) {
+              children: _participantsByPlacement(participants).map((p) {
                 final chipImageUrl = _resolveCommanderImageForRecentCard(
                   ref,
                   p,
@@ -831,11 +851,12 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
                         : null,
                   ),
                   label: Text(
-                    p.commanderName ?? p.username,
+                    '${p.isWinner ? '👑 ' : ''}${p.commanderName ?? p.username}'
+                    '${p.finalLife != null ? ' · ${p.finalLife} life' : ''}',
                     style: TextStyle(
                       color: colors.textPrimary,
                       fontSize: 11,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: p.isWinner ? FontWeight.w800 : FontWeight.w600,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

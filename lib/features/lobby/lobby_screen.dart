@@ -184,6 +184,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
             errorMessage: _qrErrorMessage,
             onRetry: _prepareHostQr,
             playerCount: lobby.players.length,
+            maxPlayers: lobby.config.maxPlayers,
           ),
           SizedBox(height: LayoutTokens.gr4),
           ...lobby.players.map((slot) => _PlayerSlotCard(slot: slot)),
@@ -347,12 +348,14 @@ class _QrHeader extends StatelessWidget {
   final String? errorMessage;
   final VoidCallback onRetry;
   final int playerCount;
+  final int maxPlayers;
   const _QrHeader({
     required this.qrData,
     required this.loadState,
     required this.errorMessage,
     required this.onRetry,
     required this.playerCount,
+    required this.maxPlayers,
   });
 
   @override
@@ -377,7 +380,7 @@ class _QrHeader extends StatelessWidget {
               SizedBox(width: LayoutTokens.gr1),
               Flexible(
                 child: Text(
-                  'Players joined: $playerCount  •  Scan QR to join',
+                  'Players: $playerCount / $maxPlayers  •  Scan QR to join',
                   style: TextStyle(
                     color: colors.textSecondary,
                     fontSize: compact ? 12 : 13,

@@ -48,6 +48,17 @@ abstract final class StackDisplay {
     return i < 0 ? 0 : i + 1;
   }
 
+  /// LIFO resolve order: 1 = resolves next (newest active), 2 = next, etc.
+  static Map<String, int> resolveOrderNumbers(List<StackItem> items) {
+    final active = items.where((i) => i.isActive).toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final map = <String, int>{};
+    for (var i = 0; i < active.length; i++) {
+      map[active[i].id] = i + 1;
+    }
+    return map;
+  }
+
   /// Newest active item — resolves first (LIFO).
   static StackItem? resolvesNextItem(List<StackItem> items) {
     final active = items.where((i) => i.isActive).toList();

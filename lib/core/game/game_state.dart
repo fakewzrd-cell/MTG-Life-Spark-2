@@ -51,6 +51,9 @@ class GameState {
   final bool awaitingFirstPlayerRoll;
   final Map<String, int> firstPlayerRolls; // playerId -> roll value
 
+  /// After rolls resolve, show the turn-order board until the player continues.
+  final bool showTurnOrderReveal;
+
   // From lobby config
   final bool autoKoFromLife;
   final bool autoKoFromPoison;
@@ -106,6 +109,7 @@ class GameState {
     this.gameStartTime,
     this.awaitingFirstPlayerRoll = false,
     this.firstPlayerRolls = const {},
+    this.showTurnOrderReveal = false,
     this.autoKoFromLife = true,
     this.autoKoFromPoison = true,
     this.autoKoFromCommanderDamage = true,
@@ -155,6 +159,7 @@ class GameState {
     Object? gameStartTime = _sentinel,
     bool? awaitingFirstPlayerRoll,
     Map<String, int>? firstPlayerRolls,
+    bool? showTurnOrderReveal,
     bool? autoKoFromLife,
     bool? autoKoFromPoison,
     bool? autoKoFromCommanderDamage,
@@ -214,6 +219,8 @@ class GameState {
       awaitingFirstPlayerRoll:
           awaitingFirstPlayerRoll ?? this.awaitingFirstPlayerRoll,
       firstPlayerRolls: firstPlayerRolls ?? this.firstPlayerRolls,
+      showTurnOrderReveal:
+          showTurnOrderReveal ?? this.showTurnOrderReveal,
       autoKoFromLife: autoKoFromLife ?? this.autoKoFromLife,
       autoKoFromPoison: autoKoFromPoison ?? this.autoKoFromPoison,
       autoKoFromCommanderDamage:

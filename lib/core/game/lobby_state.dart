@@ -12,6 +12,7 @@ import '../models/pod_preset.dart';
 import '../persistence/providers.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../shared/utils/commander_image_resolver.dart';
+import 'game_constants.dart';
 import 'game_format.dart';
 
 // ── Config ─────────────────────────────────────────────────────────────────
@@ -43,7 +44,7 @@ class LobbyConfig {
     this.format = GameFormat.commander,
     this.startingLife = 40,
     this.alliancesEnabled = true,
-    this.maxPlayers = 6,
+    this.maxPlayers = GameConstants.maxLobbyPlayers,
     this.planechaseEnabled = false,
     this.archenemyEnabled = false,
     this.bountyEnabled = false,
@@ -114,7 +115,9 @@ class LobbyConfig {
             GameFormat.commander,
         startingLife: (json['startingLife'] as num?)?.toInt() ?? 40,
         alliancesEnabled: json['alliancesEnabled'] as bool? ?? true,
-        maxPlayers: (json['maxPlayers'] as num?)?.toInt() ?? 6,
+        maxPlayers: LobbyConfig.clampMaxPlayers(
+          (json['maxPlayers'] as num?)?.toInt() ?? GameConstants.maxLobbyPlayers,
+        ),
         planechaseEnabled: json['planechaseEnabled'] as bool? ?? false,
         archenemyEnabled: json['archenemyEnabled'] as bool? ?? false,
         bountyEnabled: json['bountyEnabled'] as bool? ?? false,
@@ -128,6 +131,10 @@ class LobbyConfig {
             (json['turnTimeLimitSeconds'] as num?)?.toInt(),
         trackTurnDuration: json['trackTurnDuration'] as bool? ?? false,
       );
+
+  /// Keeps lobby size within [GameConstants.maxLobbyPlayers].
+  static int clampMaxPlayers(int value) =>
+      value.clamp(1, GameConstants.maxLobbyPlayers);
 }
 
 // ── State ──────────────────────────────────────────────────────────────────
@@ -255,7 +262,11 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
 
   void updateConfig(LobbyConfig config) {
     if (!state.isHost) return;
-    state = state.copyWith(config: config);
+    state = state.copyWith(
+      config: config.copyWith(
+        maxPlayers: LobbyConfig.clampMaxPlayers(config.maxPlayers),
+      ),
+    );
     _broadcastLobbyUpdate();
   }
 
@@ -446,7 +457,10 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
     final playerId = payload['pid'] as String? ?? '';
     final username = payload['username'] as String? ?? playerId;
     if (state.players.any((p) => p.playerId == playerId)) return;
-    if (state.players.length >= state.config.maxPlayers) return;
+    if (state.players.length >= state.config.maxPlayers) {
+      _rejectLobbyJoin(playerId);
+      return;
+    }
 
     final colorIndex = state.players.length;
     final newSlot = PlayerSlot(
@@ -561,9 +575,17 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
     ));
   }
 
-  void _send(BleMessage message) {
+  void _rejectLobbyJoin(String playerId) {
     final service = _ref.read(sessionServiceProvider);
-    service?.send(message);
+    service?.send(
+      BleMessage.reject(_nextSeq(), reason: 'lobbyFull'),
+      targetPlayerId: playerId,
+    );
+  }
+
+  void _send(BleMessage message, {String? targetPlayerId}) {
+    final service = _ref.read(sessionServiceProvider);
+    service?.send(message, targetPlayerId: targetPlayerId);
   }
 
   int _nextSeq() => _seqNum++;

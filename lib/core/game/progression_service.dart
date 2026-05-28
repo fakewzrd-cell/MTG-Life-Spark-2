@@ -111,6 +111,20 @@ class ProgressionService {
         .map((p) => p.username)
         .toList();
 
+    final winnerId = finalState.winnerPlayerId;
+    final ranked = List<PlayerGameState>.from(finalState.players)
+      ..sort((a, b) {
+        if (a.playerId == winnerId) return -1;
+        if (b.playerId == winnerId) return 1;
+        if (a.isEliminated != b.isEliminated) {
+          return a.isEliminated ? 1 : -1;
+        }
+        return b.life.compareTo(a.life);
+      });
+    final placementById = <String, int>{
+      for (var i = 0; i < ranked.length; i++) ranked[i].playerId: i + 1,
+    };
+
     final participantsJson = jsonEncode(
       finalState.players.map((p) {
         final team = finalState.teamAssignments[p.playerId] ?? 0;
@@ -120,6 +134,9 @@ class ProgressionService {
           'commanderName': p.commanderName,
           'commanderImageUrl': p.commanderImageUrl,
           'teamIndex': team,
+          'finalLife': p.life,
+          'isWinner': p.playerId == winnerId,
+          'placementRank': placementById[p.playerId] ?? 0,
         };
       }).toList(),
     );

@@ -227,11 +227,9 @@ class _GameConcedeDialogState extends State<_GameConcedeDialog> {
   Widget build(BuildContext context) {
     final colors = context.gameColors;
     final game = widget.game;
-    final others =
-        game.players
-            .where((p) => p.playerId != game.localPlayerId && !p.isEliminated)
-            .toList();
-    final allPlayers = game.players.where((p) => !p.isEliminated).toList();
+    final others = game.players
+        .where((p) => p.playerId != game.localPlayerId)
+        .toList();
 
     return Consumer(
       builder:
@@ -315,7 +313,7 @@ class _GameConcedeDialogState extends State<_GameConcedeDialog> {
                     _GameConcedeVoteDropdown(
                       label: 'MVP',
                       hint: 'Most Valuable Player',
-                      players: allPlayers,
+                      players: others,
                       selectedId: _mvpPlayerId,
                       onChanged: (id) => setState(() => _mvpPlayerId = id),
                     ),
@@ -324,7 +322,7 @@ class _GameConcedeDialogState extends State<_GameConcedeDialog> {
                     _GameConcedeVoteDropdown(
                       label: 'Team Player',
                       hint: 'Best teammate',
-                      players: allPlayers,
+                      players: others,
                       selectedId: _teamPlayerId,
                       onChanged: (id) => setState(() => _teamPlayerId = id),
                     ),
@@ -332,7 +330,7 @@ class _GameConcedeDialogState extends State<_GameConcedeDialog> {
                     _GameConcedeVoteDropdown(
                       label: 'Underdog',
                       hint: 'Best comeback or underdog performance',
-                      players: allPlayers,
+                      players: others,
                       selectedId: _underdogPlayerId,
                       onChanged: (id) => setState(() => _underdogPlayerId = id),
                     ),

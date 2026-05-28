@@ -6,6 +6,7 @@ enum BleMessageType {
   // Handshake
   hello,
   reject,
+  sessionPing,
 
   // Game lifecycle
   gameStart,
