@@ -30,6 +30,19 @@ class AppIcons {
   static const String defaultProfileBanner =
       'assets/images/default_profile_banner.png';
 
+  /// Default profile picture silhouette (tinted with the active accent colour).
+  static const String defaultProfileAvatar =
+      'assets/images/default_profile_avatar.png';
+
+  /// Launch / bootstrap splash (lightning + speed lines).
+  static const String splashLogo = 'assets/images/splash_logo.svg';
+
+  /// Game lobby — host card background (dungeon party silhouettes).
+  static const String lobbyHostParty = 'assets/images/lobby_host_party.png';
+
+  /// Game lobby — join card background (arcane portal).
+  static const String lobbyJoinPortal = 'assets/images/lobby_join_portal.png';
+
   // ── Mana symbols (WUBRG) ────────────────────────────────────────────────
   static const String manaW = 'assets/icons/W.svg';
   static const String manaU = 'assets/icons/U.svg';

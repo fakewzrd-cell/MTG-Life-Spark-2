@@ -259,37 +259,31 @@ class GameState {
   bool get isLocalPlayersTurn => activePlayerId == localPlayerId;
 
   PlayerGameState? get localPlayer {
-    try {
-      return players.firstWhere((p) => p.playerId == localPlayerId);
-    } catch (_) {
-      return null;
+    for (final p in players) {
+      if (p.playerId == localPlayerId) return p;
     }
+    return null;
   }
 
   PlayerGameState? playerById(String id) {
-    try {
-      return players.firstWhere((p) => p.playerId == id);
-    } catch (_) {
-      return null;
+    for (final p in players) {
+      if (p.playerId == id) return p;
     }
+    return null;
   }
 
   Alliance? allianceFor(String playerId) {
-    try {
-      return alliances.firstWhere((a) => a.involves(playerId));
-    } catch (_) {
-      return null;
+    for (final a in alliances) {
+      if (a.involves(playerId)) return a;
     }
+    return null;
   }
 
   AllianceProposal? pendingProposalFor(String targetId) {
-    try {
-      return pendingProposals.firstWhere(
-        (p) => p.toId == targetId && p.delivered,
-      );
-    } catch (_) {
-      return null;
+    for (final p in pendingProposals) {
+      if (p.toId == targetId && p.delivered) return p;
     }
+    return null;
   }
 
   List<AllianceProposal> scheduledProposalsFrom(String fromId) =>
@@ -303,10 +297,9 @@ class GameState {
 
   /// Secret alliance visible to [viewerId], or any revealed alliance.
   Alliance? visibleAllianceFor(String viewerId, String subjectId) {
-    try {
-      final alliance = alliances.firstWhere((a) => a.involves(subjectId));
-      if (alliance.isRevealed || alliance.involves(viewerId)) return alliance;
-    } catch (_) {}
+    final alliance = allianceFor(subjectId);
+    if (alliance == null) return null;
+    if (alliance.isRevealed || alliance.involves(viewerId)) return alliance;
     return null;
   }
 

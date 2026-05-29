@@ -104,10 +104,9 @@ class AchievementDefinitions {
   ];
 
   static AchievementDef? byId(String id) {
-    try {
-      return all.firstWhere((a) => a.id == id);
-    } catch (_) {
-      return null;
+    for (final a in all) {
+      if (a.id == id) return a;
     }
+    return null;
   }
 }

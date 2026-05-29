@@ -21,6 +21,7 @@ import 'core/debug/dismiss_web_splash.dart';
 import 'core/network/session_connection_guard.dart';
 import 'shared/theme/theme_provider.dart';
 import 'shared/utils/app_router.dart';
+import 'shared/widgets/branded_splash.dart';
 import 'shared/utils/commander_image_resolver.dart';
 import 'ui/tokens/color_tokens.dart';
 import 'ui/theme/app_system_ui.dart';
@@ -69,27 +70,9 @@ class _AppBootstrapState extends State<_AppBootstrap> {
           dismissWebSplash();
           return const MgtLifeSparkApp();
         }
-        return MaterialApp(
+        return const MaterialApp(
           debugShowCheckedModeBanner: false,
-          home: Scaffold(
-            backgroundColor: ColorTokens.backgroundPrimary,
-            body: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(color: ColorTokens.brandPurple),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Loading MTG Life Spark…',
-                    style: TextStyle(
-                      color: ColorTokens.textPrimary.withValues(alpha: 0.75),
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          home: BrandedSplash(),
         );
       },
     );

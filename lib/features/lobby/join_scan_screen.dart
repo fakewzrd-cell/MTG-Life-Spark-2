@@ -434,7 +434,7 @@ class _ConnectingView extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           CircularProgressIndicator(color: colors.primaryAccent),
-          const SizedBox(height: 20),
+          SizedBox(height: LayoutTokens.gr4 + LayoutTokens.gr0),
           Text(
             'Connecting to host…',
             style: TextStyle(color: colors.textSecondary, fontSize: FontTokens.bodyLg),
@@ -490,10 +490,10 @@ class _WaitingRoomViewState extends ConsumerState<_WaitingRoomView> {
                     color: colors.textSecondary, fontSize: FontTokens.label),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: LayoutTokens.gr3),
               ...lobby.players.map((slot) => _WaitingSlotRow(slot: slot)),
               if (profile != null) ...[
-                const SizedBox(height: 24),
+                SizedBox(height: LayoutTokens.gr4),
                 if (isCommanderLobby)
                   Row(
                     children: [

@@ -201,21 +201,26 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (!hasProfile && path != AppRoutes.profileSetup) {
         return AppRoutes.profileSetup;
       }
-      if (hasProfile &&
-          !settings.onboardingCompleted &&
-          path != AppRoutes.onboarding &&
-          path != AppRoutes.profileSetup &&
-          path != AppRoutes.game &&
-          path != AppRoutes.endGame &&
-          !path.startsWith('${AppRoutes.lobby}/')) {
+      if (hasProfile && !settings.onboardingCompleted) {
+        if (path == AppRoutes.onboarding || path == AppRoutes.profileSetup) {
+          return null;
+        }
         return AppRoutes.onboarding;
       }
       if (path == AppRoutes.splash && hasProfile && settings.onboardingCompleted) {
         return AppRoutes.home;
       }
+      final game = ref.read(gameProvider);
+
+      if (path == AppRoutes.endGame) {
+        if (!game.gameOver) {
+          if (game.localPlayer != null) return AppRoutes.game;
+          return AppRoutes.lobby;
+        }
+      }
+
       if (path == AppRoutes.game) {
         final lobby = ref.read(lobbyProvider);
-        final game = ref.read(gameProvider);
         if (game.gameOver) {
           return AppRoutes.endGame;
         }

@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-
 import '../../../core/game/game_providers.dart';
 import '../../../core/game/game_state.dart';
 import '../../../core/game/game_state_notifier.dart';
 import '../../../core/game/player_game_state.dart';
 import '../../../core/models/game_feedback.dart';
-import '../../../shared/utils/app_router.dart';
 import '../../../shared/widgets/home_nav_bar.dart';
+import '../../../shared/widgets/player_feedback_widgets.dart';
+import '../../../ui/tokens/color_tokens.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
@@ -174,12 +173,15 @@ class GameBottomBar extends ConsumerWidget {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (!context.mounted) return;
                 final after = ref.read(gameProvider);
-                final local = after.localPlayer;
-                if (local != null &&
-                    local.isEliminated &&
-                    !after.gameOver) {
-                  context.go(AppRoutes.endGame);
-                }
+                if (after.gameOver) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'You forfeited. Match results save when the game ends.',
+                    ),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
               });
             },
           ),
@@ -212,13 +214,15 @@ class _GameConcedeDialogState extends State<_GameConcedeDialog> {
   String? _underdogPlayerId;
 
   void _submit(WidgetRef ref) {
-    ref.read(pendingFeedbackProvider.notifier).state = PendingFeedbackData(
+    final pending = PendingFeedbackData(
       likePlayerIds: _likePlayerIds.toList(),
       dislikePlayerIds: _dislikePlayerIds.toList(),
       mvpPlayerId: _mvpPlayerId,
       teamPlayerId: _teamPlayerId,
       underdogPlayerId: _underdogPlayerId,
     );
+    ref.read(pendingFeedbackProvider.notifier).state =
+        pending.hasContent ? pending : null;
     Navigator.pop(context);
     widget.onConcede();
   }
@@ -227,316 +231,154 @@ class _GameConcedeDialogState extends State<_GameConcedeDialog> {
   Widget build(BuildContext context) {
     final colors = context.gameColors;
     final game = widget.game;
+    final inset = GameModalChrome.horizontalInset(context);
     final others = game.players
         .where((p) => p.playerId != game.localPlayerId)
         .toList();
 
     return Consumer(
-      builder:
-          (context, ref, _) => AlertDialog(
-            backgroundColor: colors.surface,
-            contentPadding: EdgeInsets.zero,
-            content: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.sizeOf(context).width * 0.95,
-                maxHeight: MediaQuery.sizeOf(context).height * 0.85,
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Title + X
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        GameModalChrome.horizontalInset(context),
-                        LayoutTokens.gr3,
-                        LayoutTokens.gr2,
-                        0,
-                      ),
-                      child: GameDialogTitleRow(
-                        title: 'Forfeit?',
-                        onClose: () => Navigator.pop(context),
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        GameModalChrome.horizontalInset(context),
-                        LayoutTokens.gr2,
-                        GameModalChrome.horizontalInset(context),
-                        0,
-                      ),
-                      child: Text(
-                        'This will remove you from the game. Rate your opponents before leaving.',
-                        style: TextStyle(
-                          color: colors.textSecondary,
-                          fontSize: FontTokens.hudSm,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    if (others.isNotEmpty) ...[
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: GameModalChrome.horizontalInset(context),
-                        ),
-                        child: Text(
-                          'Rate opponents',
-                          style: TextStyle(
-                            color: colors.textPrimary,
-                            fontSize: FontTokens.hudSm,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      ...others.map(
-                        (p) => _GameConcedePlayerFeedbackRow(
-                          player: p,
-                          isLiked: _likePlayerIds.contains(p.playerId),
-                          isDisliked: _dislikePlayerIds.contains(p.playerId),
-                          onLike:
-                              () => setState(() {
-                                _dislikePlayerIds.remove(p.playerId);
-                                _likePlayerIds.add(p.playerId);
-                              }),
-                          onDislike:
-                              () => setState(() {
-                                _likePlayerIds.remove(p.playerId);
-                                _dislikePlayerIds.add(p.playerId);
-                              }),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                    // MVP
-                    _GameConcedeVoteDropdown(
-                      label: 'MVP',
-                      hint: 'Most Valuable Player',
-                      players: others,
-                      selectedId: _mvpPlayerId,
-                      onChanged: (id) => setState(() => _mvpPlayerId = id),
-                    ),
-                    const SizedBox(height: 8),
-                    // Team Player
-                    _GameConcedeVoteDropdown(
-                      label: 'Team Player',
-                      hint: 'Best teammate',
-                      players: others,
-                      selectedId: _teamPlayerId,
-                      onChanged: (id) => setState(() => _teamPlayerId = id),
-                    ),
-                    const SizedBox(height: 8),
-                    _GameConcedeVoteDropdown(
-                      label: 'Underdog',
-                      hint: 'Best comeback or underdog performance',
-                      players: others,
-                      selectedId: _underdogPlayerId,
-                      onChanged: (id) => setState(() => _underdogPlayerId = id),
-                    ),
-                    const SizedBox(height: 20),
-                    // Concede button
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        GameModalChrome.horizontalInset(context),
-                        0,
-                        GameModalChrome.horizontalInset(context),
-                        LayoutTokens.gr4,
-                      ),
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: colors.textSecondary,
-                          side: BorderSide(color: colors.textSecondary),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        onPressed: () => _submit(ref),
-                        child: Text('Forfeit'),
-                      ),
+      builder: (context, ref, _) {
+        final titleStyle = TextStyle(
+          color: colors.textPrimary,
+          fontSize: FontTokens.title,
+          fontWeight: FontWeight.w700,
+        );
+        final bodyStyle = TextStyle(
+          color: colors.textSecondary,
+          fontSize: FontTokens.hudSm,
+          height: 1.4,
+        );
+
+        return AlertDialog(
+          backgroundColor: colors.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: RadiusTokens.radiusMd,
+            side: BorderSide(color: colors.backgroundSecondary),
+          ),
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: LayoutTokens.gr3,
+            vertical: LayoutTokens.gr4,
+          ),
+          titlePadding: EdgeInsets.zero,
+          contentPadding: EdgeInsets.zero,
+          actionsPadding: EdgeInsets.zero,
+          title: Padding(
+            padding: EdgeInsets.fromLTRB(inset, LayoutTokens.gr3, inset, 0),
+            child: GameDialogTitleRow(
+              titleWidget: Text('Forfeit?', style: titleStyle),
+              onClose: () => Navigator.pop(context),
+            ),
+          ),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 400,
+              maxHeight: MediaQuery.sizeOf(context).height * 0.55,
+            ),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(inset, LayoutTokens.gr2, inset, 0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    others.isEmpty
+                        ? 'You will leave this game immediately.'
+                        : 'You will leave the game. Optionally rate opponents before you go.',
+                    style: bodyStyle,
+                  ),
+                  if (others.isNotEmpty) ...[
+                    SizedBox(height: LayoutTokens.gr3),
+                    PlayerFeedbackFields(
+                      opponents: others,
+                      likePlayerIds: _likePlayerIds,
+                      dislikePlayerIds: _dislikePlayerIds,
+                      rateOpponentsTitle: 'Rate opponents',
+                      onLike: (pid) => setState(() {
+                        togglePlayerLike(
+                          likeIds: _likePlayerIds,
+                          dislikeIds: _dislikePlayerIds,
+                          playerId: pid,
+                          apply: (likes, dislikes) {
+                            _likePlayerIds
+                              ..clear()
+                              ..addAll(likes);
+                            _dislikePlayerIds
+                              ..clear()
+                              ..addAll(dislikes);
+                          },
+                        );
+                      }),
+                      onDislike: (pid) => setState(() {
+                        togglePlayerDislike(
+                          likeIds: _likePlayerIds,
+                          dislikeIds: _dislikePlayerIds,
+                          playerId: pid,
+                          apply: (likes, dislikes) {
+                            _likePlayerIds
+                              ..clear()
+                              ..addAll(likes);
+                            _dislikePlayerIds
+                              ..clear()
+                              ..addAll(dislikes);
+                          },
+                        );
+                      }),
+                      mvpPlayerId: _mvpPlayerId,
+                      teamPlayerId: _teamPlayerId,
+                      underdogPlayerId: _underdogPlayerId,
+                      onMvpChanged: (id) => setState(() => _mvpPlayerId = id),
+                      onTeamPlayerChanged: (id) =>
+                          setState(() => _teamPlayerId = id),
+                      onUnderdogChanged: (id) =>
+                          setState(() => _underdogPlayerId = id),
                     ),
                   ],
-                ),
+                ],
               ),
             ),
           ),
-    );
-  }
-}
-
-class _GameConcedePlayerFeedbackRow extends StatelessWidget {
-  final PlayerGameState player;
-  final bool isLiked;
-  final bool isDisliked;
-  final VoidCallback onLike;
-  final VoidCallback onDislike;
-
-  const _GameConcedePlayerFeedbackRow({
-    required this.player,
-    required this.isLiked,
-    required this.isDisliked,
-    required this.onLike,
-    required this.onDislike,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.gameColors;
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: GameModalChrome.horizontalInset(context),
-        vertical: 2,
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: player.playerColor,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              player.username,
-              style: TextStyle(
-                color: colors.textPrimary,
-                fontSize: FontTokens.hudSm,
-                fontWeight: FontWeight.w500,
+          actions: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                inset,
+                LayoutTokens.gr2,
+                inset,
+                LayoutTokens.gr3,
               ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          IconButton(
-            icon: Icon(
-              Icons.thumb_up,
-              size: 20,
-              color: isLiked ? colors.success : colors.textSecondary,
-            ),
-            onPressed: onLike,
-            style: IconButton.styleFrom(
-              backgroundColor:
-                  isLiked
-                      ? colors.success.withValues(alpha: OpacityTokens.soft)
-                      : Colors.transparent,
-              minimumSize: const Size(44, 44),
-              padding: EdgeInsets.zero,
-            ),
-          ),
-          IconButton(
-            icon: Icon(
-              Icons.thumb_down,
-              size: 20,
-              color: isDisliked ? colors.primaryAccent : colors.textSecondary,
-            ),
-            onPressed: onDislike,
-            style: IconButton.styleFrom(
-              backgroundColor:
-                  isDisliked
-                      ? colors.primaryAccent.withValues(alpha: OpacityTokens.soft)
-                      : Colors.transparent,
-              minimumSize: const Size(44, 44),
-              padding: EdgeInsets.zero,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _GameConcedeVoteDropdown extends StatelessWidget {
-  final String label;
-  final String hint;
-  final List<PlayerGameState> players;
-  final String? selectedId;
-  final void Function(String?) onChanged;
-
-  const _GameConcedeVoteDropdown({
-    required this.label,
-    required this.hint,
-    required this.players,
-    required this.selectedId,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.gameColors;
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: GameModalChrome.horizontalInset(context),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: colors.textSecondary,
-              fontSize: FontTokens.hudXs,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 4),
-          DropdownButton<String?>(
-            value: selectedId,
-            isExpanded: true,
-            hint: Text(
-              hint,
-              style: TextStyle(
-                color: colors.textSecondary,
-                fontSize: FontTokens.hudSm,
-              ),
-            ),
-            dropdownColor: colors.surface,
-            style: TextStyle(
-              color: colors.textPrimary,
-              fontSize: FontTokens.hudSm,
-            ),
-            underline: const SizedBox.shrink(),
-            borderRadius: RadiusTokens.radiusPill,
-            items: [
-              DropdownMenuItem<String>(
-                value: null,
-                child: Text(
-                  '— None —',
-                  style: TextStyle(color: colors.textSecondary, fontSize: 13),
-                ),
-              ),
-              ...players.map(
-                (p) => DropdownMenuItem<String>(
-                  value: p.playerId,
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: p.playerColor,
-                          shape: BoxShape.circle,
-                        ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(
+                    height: LayoutTokens.minTapTarget,
+                    child: FilledButton(
+                      onPressed: () => _submit(ref),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: ColorTokens.danger,
+                        foregroundColor: ColorTokens.onAccent,
+                        shape: const StadiumBorder(),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          p.username,
-                          style: TextStyle(
-                            color: colors.textPrimary,
-                            fontSize: FontTokens.hudSm,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
+                      child: const Text('Forfeit'),
+                    ),
                   ),
-                ),
+                  SizedBox(height: LayoutTokens.gr2),
+                  SizedBox(
+                    height: LayoutTokens.minTapTarget,
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: colors.textPrimary,
+                        side: BorderSide(color: colors.borderSubtle),
+                        shape: const StadiumBorder(),
+                      ),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                ],
               ),
-            ],
-            onChanged: onChanged,
-          ),
-        ],
-      ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

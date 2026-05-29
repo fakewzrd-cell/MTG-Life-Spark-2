@@ -7,7 +7,6 @@ import '../../core/models/player_deck.dart';
 import '../../core/persistence/deck_repository.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/utils/app_router.dart';
-import '../../ui/components/ui_app_bar.dart';
 import '../../ui/components/ui_button.dart';
 import '../../ui/components/ui_dialog_actions.dart';
 import '../../ui/theme/app_color_tokens.dart';
@@ -318,7 +317,12 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
     if (isEmpty) {
       scrollBody = Center(
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr4),
+          padding: EdgeInsets.fromLTRB(
+            LayoutTokens.shellPageInset,
+            LayoutTokens.shellPageInset,
+            LayoutTokens.shellPageInset,
+            bottomBarPad,
+          ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
@@ -346,41 +350,47 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
                   height: 1.5,
                 ),
               ),
+              SizedBox(height: LayoutTokens.gr5),
+              UiButton(
+                label: 'Add deck',
+                icon: const Icon(Icons.add_rounded, size: 22),
+                onPressed: _promptNewDeckName,
+              ),
             ],
           ),
         ),
       );
     } else {
+      const fabSize = 40.0;
+      final fabStackClearance =
+          bottomBarPad + LayoutTokens.gr2 + fabSize + LayoutTokens.gr3;
       scrollBody = ListView(
-        padding: EdgeInsets.fromLTRB(
-          LayoutTokens.gr3,
-          LayoutTokens.gr3,
-          LayoutTokens.gr3,
-          LayoutTokens.gr2,
+        padding: LayoutTokens.shellScrollPadding(context).copyWith(
+          bottom: fabStackClearance,
         ),
         children: sectionChildren,
       );
     }
 
+    final addFab = FloatingActionButton.small(
+      onPressed: _promptNewDeckName,
+      tooltip: 'Add deck',
+      child: const Icon(Icons.add_rounded),
+    );
+
+    // Pin FAB to the screen bottom, not the scroll content height (short lists
+    // otherwise shrink the [Stack] and float the button mid-page).
     return Scaffold(
-      appBar: const UiAppBar(title: 'My decks'),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: Stack(
+        fit: StackFit.expand,
         children: [
-          Expanded(child: scrollBody),
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-              LayoutTokens.gr3,
-              LayoutTokens.gr2,
-              LayoutTokens.gr3,
-              bottomBarPad,
+          Positioned.fill(child: scrollBody),
+          if (!isEmpty)
+            Positioned(
+              right: LayoutTokens.shellPageInset,
+              bottom: bottomBarPad,
+              child: addFab,
             ),
-            child: UiButton(
-              label: 'Add deck',
-              icon: const Icon(Icons.add_rounded, size: 22),
-              onPressed: _promptNewDeckName,
-            ),
-          ),
         ],
       ),
     );

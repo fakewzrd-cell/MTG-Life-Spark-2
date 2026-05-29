@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../../shared/constants/app_icons.dart';
 import '../theme/app_color_tokens.dart';
+import '../tokens/layout_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import '../tokens/radius_tokens.dart';
 
@@ -61,7 +62,7 @@ class AppBottomNavBar extends StatelessWidget {
     ),
   ];
 
-  static const _barHeight = 68.0;
+  static const double barHeight = LayoutTokens.bottomNavHeight;
   static const _pillInsetV = 8.0;
   static const _pillInsetH = 0.08;
 
@@ -84,7 +85,7 @@ class AppBottomNavBar extends StatelessWidget {
           child: SafeArea(
             top: false,
             child: SizedBox(
-              height: _barHeight,
+              height: barHeight,
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final itemWidth = constraints.maxWidth / destinations.length;

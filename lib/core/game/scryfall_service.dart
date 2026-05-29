@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../debug/app_log.dart';
 import 'package:http/http.dart' as http;
 
 class ScryfallCard {
@@ -167,7 +169,8 @@ class ScryfallService {
       if (response.statusCode != 200) return null;
       final json = jsonDecode(response.body) as Map<String, dynamic>;
       return _parseCard(json);
-    } catch (_) {
+    } catch (e, st) {
+      appLog('Scryfall fuzzy fetch failed for $name', error: e, stackTrace: st);
       return null;
     }
   }
@@ -184,7 +187,8 @@ class ScryfallService {
 
       final json = jsonDecode(response.body) as Map<String, dynamic>;
       return _parseCard(json);
-    } catch (_) {
+    } catch (e, st) {
+      appLog('Scryfall exact fetch failed for $name', error: e, stackTrace: st);
       return null;
     }
   }

@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/network/session_providers.dart';
-import '../utils/app_router.dart';
-import '../../ui/theme/app_color_tokens.dart';
+import '../../ui/components/shell_destructive_dialog.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/spacing_tokens.dart';
+import '../utils/app_router.dart';
 
 /// Navigation bar with Home button.
 /// [showQuitConfirmation] — when true, shows "Are you sure you want to quit?" before navigating.
@@ -50,50 +50,20 @@ class HomeNavBar extends ConsumerWidget {
     );
   }
 
-  static void _showQuitDialog(BuildContext context, WidgetRef ref) {
-    showDialog<bool>(
+  static Future<void> _showQuitDialog(BuildContext context, WidgetRef ref) async {
+    final quit = await showShellDestructiveConfirm(
       context: context,
-      builder: (ctx) {
-        final colors = AppColorTokens.of(ctx);
-        return AlertDialog(
-          title: Text(
-            'Are you sure you want to quit?',
-            style: TextStyle(color: colors.textPrimary),
-            textAlign: TextAlign.center,
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'You will leave the game and return home.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: colors.textSecondary),
-              ),
-              const SizedBox(height: SpacingTokens.lg),
-              FilledButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                child: Text('Yes'),
-              ),
-              const SizedBox(height: SpacingTokens.sm),
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: Text(
-                  'No',
-                  style: TextStyle(color: colors.textSecondary),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    ).then((quit) async {
-      if (quit != true || !context.mounted) return;
-      await quitActiveGame(ref);
-      if (context.mounted) {
-        context.go(AppRoutes.home);
-      }
-    });
+      title: 'Leave game?',
+      message: 'You will leave the game and return home. Match stats only '
+          'save when the table finishes the game.',
+      confirmLabel: 'Leave',
+      cancelLabel: 'Stay',
+    );
+    if (!quit || !context.mounted) return;
+    await quitActiveGame(ref);
+    if (context.mounted) {
+      context.go(AppRoutes.home);
+    }
   }
 
   static void _goHome(BuildContext context) {

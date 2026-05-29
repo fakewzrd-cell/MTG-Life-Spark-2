@@ -13,6 +13,13 @@ class PendingFeedbackData {
     this.teamPlayerId,
     this.underdogPlayerId,
   });
+
+  bool get hasContent =>
+      likePlayerIds.isNotEmpty ||
+      dislikePlayerIds.isNotEmpty ||
+      mvpPlayerId != null ||
+      teamPlayerId != null ||
+      underdogPlayerId != null;
 }
 
 /// Feedback given by a player after a game ends.

@@ -71,6 +71,8 @@ dev_dependencies:
 
   # App icon generation (run: flutter pub run flutter_launcher_icons)
   flutter_launcher_icons: ^0.14.1
+  # Native launch splash (run: dart run flutter_native_splash:create)
+  flutter_native_splash: ^2.4.4
 
 flutter:
   uses-material-design: true
@@ -96,3 +98,15 @@ flutter_launcher_icons:
   min_sdk_android: 21
   adaptive_icon_background: "#0E0E0E"
   adaptive_icon_foreground: "assets/images/app_icon_fg.png"
+
+# Branded launch screen (Android/iOS) — matches web + [BrandedSplash].
+# Regenerate after updating assets/images/splash_logo.png:
+#   dart run flutter_native_splash:create
+flutter_native_splash:
+  color: "#12121A"
+  image: assets/images/splash_logo.png
+  android_12:
+    color: "#12121A"
+    image: assets/images/splash_logo.png
+  ios: true
+  web: false

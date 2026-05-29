@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:hive/hive.dart';
 
+import '../debug/app_log.dart';
+
 part 'match_record.g.dart';
 
 /// One player row stored in [MatchRecord.participantsJson].
@@ -134,7 +136,8 @@ class MatchRecord extends HiveObject {
           .map((e) =>
               MatchParticipantSnapshot.fromJson(e as Map<String, dynamic>))
           .toList();
-    } catch (_) {
+    } catch (e, st) {
+      appLog('MatchRecord: invalid participantsJson', error: e, stackTrace: st);
       return [];
     }
   }

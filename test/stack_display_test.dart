@@ -65,6 +65,31 @@ void main() {
     );
   });
 
+  test('resolveOrderNumbers are chronological (1 = oldest active)', () {
+    const items = [
+      StackItem(id: 'a', playerId: 'p', name: 'Rift', createdAt: 100),
+      StackItem(
+        id: 'b',
+        playerId: 'p',
+        name: 'Swan',
+        parentId: 'a',
+        createdAt: 101,
+      ),
+      StackItem(
+        id: 'c',
+        playerId: 'p',
+        name: 'Dispel',
+        parentId: 'b',
+        createdAt: 102,
+      ),
+    ];
+    final numbers = StackDisplay.resolveOrderNumbers(items);
+    expect(numbers['a'], 1);
+    expect(numbers['b'], 2);
+    expect(numbers['c'], 3);
+    expect(StackDisplay.resolvesNextItem(items)?.id, 'c');
+  });
+
   test('apnap order uses stack anchor instead of current active player', () {
     final game = GameState(
       players: [

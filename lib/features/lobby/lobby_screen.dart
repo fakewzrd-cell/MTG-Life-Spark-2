@@ -169,14 +169,8 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
         bottom: false,
         child: Builder(
           builder: (context) {
-            final scrollBottomPad = LayoutTokens.shellBottomInset(context);
             return ListView(
-              padding: EdgeInsets.fromLTRB(
-                LayoutTokens.gr3,
-                LayoutTokens.gr2,
-                LayoutTokens.gr3,
-                scrollBottomPad,
-              ),
+              padding: LayoutTokens.shellListPadding(context),
               children: [
           _QrHeader(
             qrData: _qrData,

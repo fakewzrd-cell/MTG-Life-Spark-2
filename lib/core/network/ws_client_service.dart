@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
+import '../debug/app_log.dart';
 import '../bluetooth/ble_message.dart';
 import '../bluetooth/ble_protocol.dart';
 import '../bluetooth/ble_service.dart';
@@ -124,7 +125,9 @@ class WsClientService implements BleService {
     _sub = null;
     try {
       await _channel?.sink.close();
-    } catch (_) {}
+    } catch (e) {
+      appLog('WsClientService.disconnect close failed', error: e);
+    }
     _channel = null;
     _ready = false;
   }
@@ -174,7 +177,8 @@ class WsClientService implements BleService {
       message = BleMessage.fromJson(
         jsonDecode(data) as Map<String, dynamic>,
       );
-    } catch (_) {
+    } catch (e, st) {
+      appLog('WsClientService: invalid message JSON', error: e, stackTrace: st);
       return;
     }
 
@@ -252,7 +256,9 @@ class WsClientService implements BleService {
   void _sendRaw(BleMessage message) {
     try {
       _channel?.sink.add(jsonEncode(message.toJson()));
-    } catch (_) {}
+    } catch (e) {
+      appLog('WsClientService._sendRaw failed', error: e);
+    }
   }
 
   int _nextSeq() => _seqNum++;

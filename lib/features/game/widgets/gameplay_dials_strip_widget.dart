@@ -720,7 +720,7 @@ class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
                   ),
                   child: Text(
                     'Add counter',
-                    style: GameModalChrome.sheetTitleStyle,
+                    style: GameModalChrome.sheetTitleStyle(context),
                   ),
                 ),
                 Padding(

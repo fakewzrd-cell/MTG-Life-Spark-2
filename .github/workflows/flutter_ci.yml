@@ -20,11 +20,18 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Analyze
-        run: flutter analyze
+      - name: Analyze lib
+        run: flutter analyze lib
 
-      - name: Test
-        run: flutter test
+      - name: Test with coverage
+        run: flutter test --coverage
+
+      - name: Core coverage gate (50% lines in lib/core)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y lcov
+          chmod +x tool/check_core_coverage.sh
+          ./tool/check_core_coverage.sh
 
       - name: Build web
         run: flutter build web --release

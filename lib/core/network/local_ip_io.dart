@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import '../debug/app_log.dart';
 import 'local_ip_utils.dart';
 
 /// Returns the device's local WiFi/LAN IPv4 address, or null if unavailable.
@@ -23,7 +24,8 @@ Future<String?> getLocalIpAddress() async {
     );
   } on TimeoutException {
     return null;
-  } catch (_) {
+  } catch (e, st) {
+    appLog('getLocalIpAddress failed', error: e, stackTrace: st);
     return null;
   }
 }

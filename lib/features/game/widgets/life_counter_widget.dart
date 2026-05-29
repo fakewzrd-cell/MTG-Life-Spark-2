@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import '../../../ui/theme/app_color_tokens.dart';
-import '../../../ui/tokens/color_tokens.dart';
 import '../../../ui/tokens/motion_tokens.dart';
 import 'package:flutter/services.dart';
 

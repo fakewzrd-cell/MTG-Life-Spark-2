@@ -2,6 +2,8 @@ import '../../../ui/tokens/color_tokens.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
+import '../../../core/debug/app_log.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -97,7 +99,8 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
           _error = 'No cards found. Try a different spelling.';
         }
       });
-    } catch (_) {
+    } catch (e, st) {
+      appLog('StackCardPicker: Scryfall search failed', error: e, stackTrace: st);
       if (!mounted) return;
       setState(() {
         _results = [];
@@ -162,7 +165,7 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
           children: [
             Text(
               'Search Scryfall so we store the correct card name and rules text.',
-              style: GameModalChrome.dialogBodyStyle,
+              style: GameModalChrome.dialogBodyStyle(context),
             ),
             SizedBox(height: LayoutTokens.gr2),
             TextField(

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 48" fill="none" aria-hidden="true">
+  <g class="splash-core">
+    <circle cx="18" cy="24" r="13" stroke="#FFFFFF" stroke-width="2"/>
+    <path
+      d="M14 13 L20 23 L16.5 23 L22 33"
+      stroke="#FFFFFF"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      class="splash-bolt"
+    />
+  </g>
+  <g class="splash-lines">
+    <line x1="40" y1="17" x2="68" y2="17" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" class="splash-line splash-line-1"/>
+    <line x1="44" y1="24" x2="84" y2="24" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" class="splash-line splash-line-2"/>
+    <line x1="40" y1="31" x2="68" y2="31" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" class="splash-line splash-line-3"/>
+  </g>
+</svg>

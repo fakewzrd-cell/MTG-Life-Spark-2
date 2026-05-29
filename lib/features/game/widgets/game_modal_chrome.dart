@@ -1,38 +1,44 @@
-import '../../../ui/tokens/color_tokens.dart';
 import 'package:flutter/material.dart';
 
-import 'game_colors.dart';
+import '../../../ui/tokens/color_tokens.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/motion_tokens.dart';
+import '../../../ui/tokens/opacity_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
+import 'game_colors.dart';
 
 /// Shared dialog and bottom-sheet chrome for in-game modals.
 abstract final class GameModalChrome {
-  static const double _compactBreakpoint = 360;
-
   static double horizontalInset(BuildContext context) =>
-      MediaQuery.sizeOf(context).width < _compactBreakpoint
-          ? LayoutTokens.gr3
-          : LayoutTokens.gr4;
+      LayoutTokens.shellPageInset;
 
-  static TextStyle get dialogTitleStyle => TextStyle(
-        color: ColorTokens.textPrimary,
-        fontSize: FontTokens.title,
-        fontWeight: FontWeight.w700,
-      );
+  static TextStyle dialogTitleStyle(BuildContext context) {
+    final colors = context.gameColors;
+    return TextStyle(
+      color: colors.textPrimary,
+      fontSize: FontTokens.title,
+      fontWeight: FontWeight.w700,
+    );
+  }
 
-  static TextStyle get dialogBodyStyle => TextStyle(
-        color: ColorTokens.textSecondary.withValues(alpha: 0.9),
-        fontSize: FontTokens.hudSm,
-        height: 1.4,
-      );
+  static TextStyle dialogBodyStyle(BuildContext context) {
+    final colors = context.gameColors;
+    return TextStyle(
+      color: colors.textSecondary.withValues(alpha: OpacityTokens.strong),
+      fontSize: FontTokens.hudSm,
+      height: 1.4,
+    );
+  }
 
-  static TextStyle get sheetTitleStyle => TextStyle(
-        color: ColorTokens.textPrimary,
-        fontSize: FontTokens.title,
-        fontWeight: FontWeight.w700,
-      );
+  static TextStyle sheetTitleStyle(BuildContext context) {
+    final colors = context.gameColors;
+    return TextStyle(
+      color: colors.textPrimary,
+      fontSize: FontTokens.title,
+      fontWeight: FontWeight.w700,
+    );
+  }
 
   static EdgeInsets sheetPadding(BuildContext context) {
     final h = horizontalInset(context);
@@ -96,7 +102,7 @@ class GameDialogTitleRow extends StatelessWidget {
       children: [
         Expanded(
           child: titleWidget ??
-              Text(title!, style: GameModalChrome.dialogTitleStyle),
+              Text(title!, style: GameModalChrome.dialogTitleStyle(context)),
         ),
         GameDialogCloseButton(onPressed: onClose),
       ],
@@ -146,10 +152,10 @@ class GameSheetHeader extends StatelessWidget {
           const GameSheetHandle(),
           SizedBox(height: LayoutTokens.gr2),
         ],
-        Text(title, style: GameModalChrome.sheetTitleStyle),
+        Text(title, style: GameModalChrome.sheetTitleStyle(context)),
         if (subtitle != null) ...[
           SizedBox(height: LayoutTokens.gr1),
-          Text(subtitle!, style: GameModalChrome.dialogBodyStyle),
+          Text(subtitle!, style: GameModalChrome.dialogBodyStyle(context)),
         ],
       ],
     );
@@ -185,9 +191,10 @@ Future<T?> showGameBottomSheet<T>({
   bool enableDrag = true,
   Color? backgroundColor,
 }) {
+  final sheetColor = backgroundColor ?? context.gameColors.surface;
   return showModalBottomSheet<T>(
     context: context,
-    backgroundColor: backgroundColor ?? ColorTokens.surface,
+    backgroundColor: sheetColor,
     isScrollControlled: isScrollControlled,
     showDragHandle: showDragHandle,
     enableDrag: enableDrag,
@@ -214,23 +221,26 @@ Future<bool?> showGameConfirmDialog({
 }) {
   return showDialog<bool>(
     context: context,
-    builder: (ctx) => AlertDialog(
-      backgroundColor: ColorTokens.surface,
-      title: GameDialogTitleRow(
-        title: title,
-        onClose: () => Navigator.pop(ctx, false),
-      ),
-      content: Text(message, style: GameModalChrome.dialogBodyStyle),
-      actions: [
-        FilledButton(
-          onPressed: () => Navigator.pop(ctx, true),
-          style: destructive
-              ? FilledButton.styleFrom(backgroundColor: ColorTokens.danger)
-              : null,
-          child: Text(confirmLabel),
+    builder: (ctx) {
+      final colors = ctx.gameColors;
+      return AlertDialog(
+        backgroundColor: colors.surface,
+        title: GameDialogTitleRow(
+          title: title,
+          onClose: () => Navigator.pop(ctx, false),
         ),
-      ],
-    ),
+        content: Text(message, style: GameModalChrome.dialogBodyStyle(ctx)),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: destructive
+                ? FilledButton.styleFrom(backgroundColor: ColorTokens.danger)
+                : FilledButton.styleFrom(backgroundColor: colors.primaryAccent),
+            child: Text(confirmLabel),
+          ),
+        ],
+      );
+    },
   );
 }
 
@@ -245,30 +255,33 @@ Future<bool?> showGameChoiceDialog({
 }) {
   return showDialog<bool>(
     context: context,
-    builder: (ctx) => AlertDialog(
-      backgroundColor: ColorTokens.surface,
-      title: GameDialogTitleRow(
-        title: title,
-        onClose: () => Navigator.pop(ctx, false),
-      ),
-      content: content,
-      actions: [
-        if (secondaryLabel != null)
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(
-              secondaryLabel,
-              style: TextStyle(color: ColorTokens.textSecondary),
-            ),
-          ),
-        FilledButton(
-          onPressed: () => Navigator.pop(ctx, true),
-          style: primaryDestructive
-              ? FilledButton.styleFrom(backgroundColor: ColorTokens.danger)
-              : null,
-          child: Text(primaryLabel),
+    builder: (ctx) {
+      final colors = ctx.gameColors;
+      return AlertDialog(
+        backgroundColor: colors.surface,
+        title: GameDialogTitleRow(
+          title: title,
+          onClose: () => Navigator.pop(ctx, false),
         ),
-      ],
-    ),
+        content: content,
+        actions: [
+          if (secondaryLabel != null)
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(
+                secondaryLabel,
+                style: TextStyle(color: colors.textSecondary),
+              ),
+            ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: primaryDestructive
+                ? FilledButton.styleFrom(backgroundColor: ColorTokens.danger)
+                : FilledButton.styleFrom(backgroundColor: colors.primaryAccent),
+            child: Text(primaryLabel),
+          ),
+        ],
+      );
+    },
   );
 }

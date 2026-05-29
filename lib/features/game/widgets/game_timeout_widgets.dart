@@ -255,7 +255,7 @@ class _GameTimeoutOverlayState extends State<GameTimeoutOverlay> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.timer, size: 56, color: colors.emphasis),
-                      const SizedBox(height: 16),
+                      SizedBox(height: LayoutTokens.gr3),
                       Text(
                         'TIMEOUT',
                         style: TextStyle(
@@ -277,7 +277,7 @@ class _GameTimeoutOverlayState extends State<GameTimeoutOverlay> {
                           fontFeatures: [FontFeature.tabularFigures()],
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      SizedBox(height: LayoutTokens.gr3),
                       Text(
                         'Game paused — no life changes',
                         style: TextStyle(

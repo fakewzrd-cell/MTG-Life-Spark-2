@@ -2,6 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+
+import '../debug/app_log.dart';
 import '../bluetooth/ble_message.dart';
 import '../bluetooth/ble_protocol.dart';
 import '../bluetooth/ble_service.dart';
@@ -111,7 +114,8 @@ class WsHostService implements BleService {
       message = BleMessage.fromJson(
         jsonDecode(data) as Map<String, dynamic>,
       );
-    } catch (_) {
+    } catch (e, st) {
+      appLog('WsHostService: invalid message JSON', error: e, stackTrace: st);
       return;
     }
     _handleClientMessage(message, key);
@@ -272,7 +276,9 @@ class WsHostService implements BleService {
   void _trySend(WebSocket ws, String data) {
     try {
       if (ws.readyState == WebSocket.open) ws.add(data);
-    } catch (_) {}
+    } catch (e) {
+      appLog('WsHostService._trySend failed', error: e);
+    }
   }
 
   String? _keyFor(String playerId) {

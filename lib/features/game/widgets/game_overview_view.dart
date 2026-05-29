@@ -15,6 +15,7 @@ import 'alliance_overview_ui.dart';
 import 'game_colors.dart';
 import 'game_modal_chrome.dart';
 import 'game_timeout_widgets.dart';
+import 'overview_commander_art_backdrop.dart';
 import 'political_row_widget.dart';
 import 'team_colors.dart';
 
@@ -31,13 +32,23 @@ class GameOverviewView extends ConsumerWidget {
     final colors = context.gameColors;
     final notifier = ref.read(gameProvider.notifier);
     final activePlayer = game.playerById(game.activePlayerId);
-    final activeName = activePlayer?.username ?? '—';
+    final isLocalActive = game.activePlayerId == game.localPlayerId;
+    final activeName = isLocalActive
+        ? 'You'
+        : overviewShortPlayerName(
+            activePlayer?.username ?? '—',
+            maxChars: 14,
+          );
     final phaseLabel = game.currentPhase.streamlinedShortLabel;
     final aliveCount = game.activePlayers.length;
+
+    const pageInset = LayoutTokens.shellPageInset;
 
     return ColoredBox(
       color: colors.backgroundPrimary,
       child: SafeArea(
+        bottom: false,
+        minimum: EdgeInsets.only(top: pageInset),
         child: CustomScrollView(
           slivers: [
             SliverAppBar(
@@ -46,47 +57,29 @@ class GameOverviewView extends ConsumerWidget {
               surfaceTintColor: Colors.transparent,
               elevation: 0,
               scrolledUnderElevation: 0,
-              toolbarHeight: 56,
-              title: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Round ${game.roundNumber}',
-                    style: TextStyle(
-                      color: colors.textPrimary,
-                      fontSize: FontTokens.body,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.3,
-                      height: 1.1,
-                    ),
-                  ),
-                  SizedBox(height: LayoutTokens.gr0 - 1),
-                  Text(
-                    '$activeName · $phaseLabel',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: colors.textSecondary,
-                      fontSize: FontTokens.hudXs,
-                      fontWeight: FontWeight.w600,
-                      height: 1.2,
-                    ),
-                  ),
-                ],
-              ),
+              toolbarHeight: LayoutTokens.minTapTarget,
+              leadingWidth: pageInset + LayoutTokens.minTapTarget,
               centerTitle: true,
-              leading: IconButton(
-                icon: Icon(
-                  Icons.close,
-                  color: colors.textSecondary,
-                  size: 22,
+              title: Text(
+                'Round ${game.roundNumber}',
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontSize: FontTokens.title,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.2,
+                  height: 1,
                 ),
-                onPressed: onClose,
-                tooltip: 'Close overview',
-                style: IconButton.styleFrom(
-                  minimumSize: const Size(
-                    LayoutTokens.minTapTarget,
-                    LayoutTokens.minTapTarget,
+              ),
+              leading: SizedBox(
+                width: pageInset + LayoutTokens.minTapTarget,
+                child: Padding(
+                  padding: EdgeInsets.only(left: pageInset),
+                  child: Align(
+                    alignment: Alignment.center,
+                    child: Tooltip(
+                      message: 'Close overview',
+                      child: GameDialogCloseButton(onPressed: onClose),
+                    ),
                   ),
                 ),
               ),
@@ -95,48 +88,63 @@ class GameOverviewView extends ConsumerWidget {
                     game.isLocalPlayersTurn &&
                     !game.timeoutActive)
                   Padding(
-                    padding: EdgeInsets.only(
-                      right: LayoutTokens.gr1,
-                      top: LayoutTokens.gr1,
-                      bottom: LayoutTokens.gr1,
-                    ),
-                    child: TextButton(
-                      onPressed: () => notifier.endTurn(),
-                      style: TextButton.styleFrom(
-                        backgroundColor: colors.primaryAccent.withValues(
-                          alpha: OpacityTokens.soft,
+                    padding: EdgeInsets.only(right: pageInset),
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: TextButton(
+                        onPressed: () => notifier.endTurn(),
+                        style: TextButton.styleFrom(
+                          backgroundColor: colors.primaryAccent.withValues(
+                            alpha: OpacityTokens.soft,
+                          ),
+                          foregroundColor: colors.primaryAccent,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: LayoutTokens.gr2,
+                            vertical: LayoutTokens.gr0 + 2,
+                          ),
+                          minimumSize: const Size(
+                            0,
+                            LayoutTokens.minTapTarget - 12,
+                          ),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: RadiusTokens.radiusControlSm,
+                          ),
                         ),
-                        foregroundColor: colors.primaryAccent,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: LayoutTokens.gr2,
-                          vertical: LayoutTokens.gr1,
-                        ),
-                        minimumSize:
-                            const Size(0, LayoutTokens.minTapTarget - 8),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: RadiusTokens.radiusControlSm,
-                        ),
-                      ),
-                      child: Text(
-                        'End turn',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: FontTokens.caption,
+                        child: Text(
+                          'End turn',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: FontTokens.caption,
+                            height: 1.1,
+                          ),
                         ),
                       ),
                     ),
                   )
                 else
-                  SizedBox(width: LayoutTokens.minTapTarget),
+                  SizedBox(
+                    width: pageInset + LayoutTokens.minTapTarget,
+                    height: LayoutTokens.minTapTarget,
+                  ),
               ],
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(_OverviewHeaderMetrics.bottomHeight),
+                child: _GameOverviewAppBarBottom(
+                  activeName: activeName,
+                  phaseLabel: phaseLabel,
+                  playerColor: activePlayer?.playerColor,
+                  isLocalTurn: game.isLocalPlayersTurn,
+                ),
+              ),
             ),
 
             SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
-                  LayoutTokens.gr3,
-                  LayoutTokens.gr1,
-                  LayoutTokens.gr3,
+                  pageInset,
+                  LayoutTokens.gr2,
+                  pageInset,
                   LayoutTokens.gr2,
                 ),
                 child: PoliticalRowWidget(game: game),
@@ -147,9 +155,9 @@ class GameOverviewView extends ConsumerWidget {
               SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(
-                    LayoutTokens.gr3,
+                    pageInset,
                     0,
-                    LayoutTokens.gr3,
+                    pageInset,
                     LayoutTokens.gr2,
                   ),
                   child: GameTimeoutBanner(
@@ -162,9 +170,9 @@ class GameOverviewView extends ConsumerWidget {
             SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
-                  LayoutTokens.gr3,
+                  pageInset,
                   LayoutTokens.gr2,
-                  LayoutTokens.gr3,
+                  pageInset,
                   LayoutTokens.gr1,
                 ),
                 child: Row(
@@ -206,9 +214,9 @@ class GameOverviewView extends ConsumerWidget {
 
             SliverPadding(
               padding: EdgeInsets.fromLTRB(
-                LayoutTokens.gr3,
+                pageInset,
                 0,
-                LayoutTokens.gr3,
+                pageInset,
                 LayoutTokens.gr4,
               ),
               sliver: SliverList(
@@ -220,6 +228,205 @@ class GameOverviewView extends ConsumerWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+abstract final class _OverviewHeaderMetrics {
+  static const double bottomHeight = 36;
+}
+
+/// App-bar bottom: status pill + soft separator above politics.
+class _GameOverviewAppBarBottom extends StatelessWidget {
+  const _GameOverviewAppBarBottom({
+    required this.activeName,
+    required this.phaseLabel,
+    required this.playerColor,
+    required this.isLocalTurn,
+  });
+
+  final String activeName;
+  final String phaseLabel;
+  final Color? playerColor;
+  final bool isLocalTurn;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.gameColors;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(height: LayoutTokens.gr1),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr3),
+          child: Center(
+            child: _GameOverviewTurnStatusPill(
+              activeName: activeName,
+              phaseLabel: phaseLabel,
+              playerColor: playerColor,
+              isLocalTurn: isLocalTurn,
+            ),
+          ),
+        ),
+        SizedBox(height: LayoutTokens.gr1 + 2),
+        Divider(
+          height: 1,
+          thickness: 1,
+          color: colors.borderSubtle.withValues(alpha: OpacityTokens.soft),
+        ),
+      ],
+    );
+  }
+}
+
+/// Compact turn-status chip under the overview app-bar title row.
+class _GameOverviewTurnStatusPill extends StatelessWidget {
+  const _GameOverviewTurnStatusPill({
+    required this.activeName,
+    required this.phaseLabel,
+    required this.playerColor,
+    required this.isLocalTurn,
+  });
+
+  final String activeName;
+  final String phaseLabel;
+  final Color? playerColor;
+  final bool isLocalTurn;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.gameColors;
+    final accent = colors.primaryAccent;
+    final dotColor = playerColor ?? accent;
+
+    final label = isLocalTurn
+        ? 'Your turn · $activeName · $phaseLabel'
+        : '$activeName · $phaseLabel phase';
+
+    return Semantics(
+      label: label,
+      child: Container(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.sizeOf(context).width * 0.72,
+        ),
+        padding: EdgeInsets.fromLTRB(
+          isLocalTurn ? LayoutTokens.gr1 : LayoutTokens.gr1 + 2,
+          LayoutTokens.gr0 + 1,
+          LayoutTokens.gr1 + 2,
+          LayoutTokens.gr0 + 1,
+        ),
+        decoration: BoxDecoration(
+          color: isLocalTurn
+              ? accent.withValues(alpha: OpacityTokens.subtle)
+              : colors.backgroundSecondary,
+          borderRadius: RadiusTokens.radiusPill,
+          border: Border.all(
+            color: isLocalTurn
+                ? accent.withValues(alpha: OpacityTokens.moderate)
+                : colors.borderSubtle.withValues(alpha: OpacityTokens.strong),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (isLocalTurn) ...[
+              _TurnStatusMicroChip(
+                label: 'Your turn',
+                backgroundColor: accent.withValues(alpha: OpacityTokens.soft),
+                foregroundColor: accent,
+              ),
+              SizedBox(width: LayoutTokens.gr0 + 2),
+              _TurnStatusMicroChip(
+                label: phaseLabel,
+                backgroundColor: accent.withValues(alpha: OpacityTokens.soft),
+                foregroundColor: accent,
+              ),
+            ] else ...[
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: dotColor,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: colors.textPrimary.withValues(alpha: 0.12),
+                    width: 0.5,
+                  ),
+                ),
+              ),
+              SizedBox(width: LayoutTokens.gr0 + 2),
+              Flexible(
+                child: Text(
+                  activeName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: colors.textPrimary,
+                    fontSize: FontTokens.hudXs,
+                    fontWeight: FontWeight.w700,
+                    height: 1.2,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr0 + 1),
+                child: Text(
+                  '·',
+                  style: TextStyle(
+                    color: colors.textSecondary.withValues(
+                      alpha: OpacityTokens.strong,
+                    ),
+                    fontSize: FontTokens.hudXs,
+                    height: 1.2,
+                  ),
+                ),
+              ),
+              _TurnStatusMicroChip(
+                label: phaseLabel,
+                backgroundColor: accent.withValues(alpha: OpacityTokens.subtle),
+                foregroundColor: accent,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TurnStatusMicroChip extends StatelessWidget {
+  const _TurnStatusMicroChip({
+    required this.label,
+    required this.backgroundColor,
+    required this.foregroundColor,
+  });
+
+  final String label;
+  final Color backgroundColor;
+  final Color foregroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: LayoutTokens.gr0 + 2,
+        vertical: 2,
+      ),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: RadiusTokens.radiusPill,
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: foregroundColor,
+          fontSize: FontTokens.hudXs,
+          fontWeight: FontWeight.w800,
+          height: 1.1,
+          letterSpacing: 0.15,
         ),
       ),
     );
@@ -411,6 +618,7 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
         borderRadius: RadiusTokens.radiusSm,
         child: Stack(
           children: [
+            OverviewCommanderArtBackdrop(player: p),
             if (isActive && !p.isEliminated)
               Positioned(
                 left: 0,
@@ -433,48 +641,25 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      CircleAvatar(
-                        radius: 18,
-                        backgroundColor: p.isEliminated
-                            ? colors.textSecondary.withValues(alpha: 0.4)
-                            : p.playerColor,
-                        child: Text(
-                          p.username.isNotEmpty
-                              ? p.username[0].toUpperCase()
-                              : '?',
-                          style: TextStyle(
-                            color: ColorTokens.onAccent,
-                            fontSize: FontTokens.sm,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      if (isMonarch)
-                        Positioned(
-                          right: -2,
-                          top: -4,
-                          child: Text('👑', style: TextStyle(fontSize: 13)),
-                        ),
-                      if (hasInit)
-                        Positioned(
-                          right: -2,
-                          bottom: -4,
-                          child: Text('⚔️', style: TextStyle(fontSize: 11)),
-                        ),
-                    ],
-                  ),
-                  SizedBox(width: LayoutTokens.gr2),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text.rich(
                           TextSpan(
                             children: [
+                              if (isMonarch)
+                                const TextSpan(
+                                  text: '👑 ',
+                                  style: TextStyle(fontSize: 13),
+                                ),
+                              if (hasInit)
+                                const TextSpan(
+                                  text: '⚔️ ',
+                                  style: TextStyle(fontSize: 11),
+                                ),
                               TextSpan(
                                 text: p.username,
                                 style: TextStyle(
@@ -541,7 +726,8 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                         isActive: isActive,
                         accent: borderColor,
                       ),
-                      if (showMenu)
+                      if (showMenu) ...[
+                        SizedBox(width: LayoutTokens.gr0),
                         PopupMenuButton<String>(
                           icon: Icon(
                             Icons.more_vert,
@@ -623,6 +809,7 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                             return items;
                           },
                         ),
+                      ],
                     ],
                   ),
                 ],

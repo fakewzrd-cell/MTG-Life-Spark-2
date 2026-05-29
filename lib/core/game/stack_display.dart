@@ -48,10 +48,11 @@ abstract final class StackDisplay {
     return i < 0 ? 0 : i + 1;
   }
 
-  /// LIFO resolve order: 1 = resolves next (newest active), 2 = next, etc.
+  /// Chronological stack order: 1 = first cast (oldest active), then 2, 3, …
+  /// The newest active item has the highest number and resolves first (LIFO).
   static Map<String, int> resolveOrderNumbers(List<StackItem> items) {
     final active = items.where((i) => i.isActive).toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
     final map = <String, int>{};
     for (var i = 0; i < active.length; i++) {
       map[active[i].id] = i + 1;

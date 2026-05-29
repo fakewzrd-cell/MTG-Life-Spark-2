@@ -12,8 +12,8 @@ void main() {
       ),
     );
 
-    expect(find.text('Host a Game'), findsOneWidget);
-    expect(find.text('Join a Game'), findsOneWidget);
+    expect(find.text('Host Game'), findsOneWidget);
+    expect(find.text('Join Game'), findsOneWidget);
     expect(
       find.text('Create a session — others join you'),
       findsOneWidget,

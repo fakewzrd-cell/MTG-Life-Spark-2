@@ -34,13 +34,26 @@ class LayoutTokens {
   /// Width of a profile/My Decks horizontal bento tile. 236dp.
   static const double profileCarouselCardWidth = 236;
 
-  /// Height of the M3 bottom navigation bar. 80dp.
-  static const double bottomNavHeight = 80;
+  /// Height of the shell dock bar ([AppBottomNavBar] content area). 68dp.
+  static const double bottomNavHeight = 68;
 
   /// Horizontal inset for full-width CTAs (onboarding, setup, end-game actions).
   static const double ctaHorizontal = gr5;
 
-  /// Bottom clearance for scrollable content under [MainShell] floating nav.
+  // ── Shell tab insets ([MainShell] + floating [AppBottomNavBar]) ───────────
+  //
+  // • [shellPageInset] (gr3) — default left/right for tab content, lists, profile hero.
+  // • [shellListPadding] — full ListView pad including [shellBottomInset] when
+  //   the list scrolls above the dock with no sticky footer.
+  // • [shellScrollPadding] — same horizontal/top when a bottom bar or CTA row
+  //   applies [shellBottomInset] outside the scroll view.
+  // • [gr4] — section gaps inside a page, not page margins (e.g. lobby cards).
+  // • [ctaHorizontal] (gr5) — primary full-width buttons on setup/onboarding.
+
+  /// Default horizontal margin for shell tabs (Home, Lobby, Decks, Settings).
+  static const double shellPageInset = gr3;
+
+  /// Bottom clearance for content under [MainShell]'s floating nav + home indicator.
   static double shellBottomInset(BuildContext context) {
     return bottomNavHeight + MediaQuery.paddingOf(context).bottom + gr2;
   }
@@ -48,8 +61,8 @@ class LayoutTokens {
   /// Standard [ListView] padding inside shell tabs.
   static EdgeInsets shellListPadding(
     BuildContext context, {
-    double horizontal = gr3,
-    double top = gr3,
+    double horizontal = shellPageInset,
+    double top = shellPageInset,
   }) {
     return EdgeInsets.fromLTRB(
       horizontal,
@@ -57,6 +70,16 @@ class LayoutTokens {
       horizontal,
       shellBottomInset(context),
     );
+  }
+
+  /// Scroll padding when bottom inset is handled by a sticky footer or dock bar.
+  static EdgeInsets shellScrollPadding(
+    BuildContext context, {
+    double horizontal = shellPageInset,
+    double top = shellPageInset,
+    double bottom = gr2,
+  }) {
+    return EdgeInsets.fromLTRB(horizontal, top, horizontal, bottom);
   }
 }
 

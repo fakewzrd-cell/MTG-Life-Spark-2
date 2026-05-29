@@ -12,10 +12,12 @@ import '../../core/game/player_game_state.dart';
 import '../../core/game/game_session_events.dart';
 import '../../core/game/progression_service.dart';
 import '../../core/persistence/providers.dart';
+import '../../core/debug/app_log.dart';
 import '../../core/models/game_feedback.dart';
 import '../../shared/utils/achievement_definitions.dart';
 import '../../shared/utils/app_router.dart';
 import '../../shared/utils/wizard_rank_titles.dart';
+import '../../shared/widgets/player_feedback_widgets.dart';
 import '../../ui/components/ui_button.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
@@ -46,7 +48,19 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _saveMatch());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _onFirstFrame());
+  }
+
+  void _onFirstFrame() {
+    final game = ref.read(gameProvider);
+    if (!game.gameOver) {
+      if (!mounted) return;
+      context.go(
+        game.localPlayer != null ? AppRoutes.game : AppRoutes.lobby,
+      );
+      return;
+    }
+    _saveMatch();
   }
 
   Future<void> _joinRematchLobby() async {
@@ -59,18 +73,28 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
   Future<void> _saveMatch() async {
     if (_saved) return;
 
+    final game = ref.read(gameProvider);
+    if (!game.gameOver) {
+      if (mounted) {
+        context.go(
+          game.localPlayer != null ? AppRoutes.game : AppRoutes.lobby,
+        );
+      }
+      return;
+    }
+
     setState(() {
       _saving = true;
       _saveFailed = false;
     });
 
     final pending = ref.read(pendingFeedbackProvider);
-    if (pending != null && mounted) {
+    final submittedFromForfeit = pending?.hasContent ?? false;
+    if (submittedFromForfeit && mounted) {
       setState(() => _feedbackSubmitted = true);
     }
 
     try {
-      final game = ref.read(gameProvider);
       final lobby = ref.read(lobbyProvider);
       final service = ref.read(progressionServiceProvider);
 
@@ -85,11 +109,11 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
         matchId: stableMatchId,
       );
 
-      if (pending != null && result.matchId.isNotEmpty) {
+      if (submittedFromForfeit && result.matchId.isNotEmpty) {
         await service.saveFeedback(GameFeedback(
           matchId: result.matchId,
           voterPlayerId: game.localPlayerId,
-          likePlayerIds: pending.likePlayerIds,
+          likePlayerIds: pending!.likePlayerIds,
           dislikePlayerIds: pending.dislikePlayerIds,
           mvpPlayerId: pending.mvpPlayerId,
           teamPlayerId: pending.teamPlayerId,
@@ -106,10 +130,11 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
         setState(() {
           _result = result;
           _saving = false;
-          _feedbackSubmitted = pending != null;
+          _feedbackSubmitted = submittedFromForfeit;
         });
       }
-    } catch (_) {
+    } catch (e, st) {
+      appLog('EndGameScreen._saveMatch failed', error: e, stackTrace: st);
       if (mounted) {
         setState(() {
           _saving = false;
@@ -230,12 +255,34 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
                         teamPlayerId: _teamPlayerId,
                         underdogPlayerId: _underdogPlayerId,
                         onLike: (pid) => setState(() {
-                          _dislikePlayerIds.remove(pid);
-                          _likePlayerIds.add(pid);
+                          togglePlayerLike(
+                            likeIds: _likePlayerIds,
+                            dislikeIds: _dislikePlayerIds,
+                            playerId: pid,
+                            apply: (likes, dislikes) {
+                              _likePlayerIds
+                                ..clear()
+                                ..addAll(likes);
+                              _dislikePlayerIds
+                                ..clear()
+                                ..addAll(dislikes);
+                            },
+                          );
                         }),
                         onDislike: (pid) => setState(() {
-                          _likePlayerIds.remove(pid);
-                          _dislikePlayerIds.add(pid);
+                          togglePlayerDislike(
+                            likeIds: _likePlayerIds,
+                            dislikeIds: _dislikePlayerIds,
+                            playerId: pid,
+                            apply: (likes, dislikes) {
+                              _likePlayerIds
+                                ..clear()
+                                ..addAll(likes);
+                              _dislikePlayerIds
+                                ..clear()
+                                ..addAll(dislikes);
+                            },
+                          );
                         }),
                         onMvpChanged: (pid) =>
                             setState(() => _mvpPlayerId = pid),
@@ -250,14 +297,18 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
 
                     // ── Final standings ────────────────────────────────────
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr3),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: LayoutTokens.shellPageInset,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'Final Standings',
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: colors.textSecondary,
+                            style: TypographyTokens.sectionTitle(
+                              colors.textSecondary,
+                            ).copyWith(
+                              fontSize: FontTokens.label,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 1,
                             ),
@@ -335,13 +386,13 @@ class _WinnerBanner extends StatelessWidget {
     final colors = AppColorTokens.of(context);
     if (winner == null) {
       return Padding(
-        padding: EdgeInsets.all(LayoutTokens.gr4),
+        padding: EdgeInsets.all(LayoutTokens.shellPageInset),
         child: Text(
           'Game Over — No Winner',
           style: TextStyle(
             color: colors.textPrimary,
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
+            fontSize: FontTokens.headline,
+            fontWeight: FontWeight.w800,
           ),
           textAlign: TextAlign.center,
         ),
@@ -349,15 +400,13 @@ class _WinnerBanner extends StatelessWidget {
     }
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: LayoutTokens.ctaHorizontal),
+      padding: EdgeInsets.symmetric(horizontal: LayoutTokens.shellPageInset),
       child: Column(
         children: [
           Text(
             isLocalWinner ? '🏆 You Win!' : '🎉 Winner',
-            style: TextStyle(
+            style: TypographyTokens.headline(context).copyWith(
               color: colors.emphasis,
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
             ),
           ),
           SizedBox(height: LayoutTokens.gr3),
@@ -393,7 +442,7 @@ class _WinnerBanner extends StatelessWidget {
                           : '?',
                       style: TextStyle(
                           color: ColorTokens.onAccent,
-                          fontSize: 40,
+                          fontSize: FontTokens.displayCommander,
                           fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -410,7 +459,7 @@ class _WinnerBanner extends StatelessWidget {
                     : '?',
                 style: TextStyle(
                     color: ColorTokens.onAccent,
-                    fontSize: 40,
+                    fontSize: FontTokens.displayCommander,
                     fontWeight: FontWeight.bold),
               ),
             ),
@@ -420,15 +469,17 @@ class _WinnerBanner extends StatelessWidget {
             winner!.username,
             style: TextStyle(
               color: winner!.playerColor,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+              fontSize: FontTokens.headline,
+              fontWeight: FontWeight.w800,
             ),
           ),
           if (winner!.commanderName != null)
             Text(
               winner!.commanderName!,
               style: TextStyle(
-                  color: colors.textSecondary, fontSize: 13),
+                color: colors.textSecondary,
+                fontSize: FontTokens.hudSm,
+              ),
             ),
         ],
       ),
@@ -447,7 +498,12 @@ class _LevelUpCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
     return Container(
-      margin: EdgeInsets.fromLTRB(LayoutTokens.gr3, LayoutTokens.gr1, LayoutTokens.gr3, 0),
+      margin: EdgeInsets.fromLTRB(
+        LayoutTokens.shellPageInset,
+        LayoutTokens.gr1,
+        LayoutTokens.shellPageInset,
+        0,
+      ),
       padding: EdgeInsets.all(LayoutTokens.gr3),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -481,22 +537,26 @@ class _LevelUpCard extends StatelessWidget {
                 'RANK UP!',
                 style: TextStyle(
                   color: colors.emphasis,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  fontSize: FontTokens.bodyLg,
+                  fontWeight: FontWeight.w800,
                   letterSpacing: 1.5,
                 ),
               ),
               Text(
                 'Rank ${result.oldLevel} → ${result.newLevel}',
                 style: TextStyle(
-                    color: colors.textPrimary, fontSize: 14),
+                  color: colors.textPrimary,
+                  fontSize: FontTokens.sm,
+                ),
               ),
               if (wizardRankTitle(result.oldLevel) !=
                   wizardRankTitle(result.newLevel))
                 Text(
                   '${wizardRankTitle(result.oldLevel)} → ${wizardRankTitle(result.newLevel)}',
                   style: TextStyle(
-                      color: colors.textSecondary, fontSize: 12),
+                    color: colors.textSecondary,
+                    fontSize: FontTokens.sm,
+                  ),
                 ),
             ],
           ),
@@ -518,7 +578,12 @@ class _XpCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
     return Container(
-      margin: EdgeInsets.fromLTRB(LayoutTokens.gr3, LayoutTokens.gr1, LayoutTokens.gr3, 0),
+      margin: EdgeInsets.fromLTRB(
+        LayoutTokens.shellPageInset,
+        LayoutTokens.gr1,
+        LayoutTokens.shellPageInset,
+        0,
+      ),
       padding: EdgeInsets.all(LayoutTokens.gr3),
       decoration: BoxDecoration(
         color: colors.surface,
@@ -527,7 +592,7 @@ class _XpCard extends StatelessWidget {
       child: Row(
         children: [
           Icon(Icons.star, color: colors.emphasis, size: 24),
-          const SizedBox(width: 12),
+          SizedBox(width: LayoutTokens.gr2),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -535,8 +600,8 @@ class _XpCard extends StatelessWidget {
                 '+${result.xpGained} XP',
                 style: TextStyle(
                   color: colors.emphasis,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  fontSize: FontTokens.bodyLg,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
               Text(
@@ -553,9 +618,10 @@ class _XpCard extends StatelessWidget {
               Text(
                 'Rank ${result.newLevel}',
                 style: TextStyle(
-                    color: colors.textPrimary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600),
+                  color: colors.textPrimary,
+                  fontSize: FontTokens.body,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               Text(
                 wizardRankTitle(result.newLevel),
@@ -614,7 +680,7 @@ class _FeedbackCard extends StatelessWidget {
 
     if (feedbackSubmitted) {
       return Container(
-        margin: EdgeInsets.symmetric(horizontal: LayoutTokens.gr3),
+        margin: EdgeInsets.symmetric(horizontal: LayoutTokens.shellPageInset),
         padding: EdgeInsets.all(LayoutTokens.gr3),
         decoration: BoxDecoration(
           color: colors.success.withValues(alpha: 0.15),
@@ -625,7 +691,7 @@ class _FeedbackCard extends StatelessWidget {
         child: Row(
           children: [
             Icon(Icons.check_circle, color: colors.success, size: 28),
-            const SizedBox(width: 12),
+            SizedBox(width: LayoutTokens.gr2),
             Expanded(
               child: Text(
                 'Thanks! Your feedback has been recorded.',
@@ -642,7 +708,7 @@ class _FeedbackCard extends StatelessWidget {
     }
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: LayoutTokens.gr3),
+      margin: EdgeInsets.symmetric(horizontal: LayoutTokens.shellPageInset),
       padding: EdgeInsets.all(LayoutTokens.gr3),
       decoration: BoxDecoration(
         color: colors.surface,
@@ -656,41 +722,19 @@ class _FeedbackCard extends StatelessWidget {
             'Rate Your Opponents',
             style: TypographyTokens.sectionTitle(colors.textPrimary),
           ),
-          SizedBox(height: LayoutTokens.gr2),
-          if (others.isNotEmpty) ...[
-            ...others.map((p) => _PlayerFeedbackRow(
-                  player: p,
-                  isLiked: likePlayerIds.contains(p.playerId),
-                  isDisliked: dislikePlayerIds.contains(p.playerId),
-                  onLike: () => onLike(p.playerId),
-                  onDislike: () => onDislike(p.playerId),
-                )),
-            SizedBox(height: LayoutTokens.gr2),
-          ],
-          // MVP vote
-          _VoteDropdown(
-            label: 'MVP',
-            hint: 'Most Valuable Player',
-            players: others,
-            selectedId: mvpPlayerId,
-            onChanged: onMvpChanged,
-          ),
-          SizedBox(height: LayoutTokens.gr1),
-          // Team Player vote
-          _VoteDropdown(
-            label: 'Team Player',
-            hint: 'Best teammate',
-            players: others,
-            selectedId: teamPlayerId,
-            onChanged: onTeamPlayerChanged,
-          ),
-          SizedBox(height: LayoutTokens.gr1),
-          _VoteDropdown(
-            label: 'Underdog',
-            hint: 'Best comeback or underdog performance',
-            players: others,
-            selectedId: underdogPlayerId,
-            onChanged: onUnderdogChanged,
+          PlayerFeedbackFields(
+            opponents: others,
+            likePlayerIds: likePlayerIds,
+            dislikePlayerIds: dislikePlayerIds,
+            onLike: onLike,
+            onDislike: onDislike,
+            mvpPlayerId: mvpPlayerId,
+            teamPlayerId: teamPlayerId,
+            underdogPlayerId: underdogPlayerId,
+            onMvpChanged: onMvpChanged,
+            onTeamPlayerChanged: onTeamPlayerChanged,
+            onUnderdogChanged: onUnderdogChanged,
+            voteSpacing: LayoutTokens.gr1,
           ),
           SizedBox(height: LayoutTokens.gr3),
           UiButton(
@@ -699,173 +743,6 @@ class _FeedbackCard extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _PlayerFeedbackRow extends StatelessWidget {
-  final PlayerGameState player;
-  final bool isLiked;
-  final bool isDisliked;
-  final VoidCallback onLike;
-  final VoidCallback onDislike;
-
-  const _PlayerFeedbackRow({
-    required this.player,
-    required this.isLiked,
-    required this.isDisliked,
-    required this.onLike,
-    required this.onDislike,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = AppColorTokens.of(context);
-    return Padding(
-      padding: EdgeInsets.only(bottom: LayoutTokens.gr1),
-      child: Row(
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: player.playerColor,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              player.username,
-              style: TextStyle(
-                color: colors.textPrimary,
-                fontSize: FontTokens.hudSm,
-                fontWeight: FontWeight.w500,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          IconButton(
-            icon: Icon(
-              Icons.thumb_up,
-              size: 20,
-              color: isLiked ? colors.success : colors.textSecondary,
-            ),
-            onPressed: onLike,
-            style: IconButton.styleFrom(
-              backgroundColor: isLiked
-                  ? colors.success.withValues(alpha: 0.2)
-                  : Colors.transparent,
-              minimumSize: const Size(LayoutTokens.minTapTarget, LayoutTokens.minTapTarget),
-            ),
-          ),
-          IconButton(
-            icon: Icon(
-              Icons.thumb_down,
-              size: 20,
-              color: isDisliked ? colors.primaryAccent : colors.textSecondary,
-            ),
-            onPressed: onDislike,
-            style: IconButton.styleFrom(
-              backgroundColor: isDisliked
-                  ? colors.primaryAccent.withValues(alpha: 0.2)
-                  : Colors.transparent,
-              minimumSize: const Size(LayoutTokens.minTapTarget, LayoutTokens.minTapTarget),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _VoteDropdown extends StatelessWidget {
-  final String label;
-  final String hint;
-  final List<PlayerGameState> players;
-  final String? selectedId;
-  final void Function(String?) onChanged;
-
-  const _VoteDropdown({
-    required this.label,
-    required this.hint,
-    required this.players,
-    required this.selectedId,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = AppColorTokens.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: colors.textSecondary,
-            fontSize: FontTokens.hudXs,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        SizedBox(height: LayoutTokens.gr0),
-        DropdownButtonFormField<String>(
-          key: ValueKey<String?>(selectedId),
-          initialValue: selectedId,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(
-              color: colors.textSecondary,
-              fontSize: 12,
-            ),
-            filled: true,
-            fillColor: colors.backgroundSecondary,
-            border: OutlineInputBorder(
-              borderRadius: RadiusTokens.radiusLg,
-            ),
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: LayoutTokens.gr2,
-              vertical: LayoutTokens.gr2,
-            ),
-          ),
-          items: [
-            DropdownMenuItem<String>(
-              value: null,
-              child: Text(
-                '— None —',
-                style: TextStyle(
-                  color: colors.textSecondary,
-                  fontSize: FontTokens.hudSm,
-                ),
-              ),
-            ),
-            ...players.map((p) => DropdownMenuItem<String>(
-                  value: p.playerId,
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: p.playerColor,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      SizedBox(width: LayoutTokens.gr1),
-                      Text(
-                        p.username,
-                        style: TextStyle(
-                          color: colors.textPrimary,
-                          fontSize: FontTokens.hudSm,
-                        ),
-                      ),
-                    ],
-                  ),
-                )),
-          ],
-          onChanged: onChanged,
-        ),
-      ],
     );
   }
 }
@@ -888,7 +765,12 @@ class _AchievementsCard extends StatelessWidget {
     if (defs.isEmpty) return const SizedBox.shrink();
 
     return Container(
-      margin: EdgeInsets.fromLTRB(LayoutTokens.gr3, LayoutTokens.gr1, LayoutTokens.gr3, 0),
+      margin: EdgeInsets.fromLTRB(
+        LayoutTokens.shellPageInset,
+        LayoutTokens.gr1,
+        LayoutTokens.shellPageInset,
+        0,
+      ),
       padding: EdgeInsets.all(LayoutTokens.gr2),
       decoration: BoxDecoration(
         color: colors.surface,
@@ -913,7 +795,7 @@ class _AchievementsCard extends StatelessWidget {
                 child: Row(
                   children: [
                     Text(def.icon,
-                        style: TextStyle(fontSize: 18)),
+                        style: TextStyle(fontSize: FontTokens.bodyLg)),
                     SizedBox(width: LayoutTokens.gr1),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -925,8 +807,9 @@ class _AchievementsCard extends StatelessWidget {
                                 fontWeight: FontWeight.w600)),
                         Text(def.description,
                             style: TextStyle(
-                                color: colors.textSecondary,
-                                fontSize: 10)),
+                              color: colors.textSecondary,
+                              fontSize: FontTokens.xs,
+                            )),
                       ],
                     ),
                   ],
@@ -976,17 +859,17 @@ class _FinalPlayerRow extends StatelessWidget {
           if (isWinner)
             Padding(
               padding: EdgeInsets.only(right: LayoutTokens.gr1),
-              child: Text('🏆', style: TextStyle(fontSize: 14)),
+              child: Text('🏆', style: TextStyle(fontSize: FontTokens.sm)),
             ),
           Container(
-            width: 8,
-            height: 8,
+            width: LayoutTokens.gr1,
+            height: LayoutTokens.gr1,
             decoration: BoxDecoration(
               color: p.playerColor,
               shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: LayoutTokens.gr1),
           Expanded(
             child: Row(
               children: [
@@ -1003,9 +886,13 @@ class _FinalPlayerRow extends StatelessWidget {
                   ),
                 ),
                 if (isLocal)
-                  Text(' (you)',
-                      style: TextStyle(
-                          color: colors.textSecondary, fontSize: 10)),
+                  Text(
+                    ' (you)',
+                    style: TextStyle(
+                      color: colors.textSecondary,
+                      fontSize: FontTokens.xs,
+                    ),
+                  ),
               ],
             ),
           ),
@@ -1014,19 +901,21 @@ class _FinalPlayerRow extends StatelessWidget {
               child: Text(
                 p.commanderName!,
                 style: TextStyle(
-                    color: colors.textSecondary, fontSize: 10),
+                  color: colors.textSecondary,
+                  fontSize: FontTokens.xs,
+                ),
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
               ),
             ),
-          const SizedBox(width: 8),
+          SizedBox(width: LayoutTokens.gr1),
           Text(
             p.isEliminated
                 ? _reasonLabel(p.eliminationReason)
                 : '${p.life} ❤',
             style: TextStyle(
               color: p.isEliminated ? colors.primaryAccent : colors.textPrimary,
-              fontSize: 12,
+              fontSize: FontTokens.sm,
               fontWeight: FontWeight.w600,
             ),
           ),

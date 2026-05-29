@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +8,7 @@ import '../../core/models/player_profile.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/constants/app_icons.dart';
 import '../../shared/utils/app_router.dart';
+import '../../shared/widgets/default_profile_avatar.dart';
 import '../../shared/widgets/tier_badge.dart';
 import '../../ui/components/ui_button.dart';
 import '../../ui/theme/app_color_tokens.dart';
@@ -17,31 +16,11 @@ import '../../ui/tokens/color_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import 'profile_carousel_sections.dart';
+import 'profile_hero_layout.dart';
 import 'profile_player_stats_section.dart';
 
-/// Typical phones (≥360 logical width) use tighter horizontal page padding.
-const double _kProfileStatsRowBreakpoint = 360;
-
-/// Circular profile picture in the hero (above username).
-const double _kProfileAvatarSize = 104;
-
-/// Clamped text scale (1.0 = default) for layout reserves and hero sizing.
-double _profileLayoutTextScale(BuildContext context) {
-  final t = MediaQuery.textScalerOf(context).scale(1.0);
-  if (!t.isFinite || t <= 0) return 1.0;
-  return t.clamp(1.0, 1.45);
-}
-
-/// Hero banner height from viewport and orientation; stays within [260, 380].
-double _profileHeroCardHeight(BuildContext context) {
-  final size = MediaQuery.sizeOf(context);
-  final padding = MediaQuery.paddingOf(context);
-  final availH = math.max(200.0, size.height - padding.vertical);
-  final portrait = size.height >= size.width;
-  final ts = _profileLayoutTextScale(context);
-  final frac = portrait ? 0.36 : 0.30;
-  return (availH * frac * (0.88 + 0.12 * (ts - 1.0))).clamp(260.0, 380.0);
-}
+/// Camera badge diameter — centered on the avatar ring at bottom-right.
+const double _kProfileCameraBadgeSize = 32;
 
 Widget _defaultBannerFill(BuildContext context) {
   final scheme = Theme.of(context).colorScheme;
@@ -125,34 +104,31 @@ class ProfileScreen extends ConsumerWidget {
       body: SafeArea(
         top: false,
         bottom: false,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final screenW = MediaQuery.sizeOf(context).width;
-            final screenH = MediaQuery.sizeOf(context).height;
-            final raw = constraints.maxWidth;
-            final bodyW =
-                raw.isFinite && raw > 0 ? raw : screenW.clamp(320.0, 2000.0);
-            final isNarrow = bodyW < _kProfileStatsRowBreakpoint;
-            final hPad = isNarrow ? LayoutTokens.gr2 : LayoutTokens.gr3;
-            // MainShell uses extendBody; reserve space so bottom sections clear the dock.
+        child: Builder(
+          builder: (context) {
+            final bodyW = MediaQuery.sizeOf(context).width;
+            final isNarrow = bodyW < GameLayoutBreakpoints.compact;
+            final heroMetrics = ProfileHeroLayoutMetrics.resolve(
+              context,
+              isNarrow: isNarrow,
+            );
+            final hPad = heroMetrics.overlayHPadding;
             final scrollBottomPad = LayoutTokens.shellBottomInset(context);
-
-            final maxH = constraints.maxHeight;
-            final layoutTs = _profileLayoutTextScale(context);
+            final layoutTs = profileSectionTextScale(context);
             final sectionCardListMaxHeight =
                 (MediaQuery.sizeOf(context).height *
                         0.42 *
                         (0.94 + 0.06 * (layoutTs - 1.0)))
                     .clamp(280.0, 560.0);
 
-            final scroll = CustomScrollView(
+            return CustomScrollView(
               key: ValueKey(profileWatch.revision),
               slivers: [
                 SliverToBoxAdapter(
                   child: _ProfileHeroCard(
                     profile: profile,
                     colors: colors,
-                    overlayHPadding: hPad,
+                    metrics: heroMetrics,
                   ),
                 ),
                 SliverToBoxAdapter(child: SizedBox(height: LayoutTokens.gr4)),
@@ -183,15 +159,6 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                 ),
               ],
-            );
-
-            if (maxH.isFinite && maxH > 0) {
-              return scroll;
-            }
-            return SizedBox(
-              height: screenH,
-              width: double.infinity,
-              child: scroll,
             );
           },
         ),
@@ -231,12 +198,12 @@ class _ProfileHeroCard extends StatelessWidget {
   const _ProfileHeroCard({
     required this.profile,
     required this.colors,
-    required this.overlayHPadding,
+    required this.metrics,
   });
 
   final PlayerProfile profile;
   final AppColorTokens colors;
-  final double overlayHPadding;
+  final ProfileHeroLayoutMetrics metrics;
 
   static final BorderRadius _heroRadius = BorderRadius.vertical(
     bottom: Radius.circular(RadiusTokens.bento),
@@ -244,29 +211,30 @@ class _ProfileHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardHeight = _profileHeroCardHeight(context);
+    final cardHeight = metrics.cardHeight;
     void onBanner() => context.push(AppRoutes.profileBanner);
     void onAvatar() => context.push(AppRoutes.profileAvatar);
 
     Widget background() {
       final url = profile.profileBannerImageUrl;
       if (url != null && url.isNotEmpty) {
-        return CachedNetworkImage(
-          key: ValueKey(url),
-          imageUrl: url,
-          fit: BoxFit.cover,
-          width: double.infinity,
-          height: cardHeight,
-          placeholder: (ctx, _) =>
-              _defaultProfileBannerArt(ctx, height: cardHeight),
-          errorWidget: (ctx, _, __) =>
-              _defaultProfileBannerArt(ctx, height: cardHeight),
+        return RepaintBoundary(
+          child: CachedNetworkImage(
+            key: ValueKey(url),
+            imageUrl: url,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: cardHeight,
+            filterQuality: FilterQuality.medium,
+            placeholder: (ctx, _) =>
+                _defaultProfileBannerArt(ctx, height: cardHeight),
+            errorWidget: (ctx, _, stackTrace) =>
+                _defaultProfileBannerArt(ctx, height: cardHeight),
+          ),
         );
       }
       return _defaultProfileBannerArt(context, height: cardHeight);
     }
-
-    final topInset = MediaQuery.paddingOf(context).top;
 
     return ClipRRect(
       borderRadius: _heroRadius,
@@ -275,63 +243,89 @@ class _ProfileHeroCard extends StatelessWidget {
         width: double.infinity,
         child: Stack(
           fit: StackFit.expand,
-          clipBehavior: Clip.hardEdge,
           children: [
             Positioned.fill(child: background()),
-            const Positioned.fill(child: _ProfileHeroFrostVeil()),
+            const Positioned.fill(
+              child: ExcludeSemantics(child: _ProfileHeroFrostVeil()),
+            ),
             Positioned(
-              top: topInset + LayoutTokens.gr2,
-              right: overlayHPadding,
-              child: Semantics(
-                button: true,
-                label: 'Change profile banner',
-                child: Material(
-                  color: Colors.black.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(999),
-                  clipBehavior: Clip.antiAlias,
-                  child: InkWell(
-                    onTap: onBanner,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.wallpaper_outlined,
-                            color: ColorTokens.onAccent,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Banner',
-                            style: Theme.of(
-                              context,
-                            ).textTheme.labelLarge?.copyWith(
-                              color: ColorTokens.onAccent,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+              top: metrics.topInset + LayoutTokens.gr2,
+              right: metrics.overlayHPadding,
+              child: _ProfileBannerEditButton(onTap: onBanner),
+            ),
+            Positioned.fill(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: metrics.overlayHPadding,
+                  right: metrics.overlayHPadding,
+                  top: metrics.overlayTopReserve,
+                  bottom: metrics.overlayBottomPadding,
+                ),
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: _ProfileHeroIdentityAndStats(
+                    profile: profile,
+                    colors: colors,
+                    avatarSize: ProfileHeroLayoutMetrics.avatarDiameter,
+                    onAvatarTap: onAvatar,
                   ),
                 ),
               ),
             ),
-            Positioned(
-              left: overlayHPadding,
-              right: overlayHPadding,
-              bottom: LayoutTokens.gr3,
-              child: _ProfileHeroIdentityAndStats(
-                profile: profile,
-                colors: colors,
-                onAvatarTap: onAvatar,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Banner edit control — meets [LayoutTokens.minTapTarget].
+class _ProfileBannerEditButton extends StatelessWidget {
+  const _ProfileBannerEditButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Change profile banner',
+      child: Material(
+        color: Colors.black.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(RadiusTokens.pill),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: LayoutTokens.minTapTarget,
+              minWidth: LayoutTokens.minTapTarget,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: LayoutTokens.gr2,
+                vertical: LayoutTokens.gr1,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.wallpaper_outlined,
+                    color: ColorTokens.onAccent,
+                    size: 18,
+                  ),
+                  const SizedBox(width: LayoutTokens.gr1),
+                  Text(
+                    'Banner',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: ColorTokens.onAccent,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -343,11 +337,13 @@ class _ProfileHeroIdentityAndStats extends StatelessWidget {
   const _ProfileHeroIdentityAndStats({
     required this.profile,
     required this.colors,
+    required this.avatarSize,
     required this.onAvatarTap,
   });
 
   final PlayerProfile profile;
   final AppColorTokens colors;
+  final double avatarSize;
   final VoidCallback onAvatarTap;
 
   @override
@@ -360,6 +356,7 @@ class _ProfileHeroIdentityAndStats extends StatelessWidget {
           child: _ProfileHeroAvatar(
             profile: profile,
             colors: colors,
+            size: avatarSize,
             onTap: onAvatarTap,
           ),
         ),
@@ -399,51 +396,47 @@ String? _profileAvatarImageUrl(PlayerProfile profile) {
   return null;
 }
 
-String _profileInitials(String username) {
-  final trimmed = username.trim();
-  if (trimmed.isEmpty) return '?';
-  final parts = trimmed.split(RegExp(r'\s+'));
-  if (parts.length >= 2) {
-    return '${parts.first[0]}${parts[1][0]}'.toUpperCase();
-  }
-  if (trimmed.length >= 2) {
-    return trimmed.substring(0, 2).toUpperCase();
-  }
-  return trimmed[0].toUpperCase();
-}
-
 /// Tappable circular profile picture above the username.
 class _ProfileHeroAvatar extends StatelessWidget {
   const _ProfileHeroAvatar({
     required this.profile,
     required this.colors,
+    required this.size,
     required this.onTap,
   });
 
   final PlayerProfile profile;
   final AppColorTokens colors;
+  final double size;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final imageUrl = _profileAvatarImageUrl(profile);
-    const radius = _kProfileAvatarSize / 2;
 
     Widget avatarChild;
     if (imageUrl != null) {
       avatarChild = ClipOval(
         child: CachedNetworkImage(
           imageUrl: imageUrl,
-          width: _kProfileAvatarSize,
-          height: _kProfileAvatarSize,
+          width: size,
+          height: size,
           fit: BoxFit.cover,
-          placeholder: (_, __) => _initialsAvatar(radius),
-          errorWidget: (_, __, ___) => _initialsAvatar(radius),
+          placeholder: (context, url) =>
+              DefaultProfileAvatarFill(size: size),
+          errorWidget: (context, url, error) =>
+              DefaultProfileAvatarFill(size: size),
         ),
       );
     } else {
-      avatarChild = _initialsAvatar(radius);
+      avatarChild = DefaultProfileAvatarFill(size: size);
     }
+
+    const ringWidth = 3.0;
+    // Place badge center on the circle at ~315° (bottom-right on the ring).
+    final ringRadius = size / 2 - ringWidth / 2;
+    final edgeInset = ringRadius * (1 - 0.7071067811865476);
+    final badgeOffset = edgeInset - _kProfileCameraBadgeSize / 2;
 
     return Semantics(
       button: true,
@@ -453,51 +446,61 @@ class _ProfileHeroAvatar extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           customBorder: const CircleBorder(),
-          child: Container(
-            width: _kProfileAvatarSize,
-            height: _kProfileAvatarSize,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.9),
-                width: 3,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.45),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
+          child: SizedBox(
+            width: size,
+            height: size,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: size,
+                  height: size,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      width: ringWidth,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.45),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ClipOval(child: avatarChild),
                 ),
-              ],
-            ),
-            child: ClipOval(
-              child: Stack(
-                fit: StackFit.expand,
-                clipBehavior: Clip.none,
-                children: [
-                  avatarChild,
-                  Positioned(
-                    right: LayoutTokens.gr0,
-                    bottom: LayoutTokens.gr0,
-                    child: Container(
-                      padding: const EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                        color: colors.primaryAccent,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.9),
-                          width: 2,
+                Positioned(
+                  right: badgeOffset,
+                  bottom: badgeOffset,
+                  child: Container(
+                    width: _kProfileCameraBadgeSize,
+                    height: _kProfileCameraBadgeSize,
+                    decoration: BoxDecoration(
+                      color: colors.primaryAccent,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.35),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
                         ),
-                      ),
-                      child: const Icon(
-                        Icons.camera_alt_rounded,
-                        size: 18,
-                        color: ColorTokens.onAccent,
-                      ),
+                      ],
+                    ),
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      Icons.camera_alt_rounded,
+                      size: 16,
+                      color: ColorTokens.onAccent,
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -505,21 +508,6 @@ class _ProfileHeroAvatar extends StatelessWidget {
     );
   }
 
-  Widget _initialsAvatar(double radius) {
-    return ColoredBox(
-      color: colors.primaryAccent.withValues(alpha: 0.85),
-      child: Center(
-        child: Text(
-          _profileInitials(profile.username),
-          style: TextStyle(
-            color: ColorTokens.onAccent,
-            fontWeight: FontWeight.w800,
-            fontSize: radius * 0.72,
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 /// Dark pill: value + label per stat, no dividers.
@@ -577,7 +565,7 @@ class _StatColumn extends StatelessWidget {
             fontFeatures: const [FontFeature.tabularFigures()],
           ),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: LayoutTokens.gr0),
         Text(
           shortLabel,
           maxLines: 1,

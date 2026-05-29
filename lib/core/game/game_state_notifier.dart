@@ -1685,11 +1685,10 @@ class GameStateNotifier extends StateNotifier<GameState> {
   }
 
   StackItem? _stackItemById(String id) {
-    try {
-      return state.stackItems.firstWhere((i) => i.id == id);
-    } catch (_) {
-      return null;
+    for (final item in state.stackItems) {
+      if (item.id == id) return item;
     }
+    return null;
   }
 
   String _playerLabel(String playerId) {
@@ -2312,13 +2311,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
 
   int _nextSeq() => _seqNum++;
 
-  PlayerGameState? _playerById(String id) {
-    try {
-      return state.players.firstWhere((p) => p.playerId == id);
-    } catch (_) {
-      return null;
-    }
-  }
+  PlayerGameState? _playerById(String id) => state.playerById(id);
 
   /// Clears game state when leaving a session.
   void reset() {

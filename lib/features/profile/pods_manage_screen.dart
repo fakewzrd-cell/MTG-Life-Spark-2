@@ -110,12 +110,7 @@ class _PodsManageScreenState extends ConsumerState<PodsManageScreen> {
         children: [
           Expanded(
             child: ListView.builder(
-              padding: EdgeInsets.fromLTRB(
-                LayoutTokens.gr3,
-                LayoutTokens.gr3,
-                LayoutTokens.gr3,
-                LayoutTokens.gr2,
-              ),
+              padding: LayoutTokens.shellScrollPadding(context),
               itemCount: _pods.length + 1,
               itemBuilder: (context, i) {
           if (i == 0) {
@@ -230,9 +225,9 @@ class _PodsManageScreenState extends ConsumerState<PodsManageScreen> {
           ),
           Padding(
             padding: EdgeInsets.fromLTRB(
-              LayoutTokens.gr3,
+              LayoutTokens.shellPageInset,
               LayoutTokens.gr2,
-              LayoutTokens.gr3,
+              LayoutTokens.shellPageInset,
               bottomBarPad,
             ),
             child: UiButton(

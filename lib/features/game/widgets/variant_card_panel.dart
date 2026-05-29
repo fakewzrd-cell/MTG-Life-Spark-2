@@ -348,13 +348,13 @@ class _VariantTile extends StatelessWidget {
                     ),
                   ),
                 ),
-              const SizedBox(height: 16),
+              SizedBox(height: LayoutTokens.gr3),
               Text(
                 card.name,
                 style: TypographyTokens.sectionTitle(ColorTokens.textPrimary),
               ),
               if (card.oracleText != null && card.oracleText!.isNotEmpty) ...[
-                const SizedBox(height: 12),
+                SizedBox(height: LayoutTokens.gr2),
                 Text(
                   card.oracleText!,
                   style: TextStyle(

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:hive_flutter/hive_flutter.dart';
 
+import '../debug/app_log.dart';
 import '../models/game_feedback.dart';
 
 class FeedbackRepository {
@@ -30,7 +31,9 @@ class FeedbackRepository {
   GameFeedback? _parseValue(String key, String json) {
     try {
       return GameFeedback.fromJson(jsonDecode(json) as Map<String, dynamic>);
-    } catch (_) {
+    } catch (e, st) {
+      appLog('FeedbackRepository: invalid feedback JSON for key $key',
+          error: e, stackTrace: st);
       return null;
     }
   }

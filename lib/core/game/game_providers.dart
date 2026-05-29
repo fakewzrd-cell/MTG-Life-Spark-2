@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../debug/app_log.dart';
 import '../models/game_feedback.dart';
 import 'game_state.dart';
 import 'game_state_notifier.dart';
@@ -54,21 +55,24 @@ final variantDecksProvider =
   if (flags.planechaseEnabled) {
     try {
       result['planar'] = await service.fetchPlanarDeck();
-    } catch (_) {
+    } catch (e, st) {
+      appLog('fetchPlanarDeck failed', error: e, stackTrace: st);
       result['planar'] = [];
     }
   }
   if (flags.archenemyEnabled) {
     try {
       result['scheme'] = await service.fetchSchemeDeck();
-    } catch (_) {
+    } catch (e, st) {
+      appLog('fetchSchemeDeck failed', error: e, stackTrace: st);
       result['scheme'] = [];
     }
   }
   if (flags.bountyEnabled) {
     try {
       result['bounty'] = await service.fetchBountyDeck();
-    } catch (_) {
+    } catch (e, st) {
+      appLog('fetchBountyDeck failed', error: e, stackTrace: st);
       result['bounty'] = [];
     }
   }
