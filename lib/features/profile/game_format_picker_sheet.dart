@@ -1,36 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../core/models/deck_style.dart';
+import '../../core/game/game_format.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 
-/// Searchable list of [DeckStyle] values for create/edit deck flows.
-Future<DeckStyle?> showDeckStylePickerSheet(
+/// Searchable list of [GameFormat] values for create/edit deck flows.
+Future<GameFormat?> showGameFormatPickerSheet(
   BuildContext context, {
-  DeckStyle? selected,
+  GameFormat? selected,
 }) {
-  return showModalBottomSheet<DeckStyle>(
+  return showModalBottomSheet<GameFormat>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
     showDragHandle: true,
-    builder: (ctx) => _DeckStylePickerSheet(initial: selected),
+    builder: (ctx) => _GameFormatPickerSheet(initial: selected),
   );
 }
 
-class _DeckStylePickerSheet extends StatefulWidget {
-  const _DeckStylePickerSheet({this.initial});
-
-  final DeckStyle? initial;
-
-  @override
-  State<_DeckStylePickerSheet> createState() => _DeckStylePickerSheetState();
+String _formatPickerSubtitle(GameFormat format) {
+  if (format.isCommanderStyle) {
+    return 'Multiplayer · ${format.defaultStartingLife} starting life';
+  }
+  return 'Constructed · ${format.defaultStartingLife} starting life';
 }
 
-class _DeckStylePickerSheetState extends State<_DeckStylePickerSheet> {
+class _GameFormatPickerSheet extends StatefulWidget {
+  const _GameFormatPickerSheet({this.initial});
+
+  final GameFormat? initial;
+
+  @override
+  State<_GameFormatPickerSheet> createState() => _GameFormatPickerSheetState();
+}
+
+class _GameFormatPickerSheetState extends State<_GameFormatPickerSheet> {
   final _searchCtrl = TextEditingController();
   String _query = '';
 
@@ -40,19 +47,19 @@ class _DeckStylePickerSheetState extends State<_DeckStylePickerSheet> {
     super.dispose();
   }
 
-  List<DeckStyle> get _filtered {
+  List<GameFormat> get _filtered {
     final q = _query.trim().toLowerCase();
-    if (q.isEmpty) return DeckStyle.values;
-    return DeckStyle.values.where((s) {
-      return s.displayName.toLowerCase().contains(q) ||
-          s.description.toLowerCase().contains(q) ||
-          s.id.contains(q);
+    final ordered = GameFormatDetails.lobbyPickerOrder;
+    if (q.isEmpty) return ordered;
+    return ordered.where((f) {
+      return f.displayName.toLowerCase().contains(q) ||
+          f.name.contains(q);
     }).toList();
   }
 
-  void _pick(DeckStyle style) {
+  void _pick(GameFormat format) {
     HapticFeedback.selectionClick();
-    Navigator.pop(context, style);
+    Navigator.pop(context, format);
   }
 
   @override
@@ -60,7 +67,6 @@ class _DeckStylePickerSheetState extends State<_DeckStylePickerSheet> {
     final colors = AppColorTokens.of(context);
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
 
-    // Lift sheet above the keyboard; do not also shrink maxHeight by inset (avoids double squeeze).
     return Padding(
       padding: EdgeInsets.only(bottom: bottomInset),
       child: SafeArea(
@@ -80,7 +86,7 @@ class _DeckStylePickerSheetState extends State<_DeckStylePickerSheet> {
                   LayoutTokens.gr2,
                 ),
                 child: Text(
-                  'Deck style',
+                  'Format',
                   style: TextStyle(
                     color: colors.textPrimary,
                     fontSize: FontTokens.title,
@@ -96,7 +102,7 @@ class _DeckStylePickerSheetState extends State<_DeckStylePickerSheet> {
                   controller: _searchCtrl,
                   scrollPadding: const EdgeInsets.only(bottom: 120),
                   decoration: InputDecoration(
-                    hintText: 'Search styles…',
+                    hintText: 'Search formats…',
                     prefixIcon: const Icon(Icons.search_rounded),
                     hintStyle: TextStyle(color: colors.textSecondary),
                   ),
@@ -117,12 +123,12 @@ class _DeckStylePickerSheetState extends State<_DeckStylePickerSheet> {
                   separatorBuilder: (_, __) =>
                       SizedBox(height: LayoutTokens.gr1),
                   itemBuilder: (context, i) {
-                    final style = _filtered[i];
-                    final isSelected = widget.initial == style;
+                    final format = _filtered[i];
+                    final isSelected = widget.initial == format;
                     return Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        onTap: () => _pick(style),
+                        onTap: () => _pick(format),
                         borderRadius: RadiusTokens.radiusSm,
                         child: DecoratedBox(
                           decoration: BoxDecoration(
@@ -145,7 +151,7 @@ class _DeckStylePickerSheetState extends State<_DeckStylePickerSheet> {
                                   children: [
                                     Expanded(
                                       child: Text(
-                                        style.displayName,
+                                        format.displayName,
                                         style: TextStyle(
                                           color: colors.textPrimary,
                                           fontWeight: FontWeight.w700,
@@ -163,8 +169,8 @@ class _DeckStylePickerSheetState extends State<_DeckStylePickerSheet> {
                                 ),
                                 SizedBox(height: LayoutTokens.gr0),
                                 Text(
-                                  style.description,
-                                  maxLines: 3,
+                                  _formatPickerSubtitle(format),
+                                  maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     color: colors.textSecondary,
@@ -189,53 +195,40 @@ class _DeckStylePickerSheetState extends State<_DeckStylePickerSheet> {
   }
 }
 
-/// Tappable row showing the chosen style (or placeholder).
-class DeckStylePickerField extends StatelessWidget {
-  const DeckStylePickerField({
+/// Tappable row showing the chosen format (matches [DeckStylePickerField]).
+class GameFormatPickerField extends StatelessWidget {
+  const GameFormatPickerField({
     required this.selected,
     required this.onPick,
-    this.errorText,
   });
 
-  final DeckStyle? selected;
+  final GameFormat selected;
   final VoidCallback onPick;
-  final String? errorText;
 
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
-    final label = selected?.displayName ?? 'Choose deck style';
-    final hasError = errorText != null && errorText!.isNotEmpty;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        InkWell(
-          onTap: onPick,
-          borderRadius: RadiusTokens.radiusSm,
-          child: InputDecorator(
-            decoration: InputDecoration(
-              labelText: 'Deck style',
-              labelStyle: TextStyle(color: colors.textSecondary),
-              errorText: hasError ? errorText : null,
-              suffixIcon: Icon(
-                Icons.unfold_more_rounded,
-                color: colors.textSecondary,
-              ),
-            ),
-            child: Text(
-              label,
-              style: TextStyle(
-                color: selected != null
-                    ? colors.textPrimary
-                    : colors.textSecondary,
-                fontWeight:
-                    selected != null ? FontWeight.w600 : FontWeight.w500,
-              ),
-            ),
+    return InkWell(
+      onTap: onPick,
+      borderRadius: RadiusTokens.radiusSm,
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: 'Format',
+          labelStyle: TextStyle(color: colors.textSecondary),
+          suffixIcon: Icon(
+            Icons.unfold_more_rounded,
+            color: colors.textSecondary,
           ),
         ),
-      ],
+        child: Text(
+          selected.displayName,
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
     );
   }
 }

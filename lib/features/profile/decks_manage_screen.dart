@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/game/game_format.dart';
-import '../../core/models/deck_style.dart';
 import '../../core/models/player_deck.dart';
 import '../../core/persistence/deck_repository.dart';
 import '../../core/persistence/providers.dart';
@@ -17,6 +16,7 @@ import '../../ui/tokens/radius_tokens.dart';
 import '../../ui/tokens/typography_tokens.dart';
 import '../game/widgets/game_modal_chrome.dart';
 import 'deck_style_picker_sheet.dart';
+import 'new_deck_sheet.dart';
 import 'profile_carousel_sections.dart';
 
 class DecksManageScreen extends ConsumerStatefulWidget {
@@ -56,97 +56,7 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
   }
 
   Future<void> _promptNewDeckName() async {
-    final controller = TextEditingController();
-    var selectedFormat = GameFormat.commander;
-    DeckStyle? selectedStyle;
-    final result = await showDialog<
-        ({String name, GameFormat format, String deckStyleId})>(
-      context: context,
-      builder: (ctx) {
-        final colors = AppColorTokens.of(ctx);
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            final canNext = controller.text.trim().isNotEmpty &&
-                selectedStyle != null;
-            return AlertDialog(
-              title: GameDialogTitleRow(
-                title: 'New deck',
-                onClose: () => Navigator.pop(ctx),
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextField(
-                    controller: controller,
-                    autofocus: true,
-                    onChanged: (_) => setDialogState(() {}),
-                    decoration: InputDecoration(
-                      labelText: 'Deck name',
-                      hintText: 'e.g. Raffine Tempo',
-                      hintStyle: TextStyle(color: colors.textSecondary),
-                    ),
-                    style: TextStyle(color: colors.textPrimary),
-                  ),
-                  SizedBox(height: LayoutTokens.gr3),
-                  DropdownButtonFormField<GameFormat>(
-                    initialValue: selectedFormat,
-                    decoration: InputDecoration(
-                      labelText: 'Format',
-                      labelStyle: TextStyle(color: colors.textSecondary),
-                    ),
-                    dropdownColor: colors.surface,
-                    style: TextStyle(color: colors.textPrimary),
-                    items: GameFormatDetails.lobbyPickerOrder
-                        .map(
-                          (f) => DropdownMenuItem(
-                            value: f,
-                            child: Text(f.displayName),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (f) {
-                      if (f == null) return;
-                      setDialogState(() => selectedFormat = f);
-                    },
-                  ),
-                  SizedBox(height: LayoutTokens.gr3),
-                  DeckStylePickerField(
-                    selected: selectedStyle,
-                    errorText: selectedStyle == null ? 'Required' : null,
-                    onPick: () async {
-                      final picked = await showDeckStylePickerSheet(
-                        ctx,
-                        selected: selectedStyle,
-                      );
-                      if (picked == null) return;
-                      setDialogState(() => selectedStyle = picked);
-                    },
-                  ),
-                ],
-              ),
-              actions: [
-                FilledButton(
-                  onPressed: canNext
-                      ? () {
-                          Navigator.pop(
-                            ctx,
-                            (
-                              name: controller.text.trim(),
-                              format: selectedFormat,
-                              deckStyleId: selectedStyle!.id,
-                            ),
-                          );
-                        }
-                      : null,
-                  child: const Text('Next'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
+    final result = await showNewDeckSheet(context);
     if (result == null || !mounted) return;
     final profile = ref.read(profileRepositoryProvider).getProfile();
     if (profile == null) return;
