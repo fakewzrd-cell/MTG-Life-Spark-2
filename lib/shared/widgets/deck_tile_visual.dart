@@ -473,11 +473,16 @@ class DeckStatChips extends StatelessWidget {
     required this.deck,
     required this.colors,
     this.compact = false,
+    this.forCarousel = false,
+    this.scrollHorizontally = false,
   });
 
   final PlayerDeck deck;
   final AppColorTokens colors;
   final bool compact;
+  /// 2×2 equal-width grid for profile/My Decks carousel cards (240×360).
+  final bool forCarousel;
+  final bool scrollHorizontally;
 
   @override
   Widget build(BuildContext context) {
@@ -490,42 +495,111 @@ class DeckStatChips extends StatelessWidget {
       required String value,
       Color? valueColor,
     }) {
-      final fs = compact ? 11.0 : 12.0;
-      return Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: compact ? 8 : 10,
-          vertical: compact ? 4 : 6,
-        ),
-        decoration: BoxDecoration(
-          color: colors.backgroundSecondary,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: colors.textSecondary.withValues(alpha: OpacityTokens.soft),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: compact ? 14 : 16, color: colors.textSecondary),
-            SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: colors.textMuted,
-                fontSize: fs - 1,
-                fontWeight: FontWeight.w600,
-              ),
+      final carousel = forCarousel;
+      final fs = carousel ? 11.0 : (compact ? 11.0 : 12.0);
+      final hPad = carousel ? 8.0 : (compact ? 8.0 : 10.0);
+      final vPad = carousel ? 5.0 : (compact ? 4.0 : 6.0);
+      final iconSize = carousel ? 13.0 : (compact ? 14.0 : 16.0);
+      final radius = carousel ? 10.0 : 8.0;
+
+      final content = Row(
+        mainAxisSize: carousel ? MainAxisSize.max : MainAxisSize.min,
+        mainAxisAlignment:
+            carousel ? MainAxisAlignment.center : MainAxisAlignment.start,
+        children: [
+          Icon(icon, size: iconSize, color: colors.textSecondary),
+          SizedBox(width: carousel ? 3 : 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: colors.textMuted,
+              fontSize: fs - 1,
+              fontWeight: FontWeight.w600,
             ),
-            SizedBox(width: 4),
-            Text(
+          ),
+          SizedBox(width: carousel ? 3 : 4),
+          Flexible(
+            child: Text(
               value,
               style: TextStyle(
                 color: valueColor ?? colors.textPrimary,
                 fontSize: fs,
                 fontWeight: FontWeight.w800,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-          ],
+          ),
+        ],
+      );
+
+      return Container(
+        padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
+        decoration: BoxDecoration(
+          color: colors.backgroundSecondary,
+          borderRadius: BorderRadius.circular(radius),
+          border: Border.all(
+            color: colors.textSecondary.withValues(alpha: OpacityTokens.soft),
+          ),
+        ),
+        child: content,
+      );
+    }
+
+    final chips = [
+      chip(
+        icon: Icons.percent,
+        label: 'WR',
+        value: wr == null ? '—' : '$wr%',
+        valueColor: colors.primaryAccent,
+      ),
+      chip(
+        icon: Icons.emoji_events_outlined,
+        label: 'W',
+        value: '${deck.wins}',
+        valueColor: ColorTokens.success,
+      ),
+      chip(
+        icon: Icons.remove_circle_outline,
+        label: 'L',
+        value: '${deck.losses}',
+        valueColor: ColorTokens.danger.withValues(alpha: 0.95),
+      ),
+      chip(
+        icon: Icons.sports_esports_outlined,
+        label: 'GP',
+        value: '$gp',
+      ),
+    ];
+
+    if (forCarousel) {
+      const gap = 8.0;
+      Widget pairRow(Widget left, Widget right) => Row(
+        children: [
+          Expanded(child: left),
+          const SizedBox(width: gap),
+          Expanded(child: right),
+        ],
+      );
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          pairRow(chips[0], chips[1]),
+          const SizedBox(height: gap),
+          pairRow(chips[2], chips[3]),
+        ],
+      );
+    }
+
+    if (scrollHorizontally) {
+      return SizedBox(
+        height: compact ? 26 : 30,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          itemCount: chips.length,
+          separatorBuilder: (_, __) => SizedBox(width: compact ? 6 : 8),
+          itemBuilder: (_, i) => chips[i],
         ),
       );
     }
@@ -533,31 +607,7 @@ class DeckStatChips extends StatelessWidget {
     return Wrap(
       spacing: compact ? 6 : 8,
       runSpacing: 6,
-      children: [
-        chip(
-          icon: Icons.percent,
-          label: 'WR',
-          value: wr == null ? '—' : '$wr%',
-          valueColor: colors.primaryAccent,
-        ),
-        chip(
-          icon: Icons.emoji_events_outlined,
-          label: 'W',
-          value: '${deck.wins}',
-          valueColor: ColorTokens.success,
-        ),
-        chip(
-          icon: Icons.remove_circle_outline,
-          label: 'L',
-          value: '${deck.losses}',
-          valueColor: ColorTokens.danger.withValues(alpha: 0.95),
-        ),
-        chip(
-          icon: Icons.sports_esports_outlined,
-          label: 'GP',
-          value: '$gp',
-        ),
-      ],
+      children: chips,
     );
   }
 }

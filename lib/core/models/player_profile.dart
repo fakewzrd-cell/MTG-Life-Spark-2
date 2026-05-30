@@ -76,7 +76,7 @@ class PlayerProfile extends HiveObject {
   @HiveField(22)
   String? profileBannerImageUrl;
 
-  /// User-picked optional stat bento cards (see [ProfileOptionalStatIds]).
+  /// User-picked optional stat carousel cards (see [ProfileOptionalStatIds]).
   @HiveField(23, defaultValue: <String>[])
   List<String> profileExtraStatIds;
 

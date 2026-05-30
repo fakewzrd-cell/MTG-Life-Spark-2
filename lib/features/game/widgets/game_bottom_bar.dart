@@ -109,19 +109,6 @@ class GameBottomBar extends ConsumerWidget {
                     ),
                   ),
                 ),
-              if (game.isHost)
-                Expanded(
-                  child: Center(
-                    child: _GameBarButton(
-                      icon: Icons.skip_next,
-                      label: 'End Turn',
-                      iconSize: iconSize,
-                      enabled:
-                          game.isLocalPlayersTurn && !game.timeoutActive,
-                      onTap: () => notifier.endTurn(),
-                    ),
-                  ),
-                ),
               Expanded(
                 child: Center(
                   child: _GameBarButton(

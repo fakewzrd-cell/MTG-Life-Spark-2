@@ -9,7 +9,7 @@ import '../../../ui/tokens/opacity_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
 import 'phase_picker_sheet.dart';
 
-/// Unified Back · Phase · Next bar for the Play tab.
+/// Play-tab bar: phase status · Back · Next · End turn.
 class PhaseNavCluster extends StatelessWidget {
   const PhaseNavCluster({
     super.key,
@@ -18,6 +18,8 @@ class PhaseNavCluster extends StatelessWidget {
     this.onBack,
     this.onNext,
     this.onPickPhase,
+    this.onEndTurn,
+    this.endTurnEnabled = false,
   });
 
   final GameState game;
@@ -25,6 +27,10 @@ class PhaseNavCluster extends StatelessWidget {
   final VoidCallback? onBack;
   final VoidCallback? onNext;
   final void Function(GamePhase phase)? onPickPhase;
+  final VoidCallback? onEndTurn;
+  final bool endTurnEnabled;
+
+  static const double barHeight = 52;
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +58,8 @@ class PhaseNavCluster extends StatelessWidget {
           onBack: onBack,
           onNext: onNext,
           onPickPhase: onPickPhase,
+          onEndTurn: onEndTurn,
+          endTurnEnabled: endTurnEnabled,
         ),
       ),
     );
@@ -66,6 +74,8 @@ class PhaseNavClusterStrip extends StatelessWidget {
     this.onBack,
     this.onNext,
     this.onPickPhase,
+    this.onEndTurn,
+    this.endTurnEnabled = false,
   });
 
   final GameState game;
@@ -73,8 +83,11 @@ class PhaseNavClusterStrip extends StatelessWidget {
   final VoidCallback? onBack;
   final VoidCallback? onNext;
   final void Function(GamePhase phase)? onPickPhase;
+  final VoidCallback? onEndTurn;
+  final bool endTurnEnabled;
 
-  static const double _sideMinWidth = 88;
+  static const double _sideMinWidth = 72;
+  static const double _endTurnMinWidth = 88;
 
   @override
   Widget build(BuildContext context) {
@@ -82,11 +95,19 @@ class PhaseNavClusterStrip extends StatelessWidget {
     final dividerColor = colors.textSecondary.withValues(alpha: 0.14);
 
     return SizedBox(
-      height: LayoutTokens.minTapTarget,
+      height: PhaseNavCluster.barHeight,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Expanded(
+            child: _PhaseNavCenter(
+              game: game,
+              accentColor: accentColor,
+              onPickPhase: onPickPhase,
+            ),
+          ),
           if (onBack != null) ...[
+            VerticalDivider(width: 1, thickness: 1, color: dividerColor),
             SizedBox(
               width: _sideMinWidth,
               child: _PhaseNavSideButton(
@@ -97,15 +118,7 @@ class PhaseNavClusterStrip extends StatelessWidget {
                 onPressed: onBack,
               ),
             ),
-            VerticalDivider(width: 1, thickness: 1, color: dividerColor),
           ],
-          Expanded(
-            child: _PhaseNavCenter(
-              game: game,
-              accentColor: accentColor,
-              onPickPhase: onPickPhase,
-            ),
-          ),
           if (onNext != null) ...[
             VerticalDivider(width: 1, thickness: 1, color: dividerColor),
             SizedBox(
@@ -119,7 +132,65 @@ class PhaseNavClusterStrip extends StatelessWidget {
               ),
             ),
           ],
+          if (onEndTurn != null) ...[
+            VerticalDivider(width: 1, thickness: 1, color: dividerColor),
+            SizedBox(
+              width: _endTurnMinWidth,
+              child: _PhaseNavEndTurnButton(
+                enabled: endTurnEnabled && !game.timeoutActive,
+                accentColor: accentColor,
+                onPressed: onEndTurn,
+              ),
+            ),
+          ],
         ],
+      ),
+    );
+  }
+}
+
+class _PhaseNavEndTurnButton extends StatelessWidget {
+  const _PhaseNavEndTurnButton({
+    required this.enabled,
+    required this.accentColor,
+    this.onPressed,
+  });
+
+  final bool enabled;
+  final Color accentColor;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.gameColors;
+    final bg = enabled
+        ? accentColor.withValues(alpha: OpacityTokens.soft)
+        : colors.backgroundSecondary.withValues(alpha: 0.35);
+    final fg = enabled
+        ? accentColor
+        : colors.textSecondary.withValues(alpha: 0.45);
+
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: 'End turn',
+      child: Material(
+        color: bg,
+        child: InkWell(
+          onTap: enabled ? onPressed : null,
+          child: Center(
+            child: Text(
+              'End turn',
+              style: TextStyle(
+                fontSize: FontTokens.hudSm,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.1,
+                color: fg,
+                height: 1.1,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -168,12 +239,15 @@ class _PhaseNavSideButton extends StatelessWidget {
         child: InkWell(
           onTap: enabled ? onPressed : null,
           child: Center(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children:
-                  iconFirst
-                      ? [iconWidget, SizedBox(width: LayoutTokens.gr0), labelWidget]
-                      : [labelWidget, SizedBox(width: LayoutTokens.gr0), iconWidget],
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children:
+                    iconFirst
+                        ? [iconWidget, SizedBox(width: LayoutTokens.gr0), labelWidget]
+                        : [labelWidget, SizedBox(width: LayoutTokens.gr0), iconWidget],
+              ),
             ),
           ),
         ),

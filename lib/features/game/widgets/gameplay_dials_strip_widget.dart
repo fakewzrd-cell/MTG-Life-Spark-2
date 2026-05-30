@@ -63,8 +63,8 @@ class _DialMetrics {
     return _DialMetrics(
       pillHeaderHeight: r4(lerp(32, 36)),
       stepTapHeight: r4(lerp(32, 36)),
-      wheelHeight: r4(lerp(48, 64)),
-      itemExtent: r4(lerp(18, 22)),
+      wheelHeight: r4(lerp(56, 80)),
+      itemExtent: r4(lerp(20, 24)),
       leadingSize: r4(lerp(16, 20)),
       stepIconSize: r4(lerp(20, 24)),
       wheelFontSize: r4(lerp(12, 15)),
@@ -243,12 +243,22 @@ class GameplayDialsStripWidget extends StatelessWidget {
     int current,
   ) {
     if (isEliminated) return;
+    final isCustom = getPlayer().customDialLabels.containsKey(field);
     showCounterAdjustSheet(
       context,
       title: title,
       current: current,
+      confirmReset: !isCustom,
       onChanged: (delta) => onAdjustCounter(field, delta),
     );
+  }
+
+  void _resetCounterInstant(String field) {
+    if (isEliminated) return;
+    final cur = _valueOf(getPlayer(), field);
+    if (cur == 0) return;
+    onSetCounterAbsolute(field, 0);
+    HapticFeedback.lightImpact();
   }
 
   Future<void> _promptCustomDial(BuildContext context) async {
@@ -397,60 +407,76 @@ class GameplayDialsStripWidget extends StatelessWidget {
               final rowChildren = <Widget>[
                 for (var i = 0; i < fields.length; i++) ...[
                   if (i > 0) SizedBox(width: gap),
-                  SizedBox(
-                    width: pillW,
-                    height: metrics.tileStackHeight,
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Positioned.fill(
-                          child: _GameplayDialPill(
-                            metrics: metrics,
-                            value: _valueOf(livePlayer, fields[i]).clamp(
-                              0,
-                              9999,
-                            ),
-                            width: pillW,
-                            isEliminated: isEliminated,
-                            tooltip:
-                                '${_labelFor(livePlayer, fields[i])} — tap to adjust, X to remove',
-                            headerLeading: _leadingGlyph(
-                              fields[i],
-                              metrics.leadingSize,
-                              colors,
-                            ),
-                            onHeaderTap:
-                                isEliminated
-                                    ? null
-                                    : () => _showAdjust(
-                                      context,
-                                      fields[i],
-                                      '${_labelFor(livePlayer, fields[i])} counters',
-                                      _valueOf(livePlayer, fields[i]),
-                                    ),
-                            onHeaderLongPress:
-                                isEliminated
-                                    ? null
-                                    : () => _confirmRemove(context, fields[i]),
-                            onStep: (d) => onAdjustCounter(fields[i], d),
-                            onSetAbsolute:
-                                (v) => onSetCounterAbsolute(
-                                  fields[i],
-                                  v.clamp(0, 9999),
+                  Builder(
+                    builder: (context) {
+                      final field = fields[i];
+                      final isCustom =
+                          livePlayer.customDialLabels.containsKey(field);
+                      return SizedBox(
+                        width: pillW,
+                        height: metrics.tileStackHeight,
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Positioned.fill(
+                              child: _GameplayDialPill(
+                                metrics: metrics,
+                                value: _valueOf(livePlayer, field).clamp(
+                                  0,
+                                  9999,
                                 ),
-                          ),
-                        ),
-                        if (!isEliminated)
-                          Positioned(
-                            top: -_kDialRemoveBadgeOverlap,
-                            right: -_kDialRemoveBadgeOverlap,
-                            child: _DialStripRemoveButton(
-                              onPressed:
-                                  () => _confirmRemove(context, fields[i]),
+                                width: pillW,
+                                isEliminated: isEliminated,
+                                tooltip:
+                                    '${_labelFor(livePlayer, field)} — tap to adjust, X to remove',
+                                headerLeading: _leadingGlyph(
+                                  field,
+                                  metrics.leadingSize,
+                                  colors,
+                                ),
+                                onHeaderTap:
+                                    isEliminated
+                                        ? null
+                                        : () => _showAdjust(
+                                          context,
+                                          field,
+                                          '${_labelFor(livePlayer, field)} counters',
+                                          _valueOf(livePlayer, field),
+                                        ),
+                                onHeaderLongPress:
+                                    isEliminated
+                                        ? null
+                                        : () => _confirmRemove(context, field),
+                                onStep: (d) => onAdjustCounter(field, d),
+                                onSetAbsolute:
+                                    (v) => onSetCounterAbsolute(
+                                      field,
+                                      v.clamp(0, 9999),
+                                    ),
+                              ),
                             ),
-                          ),
-                      ],
-                    ),
+                            if (!isEliminated && isCustom)
+                              Positioned(
+                                top: -_kDialRemoveBadgeOverlap,
+                                left: -_kDialRemoveBadgeOverlap,
+                                child: _DialStripResetButton(
+                                  onPressed: () =>
+                                      _resetCounterInstant(field),
+                                ),
+                              ),
+                            if (!isEliminated)
+                              Positioned(
+                                top: -_kDialRemoveBadgeOverlap,
+                                right: -_kDialRemoveBadgeOverlap,
+                                child: _DialStripRemoveButton(
+                                  onPressed: () =>
+                                      _confirmRemove(context, field),
+                                ),
+                              ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 ],
                 if (showAddButton) ...[
@@ -892,6 +918,53 @@ class _AddCounterPillTile extends StatelessWidget {
                 Icons.add_rounded,
                 size: metrics.addIconSize,
                 color: isEliminated ? colors.textSecondary : colors.primaryAccent,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DialStripResetButton extends StatelessWidget {
+  const _DialStripResetButton({required this.onPressed});
+
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.gameColors;
+    return Semantics(
+      button: true,
+      label: 'Reset counter to zero',
+      child: Tooltip(
+        message: 'Reset to 0',
+        child: SizedBox(
+          width: LayoutTokens.minTapTarget,
+          height: LayoutTokens.minTapTarget,
+          child: Material(
+            color: colors.surface,
+            elevation: 2,
+            shadowColor: Colors.black.withValues(alpha: 0.22),
+            shape: CircleBorder(
+              side: BorderSide(
+                color: colors.primaryAccent.withValues(alpha: 0.55),
+                width: 1.5,
+              ),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: onPressed,
+              customBorder: const CircleBorder(),
+              child: SizedBox(
+                width: _kDialRemoveButtonSize,
+                height: _kDialRemoveButtonSize,
+                child: Icon(
+                  Icons.restart_alt_rounded,
+                  size: 14,
+                  color: colors.primaryAccent,
+                ),
               ),
             ),
           ),

@@ -10,6 +10,7 @@ Future<void> showCounterAdjustSheet(
   required String title,
   required int current,
   required void Function(int delta) onChanged,
+  bool confirmReset = false,
 }) {
   return showGameBottomSheet<void>(
     context: context,
@@ -17,6 +18,7 @@ Future<void> showCounterAdjustSheet(
       title: title,
       current: current,
       onChanged: onChanged,
+      confirmReset: confirmReset,
     ),
   );
 }
@@ -25,12 +27,14 @@ class CounterAdjustSheet extends StatefulWidget {
   final String title;
   final int current;
   final void Function(int delta) onChanged;
+  final bool confirmReset;
 
   const CounterAdjustSheet({
     super.key,
     required this.title,
     required this.current,
     required this.onChanged,
+    this.confirmReset = false,
   });
 
   @override
@@ -51,6 +55,22 @@ class _CounterAdjustSheetState extends State<CounterAdjustSheet> {
     if (newVal == _value) return;
     widget.onChanged(newVal - _value);
     setState(() => _value = newVal);
+  }
+
+  Future<void> _resetToZero() async {
+    if (_value == 0) return;
+    if (widget.confirmReset) {
+      final ok = await showGameConfirmDialog(
+        context: context,
+        title: 'Reset to 0?',
+        message: 'Set this counter to zero.',
+        confirmLabel: 'Reset',
+        destructive: true,
+      );
+      if (ok != true || !mounted) return;
+    }
+    widget.onChanged(-_value);
+    setState(() => _value = 0);
   }
 
   @override
@@ -83,7 +103,20 @@ class _CounterAdjustSheetState extends State<CounterAdjustSheet> {
               _AdjBtn(label: '+5', onTap: () => _adjust(5)),
             ],
           ),
-          SizedBox(height: LayoutTokens.gr3),
+          SizedBox(height: LayoutTokens.gr2),
+          TextButton(
+            onPressed: _value == 0 ? null : _resetToZero,
+            child: Text(
+              'Reset to 0',
+              style: TextStyle(
+                color: _value == 0
+                    ? colors.textSecondary.withValues(alpha: 0.45)
+                    : colors.error,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          SizedBox(height: LayoutTokens.gr1),
           TextButton(
             onPressed: () => Navigator.pop(context),
             style: GameUiTokens.sheetSecondaryButton(context.gameColors),

@@ -30,19 +30,19 @@ const String _kProfileUntilFirstGameMessage =
 const String _kProfileAddDeckMessage =
     'Add a deck to track commander performance here.';
 
-/// Internal padding of every profile carousel card ([LayoutTokens.gr2]).
-/// Inner element radius = RadiusTokens.bento − padding (nested radius rule).
-const double kProfileBentoCardPaddingPx = LayoutTokens.gr2;
+/// Interior padding for 240×360 carousel cards ([LayoutTokens.gr3]).
+/// Inner art radius = [RadiusTokens.carouselCard] − padding (nested radius rule).
+const double kProfileCarouselCardPaddingPx = LayoutTokens.gr3;
 
-const double _kBentoCardPaddingPx = kProfileBentoCardPaddingPx;
-const double _kBentoCardBorderAlpha = 0.55;
-BorderRadius get _kProfileBentoRadius => RadiusTokens.radiusBento;
+const double _kCarouselCardPaddingPx = kProfileCarouselCardPaddingPx;
+const double _kCarouselCardBorderAlpha = 0.55;
+BorderRadius get _kProfileCarouselCardRadius => RadiusTokens.radiusCarouselCard;
 
 RoundedRectangleBorder _profileCarouselCardShape(ColorScheme scheme) {
   return RoundedRectangleBorder(
-    borderRadius: _kProfileBentoRadius,
+    borderRadius: _kProfileCarouselCardRadius,
     side: BorderSide(
-      color: scheme.outlineVariant.withValues(alpha: _kBentoCardBorderAlpha),
+      color: scheme.outlineVariant.withValues(alpha: _kCarouselCardBorderAlpha),
       width: 1,
     ),
   );
@@ -110,7 +110,7 @@ const List<Shadow> _recentMatchOverlayShadow = [
   Shadow(color: Color(0xB3000000), blurRadius: 6, offset: Offset(0, 1)),
 ];
 
-/// Full-height bento tile with centered guidance copy (empty profile sections).
+/// Full-height carousel card with centered guidance copy (empty profile sections).
 class ProfileCarouselPlaceholderCard extends StatelessWidget {
   const ProfileCarouselPlaceholderCard({
     required this.message,
@@ -129,17 +129,18 @@ class ProfileCarouselPlaceholderCard extends StatelessWidget {
     return SizedBox(
       width: width,
       height: height,
-      child: ProfileBentoCard(
+      child: ProfileCarouselCard(
         child: Center(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: LayoutTokens.gr2),
             child: Text(
               message,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: colors.textSecondary,
                 fontWeight: FontWeight.w600,
                 height: 1.4,
+                fontSize: FontTokens.sm,
               ),
             ),
           ),
@@ -149,7 +150,39 @@ class ProfileCarouselPlaceholderCard extends StatelessWidget {
   }
 }
 
-/// "+" bento tile — full-card tap target (matches player-stats add card).
+/// Shared add affordance for carousel cards (decks shelf, optional stats).
+class ProfileCarouselAddGlyph extends StatelessWidget {
+  const ProfileCarouselAddGlyph({required this.colors});
+
+  final AppColorTokens colors;
+
+  static const double circleSize = 60;
+  static const double iconSize = 28;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: circleSize,
+      height: circleSize,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: colors.primaryAccent.withValues(alpha: 0.14),
+        border: Border.all(
+          color: colors.primaryAccent.withValues(alpha: 0.45),
+          width: 2,
+        ),
+      ),
+      alignment: Alignment.center,
+      child: Icon(
+        Icons.add_rounded,
+        size: iconSize,
+        color: colors.primaryAccent,
+      ),
+    );
+  }
+}
+
+/// "+" carousel card — full-card tap target (matches player-stats add card).
 class ProfileCarouselAddCard extends StatelessWidget {
   const ProfileCarouselAddCard({
     required this.colors,
@@ -170,27 +203,10 @@ class ProfileCarouselAddCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: RadiusTokens.radiusBento,
+          borderRadius: RadiusTokens.radiusCarouselCard,
           child: SizedBox.expand(
             child: Center(
-              child: Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: colors.primaryAccent.withValues(alpha: 0.14),
-                  border: Border.all(
-                    color: colors.primaryAccent.withValues(alpha: 0.45),
-                    width: 2,
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: Icon(
-                  Icons.add_rounded,
-                  size: 32,
-                  color: colors.primaryAccent,
-                ),
-              ),
+              child: ProfileCarouselAddGlyph(colors: colors),
             ),
           ),
         ),
@@ -199,8 +215,8 @@ class ProfileCarouselAddCard extends StatelessWidget {
   }
 }
 
-class ProfileBentoCard extends StatelessWidget {
-  const ProfileBentoCard({
+class ProfileCarouselCard extends StatelessWidget {
+  const ProfileCarouselCard({
     super.key,
     required this.child,
     this.padding,
@@ -208,7 +224,7 @@ class ProfileBentoCard extends StatelessWidget {
 
   final Widget child;
 
-  /// When null, uses standard bento inset ([_kBentoCardPaddingPx]).
+  /// When null, uses standard carousel card inset ([_kCarouselCardPaddingPx]).
   final EdgeInsetsGeometry? padding;
 
   @override
@@ -222,7 +238,7 @@ class ProfileBentoCard extends StatelessWidget {
       surfaceTintColor: scheme.surfaceTint,
       shape: _profileCarouselCardShape(scheme),
       child: Padding(
-        padding: padding ?? EdgeInsets.all(_kBentoCardPaddingPx),
+        padding: padding ?? EdgeInsets.all(_kCarouselCardPaddingPx),
         child: child,
       ),
     );
@@ -328,32 +344,93 @@ class ProfileSectionCountPill extends StatelessWidget {
   }
 }
 
-/// Shared width for profile/My Decks horizontal bento tiles (236dp).
-const double kProfileBentoCardWidth = LayoutTokens.profileCarouselCardWidth;
+/// Shared width for profile/My Decks horizontal carousel cards.
+const double kProfileCarouselCardWidth = LayoutTokens.profileCarouselCardWidth;
 
-/// Canonical height at unit text scale (between legacy stats and deck perf).
-const double kProfileBentoCardHeight = 340;
+/// Fixed height for every carousel card (same on all pages).
+const double kProfileCarouselCardHeight = LayoutTokens.profileCarouselCardCanonicalHeight;
 
-const double _kProfileBentoSectionTitleHeight = 44;
-const double _kProfileBentoDeckPortraitMin = 96;
-const double _kProfileBentoDeckPortraitMax = 148;
+/// MTG card art proportion (63×88) for commander portraits in deck cards.
+const double _kDeckPortraitWidthOverHeight = 63 / 88;
 
-/// Height for deck performance, recent games, player stats, and My Decks rows.
-double profileBentoCardHeight(
+const double _kProfileDeckCardPortraitMin = 72;
+const double _kProfileDeckCardPortraitMax = 200;
+
+/// Line heights for deck card footer (matches [ProfileDeckCard] text styles).
+const double _kDeckCardTitleLine = 18;
+const double _kDeckCardSubtitleLine = 15;
+const double _kDeckCardMetaLine = 14;
+
+/// Estimated footer height so commander art shrinks instead of overflowing.
+double profileDeckCardFooterReserveHeight(
+  PlayerDeck deck, {
+  double textScale = 1.0,
+}) {
+  final ts = textScale.clamp(1.0, 1.35);
+  // Title + commander + combined format/style + gap (see [ProfileDeckCard]).
+  var h = (_kDeckCardTitleLine + _kDeckCardSubtitleLine + _kDeckCardMetaLine) *
+      ts +
+      LayoutTokens.gr0;
+  if (deck.isCommanderDeck && _deckHasManaForProfile(deck)) {
+    h += (LayoutTokens.gr1 + (deck.hasPartner ? 32.0 : 16.0)) * ts;
+  }
+  // W/L bar + 2×2 carousel chip grid ([DeckStatChips.forCarousel]).
+  h += (LayoutTokens.gr1 + 8 + LayoutTokens.gr1 + 56) * ts;
+  return h + LayoutTokens.gr1 * ts;
+}
+
+/// Smallest card height that fits the heaviest deck footer + minimum art band.
+double profileDeckCardMinHeight({double textScale = 1.0}) {
+  final heavy = PlayerDeck(
+    id: '_layout_probe',
+    displayName: 'Probe',
+    commanderName: 'Commander // Partner',
+    partnerCommanderName: 'Partner',
+    commanderManaCost: '{2}{U}{R}',
+    partnerManaCost: '{1}{W}',
+    format: 'commander',
+    deckStyleId: 'voltron',
+  );
+  final footer = profileDeckCardFooterReserveHeight(heavy, textScale: textScale);
+  return footer + _kProfileDeckCardPortraitMin + 2 * kProfileCarouselCardPaddingPx;
+}
+
+/// Commander art band height inside a deck card (fits remaining space).
+double profileDeckCardArtHeight(
+  double cardWidth,
+  double cardHeight, {
+  required PlayerDeck deck,
+  required bool hasPartner,
+}) {
+  final innerW = cardWidth - 2 * kProfileCarouselCardPaddingPx;
+  final innerH = cardHeight - 2 * kProfileCarouselCardPaddingPx;
+  final footer = profileDeckCardFooterReserveHeight(deck);
+  final maxByFooter = math.max(_kProfileDeckCardPortraitMin, innerH - footer);
+  final wRatio = hasPartner
+      ? _kDeckPortraitWidthOverHeight * (1 + 0.35 * 0.58)
+      : _kDeckPortraitWidthOverHeight;
+  final byCardRatio = innerW / wRatio;
+  return math.min(byCardRatio, maxByFooter).clamp(
+    _kProfileDeckCardPortraitMin,
+    math.min(_kProfileDeckCardPortraitMax, maxByFooter),
+  );
+}
+
+/// Fixed 2:3 height for every carousel card (240×360 at default width).
+///
+/// [listMaxHeight] is ignored — all profile/My Decks carousels share one size.
+double profileCarouselCardHeight(
   BuildContext context, {
   double? listMaxHeight,
 }) {
-  final scale = MediaQuery.textScalerOf(context).scale(12) / 12.0;
-  final scaled =
-      (kProfileBentoCardHeight * scale.clamp(1.0, 1.35)).clamp(300.0, 420.0);
-  if (listMaxHeight != null && listMaxHeight.isFinite && listMaxHeight > 0) {
-    final budget = listMaxHeight - _kProfileBentoSectionTitleHeight;
-    if (budget > 0) {
-      return math.min(scaled, math.max(280.0, budget));
-    }
-  }
-  return scaled;
+  return LayoutTokens.profileCarouselCardCanonicalHeight;
 }
+
+/// Canonical carousel tile size (width × height) for layout tests and tiles.
+Size profileCarouselCardSize() => Size(
+  kProfileCarouselCardWidth,
+  kProfileCarouselCardHeight,
+);
 
 bool _deckHasManaForProfile(PlayerDeck d) {
   final c = d.commanderManaCost?.trim();
@@ -542,23 +619,9 @@ class _ProfileRecentGamesModuleState extends State<ProfileRecentGamesModule> {
       );
     }
 
-    Widget emptyBody(String message) {
-      return SizedBox(
-        height: 148,
-        child: Center(
-          child: Text(
-            message,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: c.textSecondary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ),
-      );
-    }
+    final cardHeight = profileCarouselCardHeight(context, listMaxHeight: lh);
 
     if (widget.matches.isEmpty) {
-      final cardHeight = profileBentoCardHeight(context, listMaxHeight: lh);
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
@@ -576,7 +639,7 @@ class _ProfileRecentGamesModuleState extends State<ProfileRecentGamesModule> {
                 ProfileCarouselPlaceholderCard(
                   message: _kProfileUntilFirstGameMessage,
                   colors: c,
-                  width: kProfileBentoCardWidth,
+                  width: kProfileCarouselCardWidth,
                   height: cardHeight,
                 ),
               ],
@@ -593,12 +656,26 @@ class _ProfileRecentGamesModuleState extends State<ProfileRecentGamesModule> {
         children: [
           titleRow(),
           SizedBox(height: LayoutTokens.gr2),
-          emptyBody('No matches for this filter.'),
+          SizedBox(
+            height: cardHeight,
+            child: ListView(
+              primary: false,
+              scrollDirection: Axis.horizontal,
+              clipBehavior: Clip.none,
+              physics: kProfileHorizontalCarouselPhysics,
+              children: [
+                ProfileCarouselPlaceholderCard(
+                  message: 'No matches for this filter.',
+                  colors: c,
+                  width: kProfileCarouselCardWidth,
+                  height: cardHeight,
+                ),
+              ],
+            ),
+          ),
         ],
       );
     }
-
-    final cardHeight = profileBentoCardHeight(context, listMaxHeight: lh);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -622,7 +699,7 @@ class _ProfileRecentGamesModuleState extends State<ProfileRecentGamesModule> {
                 key: ValueKey<String>(filtered[i].matchId),
                 match: filtered[i],
                 colors: c,
-                width: kProfileBentoCardWidth,
+                width: kProfileCarouselCardWidth,
                 height: cardHeight,
               );
             },
@@ -857,7 +934,7 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
 
     final structureLine = _recentMatchStructureLine(m);
 
-    final innerPad = _kBentoCardPaddingPx;
+    final innerPad = _kCarouselCardPaddingPx;
     final expandedInnerH = math.max(0.0, widget.height - 2 * innerPad);
     final profile = ref.watch(profileProvider).profile;
     final winner = _winnerParticipantForRecentCard(m, profile);
@@ -1142,20 +1219,15 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
     final card = SizedBox(
       width: widget.width,
       height: widget.height,
-      child: Card(
-        margin: EdgeInsets.zero,
-        clipBehavior: Clip.antiAlias,
-        color: scheme.surfaceContainerHigh,
-        elevation: 1,
-        surfaceTintColor: scheme.surfaceTint,
-        shape: _profileCarouselCardShape(scheme),
+      child: ProfileCarouselCard(
+        padding: EdgeInsets.zero,
         child: Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: _expanded
                 ? null
                 : () => setState(() => _expanded = true),
-            borderRadius: _kProfileBentoRadius,
+            borderRadius: _kProfileCarouselCardRadius,
             child: SizedBox(
               height: widget.height,
               width: double.infinity,
@@ -1292,7 +1364,7 @@ class _ProfileDeckPerformanceSectionState
           ProfileCarouselPlaceholderCard(
             message: placeholderMessage,
             colors: colors,
-            width: kProfileBentoCardWidth,
+            width: kProfileCarouselCardWidth,
             height: cardHeight,
           ),
         );
@@ -1301,10 +1373,10 @@ class _ProfileDeckPerformanceSectionState
         for (var i = 0; i < repoDecks.length; i++) {
           if (i > 0) children.add(SizedBox(width: LayoutTokens.gr2));
           children.add(
-            ProfileDeckBentoTile(
+            ProfileDeckCard(
               deck: repoDecks[i],
               colors: colors,
-              width: kProfileBentoCardWidth,
+              width: kProfileCarouselCardWidth,
               height: cardHeight,
             ),
           );
@@ -1313,9 +1385,9 @@ class _ProfileDeckPerformanceSectionState
       }
       children.add(
         SizedBox(
-          width: kProfileBentoCardWidth,
+          width: kProfileCarouselCardWidth,
           height: cardHeight,
-          child: ProfileBentoCard(
+          child: ProfileCarouselCard(
             padding: EdgeInsets.zero,
             child: ProfileCarouselAddCard(
               colors: colors,
@@ -1343,7 +1415,7 @@ class _ProfileDeckPerformanceSectionState
     return LayoutBuilder(
       builder: (context, c) {
         final double cardHeight =
-            profileBentoCardHeight(context, listMaxHeight: lh);
+            profileCarouselCardHeight(context, listMaxHeight: lh);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
@@ -1358,9 +1430,83 @@ class _ProfileDeckPerformanceSectionState
   }
 }
 
-/// Vertical bento tile for a saved deck (profile carousel + My Decks library).
-class ProfileDeckBentoTile extends StatelessWidget {
-  const ProfileDeckBentoTile({
+TextStyle _profileDeckCardTitleStyle(AppColorTokens colors) => TextStyle(
+  fontSize: FontTokens.hudSm + 2,
+  fontWeight: FontWeight.w800,
+  height: 1.2,
+  letterSpacing: -0.15,
+  color: colors.textPrimary,
+);
+
+TextStyle _profileDeckCardSubtitleStyle(AppColorTokens colors) => TextStyle(
+  fontSize: FontTokens.sm,
+  fontWeight: FontWeight.w500,
+  height: 1.25,
+  color: colors.textSecondary,
+);
+
+TextStyle _profileDeckCardMetaStyle(
+  AppColorTokens colors, {
+  required bool accent,
+}) =>
+    TextStyle(
+      fontSize: FontTokens.hudXs + 1,
+      fontWeight: FontWeight.w600,
+      height: 1.25,
+      letterSpacing: 0.1,
+      color: accent ? colors.primaryAccent : colors.textSecondary,
+    );
+
+/// Format + deck style on one line (single layout pass — no baseline drift).
+class _ProfileDeckFormatStyleLine extends StatelessWidget {
+  const _ProfileDeckFormatStyleLine({
+    required this.deck,
+    required this.colors,
+  });
+
+  final PlayerDeck deck;
+  final AppColorTokens colors;
+
+  @override
+  Widget build(BuildContext context) {
+    final base = _profileDeckCardMetaStyle(colors, accent: false);
+    final styleColor =
+        deck.hasDeckStyle ? colors.textSecondary : colors.primaryAccent;
+    return Text.rich(
+      TextSpan(
+        style: base,
+        children: [
+          TextSpan(
+            text: deck.gameFormat.displayName,
+            style: base.copyWith(color: colors.primaryAccent),
+          ),
+          const TextSpan(text: ' · '),
+          TextSpan(
+            text: deck.deckStyleDisplayName,
+            style: base.copyWith(color: styleColor),
+          ),
+        ],
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      strutStyle: StrutStyle(
+        fontSize: base.fontSize,
+        height: base.height,
+        fontWeight: base.fontWeight,
+        leadingDistribution: TextLeadingDistribution.even,
+        forceStrutHeight: true,
+      ),
+      textHeightBehavior: const TextHeightBehavior(
+        applyHeightToFirstAscent: true,
+        applyHeightToLastDescent: false,
+      ),
+    );
+  }
+}
+
+/// Portrait deck card for profile carousel + My Decks (2:3 ratio).
+class ProfileDeckCard extends StatelessWidget {
+  const ProfileDeckCard({
     required this.deck,
     required this.colors,
     required this.width,
@@ -1374,78 +1520,86 @@ class ProfileDeckBentoTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final innerW = width - 2 * kProfileCarouselCardPaddingPx;
+    final wRatio = deck.hasPartner
+        ? _kDeckPortraitWidthOverHeight * (1 + 0.35 * 0.58)
+        : _kDeckPortraitWidthOverHeight;
+
     return SizedBox(
       width: width,
       height: height,
-      child: ProfileBentoCard(
+      child: ProfileCarouselCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(
+            Flexible(
               child: LayoutBuilder(
-                builder: (context, c) {
-                  // Primary card height `size`; cluster width scales with partner overlap.
-                  final wRatio = deck.hasPartner
-                      ? (63 / 88) * (1 + 0.35 * 0.58)
-                      : (63 / 88);
-                  final maxByWidth = c.maxWidth / wRatio;
-                  final sz = math
-                      .min(c.maxHeight, maxByWidth)
+                builder: (context, constraints) {
+                  final artH = profileDeckCardArtHeight(
+                    width,
+                    height,
+                    deck: deck,
+                    hasPartner: deck.hasPartner,
+                  );
+                  final maxH = constraints.maxHeight.isFinite
+                      ? constraints.maxHeight
+                      : artH;
+                  final bandH = math.min(artH, maxH);
+                  final portraitSize = math
+                      .min(bandH, innerW / wRatio)
                       .clamp(
-                        _kProfileBentoDeckPortraitMin,
-                        _kProfileBentoDeckPortraitMax,
+                        _kProfileDeckCardPortraitMin,
+                        _kProfileDeckCardPortraitMax,
                       );
                   return Center(
                     child: ResolvedDeckCommanderAvatarCluster(
                       deck: deck,
                       colors: colors,
-                      size: sz,
+                      size: portraitSize,
                       portraitStyle: CommanderPortraitStyle.card,
                     ),
                   );
                 },
               ),
             ),
-            SizedBox(height: LayoutTokens.gr0),
+            SizedBox(height: LayoutTokens.gr1),
             Text(
               deck.displayName,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: colors.textPrimary,
-              ),
+              style: _profileDeckCardTitleStyle(colors),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
+            SizedBox(height: LayoutTokens.gr0),
             Text(
               deck.isCommanderDeck && deck.hasPartner
                   ? '${deck.commanderName} // ${deck.partnerCommanderName}'
                   : deck.commanderName,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: colors.textSecondary,
-              ),
+              style: _profileDeckCardSubtitleStyle(colors),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            Text(
-              deck.gameFormat.displayName,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: colors.primaryAccent,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            SizedBox(height: LayoutTokens.gr0),
+            _ProfileDeckFormatStyleLine(deck: deck, colors: colors),
             if (deck.isCommanderDeck && _deckHasManaForProfile(deck)) ...[
               SizedBox(height: LayoutTokens.gr1),
-              DeckManaCostRows(
-                commanderManaCost: deck.commanderManaCost,
-                partnerManaCost: deck.partnerManaCost,
-                hasPartner: deck.hasPartner,
-                compact: true,
+              Align(
+                alignment: Alignment.centerLeft,
+                child: DeckManaCostRows(
+                  commanderManaCost: deck.commanderManaCost,
+                  partnerManaCost: deck.partnerManaCost,
+                  hasPartner: deck.hasPartner,
+                  compact: true,
+                ),
               ),
             ],
-            SizedBox(height: LayoutTokens.gr2),
-            DeckWinLossRatioBar(deck: deck, colors: colors, height: 6),
             SizedBox(height: LayoutTokens.gr1),
-            DeckStatChips(deck: deck, colors: colors, compact: true),
+            DeckWinLossRatioBar(deck: deck, colors: colors, height: 8),
+            SizedBox(height: LayoutTokens.gr1),
+            DeckStatChips(
+              deck: deck,
+              colors: colors,
+              forCarousel: true,
+            ),
           ],
         ),
       ),

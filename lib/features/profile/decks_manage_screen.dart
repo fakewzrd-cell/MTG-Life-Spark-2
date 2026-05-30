@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/game/game_format.dart';
+import '../../core/models/deck_style.dart';
 import '../../core/models/player_deck.dart';
 import '../../core/persistence/deck_repository.dart';
 import '../../core/persistence/providers.dart';
@@ -15,6 +16,7 @@ import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import '../../ui/tokens/typography_tokens.dart';
 import '../game/widgets/game_modal_chrome.dart';
+import 'deck_style_picker_sheet.dart';
 import 'profile_carousel_sections.dart';
 
 class DecksManageScreen extends ConsumerStatefulWidget {
@@ -56,12 +58,16 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
   Future<void> _promptNewDeckName() async {
     final controller = TextEditingController();
     var selectedFormat = GameFormat.commander;
-    final result = await showDialog<({String name, GameFormat format})>(
+    DeckStyle? selectedStyle;
+    final result = await showDialog<
+        ({String name, GameFormat format, String deckStyleId})>(
       context: context,
       builder: (ctx) {
         final colors = AppColorTokens.of(ctx);
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            final canNext = controller.text.trim().isNotEmpty &&
+                selectedStyle != null;
             return AlertDialog(
               title: GameDialogTitleRow(
                 title: 'New deck',
@@ -74,6 +80,7 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
                   TextField(
                     controller: controller,
                     autofocus: true,
+                    onChanged: (_) => setDialogState(() {}),
                     decoration: InputDecoration(
                       labelText: 'Deck name',
                       hintText: 'e.g. Raffine Tempo',
@@ -103,15 +110,35 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
                       setDialogState(() => selectedFormat = f);
                     },
                   ),
+                  SizedBox(height: LayoutTokens.gr3),
+                  DeckStylePickerField(
+                    selected: selectedStyle,
+                    errorText: selectedStyle == null ? 'Required' : null,
+                    onPick: () async {
+                      final picked = await showDeckStylePickerSheet(
+                        ctx,
+                        selected: selectedStyle,
+                      );
+                      if (picked == null) return;
+                      setDialogState(() => selectedStyle = picked);
+                    },
+                  ),
                 ],
               ),
               actions: [
                 FilledButton(
-                  onPressed: () {
-                    final t = controller.text.trim();
-                    if (t.isEmpty) return;
-                    Navigator.pop(ctx, (name: t, format: selectedFormat));
-                  },
+                  onPressed: canNext
+                      ? () {
+                          Navigator.pop(
+                            ctx,
+                            (
+                              name: controller.text.trim(),
+                              format: selectedFormat,
+                              deckStyleId: selectedStyle!.id,
+                            ),
+                          );
+                        }
+                      : null,
                   child: const Text('Next'),
                 ),
               ],
@@ -129,13 +156,38 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
         'playerId': profile.username,
         'newDeckDisplayName': result.name,
         'deckFormat': result.format.name,
+        'deckStyleId': result.deckStyleId,
       },
     );
     bumpDeckListRevision(ref);
     _reload();
   }
 
-  Future<void> _editCommanders(PlayerDeck deck) async {
+  Future<bool> _ensureDeckStyle(PlayerDeck deck, DeckRepository repo) async {
+    if (deck.hasDeckStyle) return true;
+    final picked = await showDeckStylePickerSheet(context);
+    if (picked == null || !mounted) return false;
+    deck.deckStyleId = picked.id;
+    await repo.save(deck);
+    bumpDeckListRevision(ref);
+    _reload();
+    return true;
+  }
+
+  Future<void> _changeDeckStyle(DeckRepository repo, PlayerDeck deck) async {
+    final picked = await showDeckStylePickerSheet(
+      context,
+      selected: deck.deckStyle,
+    );
+    if (picked == null || picked.id == deck.deckStyleId) return;
+    deck.deckStyleId = picked.id;
+    await repo.save(deck);
+    bumpDeckListRevision(ref);
+    _reload();
+  }
+
+  Future<void> _editCommanders(PlayerDeck deck, DeckRepository repo) async {
+    if (!await _ensureDeckStyle(deck, repo)) return;
     final profile = ref.read(profileRepositoryProvider).getProfile();
     if (profile == null) return;
     await context.push(
@@ -252,11 +304,23 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
                 ),
               ),
               ListTile(
+                leading: Icon(Icons.category_outlined, color: colors.primaryAccent),
+                title: Text(
+                  deck.hasDeckStyle
+                      ? 'Deck style: ${deck.deckStyleDisplayName}'
+                      : 'Set deck style (required)',
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _changeDeckStyle(repo, deck);
+                },
+              ),
+              ListTile(
                 leading: Icon(Icons.style_outlined, color: colors.primaryAccent),
                 title: Text(coverLabel),
                 onTap: () {
                   Navigator.pop(ctx);
-                  _editCommanders(deck);
+                  _editCommanders(deck, repo);
                 },
               ),
               ListTile(
@@ -293,7 +357,7 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
     final repo = ref.read(deckRepositoryProvider);
     final bottomBarPad = LayoutTokens.shellBottomInset(context);
     final grouped = _groupDecksByFormat(_decks);
-    final cardHeight = profileBentoCardHeight(context);
+    final cardHeight = profileCarouselCardHeight(context);
 
     final isEmpty = _decks.isEmpty;
 
@@ -397,7 +461,7 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
   }
 }
 
-/// One format section: title + horizontal row of profile-style deck bento cards.
+/// One format section: title + horizontal row of profile-style deck cards.
 class _DecksFormatRow extends StatelessWidget {
   const _DecksFormatRow({
     required this.format,
@@ -447,11 +511,11 @@ class _DecksFormatRow extends StatelessWidget {
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: () => onDeckTap(deck),
-                    borderRadius: RadiusTokens.radiusBento,
-                    child: ProfileDeckBentoTile(
+                    borderRadius: RadiusTokens.radiusCarouselCard,
+                    child: ProfileDeckCard(
                       deck: deck,
                       colors: colors,
-                      width: kProfileBentoCardWidth,
+                      width: kProfileCarouselCardWidth,
                       height: cardHeight,
                     ),
                   ),

@@ -35,12 +35,16 @@ class CommanderSelectScreen extends ConsumerStatefulWidget {
   /// `GameFormat.name` when saving a new deck from My Decks.
   final String? deckFormat;
 
+  /// [DeckStyle.id] when saving a new deck from My Decks.
+  final String? deckStyleId;
+
   const CommanderSelectScreen({
     super.key,
     required this.playerId,
     this.newDeckDisplayName,
     this.editDeckId,
     this.deckFormat,
+    this.deckStyleId,
   });
 
   bool get _deckMode =>
@@ -215,9 +219,11 @@ class _CommanderSelectScreenState
         _primary!,
         usePartner ? _partner : null,
       );
+      final styleId = widget.deckStyleId?.trim() ?? '';
       final deck = PlayerDeck.create(
         displayName: widget.newDeckDisplayName!.trim(),
         format: fmt,
+        deckStyleId: styleId,
         commanderName: _primary!.name,
         commanderImageUrl: _primary!.imageUrl,
         partnerCommanderName: usePartner ? _partner?.name : null,

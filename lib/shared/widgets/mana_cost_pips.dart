@@ -158,6 +158,7 @@ class DeckManaCostRows extends StatelessWidget {
     if (children.isEmpty) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: children,
     );
   }

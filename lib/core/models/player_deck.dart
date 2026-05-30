@@ -2,6 +2,7 @@ import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 
 import '../game/game_format.dart';
+import 'deck_style.dart';
 
 part 'player_deck.g.dart';
 
@@ -50,6 +51,10 @@ class PlayerDeck extends HiveObject {
   @HiveField(12, defaultValue: 'commander')
   String format;
 
+  /// [DeckStyle.id]; empty until set on legacy decks.
+  @HiveField(13, defaultValue: '')
+  String deckStyleId;
+
   PlayerDeck({
     required this.id,
     required this.displayName,
@@ -64,7 +69,15 @@ class PlayerDeck extends HiveObject {
     this.partnerManaCost,
     this.commanderColorIdentity = const [],
     this.format = 'commander',
+    this.deckStyleId = '',
   });
+
+  bool get hasDeckStyle => DeckStyle.isValidId(deckStyleId);
+
+  DeckStyle? get deckStyle => DeckStyle.fromId(deckStyleId);
+
+  String get deckStyleDisplayName =>
+      deckStyle?.displayName ?? DeckStyle.unsetLabel;
 
   GameFormat get gameFormat =>
       GameFormatDetails.fromName(format) ?? GameFormat.commander;
@@ -82,6 +95,7 @@ class PlayerDeck extends HiveObject {
     required String displayName,
     required String commanderName,
     required GameFormat format,
+    required String deckStyleId,
     String? commanderImageUrl,
     String? partnerCommanderName,
     String? partnerCommanderImageUrl,
@@ -102,6 +116,7 @@ class PlayerDeck extends HiveObject {
         partnerManaCost: format.isCommanderStyle ? partnerManaCost : null,
         commanderColorIdentity: commanderColorIdentity,
         format: format.name,
+        deckStyleId: deckStyleId,
       );
 
   /// Saved deck format must match the lobby host format for picker and W/L.

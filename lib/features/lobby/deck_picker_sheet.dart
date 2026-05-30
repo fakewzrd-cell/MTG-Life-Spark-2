@@ -17,11 +17,13 @@ Future<void> showDeckPickerSheet(
 ) async {
   final lobbyFormat = ref.read(lobbyProvider).config.format;
   final isCommanderLobby = lobbyFormat.isCommanderStyle;
-  final decks = ref
+  final allForFormat = ref
       .read(deckRepositoryProvider)
       .getAll()
       .where((d) => d.matchesLobbyFormat(lobbyFormat))
       .toList();
+  final decks = allForFormat.where((d) => d.hasDeckStyle).toList();
+  final needsStyle = allForFormat.where((d) => !d.hasDeckStyle).length;
   await showModalBottomSheet<void>(
     context: context,
     backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
@@ -76,8 +78,11 @@ Future<void> showDeckPickerSheet(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'No ${lobbyFormat.displayName} decks saved yet. '
-                        'Create one from the Decks tab.',
+                        needsStyle > 0
+                            ? '$needsStyle deck${needsStyle == 1 ? '' : 's'} '
+                                'need a style set in the Decks tab before lobby use.'
+                            : 'No ${lobbyFormat.displayName} decks saved yet. '
+                                'Create one from the Decks tab.',
                         style: TextStyle(
                           color: colors.textSecondary,
                           fontSize: 13,
@@ -106,9 +111,12 @@ Future<void> showDeckPickerSheet(
                       ),
                     ),
                     subtitle: Text(
-                      d.hasPartner
-                          ? '${d.commanderName} // ${d.partnerCommanderName}'
-                          : d.commanderName,
+                      [
+                        d.deckStyleDisplayName,
+                        d.hasPartner
+                            ? '${d.commanderName} // ${d.partnerCommanderName}'
+                            : d.commanderName,
+                      ].join(' · '),
                       style: TextStyle(
                         color: colors.textSecondary,
                         fontSize: 12,

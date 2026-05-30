@@ -31,7 +31,7 @@ class TypographyTokens {
         color: primary,
       );
 
-  /// In-card titles — bento carousel tiles (16dp w800).
+  /// In-card titles — profile carousel cards (16dp w800).
   static TextStyle cardTitle(Color primary) => GoogleFonts.lato(
         fontSize: FontTokens.title,
         fontWeight: FontWeight.w800,

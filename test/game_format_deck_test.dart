@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mgt_life_spark/core/game/game_format.dart';
+import 'package:mgt_life_spark/core/models/deck_style.dart';
 import 'package:mgt_life_spark/core/models/player_deck.dart';
 
 void main() {
@@ -8,6 +9,7 @@ void main() {
       final deck = PlayerDeck.create(
         displayName: 'Azorius Control',
         format: GameFormat.standard,
+        deckStyleId: DeckStyle.control.id,
         commanderName: 'Teferi, Hero of Dominaria',
       );
       expect(deck.matchesLobbyFormat(GameFormat.standard), isTrue);
@@ -18,11 +20,13 @@ void main() {
       final cmd = PlayerDeck.create(
         displayName: 'EDH',
         format: GameFormat.commander,
+        deckStyleId: DeckStyle.aristocrats.id,
         commanderName: 'Atraxa',
       );
       final std = PlayerDeck.create(
         displayName: 'Std',
         format: GameFormat.standard,
+        deckStyleId: DeckStyle.spellslinger.id,
         commanderName: 'Lightning Bolt',
       );
       expect(cmd.isCommanderDeck, isTrue);
@@ -34,6 +38,7 @@ void main() {
       final deck = PlayerDeck.create(
         displayName: 'Rakdos',
         format: GameFormat.modern,
+        deckStyleId: DeckStyle.voltron.id,
         commanderName: 'Ragavan',
         partnerCommanderName: 'Should Not Stick',
       );

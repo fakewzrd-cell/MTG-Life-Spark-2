@@ -47,22 +47,26 @@ Widget _buildCommanderSelect(GoRouterState state) {
   final String? newDeckDisplayName;
   final String? editDeckId;
   final String? deckFormat;
+  final String? deckStyleId;
   if (extra is Map) {
     playerId = extra['playerId'] as String? ?? '';
     newDeckDisplayName = extra['newDeckDisplayName'] as String?;
     editDeckId = extra['editDeckId'] as String?;
     deckFormat = extra['deckFormat'] as String?;
+    deckStyleId = extra['deckStyleId'] as String?;
   } else {
     playerId = extra as String? ?? '';
     newDeckDisplayName = null;
     editDeckId = null;
     deckFormat = null;
+    deckStyleId = null;
   }
   return CommanderSelectScreen(
     playerId: playerId,
     newDeckDisplayName: newDeckDisplayName,
     editDeckId: editDeckId,
     deckFormat: deckFormat,
+    deckStyleId: deckStyleId,
   );
 }
 

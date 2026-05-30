@@ -31,8 +31,11 @@ class RadiusTokens {
 
   // ── Hero cards ────────────────────────────────────────────────────────────
 
-  /// Bento card (28). Profile stats, deck-performance carousel cards.
-  static const double bento = 28;
+  /// Profile carousel / deck shelf cards (28). Alias: [bento].
+  static const double carouselCard = 28;
+
+  /// Legacy name for [carouselCard].
+  static const double bento = carouselCard;
 
   // ── BorderRadius constants ────────────────────────────────────────────────
   static const BorderRadius radiusXs = BorderRadius.all(Radius.circular(controlXs));
@@ -42,7 +45,9 @@ class RadiusTokens {
   static const BorderRadius radiusMd = BorderRadius.all(Radius.circular(md));
   static const BorderRadius radiusLg = BorderRadius.all(Radius.circular(lg));
   static const BorderRadius radiusXl = BorderRadius.all(Radius.circular(xl));
-  static const BorderRadius radiusBento = BorderRadius.all(Radius.circular(bento));
+  static const BorderRadius radiusCarouselCard =
+      BorderRadius.all(Radius.circular(carouselCard));
+  static const BorderRadius radiusBento = radiusCarouselCard;
   static const BorderRadius radiusPill = BorderRadius.all(Radius.circular(pill));
   static const BorderRadius radiusControlSm = BorderRadius.all(Radius.circular(controlSm));
   static const BorderRadius radiusChip = BorderRadius.all(Radius.circular(chip));

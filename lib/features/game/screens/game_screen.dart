@@ -18,6 +18,7 @@ import '../../../core/services/shake_detector.dart';
 import '../../../shared/utils/app_router.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
+import '../widgets/active_turn_banner.dart';
 import '../widgets/alliance_overview_ui.dart';
 import '../widgets/commander_damage_panel.dart';
 import '../widgets/commander_info_bar.dart';
@@ -385,7 +386,7 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
                           )
                         : null,
                   )
-                : null,
+                : ActiveTurnBanner(game: game),
           ),
         ),
         Expanded(
@@ -423,13 +424,18 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
                               onPickPhase: game.timeoutActive
                                   ? null
                                   : notifier.setPhase,
+                              onEndTurn: notifier.endTurn,
+                              endTurnEnabled: !game.timeoutActive &&
+                                  (game.isLocalPlayersTurn || game.isHost),
                             ),
                           ),
                         ),
+                        SizedBox(height: LayoutTokens.gr2),
+                        ActiveTurnBanner(game: game),
                         SizedBox(
                           height: tightVertical
-                              ? LayoutTokens.gr1
-                              : LayoutTokens.gr2,
+                              ? LayoutTokens.gr2
+                              : LayoutTokens.gr3,
                         ),
                         Center(
                           child: ConstrainedBox(

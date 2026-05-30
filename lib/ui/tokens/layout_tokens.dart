@@ -31,8 +31,22 @@ class LayoutTokens {
 
   // ── Named layout constants ────────────────────────────────────────────────
 
-  /// Width of a profile/My Decks horizontal bento tile. 236dp.
-  static const double profileCarouselCardWidth = 236;
+  /// Width of profile/My Decks horizontal carousel cards.
+  ///
+  /// Height is derived via [profileCarouselCardHeightForWidth] (2:3 portrait).
+  static const double profileCarouselCardWidth = 240;
+
+  /// Carousel card aspect ratio — width : height = 2 : 3.
+  static const double profileCarouselCardWidthOverHeight = 2 / 3;
+
+  /// Fixed 2:3 height for [profileCarouselCardWidth] (240×360 on the 4dp grid).
+  static const double profileCarouselCardCanonicalHeight = 360;
+
+  /// Height for a carousel card at [width], preserving [profileCarouselCardWidthOverHeight].
+  static double profileCarouselCardHeightForWidth(double width) {
+    final h = width / profileCarouselCardWidthOverHeight;
+    return (h / gr0).round() * gr0;
+  }
 
   /// Height of the shell dock bar ([AppBottomNavBar] content area). 68dp.
   static const double bottomNavHeight = 68;

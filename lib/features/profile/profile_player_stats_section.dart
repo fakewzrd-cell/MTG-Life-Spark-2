@@ -150,9 +150,9 @@ class _AnimatedXpInLevelLabelState extends State<_AnimatedXpInLevelLabel>
 }
 
 /// Highest-volume commander from hive stats with deck art when possible.
-/// Fixed-size bento tile for the player stats horizontal carousel.
-class _PlayerStatsBentoTile extends StatelessWidget {
-  const _PlayerStatsBentoTile({
+/// Fixed-size carousel card for the player stats horizontal shelf.
+class _PlayerStatsCarouselTile extends StatelessWidget {
+  const _PlayerStatsCarouselTile({
     required this.width,
     required this.height,
     required this.child,
@@ -167,7 +167,7 @@ class _PlayerStatsBentoTile extends StatelessWidget {
     return SizedBox(
       width: width,
       height: height,
-      child: ProfileBentoCard(child: child),
+      child: ProfileCarouselCard(child: child),
     );
   }
 }
@@ -178,25 +178,21 @@ Widget _mostPlayedTile({
   required AppColorTokens colors,
   required CommanderStats? top,
 }) {
-  const info =
-      'Commander you have played the most games with across recorded matches.';
   if (!hasPlayedGames) {
-    return _PlayerStatsEmptyBentoCard(
+    return _PlayerStatsEmptyCard(
       title: 'Most played',
-      infoMessage: info,
       colors: colors,
     );
   }
   if (top != null) {
-    return _MostPlayedBentoCard(
+    return _MostPlayedCard(
       profile: profile,
       colors: colors,
       top: top,
     );
   }
-  return _PlayerStatsEmptyBentoCard(
+  return _PlayerStatsEmptyCard(
     title: 'Most played',
-    infoMessage: info,
     colors: colors,
     message: 'No commander stats yet.',
   );
@@ -277,14 +273,14 @@ class ProfilePlayerStatsSection extends ConsumerWidget {
 
     return LayoutBuilder(
       builder: (context, _) {
-        final cardHeight = profileBentoCardHeight(
+        final cardHeight = profileCarouselCardHeight(
           context,
           listMaxHeight: listMaxHeight,
         );
-        final cardWidth = kProfileBentoCardWidth;
+        final cardWidth = kProfileCarouselCardWidth;
 
         final tiles = <Widget>[
-          _PlayerStatsBentoTile(
+          _PlayerStatsCarouselTile(
             width: cardWidth,
             height: cardHeight,
             child: _LevelDonutCard(
@@ -296,7 +292,7 @@ class ProfilePlayerStatsSection extends ConsumerWidget {
               fillHeight: true,
             ),
           ),
-          _PlayerStatsBentoTile(
+          _PlayerStatsCarouselTile(
             width: cardWidth,
             height: cardHeight,
             child: _BehaviourBarCard(
@@ -306,7 +302,7 @@ class ProfilePlayerStatsSection extends ConsumerWidget {
             ),
           ),
           for (final statId in extraStatIds)
-            _PlayerStatsBentoTile(
+            _PlayerStatsCarouselTile(
               width: cardWidth,
               height: cardHeight,
               child: _optionalStatTile(
@@ -322,10 +318,11 @@ class ProfilePlayerStatsSection extends ConsumerWidget {
             SizedBox(
               width: cardWidth,
               height: cardHeight,
-              child: ProfileBentoCard(
+              child: ProfileCarouselCard(
                 padding: EdgeInsets.zero,
-                child: _AddPlayerStatCard(
+                child: ProfileCarouselAddCard(
                   colors: colors,
+                  semanticsLabel: 'Add stat card',
                   onTap:
                       () => _showAddStatPicker(
                         context,
@@ -391,14 +388,13 @@ Widget _optionalStatTile({
       );
     case ProfileOptionalStatIds.toughRecord:
       return hasPlayedGames && worst != null
-          ? _WorstDeckBentoCard(
+          ? _WorstDeckCard(
             profile: profile,
             colors: colors,
             deck: worst,
           )
-          : _PlayerStatsEmptyBentoCard(
+          : _PlayerStatsEmptyCard(
             title: 'Tough record',
-            infoMessage: ProfileOptionalStatIds.description(statId),
             colors: colors,
             message:
                 hasPlayedGames
@@ -500,65 +496,15 @@ Future<void> _showAddStatPicker(
   );
 }
 
-/// "+" tile — opens picker for optional stat cards (most played, tough record, …).
-class _AddPlayerStatCard extends StatelessWidget {
-  const _AddPlayerStatCard({
-    required this.colors,
-    required this.onTap,
-  });
-
-  final AppColorTokens colors;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: 'Add stat card',
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: RadiusTokens.radiusBento,
-          child: SizedBox.expand(
-            child: Center(
-              child: Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: colors.primaryAccent.withValues(alpha: 0.14),
-                  border: Border.all(
-                    color: colors.primaryAccent.withValues(alpha: 0.45),
-                    width: 2,
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: Icon(
-                  Icons.add_rounded,
-                  size: 32,
-                  color: colors.primaryAccent,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Stats bento tile before match history exists (or no commander/deck data yet).
-class _PlayerStatsEmptyBentoCard extends StatelessWidget {
-  const _PlayerStatsEmptyBentoCard({
+/// Stats carousel card before match history exists (or no commander/deck data yet).
+class _PlayerStatsEmptyCard extends StatelessWidget {
+  const _PlayerStatsEmptyCard({
     required this.title,
-    required this.infoMessage,
     required this.colors,
     this.message = _kProfileUntilFirstGameMessage,
   });
 
   final String title;
-  final String infoMessage;
   final AppColorTokens colors;
   final String message;
 
@@ -567,23 +513,20 @@ class _PlayerStatsEmptyBentoCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _BentoSectionHeader(
-          title: title,
-          colors: colors,
-          infoMessage: infoMessage,
-        ),
+        _CarouselSectionHeader(title: title, colors: colors),
         SizedBox(height: LayoutTokens.gr2),
         Expanded(
           child: Center(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: LayoutTokens.gr2),
+              padding: const EdgeInsets.symmetric(horizontal: LayoutTokens.gr1),
               child: Text(
                 message,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: colors.textSecondary,
                   fontWeight: FontWeight.w600,
-                  height: 1.35,
+                  height: 1.4,
+                  fontSize: FontTokens.sm,
                 ),
               ),
             ),
@@ -595,10 +538,9 @@ class _PlayerStatsEmptyBentoCard extends StatelessWidget {
 }
 
 /// Shared layout for Most played / Worst deck player-stats tiles.
-class _PlayerStatsHighlightBentoCard extends StatelessWidget {
-  const _PlayerStatsHighlightBentoCard({
+class _PlayerStatsHighlightCard extends StatelessWidget {
+  const _PlayerStatsHighlightCard({
     required this.title,
-    required this.infoMessage,
     required this.colors,
     required this.primaryLabel,
     required this.statsLine,
@@ -606,7 +548,6 @@ class _PlayerStatsHighlightBentoCard extends StatelessWidget {
   });
 
   final String title;
-  final String infoMessage;
   final AppColorTokens colors;
   final String primaryLabel;
   final String statsLine;
@@ -614,22 +555,19 @@ class _PlayerStatsHighlightBentoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final innerRadius = RadiusTokens.bento - kProfileBentoCardPaddingPx;
+    final innerRadius = RadiusTokens.carouselCard - kProfileCarouselCardPaddingPx;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _BentoSectionHeader(
-          title: title,
-          colors: colors,
-          infoMessage: infoMessage,
-        ),
+        _CarouselSectionHeader(title: title, colors: colors),
         SizedBox(height: LayoutTokens.gr2),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Expanded(
+                flex: 5,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(innerRadius),
                   child: Stack(
@@ -662,16 +600,18 @@ class _PlayerStatsHighlightBentoCard extends StatelessWidget {
                   ),
                 ),
               ),
-              SizedBox(height: LayoutTokens.gr1),
+              SizedBox(height: LayoutTokens.gr2),
               Text(
                 primaryLabel,
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                style: TextStyle(
+                  fontSize: FontTokens.hudSm + 1,
                   fontWeight: FontWeight.w800,
                   color: colors.textPrimary,
-                  height: 1.15,
+                  height: 1.2,
+                  letterSpacing: -0.1,
                 ),
               ),
               SizedBox(height: LayoutTokens.gr0),
@@ -680,9 +620,11 @@ class _PlayerStatsHighlightBentoCard extends StatelessWidget {
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                style: TextStyle(
+                  fontSize: FontTokens.sm,
                   color: colors.textSecondary,
                   fontWeight: FontWeight.w600,
+                  height: 1.2,
                 ),
               ),
             ],
@@ -693,8 +635,8 @@ class _PlayerStatsHighlightBentoCard extends StatelessWidget {
   }
 }
 
-class _MostPlayedBentoCard extends ConsumerWidget {
-  const _MostPlayedBentoCard({
+class _MostPlayedCard extends ConsumerWidget {
+  const _MostPlayedCard({
     required this.profile,
     required this.colors,
     required this.top,
@@ -731,10 +673,8 @@ class _MostPlayedBentoCard extends ConsumerWidget {
             ? '${commander.wins}W · ${commander.losses}L · ${commander.gamesPlayed} games'
             : 'Play games to see stats';
 
-    return _PlayerStatsHighlightBentoCard(
+    return _PlayerStatsHighlightCard(
       title: 'Most played',
-      infoMessage:
-          'Commander you have played the most games with across recorded matches.',
       colors: colors,
       primaryLabel: commanderName,
       statsLine: statsLine,
@@ -743,8 +683,8 @@ class _MostPlayedBentoCard extends ConsumerWidget {
   }
 }
 
-class _WorstDeckBentoCard extends ConsumerWidget {
-  const _WorstDeckBentoCard({
+class _WorstDeckCard extends ConsumerWidget {
+  const _WorstDeckCard({
     required this.profile,
     required this.colors,
     required this.deck,
@@ -767,10 +707,8 @@ class _WorstDeckBentoCard extends ConsumerWidget {
             ? '${d.wins}W · ${d.losses}L · ${d.gamesPlayed} games'
             : 'Add a deck and play matches';
 
-    return _PlayerStatsHighlightBentoCard(
+    return _PlayerStatsHighlightCard(
       title: 'Tough record',
-      infoMessage:
-          'Saved deck with the lowest win rate among decks with at least one recorded game.',
       colors: colors,
       primaryLabel: primaryLabel,
       statsLine: statsLine,
@@ -900,73 +838,30 @@ Widget _behaviourSpectrumTrack({
   );
 }
 
-void _showBentoSectionInfo(
-  BuildContext context, {
-  required String title,
-  required String message,
-}) {
-  showAdaptiveDialog<void>(
-    context: context,
-    builder: (ctx) => AlertDialog.adaptive(
-      title: Text(title),
-      content: SingleChildScrollView(child: Text(message)),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(),
-          child: Text('OK'),
-        ),
-      ],
-    ),
-  );
-}
-
-/// Title + info icon row shared by Level and Behaviour bento cards so headers
-/// line up when the two cards sit side-by-side (same min height, top alignment).
-class _BentoSectionHeader extends StatelessWidget {
-  const _BentoSectionHeader({
+/// Centered title for carousel stat cards (Level, Behaviour, Most played, etc.).
+class _CarouselSectionHeader extends StatelessWidget {
+  const _CarouselSectionHeader({
     required this.title,
-    required this.infoMessage,
     required this.colors,
   });
 
   final String title;
-  final String infoMessage;
   final AppColorTokens colors;
 
-  static const double _minRowHeight = 36;
+  static const double _minRowHeight = 32;
 
   @override
   Widget build(BuildContext context) {
     return ConstrainedBox(
       constraints: const BoxConstraints(minHeight: _minRowHeight),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TypographyTokens.cardTitle(colors.textPrimary),
-            ),
-          ),
-          IconButton(
-            onPressed: () => _showBentoSectionInfo(
-              context,
-              title: title,
-              message: infoMessage,
-            ),
-            icon: Icon(
-              Icons.info_outline_rounded,
-              size: 20,
-              color: colors.textSecondary,
-            ),
-            tooltip: infoMessage,
-            visualDensity: VisualDensity.compact,
-            padding: EdgeInsets.all(LayoutTokens.gr1),
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-          ),
-        ],
+      child: Center(
+        child: Text(
+          title,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TypographyTokens.cardTitle(colors.textPrimary),
+        ),
       ),
     );
   }
@@ -994,7 +889,7 @@ class _LevelDonutCard extends StatelessWidget {
   static const double _kBottomXpLabelReserveH = 24.0;
 
   static const double _kDonutSizeMin = 56.0;
-  static const double _kDonutSizeMax = 164.0;
+  static const double _kDonutSizeMax = 172.0;
   static const double _kDonutStrokeReferenceSize = 140.0;
 
   /// Donut + center (% + level) only; stroke scales with [size].
@@ -1055,11 +950,9 @@ class _LevelDonutCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _BentoSectionHeader(
+        _CarouselSectionHeader(
           title: 'Level progress',
           colors: colors,
-          infoMessage:
-              'XP in your current level fills the ring. Reach 100% for the next level band.',
         ),
         SizedBox(height: LayoutTokens.gr2),
         if (fillHeight)
@@ -1117,7 +1010,7 @@ class _BehaviourBarCard extends StatelessWidget {
 
   final PlayerProfile profile;
   final AppColorTokens colors;
-  /// When true (wide row), spectrum block expands so the bento matches level progress height.
+  /// When true (wide row), spectrum block expands so the card matches level progress height.
   final bool fillHeight;
 
   /// Smiley (44) + spectrum track (20) + axis row + reaction line — remainder split evenly.
@@ -1182,11 +1075,9 @@ class _BehaviourBarCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _BentoSectionHeader(
+        _CarouselSectionHeader(
           title: 'Player behaviour',
           colors: colors,
-          infoMessage:
-              'Position on the spectrum reflects reactions from others—more dislikes shifts toward Salty.',
         ),
         SizedBox(height: LayoutTokens.gr2),
         if (fillHeight)
