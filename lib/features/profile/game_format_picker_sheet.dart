@@ -6,17 +6,15 @@ import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
+import '../game/widgets/game_modal_chrome.dart';
 
 /// Searchable list of [GameFormat] values for create/edit deck flows.
 Future<GameFormat?> showGameFormatPickerSheet(
   BuildContext context, {
   GameFormat? selected,
 }) {
-  return showModalBottomSheet<GameFormat>(
+  return showDialog<GameFormat>(
     context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    showDragHandle: true,
     builder: (ctx) => _GameFormatPickerSheet(initial: selected),
   );
 }
@@ -66,129 +64,116 @@ class _GameFormatPickerSheetState extends State<_GameFormatPickerSheet> {
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    final hPad = LayoutTokens.gr2;
+    final maxH = MediaQuery.sizeOf(context).height * 0.72;
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: bottomInset),
-      child: SafeArea(
-        top: false,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.sizeOf(context).height * 0.85,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: EdgeInsets.fromLTRB(
-                  LayoutTokens.shellPageInset,
-                  LayoutTokens.gr1,
-                  LayoutTokens.shellPageInset,
-                  LayoutTokens.gr2,
-                ),
-                child: Text(
-                  'Format',
-                  style: TextStyle(
-                    color: colors.textPrimary,
-                    fontSize: FontTokens.title,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
+    return AlertDialog(
+      backgroundColor: colors.surface,
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: LayoutTokens.gr4,
+        vertical: LayoutTokens.gr4,
+      ),
+      titlePadding: EdgeInsets.fromLTRB(hPad, LayoutTokens.gr2, hPad, 0),
+      contentPadding: EdgeInsets.fromLTRB(
+        hPad,
+        LayoutTokens.gr2,
+        hPad,
+        LayoutTokens.gr2 + bottomInset,
+      ),
+      title: GameDialogTitleRow(
+        title: 'Format',
+        onClose: () => Navigator.pop(context),
+      ),
+      content: SizedBox(
+        width: double.maxFinite,
+        height: maxH,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextField(
+              controller: _searchCtrl,
+              scrollPadding: const EdgeInsets.only(bottom: 120),
+              decoration: InputDecoration(
+                hintText: 'Search formats…',
+                prefixIcon: const Icon(Icons.search_rounded),
+                hintStyle: TextStyle(color: colors.textSecondary),
               ),
-              Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: LayoutTokens.shellPageInset,
-                ),
-                child: TextField(
-                  controller: _searchCtrl,
-                  scrollPadding: const EdgeInsets.only(bottom: 120),
-                  decoration: InputDecoration(
-                    hintText: 'Search formats…',
-                    prefixIcon: const Icon(Icons.search_rounded),
-                    hintStyle: TextStyle(color: colors.textSecondary),
-                  ),
-                  style: TextStyle(color: colors.textPrimary),
-                  onChanged: (v) => setState(() => _query = v),
-                ),
-              ),
-              SizedBox(height: LayoutTokens.gr2),
-              Expanded(
-                child: ListView.separated(
-                  padding: EdgeInsets.fromLTRB(
-                    LayoutTokens.shellPageInset,
-                    0,
-                    LayoutTokens.shellPageInset,
-                    LayoutTokens.gr4,
-                  ),
-                  itemCount: _filtered.length,
-                  separatorBuilder: (_, __) =>
-                      SizedBox(height: LayoutTokens.gr1),
-                  itemBuilder: (context, i) {
-                    final format = _filtered[i];
-                    final isSelected = widget.initial == format;
-                    return Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () => _pick(format),
-                        borderRadius: RadiusTokens.radiusSm,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
+              style: TextStyle(color: colors.textPrimary),
+              onChanged: (v) => setState(() => _query = v),
+            ),
+            SizedBox(height: LayoutTokens.gr2),
+            Expanded(
+              child: ListView.separated(
+                padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
+                itemCount: _filtered.length,
+                separatorBuilder: (_, __) =>
+                    SizedBox(height: LayoutTokens.gr1),
+                itemBuilder: (context, i) {
+                  final format = _filtered[i];
+                  final isSelected = widget.initial == format;
+                  return Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _pick(format),
+                      borderRadius: RadiusTokens.radiusSm,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? colors.primaryAccent.withValues(alpha: 0.12)
+                              : colors.surface,
+                          borderRadius: RadiusTokens.radiusSm,
+                          border: Border.all(
                             color: isSelected
-                                ? colors.primaryAccent.withValues(alpha: 0.12)
-                                : colors.surface,
-                            borderRadius: RadiusTokens.radiusSm,
-                            border: Border.all(
-                              color: isSelected
-                                  ? colors.primaryAccent.withValues(alpha: 0.5)
-                                  : colors.borderSubtle.withValues(alpha: 0.35),
-                            ),
+                                ? colors.primaryAccent.withValues(alpha: 0.5)
+                                : colors.borderSubtle.withValues(alpha: 0.35),
                           ),
-                          child: Padding(
-                            padding: EdgeInsets.all(LayoutTokens.gr2),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        format.displayName,
-                                        style: TextStyle(
-                                          color: colors.textPrimary,
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: FontTokens.body,
-                                        ),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.all(LayoutTokens.gr2),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      format.displayName,
+                                      style: TextStyle(
+                                        color: colors.textPrimary,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: FontTokens.body,
                                       ),
                                     ),
-                                    if (isSelected)
-                                      Icon(
-                                        Icons.check_circle_rounded,
-                                        color: colors.primaryAccent,
-                                        size: 20,
-                                      ),
-                                  ],
-                                ),
-                                SizedBox(height: LayoutTokens.gr0),
-                                Text(
-                                  _formatPickerSubtitle(format),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: colors.textSecondary,
-                                    fontSize: FontTokens.sm,
-                                    height: 1.35,
                                   ),
+                                  if (isSelected)
+                                    Icon(
+                                      Icons.check_circle_rounded,
+                                      color: colors.primaryAccent,
+                                      size: 20,
+                                    ),
+                                ],
+                              ),
+                              SizedBox(height: LayoutTokens.gr0),
+                              Text(
+                                _formatPickerSubtitle(format),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: colors.textSecondary,
+                                  fontSize: FontTokens.sm,
+                                  height: 1.35,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

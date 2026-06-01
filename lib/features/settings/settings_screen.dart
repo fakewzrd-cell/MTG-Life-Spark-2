@@ -45,6 +45,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(settingsRevisionProvider, (_, __) {
+      if (!mounted) return;
+      setState(() {
+        _settings = ref.read(settingsRepositoryProvider).settings;
+      });
+    });
     final colors = AppColorTokens.of(context);
     return Scaffold(
       appBar: const UiAppBar(title: 'Settings'),

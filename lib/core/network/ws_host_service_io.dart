@@ -2,8 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
-
 import '../debug/app_log.dart';
 import '../bluetooth/ble_message.dart';
 import '../bluetooth/ble_protocol.dart';

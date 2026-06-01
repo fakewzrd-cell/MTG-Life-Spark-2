@@ -33,14 +33,18 @@ Future<void> main() async {
 
     FlutterError.onError = (details) {
       FlutterError.presentError(details);
-      debugPrint('FlutterError: ${details.exception}');
-      debugPrint('Stack: ${details.stack}');
+      if (kDebugMode) {
+        debugPrint('FlutterError: ${details.exception}');
+        debugPrint('Stack: ${details.stack}');
+      }
     };
 
     runApp(const ProviderScope(child: _AppBootstrap()));
   }, (error, stack) {
-    debugPrint('Zone error: $error');
-    debugPrint('Stack: $stack');
+    if (kDebugMode) {
+      debugPrint('Zone error: $error');
+      debugPrint('Stack: $stack');
+    }
   });
 }
 
@@ -208,8 +212,10 @@ Future<void> _deferredStartupMaintenance() async {
     await FeedbackRepository().init();
     await _deferredProfileMaintenance();
   } catch (e, st) {
-    debugPrint('Deferred startup maintenance failed: $e');
-    debugPrint('Stack: $st');
+    if (kDebugMode) {
+      debugPrint('Deferred startup maintenance failed: $e');
+      debugPrint('Stack: $st');
+    }
   }
 }
 
@@ -226,8 +232,10 @@ Future<void> _deferredProfileMaintenance() async {
       prof.username,
     );
   } catch (e, st) {
-    debugPrint('Deferred profile maintenance failed: $e');
-    debugPrint('Stack: $st');
+    if (kDebugMode) {
+      debugPrint('Deferred profile maintenance failed: $e');
+      debugPrint('Stack: $st');
+    }
   }
 }
 

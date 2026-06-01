@@ -2,6 +2,9 @@ import 'dart:math';
 
 /// QR / WebSocket join URI helpers for LAN sessions.
 ///
+/// Transport is cleartext `ws://` on the local network by design (same Wi‑Fi
+/// pod). Do not reuse join tokens outside a trusted LAN.
+///
 /// Format: `mgtlifespark://<host>:<port>?token=<secret>`
 /// Legacy QRs without `token` are rejected by current hosts.
 class SessionJoinUri {

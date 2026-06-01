@@ -5,6 +5,7 @@ import '../../shared/constants/app_icons.dart';
 import '../../shared/utils/app_router.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/color_tokens.dart';
+import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 
@@ -12,7 +13,7 @@ import '../../ui/tokens/radius_tokens.dart';
 const Alignment _kLobbyHostArtAlignment = Alignment(0.22, 0);
 const Alignment _kLobbyJoinArtAlignment = Alignment(0.18, 0);
 
-/// Game lobby — Host and Join split the viewport above the shell nav (50/50).
+/// Game lobby — Host and Join split the viewport 50/50 with uniform page inset.
 class GameLobbyScreen extends StatelessWidget {
   const GameLobbyScreen({super.key});
 
@@ -24,17 +25,11 @@ class GameLobbyScreen extends StatelessWidget {
       body: SafeArea(
         bottom: false,
         child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            LayoutTokens.shellPageInset,
-            LayoutTokens.shellPageInset,
-            LayoutTokens.shellPageInset,
-            LayoutTokens.shellBottomInset(context),
-          ),
+          padding: EdgeInsets.all(LayoutTokens.shellPageInset),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Expanded(
-                flex: 1,
                 child: _BigActionButton(
                   label: 'Host Game',
                   subtitle: 'Create a session — others join you',
@@ -44,15 +39,15 @@ class GameLobbyScreen extends StatelessWidget {
                   onTap: () => context.push(AppRoutes.lobbyHost),
                 ),
               ),
-              SizedBox(height: LayoutTokens.gr4),
+              SizedBox(height: LayoutTokens.gr2),
               Expanded(
-                flex: 1,
                 child: _BigActionButton(
                   label: 'Join Game',
                   subtitle: 'Scan for a nearby host',
                   icon: Icons.qr_code_scanner_rounded,
                   artAsset: AppIcons.lobbyJoinPortal,
                   artAlignment: _kLobbyJoinArtAlignment,
+                  liftContentAboveNav: true,
                   onTap: () => context.push(AppRoutes.lobbyJoin),
                 ),
               ),
@@ -151,6 +146,7 @@ class _BigActionButton extends StatelessWidget {
     required this.artAsset,
     required this.artAlignment,
     required this.onTap,
+    this.liftContentAboveNav = false,
   });
 
   final String label;
@@ -159,6 +155,7 @@ class _BigActionButton extends StatelessWidget {
   final String artAsset;
   final Alignment artAlignment;
   final VoidCallback onTap;
+  final bool liftContentAboveNav;
 
   @override
   Widget build(BuildContext context) {
@@ -167,7 +164,9 @@ class _BigActionButton extends StatelessWidget {
         MediaQuery.sizeOf(context).width < 360 ||
         MediaQuery.sizeOf(context).height < 600;
     final padding = isCompact ? LayoutTokens.gr3 : LayoutTokens.gr4;
-    final titleSize = isCompact ? 20.0 : 24.0;
+    final titleSize =
+        isCompact ? FontTokens.headline : FontTokens.headline + LayoutTokens.gr1;
+    final navLift = liftContentAboveNav ? LayoutTokens.bottomNavHeight * 0.35 : 0.0;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -202,7 +201,12 @@ class _BigActionButton extends StatelessWidget {
                 colors: colors,
               ),
               Padding(
-                padding: EdgeInsets.all(padding),
+                padding: EdgeInsets.fromLTRB(
+                  padding,
+                  padding,
+                  padding,
+                  padding + navLift,
+                ),
                 child: Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,

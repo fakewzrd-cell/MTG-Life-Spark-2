@@ -7,14 +7,14 @@ import '../../core/models/player_deck.dart';
 import '../../core/persistence/deck_repository.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/utils/app_router.dart';
+import '../../ui/components/ui_app_bar.dart';
 import '../../ui/components/ui_button.dart';
-import '../../ui/components/ui_dialog_actions.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import '../../ui/tokens/typography_tokens.dart';
-import '../game/widgets/game_modal_chrome.dart';
+import 'deck_options_sheet.dart';
 import 'deck_style_picker_sheet.dart';
 import 'new_deck_sheet.dart';
 import 'profile_carousel_sections.dart';
@@ -46,7 +46,9 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
   @override
   void initState() {
     super.initState();
-    _reload();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _reload();
+    });
   }
 
   void _reload() {
@@ -98,6 +100,7 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
 
   Future<void> _editCommanders(PlayerDeck deck, DeckRepository repo) async {
     if (!await _ensureDeckStyle(deck, repo)) return;
+    if (!mounted) return;
     final profile = ref.read(profileRepositoryProvider).getProfile();
     if (profile == null) return;
     await context.push(
@@ -108,40 +111,17 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
         'deckFormat': deck.format,
       },
     );
+    if (!mounted) return;
     bumpDeckListRevision(ref);
     _reload();
   }
 
   Future<void> _renameDeck(DeckRepository repo, PlayerDeck deck) async {
-    final controller = TextEditingController(text: deck.displayName);
-    final name = await showDialog<String>(
-      context: context,
-      builder: (ctx) {
-        final colors = AppColorTokens.of(ctx);
-        return AlertDialog(
-          title: GameDialogTitleRow(
-            title: 'Rename deck',
-            onClose: () => Navigator.pop(ctx),
-          ),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            style: TextStyle(color: colors.textPrimary),
-          ),
-          actions: [
-            FilledButton(
-              onPressed: () {
-                final t = controller.text.trim();
-                if (t.isEmpty) return;
-                Navigator.pop(ctx, t);
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
+    final name = await showRenameDeckDialog(
+      context,
+      initialName: deck.displayName,
     );
-    if (name == null || name == deck.displayName) return;
+    if (name == null || name == deck.displayName || !mounted) return;
     deck.displayName = name;
     await repo.save(deck);
     bumpDeckListRevision(ref);
@@ -149,115 +129,27 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
   }
 
   Future<void> _confirmDelete(DeckRepository repo, PlayerDeck deck) async {
-    final colors = AppColorTokens.of(context);
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: GameDialogTitleRow(
-          title: 'Delete deck?',
-          onClose: () => Navigator.pop(ctx, false),
-        ),
-        content: Text(
-          'Remove “${deck.displayName}” from your library? Match history stays, '
-          'but this deck will no longer appear in the lobby picker.',
-          style: TextStyle(color: colors.textSecondary),
-        ),
-        actions: UiDialogActions.cancelConfirm(
-          context: ctx,
-          confirmLabel: 'Delete',
-          onConfirm: () => Navigator.pop(ctx, true),
-          isDestructive: true,
-        ),
-      ),
-    );
-    if (ok == true) {
-      await repo.delete(deck.id);
-      bumpDeckListRevision(ref);
-      _reload();
-    }
+    final ok = await showDeleteDeckConfirm(context, deck);
+    if (!ok || !mounted) return;
+    await repo.delete(deck.id);
+    bumpDeckListRevision(ref);
+    _reload();
   }
 
-  void _showDeckOptionsSheet(PlayerDeck deck, DeckRepository repo) {
-    final colors = AppColorTokens.of(context);
-    final coverLabel = deck.isCommanderDeck ? 'Edit commanders' : 'Edit cover card';
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
-      builder: (ctx) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: EdgeInsets.fromLTRB(
-                  LayoutTokens.gr3,
-                  LayoutTokens.gr1,
-                  LayoutTokens.gr3,
-                  LayoutTokens.gr2,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      deck.displayName,
-                      style: TypographyTokens.cardTitle(colors.textPrimary),
-                    ),
-                    Text(
-                      deck.gameFormat.displayName,
-                      style: TextStyle(
-                        color: colors.textSecondary,
-                        fontSize: FontTokens.sm,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              ListTile(
-                leading: Icon(Icons.category_outlined, color: colors.primaryAccent),
-                title: Text(
-                  deck.hasDeckStyle
-                      ? 'Deck style: ${deck.deckStyleDisplayName}'
-                      : 'Set deck style (required)',
-                ),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _changeDeckStyle(repo, deck);
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.style_outlined, color: colors.primaryAccent),
-                title: Text(coverLabel),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _editCommanders(deck, repo);
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.edit_outlined, color: colors.textPrimary),
-                title: const Text('Rename'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _renameDeck(repo, deck);
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.delete_outline, color: colors.error),
-                title: Text(
-                  'Delete deck',
-                  style: TextStyle(color: colors.error),
-                ),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _confirmDelete(repo, deck);
-                },
-              ),
-              SizedBox(height: LayoutTokens.gr2),
-            ],
-          ),
-        );
-      },
-    );
+  Future<void> _onDeckTap(PlayerDeck deck, DeckRepository repo) async {
+    final action = await showDeckOptionsSheet(context, deck);
+    if (action == null || !mounted) return;
+
+    switch (action) {
+      case DeckSheetAction.changeStyle:
+        await _changeDeckStyle(repo, deck);
+      case DeckSheetAction.editCover:
+        await _editCommanders(deck, repo);
+      case DeckSheetAction.rename:
+        await _renameDeck(repo, deck);
+      case DeckSheetAction.delete:
+        await _confirmDelete(repo, deck);
+    }
   }
 
   @override
@@ -270,6 +162,9 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
     final cardHeight = profileCarouselCardHeight(context);
 
     final isEmpty = _decks.isEmpty;
+    const fabSize = 40.0;
+    final fabBottom = MediaQuery.paddingOf(context).bottom + LayoutTokens.gr1;
+    final fabStackClearance = fabBottom + fabSize + LayoutTokens.gr2;
 
     final sectionChildren = <Widget>[];
     for (final format in GameFormatDetails.lobbyPickerOrder) {
@@ -281,7 +176,7 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
           decks: decks,
           cardHeight: cardHeight,
           colors: colors,
-          onDeckTap: (deck) => _showDeckOptionsSheet(deck, repo),
+          onDeckTap: (deck) => _onDeckTap(deck, repo),
         ),
       );
       sectionChildren.add(SizedBox(height: LayoutTokens.gr4));
@@ -335,11 +230,11 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
         ),
       );
     } else {
-      const fabSize = 40.0;
-      final fabStackClearance =
-          bottomBarPad + LayoutTokens.gr2 + fabSize + LayoutTokens.gr3;
       scrollBody = ListView(
-        padding: LayoutTokens.shellScrollPadding(context).copyWith(
+        padding: LayoutTokens.shellListPadding(
+          context,
+          top: LayoutTokens.gr4,
+        ).copyWith(
           bottom: fabStackClearance,
         ),
         children: sectionChildren,
@@ -352,9 +247,9 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
       child: const Icon(Icons.add_rounded),
     );
 
-    // Pin FAB to the screen bottom, not the scroll content height (short lists
-    // otherwise shrink the [Stack] and float the button mid-page).
     return Scaffold(
+      appBar: const UiAppBar(title: 'Decks'),
+      backgroundColor: colors.backgroundPrimary,
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -362,7 +257,7 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
           if (!isEmpty)
             Positioned(
               right: LayoutTokens.shellPageInset,
-              bottom: bottomBarPad,
+              bottom: fabBottom,
               child: addFab,
             ),
         ],

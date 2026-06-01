@@ -429,7 +429,7 @@ class _QrHeader extends StatelessWidget {
                 child: CircularProgressIndicator(color: colors.primaryAccent),
               ),
             )
-          else
+          else if (loadState == _QrHostLoadState.ready && qrData != null)
             Container(
               decoration: BoxDecoration(
                 color: ColorTokens.onAccent,
@@ -449,7 +449,9 @@ class _QrHeader extends StatelessWidget {
                 size: qrSize,
                 backgroundColor: Colors.white,
               ),
-            ),
+            )
+          else
+            SizedBox(height: qrSize),
           if (loadState == _QrHostLoadState.ready && qrData != null) ...[
             Padding(
               padding: EdgeInsets.only(top: LayoutTokens.gr1),

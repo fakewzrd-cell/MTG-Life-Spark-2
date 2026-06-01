@@ -65,9 +65,10 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
 
   Future<void> _joinRematchLobby() async {
     final game = ref.read(gameProvider);
+    final target = game.isHost ? AppRoutes.lobbyHost : AppRoutes.lobby;
     await quitActiveGame(ref);
     if (!context.mounted) return;
-    context.go(game.isHost ? AppRoutes.lobbyHost : AppRoutes.lobby);
+    context.go(target);
   }
 
   Future<void> _saveMatch() async {

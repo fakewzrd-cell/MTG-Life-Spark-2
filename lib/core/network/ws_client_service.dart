@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../debug/app_log.dart';
@@ -145,7 +144,7 @@ class WsClientService implements BleService {
       await disconnect();
       await connectToHost(uri, joinToken: token);
     } catch (e, st) {
-      debugPrint('WsClientService reconnect failed: $e\n$st');
+      appLog('WsClientService reconnect failed', error: e, stackTrace: st);
     } finally {
       _reconnecting = false;
     }
