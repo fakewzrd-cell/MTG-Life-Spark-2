@@ -1,7 +1,7 @@
 name: mgt_life_spark
 description: MTG Life Spark — Commander 2.0 multiplayer battlefield companion.
 publish_to: none
-version: 1.0.9+9
+version: 1.0.10+10
 
 environment:
   sdk: '>=3.7.0 <4.0.0'
@@ -97,17 +97,17 @@ flutter_launcher_icons:
   ios: true
   image_path: "assets/images/app_icon.png"
   min_sdk_android: 21
-  adaptive_icon_background: "#0E0E0E"
+  adaptive_icon_background: "#131628"
   adaptive_icon_foreground: "assets/images/app_icon_fg.png"
 
-# Branded launch screen (Android/iOS) — matches web + [BrandedSplash].
+# Branded launch screen (Android/iOS) — matches [BrandedSplash].
 # Regenerate after updating assets/images/splash_logo.png:
 #   dart run flutter_native_splash:create
 flutter_native_splash:
-  color: "#12121A"
+  color: "#131628"
   image: assets/images/splash_logo.png
   android_12:
-    color: "#12121A"
+    color: "#131628"
     image: assets/images/splash_logo.png
   ios: true
   web: false
