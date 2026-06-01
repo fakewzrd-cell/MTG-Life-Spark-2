@@ -65,6 +65,38 @@ void main() {
     expect(ended, isTrue);
   });
 
+  testWidgets('PhaseNavCluster fits long phase names at phone width', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark(),
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 320,
+              child: PhaseNavCluster(
+                game: _minimalGame().copyWith(
+                  currentPhase: GamePhase.combatDamage,
+                ),
+                accentColor: Colors.purple,
+                onBack: () {},
+                onNext: () {},
+                onPickPhase: (_) {},
+                onEndTurn: () {},
+                endTurnEnabled: true,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+    // Center column is narrow at 320dp — short phase label is used.
+    expect(find.text('Damage'), findsOneWidget);
+  });
+
   testWidgets('End turn disabled when endTurnEnabled is false', (tester) async {
     await tester.pumpWidget(
       MaterialApp(

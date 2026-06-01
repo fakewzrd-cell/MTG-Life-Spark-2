@@ -63,7 +63,6 @@ class _GameFormatPickerSheetState extends State<_GameFormatPickerSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
-    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
     final hPad = LayoutTokens.gr2;
     final maxH = MediaQuery.sizeOf(context).height * 0.72;
 
@@ -78,15 +77,16 @@ class _GameFormatPickerSheetState extends State<_GameFormatPickerSheet> {
         hPad,
         LayoutTokens.gr2,
         hPad,
-        LayoutTokens.gr2 + bottomInset,
+        LayoutTokens.gr2,
       ),
       title: GameDialogTitleRow(
         title: 'Format',
         onClose: () => Navigator.pop(context),
       ),
-      content: SizedBox(
+      content: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxH),
+        child: SizedBox(
         width: double.maxFinite,
-        height: maxH,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -174,6 +174,7 @@ class _GameFormatPickerSheetState extends State<_GameFormatPickerSheet> {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

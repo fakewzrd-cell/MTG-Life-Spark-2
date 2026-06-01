@@ -234,15 +234,14 @@ class _RenameDeckDialogState extends State<_RenameDeckDialog> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
-    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
 
     return AlertDialog(
       backgroundColor: colors.surface,
-      contentPadding: EdgeInsets.fromLTRB(
+      contentPadding: const EdgeInsets.fromLTRB(
         LayoutTokens.gr3,
         LayoutTokens.gr2,
         LayoutTokens.gr3,
-        LayoutTokens.gr2 + bottomInset,
+        LayoutTokens.gr2,
       ),
       title: GameDialogTitleRow(
         title: 'Rename deck',
@@ -251,6 +250,7 @@ class _RenameDeckDialogState extends State<_RenameDeckDialog> {
       content: TextField(
         controller: _controller,
         autofocus: true,
+        scrollPadding: const EdgeInsets.only(bottom: 120),
         textInputAction: TextInputAction.done,
         onSubmitted: (_) {
           if (_canSave) _submit();

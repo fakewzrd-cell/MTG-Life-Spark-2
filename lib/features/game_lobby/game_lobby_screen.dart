@@ -25,7 +25,12 @@ class GameLobbyScreen extends StatelessWidget {
       body: SafeArea(
         bottom: false,
         child: Padding(
-          padding: EdgeInsets.all(LayoutTokens.shellPageInset),
+          padding: EdgeInsets.fromLTRB(
+            LayoutTokens.shellPageInset,
+            LayoutTokens.shellPageInset,
+            LayoutTokens.shellPageInset,
+            LayoutTokens.shellBottomInset(context),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -47,7 +52,6 @@ class GameLobbyScreen extends StatelessWidget {
                   icon: Icons.qr_code_scanner_rounded,
                   artAsset: AppIcons.lobbyJoinPortal,
                   artAlignment: _kLobbyJoinArtAlignment,
-                  liftContentAboveNav: true,
                   onTap: () => context.push(AppRoutes.lobbyJoin),
                 ),
               ),
@@ -146,7 +150,6 @@ class _BigActionButton extends StatelessWidget {
     required this.artAsset,
     required this.artAlignment,
     required this.onTap,
-    this.liftContentAboveNav = false,
   });
 
   final String label;
@@ -155,7 +158,6 @@ class _BigActionButton extends StatelessWidget {
   final String artAsset;
   final Alignment artAlignment;
   final VoidCallback onTap;
-  final bool liftContentAboveNav;
 
   @override
   Widget build(BuildContext context) {
@@ -166,7 +168,6 @@ class _BigActionButton extends StatelessWidget {
     final padding = isCompact ? LayoutTokens.gr3 : LayoutTokens.gr4;
     final titleSize =
         isCompact ? FontTokens.headline : FontTokens.headline + LayoutTokens.gr1;
-    final navLift = liftContentAboveNav ? LayoutTokens.bottomNavHeight * 0.35 : 0.0;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -201,12 +202,7 @@ class _BigActionButton extends StatelessWidget {
                 colors: colors,
               ),
               Padding(
-                padding: EdgeInsets.fromLTRB(
-                  padding,
-                  padding,
-                  padding,
-                  padding + navLift,
-                ),
+                padding: EdgeInsets.all(padding),
                 child: Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,

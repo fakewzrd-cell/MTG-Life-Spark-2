@@ -181,10 +181,12 @@ class _PhaseNavEndTurnButton extends StatelessWidget {
           child: Center(
             child: Text(
               'End turn',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: FontTokens.hudSm,
+                fontSize: FontTokens.hudXs,
                 fontWeight: FontWeight.w800,
-                letterSpacing: 0.1,
+                letterSpacing: 0.05,
                 color: fg,
                 height: 1.1,
               ),
@@ -221,10 +223,12 @@ class _PhaseNavSideButton extends StatelessWidget {
     final iconWidget = Icon(icon, size: 20, color: fg);
     final labelWidget = Text(
       label,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
       style: TextStyle(
-        fontSize: FontTokens.hudSm,
+        fontSize: FontTokens.hudXs,
         fontWeight: FontWeight.w600,
-        letterSpacing: 0.15,
+        letterSpacing: 0.05,
         color: fg,
         height: 1.1,
       ),
@@ -275,39 +279,55 @@ class _PhaseNavCenter extends StatelessWidget {
     final phaseColor =
         game.isLocalPlayersTurn ? colors.primaryAccent : colors.textSecondary;
 
-    final label = FittedBox(
-      fit: BoxFit.scaleDown,
-      child: Row(
+    Widget buildLabel(BoxConstraints constraints) {
+      final narrow = constraints.maxWidth < 108;
+      final phaseText = narrow
+          ? game.currentPhase.shortName
+          : game.currentPhase.displayName;
+      final fontSize = narrow ? FontTokens.hudXs : FontTokens.hudSm;
+
+      return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            game.currentPhase.displayName,
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: FontTokens.title,
-              letterSpacing: 0.2,
-              color: phaseColor,
+          Flexible(
+            child: Text(
+              phaseText,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: fontSize,
+                letterSpacing: 0.05,
+                height: 1.1,
+                color: phaseColor,
+              ),
             ),
           ),
           if (_canPick) ...[
             const SizedBox(width: LayoutTokens.gr0),
             Icon(
               Icons.unfold_more_rounded,
-              size: 18,
+              size: 14,
               color: phaseColor.withValues(alpha: OpacityTokens.nearOpaque),
             ),
           ],
         ],
-      ),
-    );
+      );
+    }
 
     if (!_canPick) {
       return Semantics(
         header: true,
         label: 'Current phase, ${game.currentPhase.displayName}',
-        child: Center(child: label),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: LayoutTokens.gr1),
+          child: LayoutBuilder(
+            builder: (context, constraints) => Center(
+              child: buildLabel(constraints),
+            ),
+          ),
+        ),
       );
     }
 
@@ -324,8 +344,16 @@ class _PhaseNavCenter extends StatelessWidget {
                 accentColor: accentColor,
                 onSelected: onPickPhase!,
               ),
-          child: Center(
-            child: Tooltip(message: 'Choose phase', child: label),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: LayoutTokens.gr1),
+            child: LayoutBuilder(
+              builder: (context, constraints) => Center(
+                child: Tooltip(
+                  message: 'Choose phase',
+                  child: buildLabel(constraints),
+                ),
+              ),
+            ),
           ),
         ),
       ),

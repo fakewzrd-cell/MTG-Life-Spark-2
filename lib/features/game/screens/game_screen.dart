@@ -322,8 +322,12 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
     final rawMaxW = min(screenWidth - horizontalInset * 2, 400.0);
     final lifeBandMaxW = rawMaxW - (rawMaxW % 4);
     final lifeBandH = tightVertical
-        ? (isCompact ? 136.0 : 160.0)
+        ? (isCompact ? 128.0 : 148.0)
         : (isCompact ? 160.0 : 192.0);
+    final playGapSm =
+        tightVertical ? LayoutTokens.gr1 : LayoutTokens.gr2;
+    final playGapMd =
+        tightVertical ? LayoutTokens.gr2 : LayoutTokens.gr3;
 
     void adjustLife(int delta) {
       if (delta == 0) return;
@@ -398,114 +402,116 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
               ),
               localPlayerId: widget.localPlayerId,
             ),
-            _ => LayoutBuilder(
-              builder: (context, playViewport) {
-                return SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(horizontal: horizontalInset),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: playViewport.maxHeight,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Center(
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(maxWidth: lifeBandMaxW),
-                            child: PhaseNavCluster(
-                              game: game,
-                              accentColor: chromeAccent,
-                              onBack: !game.timeoutActive
-                                  ? notifier.previousPhase
-                                  : null,
-                              onNext: !game.timeoutActive
-                                  ? notifier.advancePhase
-                                  : null,
-                              onPickPhase: game.timeoutActive
-                                  ? null
-                                  : notifier.setPhase,
-                              onEndTurn: notifier.endTurn,
-                              endTurnEnabled: !game.timeoutActive &&
-                                  (game.isLocalPlayersTurn || game.isHost),
+            _ => Padding(
+              padding: EdgeInsets.symmetric(horizontal: horizontalInset),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Flexible(
+                    child: SingleChildScrollView(
+                      physics: const ClampingScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Center(
+                            child: ConstrainedBox(
+                              constraints:
+                                  BoxConstraints(maxWidth: lifeBandMaxW),
+                              child: PhaseNavCluster(
+                                game: game,
+                                accentColor: chromeAccent,
+                                onBack: !game.timeoutActive
+                                    ? notifier.previousPhase
+                                    : null,
+                                onNext: !game.timeoutActive
+                                    ? notifier.advancePhase
+                                    : null,
+                                onPickPhase: game.timeoutActive
+                                    ? null
+                                    : notifier.setPhase,
+                                onEndTurn: notifier.endTurn,
+                                endTurnEnabled: !game.timeoutActive &&
+                                    (game.isLocalPlayersTurn || game.isHost),
+                              ),
                             ),
                           ),
-                        ),
-                        SizedBox(height: LayoutTokens.gr2),
-                        ActiveTurnBanner(game: game),
-                        SizedBox(
-                          height: tightVertical
-                              ? LayoutTokens.gr2
-                              : LayoutTokens.gr3,
-                        ),
-                        Center(
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxWidth: lifeBandMaxW,
-                              minHeight: lifeBandH,
-                            ),
-                            child: ScopedLifeCounter(
-                              playerId: local.playerId,
-                              height: lifeBandH,
-                              onLifeChange: adjustLife,
+                          SizedBox(height: playGapSm),
+                          ActiveTurnBanner(game: game),
+                          SizedBox(height: playGapMd),
+                          Center(
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxWidth: lifeBandMaxW,
+                                minHeight: lifeBandH,
+                              ),
+                              child: ScopedLifeCounter(
+                                playerId: local.playerId,
+                                height: lifeBandH,
+                                onLifeChange: adjustLife,
+                              ),
                             ),
                           ),
-                        ),
-                        SizedBox(height: LayoutTokens.gr3),
-                        const VariantCardPanel(),
-                        SizedBox(height: LayoutTokens.gr2),
-                        if (!local.isEliminated &&
-                            game.pendingProposalFor(local.playerId) != null)
-                          SizedBox(height: LayoutTokens.gr0),
-                        if ((game.trackTurnDuration ||
-                                game.turnTimeLimitSeconds != null) &&
-                            game.turnStartTime != null)
-                          GameTurnDurationBanner(
-                            turnStartTime: game.turnStartTime!,
-                            limitSeconds: game.turnTimeLimitSeconds,
-                            isActiveTurn: game.isLocalPlayersTurn,
-                            activePlayerName:
-                                game.playerById(game.activePlayerId)
-                                    ?.username ??
-                                'Player',
-                          ),
-                        SizedBox(height: LayoutTokens.gr3),
-                        ScopedGameplayDials(
-                          playerId: local.playerId,
-                          onAdjustCounter: (field, delta) =>
-                              notifier.adjustCounter(
-                            local.playerId,
-                            field,
-                            delta,
-                          ),
-                          onSetCounterAbsolute: (field, v) =>
-                              notifier.setGameplayDialAbsolute(
-                            local.playerId,
-                            field,
-                            v,
-                          ),
-                          onRegisterCustomDial: (key, label) =>
-                              notifier.registerCustomGameplayDial(
-                            local.playerId,
-                            key,
-                            label,
-                          ),
-                          onAddDialToStrip: (field) =>
-                              notifier.addGameplayDialToStrip(
-                            local.playerId,
-                            field,
-                          ),
-                          onRemoveDialFromStrip: (field) =>
-                              notifier.removeGameplayDialFromStrip(
-                            local.playerId,
-                            field,
-                          ),
-                        ),
-                        SizedBox(height: LayoutTokens.gr2),
-                      ],
+                          SizedBox(height: playGapMd),
+                          const VariantCardPanel(),
+                          SizedBox(height: playGapSm),
+                          if (!local.isEliminated &&
+                              game.pendingProposalFor(local.playerId) != null)
+                            SizedBox(height: LayoutTokens.gr0),
+                          if ((game.trackTurnDuration ||
+                                  game.turnTimeLimitSeconds != null) &&
+                              game.turnStartTime != null) ...[
+                            GameTurnDurationBanner(
+                              turnStartTime: game.turnStartTime!,
+                              limitSeconds: game.turnTimeLimitSeconds,
+                              isActiveTurn: game.isLocalPlayersTurn,
+                              activePlayerName:
+                                  game.playerById(game.activePlayerId)
+                                      ?.username ??
+                                  'Player',
+                            ),
+                            SizedBox(height: playGapMd),
+                          ],
+                        ],
+                      ),
                     ),
                   ),
-                );
-              },
+                  Padding(
+                    padding: EdgeInsets.only(bottom: playGapSm),
+                    child: ScopedGameplayDials(
+                      playerId: local.playerId,
+                      onAdjustCounter: (field, delta) =>
+                          notifier.adjustCounter(
+                        local.playerId,
+                        field,
+                        delta,
+                      ),
+                      onSetCounterAbsolute: (field, v) =>
+                          notifier.setGameplayDialAbsolute(
+                        local.playerId,
+                        field,
+                        v,
+                      ),
+                      onRegisterCustomDial: (key, label) =>
+                          notifier.registerCustomGameplayDial(
+                        local.playerId,
+                        key,
+                        label,
+                      ),
+                      onAddDialToStrip: (field) =>
+                          notifier.addGameplayDialToStrip(
+                        local.playerId,
+                        field,
+                      ),
+                      onRemoveDialFromStrip: (field) =>
+                          notifier.removeGameplayDialFromStrip(
+                        local.playerId,
+                        field,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           },
         ),

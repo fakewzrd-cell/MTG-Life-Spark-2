@@ -62,8 +62,8 @@ class _NewDeckDialogState extends State<_NewDeckDialog> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
-    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
     final hPad = LayoutTokens.gr2;
+    // Dialog route already applies [MediaQuery.viewInsets] — do not pad again.
     final maxH = MediaQuery.sizeOf(context).height * 0.75;
 
     return AlertDialog(
@@ -77,13 +77,13 @@ class _NewDeckDialogState extends State<_NewDeckDialog> {
         hPad,
         LayoutTokens.gr2,
         hPad,
-        LayoutTokens.gr2 + bottomInset,
+        LayoutTokens.gr2,
       ),
       actionsPadding: EdgeInsets.fromLTRB(
         hPad,
         0,
         hPad,
-        LayoutTokens.gr3 + bottomInset,
+        LayoutTokens.gr3,
       ),
       title: GameDialogTitleRow(
         title: 'New deck',
