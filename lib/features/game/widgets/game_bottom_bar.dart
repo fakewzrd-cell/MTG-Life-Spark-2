@@ -6,6 +6,7 @@ import '../../../core/game/game_state.dart';
 import '../../../core/game/game_state_notifier.dart';
 import '../../../core/game/player_game_state.dart';
 import '../../../core/models/game_feedback.dart';
+import '../../../core/game/session_exit_helpers.dart';
 import '../../../core/network/session_providers.dart';
 import '../../../shared/utils/app_router.dart';
 import '../../../shared/widgets/home_nav_bar.dart';
@@ -221,9 +222,9 @@ Future<void> _showPostForfeitFollowUp(
       content: Padding(
         padding: EdgeInsets.fromLTRB(inset, LayoutTokens.gr2, inset, 0),
         child: Text(
-          'Other players can keep playing. Stay on this device to save match '
-          'stats when the game ends. Returning to your profile hub now '
-          'disconnects you and this device will not save match stats.',
+          'Other players can keep playing. Stay on this device to spectate '
+          'until the table finishes. Returning to your profile hub now saves '
+          'your concede result and disconnects from the live game.',
           style: bodyStyle,
         ),
       ),
@@ -271,6 +272,7 @@ Future<void> _showPostForfeitFollowUp(
   );
 
   if (leave != true || !context.mounted) return;
+  await recordLocalConcedeBeforeExit(ref);
   await quitActiveGame(ref);
   if (context.mounted) {
     context.go(AppRoutes.home);

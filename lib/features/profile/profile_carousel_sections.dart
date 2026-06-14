@@ -12,6 +12,7 @@ import '../../core/models/player_deck.dart';
 import '../../core/models/player_profile.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/constants/app_icons.dart';
+import '../../shared/widgets/game_icon.dart';
 import '../../shared/utils/app_router.dart';
 import '../../shared/utils/commander_image_resolver.dart';
 import '../../shared/widgets/deck_tile_visual.dart';
@@ -1126,16 +1127,31 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
                           )
                         : null,
                   ),
-                  label: Text(
-                    '${p.isWinner ? '👑 ' : ''}${p.commanderName ?? p.username}'
-                    '${p.finalLife != null ? ' · ${p.finalLife} life' : ''}',
-                    style: TextStyle(
-                      color: colors.textPrimary,
-                      fontSize: 11,
-                      fontWeight: p.isWinner ? FontWeight.w800 : FontWeight.w600,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  label: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (p.isWinner) ...[
+                        GameIcon.monarch(
+                          size: 12,
+                          color: colors.emphasis,
+                        ),
+                        const SizedBox(width: 4),
+                      ],
+                      Flexible(
+                        child: Text(
+                          '${p.commanderName ?? p.username}'
+                          '${p.finalLife != null ? ' · ${p.finalLife} life' : ''}',
+                          style: TextStyle(
+                            color: colors.textPrimary,
+                            fontSize: FontTokens.hudXs,
+                            fontWeight:
+                                p.isWinner ? FontWeight.w800 : FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
                   backgroundColor: scheme.surfaceContainerLow,
                   side: BorderSide(

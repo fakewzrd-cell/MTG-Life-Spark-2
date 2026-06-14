@@ -81,11 +81,12 @@ class WsHostService implements BleService {
   Future<void> dispose() async {
     await _server?.close(force: true);
     _server = null;
-    for (final ws in _sockets.values) {
-      await ws.close();
-    }
+    final openSockets = List<WebSocket>.from(_sockets.values);
     _sockets.clear();
     _verified.clear();
+    for (final ws in openSockets) {
+      await ws.close();
+    }
     await _messageController.close();
     await _connectionController.close();
     _ready = false;

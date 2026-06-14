@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/game/session_exit_helpers.dart';
 import '../../core/network/session_providers.dart';
 import '../../ui/components/shell_destructive_dialog.dart';
 import '../../ui/tokens/font_tokens.dart';
@@ -51,15 +52,22 @@ class HomeNavBar extends ConsumerWidget {
   }
 
   static Future<void> _showQuitDialog(BuildContext context, WidgetRef ref) async {
+    final concededEarly = localConcededWhileTableActive(ref);
     final quit = await showShellDestructiveConfirm(
       context: context,
       title: 'Leave game?',
-      message: 'You will leave the game and return home. Match stats only '
-          'save when the table finishes the game.',
+      message: concededEarly
+          ? 'You will leave the live game and return home. Your concede '
+              'result will be saved before disconnecting.'
+          : 'You will leave the game and return home. Match stats only '
+              'save when the table finishes the game.',
       confirmLabel: 'Leave',
       cancelLabel: 'Stay',
     );
     if (!quit || !context.mounted) return;
+    if (concededEarly) {
+      await recordLocalConcedeBeforeExit(ref);
+    }
     await quitActiveGame(ref);
     if (context.mounted) {
       context.go(AppRoutes.home);

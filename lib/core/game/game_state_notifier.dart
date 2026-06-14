@@ -1528,6 +1528,9 @@ class GameStateNotifier extends StateNotifier<GameState> {
     final alliance = state.allianceFor(playerId);
     if (alliance != null) _removeAlliance(alliance);
 
+    final clearMonarch = state.monarchPlayerId == playerId;
+    final clearInitiative = state.initiativePlayerId == playerId;
+
     state = state.copyWith(
       players: state.players.map((p) {
         if (p.playerId != playerId) return p;
@@ -1537,6 +1540,8 @@ class GameStateNotifier extends StateNotifier<GameState> {
           killedByPlayerId: killedBy,
         );
       }).toList(),
+      monarchPlayerId: clearMonarch ? null : state.monarchPlayerId,
+      initiativePlayerId: clearInitiative ? null : state.initiativePlayerId,
     );
 
     if (broadcast && state.isHost) {

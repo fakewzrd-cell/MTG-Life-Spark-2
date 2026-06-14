@@ -8,7 +8,6 @@ import 'package:mgt_life_spark/features/profile/deck_options_sheet.dart';
 import 'package:mgt_life_spark/features/profile/decks_manage_screen.dart';
 import 'package:mgt_life_spark/features/settings/settings_screen.dart';
 import 'package:mgt_life_spark/shared/theme/app_theme.dart';
-import 'package:mgt_life_spark/shared/theme/theme_provider.dart';
 import 'package:mgt_life_spark/ui/theme/app_color_tokens.dart';
 
 import 'support/test_deck_repository.dart';

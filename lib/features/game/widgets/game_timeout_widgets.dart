@@ -188,7 +188,7 @@ class _GameTimeoutOverlayState extends State<GameTimeoutOverlay> {
                                   : '$_timeStr elapsed — tap to expand',
                               style: TextStyle(
                                 color: colors.emphasis,
-                                fontSize: 14,
+                                fontSize: FontTokens.body,
                                 fontWeight: FontWeight.w600,
                                 fontFeatures: const [
                                   FontFeature.tabularFigures(),
@@ -282,7 +282,7 @@ class _GameTimeoutOverlayState extends State<GameTimeoutOverlay> {
                         'Game paused — no life changes',
                         style: TextStyle(
                           color: colors.textSecondary,
-                          fontSize: 14,
+                          fontSize: FontTokens.body,
                         ),
                       ),
                     ],
@@ -461,7 +461,7 @@ class _GameTurnDurationBannerState extends State<GameTurnDurationBanner> {
                   widget.isActiveTurn
                       ? colors.primaryAccent
                       : colors.textSecondary,
-              fontSize: 12,
+              fontSize: FontTokens.caption,
               fontWeight: FontWeight.w600,
             ),
           ),

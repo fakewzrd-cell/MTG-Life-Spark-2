@@ -11,6 +11,7 @@ import '../../../core/game/game_format.dart';
 import '../../../core/game/player_game_state.dart';
 import '../../../ui/theme/app_color_tokens.dart';
 import 'game_colors.dart';
+import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/motion_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
@@ -416,7 +417,7 @@ class _CommanderDamagePanelState extends State<CommanderDamagePanel> {
               'Opponents will appear here when others join the pod.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: FontTokens.caption,
                 color: colors.textSecondary.withValues(alpha: 0.9),
                 height: 1.35,
               ),
@@ -428,7 +429,7 @@ class _CommanderDamagePanelState extends State<CommanderDamagePanel> {
             style: TextStyle(
               color: colors.textPrimary,
               fontWeight: FontWeight.w700,
-              fontSize: 13,
+              fontSize: FontTokens.hudSm,
             ),
           ),
           SizedBox(height: LayoutTokens.gr1),
@@ -534,7 +535,7 @@ class _ModeToggleChip extends StatelessWidget {
               style: TextStyle(
                 color: selected ? colors.primaryAccent : colors.textSecondary,
                 fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                fontSize: 13,
+                fontSize: FontTokens.hudSm,
               ),
             ),
           ),
@@ -625,7 +626,7 @@ class _CommanderDamageSummary extends StatelessWidget {
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.82),
                             fontWeight: FontWeight.w700,
-                            fontSize: 13,
+                            fontSize: FontTokens.hudSm,
                             letterSpacing: 0.3,
                           ),
                         ),
@@ -638,7 +639,7 @@ class _CommanderDamageSummary extends StatelessWidget {
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.62),
                               fontWeight: FontWeight.w600,
-                              fontSize: 12,
+                              fontSize: FontTokens.caption,
                             ),
                           ),
                         ],
@@ -778,7 +779,7 @@ class _OpponentPickerStrip extends StatelessWidget {
                           color: colors.textPrimary,
                           fontWeight:
                               selected ? FontWeight.w800 : FontWeight.w600,
-                          fontSize: 11,
+                          fontSize: FontTokens.hudXs,
                         ),
                       ),
                     ],
@@ -953,7 +954,7 @@ class _DamageTrack extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: colors.textSecondary,
-                  fontSize: 12,
+                  fontSize: FontTokens.caption,
                   fontWeight: FontWeight.w600,
                 ),
               ),

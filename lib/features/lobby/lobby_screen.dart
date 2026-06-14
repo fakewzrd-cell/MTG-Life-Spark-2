@@ -234,7 +234,7 @@ class _PodSection extends ConsumerWidget {
       padding: EdgeInsets.all(compact ? LayoutTokens.gr3 : LayoutTokens.gr4),
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: RadiusTokens.radiusChip,
+        borderRadius: RadiusTokens.radiusMd,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -246,7 +246,7 @@ class _PodSection extends ConsumerWidget {
           SizedBox(height: LayoutTokens.gr1),
           Text(
             'Optional. Pod name is saved with match history. Players listed on the pod are shown below so you know who is in this group.',
-            style: TextStyle(color: colors.textSecondary, fontSize: 12),
+            style: TextStyle(color: colors.textSecondary, fontSize: FontTokens.caption),
           ),
           SizedBox(height: LayoutTokens.gr2),
           DropdownButton<String?>(
@@ -304,7 +304,7 @@ class _PodSection extends ConsumerWidget {
                 return Chip(
                   label: Text(
                     id,
-                    style: TextStyle(color: colors.textPrimary, fontSize: 12),
+                    style: TextStyle(color: colors.textPrimary, fontSize: FontTokens.caption),
                   ),
                   backgroundColor: colors.backgroundSecondary,
                   side: BorderSide(
@@ -383,7 +383,7 @@ class _QrHeader extends StatelessWidget {
                   'Players: $playerCount / $maxPlayers  •  Scan QR to join',
                   style: TextStyle(
                     color: colors.textSecondary,
-                    fontSize: compact ? 12 : 13,
+                    fontSize: compact ? FontTokens.caption : FontTokens.hudSm,
                   ),
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
@@ -404,7 +404,7 @@ class _QrHeader extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: colors.textSecondary,
-                    fontSize: compact ? 12 : 13,
+                    fontSize: compact ? FontTokens.caption : FontTokens.hudSm,
                     height: 1.4,
                   ),
                 ),
@@ -766,7 +766,7 @@ class _SlotActionButton extends StatelessWidget {
         foregroundColor: fg,
         side: BorderSide(color: border),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(LayoutTokens.gr1),
+          borderRadius: RadiusTokens.radiusControlMd,
         ),
         textStyle: TextStyle(
           fontSize: FontTokens.sm,
@@ -794,7 +794,7 @@ class _CommanderAvatar extends StatelessWidget {
         compact ? LayoutTokens.minTapTarget : LayoutTokens.gr6 + LayoutTokens.gr0;
     if (slot.commanderImageUrl != null) {
       return ClipRRect(
-        borderRadius: BorderRadius.circular(LayoutTokens.gr1),
+        borderRadius: RadiusTokens.radiusControlMd,
         child: CachedNetworkImage(
           imageUrl: slot.commanderImageUrl!,
           width: size,
@@ -820,7 +820,7 @@ class _ColorDot extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(LayoutTokens.gr1),
+        borderRadius: RadiusTokens.radiusControlMd,
         border: Border.all(color: color, width: 2),
       ),
       child: Icon(Icons.person, color: color, size: size * 0.56),
@@ -853,7 +853,7 @@ class _PartnerChip extends ConsumerWidget {
                   : colors.textSecondary.withValues(alpha: 0.4),
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(LayoutTokens.gr1),
+          borderRadius: RadiusTokens.radiusControlMd,
         ),
         textStyle: TextStyle(
           fontSize: FontTokens.sm,
@@ -885,7 +885,7 @@ class _EmptySlotCard extends StatelessWidget {
       padding: EdgeInsets.symmetric(vertical: LayoutTokens.gr4),
       decoration: BoxDecoration(
         color: colors.backgroundSecondary,
-        borderRadius: RadiusTokens.radiusChip,
+        borderRadius: RadiusTokens.radiusMd,
         border: Border.all(
           color: colors.textSecondary.withValues(alpha: OpacityTokens.soft),
           style: BorderStyle.solid,
@@ -897,7 +897,9 @@ class _EmptySlotCard extends StatelessWidget {
           '$remaining open slot${remaining == 1 ? '' : 's'} — share your device to let friends join',
           style: TextStyle(
             color: colors.textSecondary,
-            fontSize: MediaQuery.sizeOf(context).width < 360 ? 12 : 13,
+            fontSize: MediaQuery.sizeOf(context).width < 360
+                ? FontTokens.caption
+                : FontTokens.hudSm,
           ),
           textAlign: TextAlign.center,
           maxLines: 2,
@@ -924,7 +926,7 @@ class _ConfigSection extends ConsumerWidget {
       padding: EdgeInsets.all(compact ? LayoutTokens.gr3 : LayoutTokens.gr4),
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: RadiusTokens.radiusChip,
+        borderRadius: RadiusTokens.radiusMd,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

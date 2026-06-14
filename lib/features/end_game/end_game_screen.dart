@@ -11,6 +11,8 @@ import '../../core/game/lobby_state.dart';
 import '../../core/game/player_game_state.dart';
 import '../../core/game/game_session_events.dart';
 import '../../core/game/progression_service.dart';
+import '../../core/game/session_exit_helpers.dart';
+import '../../shared/widgets/game_icon.dart';
 import '../../core/persistence/providers.dart';
 import '../../core/debug/app_log.dart';
 import '../../core/models/game_feedback.dart';
@@ -99,9 +101,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
       final lobby = ref.read(lobbyProvider);
       final service = ref.read(progressionServiceProvider);
 
-      final stableMatchId = game.gameStartTime != null
-          ? '${game.gameStartTime!.millisecondsSinceEpoch}_${game.localPlayerId}'
-          : null;
+      final stableMatchId = stableMatchIdForGame(game);
 
       final result = await service.recordMatch(
         finalState: game,
@@ -223,6 +223,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
                     _WinnerBanner(
                       winner: winner,
                       isLocalWinner: isWinner,
+                      noWinnerHeadline: _noWinnerHeadline(game),
                     ),
 
                     SizedBox(height: LayoutTokens.gr4),
@@ -374,13 +375,28 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
   }
 }
 
+String _noWinnerHeadline(GameState game) {
+  if (game.winnerPlayerId != null) return 'Game Over — No Winner';
+  final local = game.localPlayer;
+  if (game.players.length == 1 &&
+      local?.eliminationReason == 'concede') {
+    return 'Practice ended';
+  }
+  return 'Game Over — No Winner';
+}
+
 // ── Winner Banner ────────────────────────────────────────────────────────────
 
 class _WinnerBanner extends StatelessWidget {
   final PlayerGameState? winner;
   final bool isLocalWinner;
+  final String noWinnerHeadline;
 
-  const _WinnerBanner({required this.winner, required this.isLocalWinner});
+  const _WinnerBanner({
+    required this.winner,
+    required this.isLocalWinner,
+    required this.noWinnerHeadline,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -389,7 +405,7 @@ class _WinnerBanner extends StatelessWidget {
       return Padding(
         padding: EdgeInsets.all(LayoutTokens.shellPageInset),
         child: Text(
-          'Game Over — No Winner',
+          noWinnerHeadline,
           style: TextStyle(
             color: colors.textPrimary,
             fontSize: FontTokens.headline,
@@ -405,7 +421,7 @@ class _WinnerBanner extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            isLocalWinner ? '🏆 You Win!' : '🎉 Winner',
+            isLocalWinner ? 'You Win!' : 'Winner',
             style: TypographyTokens.headline(context).copyWith(
               color: colors.emphasis,
             ),
@@ -860,7 +876,10 @@ class _FinalPlayerRow extends StatelessWidget {
           if (isWinner)
             Padding(
               padding: EdgeInsets.only(right: LayoutTokens.gr1),
-              child: Text('🏆', style: TextStyle(fontSize: FontTokens.sm)),
+              child: GameIcon.monarch(
+                size: FontTokens.sm,
+                color: colors.emphasis,
+              ),
             ),
           Container(
             width: LayoutTokens.gr1,

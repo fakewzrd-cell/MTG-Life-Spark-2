@@ -356,7 +356,7 @@ class _QrScanView extends StatelessWidget {
             height: 240,
             decoration: BoxDecoration(
               border: Border.all(color: colors.primaryAccent, width: 3),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: RadiusTokens.radiusMd,
             ),
           ),
         ),

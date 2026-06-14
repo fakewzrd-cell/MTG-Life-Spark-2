@@ -18,6 +18,7 @@ import 'game_timeout_widgets.dart';
 import 'overview_commander_art_backdrop.dart';
 import 'political_row_widget.dart';
 import 'team_colors.dart';
+import '../../../shared/widgets/game_icon.dart';
 
 // ── Overview View ─────────────────────────────────────────────────────────
 
@@ -551,44 +552,54 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text.rich(
-                          TextSpan(
-                            children: [
-                              if (isMonarch)
-                                const TextSpan(
-                                  text: '👑 ',
-                                  style: TextStyle(fontSize: 13),
-                                ),
-                              if (hasInit)
-                                const TextSpan(
-                                  text: '⚔️ ',
-                                  style: TextStyle(fontSize: 11),
-                                ),
-                              TextSpan(
-                                text: p.username,
-                                style: TextStyle(
-                                  color: p.isEliminated
-                                      ? colors.textSecondary
-                                      : colors.textPrimary,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: FontTokens.hudSm,
-                                  height: 1.3,
-                                ),
+                        Row(
+                          children: [
+                            if (isMonarch) ...[
+                              GameIcon.monarch(
+                                size: LayoutTokens.gr3,
+                                color: politicsIconTone(context),
                               ),
-                              if (isLocal)
-                                TextSpan(
-                                  text: ' · you',
-                                  style: TextStyle(
-                                    color: colors.textSecondary,
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: FontTokens.hudXs,
-                                    height: 1.3,
-                                  ),
-                                ),
+                              SizedBox(width: LayoutTokens.gr0),
                             ],
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                            if (hasInit) ...[
+                              GameIcon.initiative(
+                                size: LayoutTokens.gr3,
+                                color: politicsIconTone(context),
+                              ),
+                              SizedBox(width: LayoutTokens.gr0),
+                            ],
+                            Expanded(
+                              child: Text.rich(
+                                TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: p.username,
+                                      style: TextStyle(
+                                        color: p.isEliminated
+                                            ? colors.textSecondary
+                                            : colors.textPrimary,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: FontTokens.hudSm,
+                                        height: 1.3,
+                                      ),
+                                    ),
+                                    if (isLocal)
+                                      TextSpan(
+                                        text: ' · you',
+                                        style: TextStyle(
+                                          color: colors.textSecondary,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: FontTokens.hudXs,
+                                          height: 1.3,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
                         OverviewPlayerMarkerBadges(
                           game: game,

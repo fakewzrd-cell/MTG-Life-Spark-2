@@ -400,5 +400,33 @@ void main() {
       expect(notifier.state.gameOver, isTrue);
       expect(notifier.state.winnerPlayerId, 'bob');
     });
+
+    test('elimination clears monarch and initiative when holder is out', () {
+      final ble = FakeBleService();
+      final container = _container(ble: ble);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(gameProvider.notifier);
+      notifier.setGameStateForTest(_twoPlayerGame(
+        localId: 'alice',
+        isHost: true,
+        players: [
+          _player(id: 'alice'),
+          _player(id: 'bob'),
+          _player(id: 'carol'),
+        ],
+      ));
+
+      notifier.setMonarch('bob');
+      notifier.setInitiative('carol');
+      notifier.concede('bob');
+
+      expect(notifier.state.monarchPlayerId, isNull);
+      expect(notifier.state.initiativePlayerId, 'carol');
+
+      notifier.concede('carol');
+
+      expect(notifier.state.initiativePlayerId, isNull);
+    });
   });
 }
