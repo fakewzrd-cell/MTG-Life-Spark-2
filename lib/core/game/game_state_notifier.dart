@@ -17,7 +17,6 @@ import 'game_constants.dart';
 import 'game_log_entry.dart';
 import 'game_phase.dart';
 import 'game_session_events.dart';
-import 'stack_example_data.dart';
 import 'game_state.dart';
 import 'gameplay_dial_ids.dart';
 import 'lobby_state.dart';
@@ -707,9 +706,35 @@ class GameStateNotifier extends StateNotifier<GameState> {
       }).toList(),
     );
 
+    _sendCommanderCastDelta(playerId, 1);
+  }
+
+  void uncastCommanderFromZone(String playerId) {
+    if (state.timeoutActive) return;
+    if (!_canMutatePlayer(playerId)) return;
+    final player = _playerById(playerId);
+    if (player == null || player.commanderCastCount <= 0) return;
+
+    _pushUndo(UndoAction(
+      playerId: playerId,
+      field: 'commanderCast',
+      previousValue: player.commanderCastCount,
+    ));
+
+    state = state.copyWith(
+      players: state.players.map((p) {
+        if (p.playerId != playerId) return p;
+        return p.copyWith(commanderCastCount: p.commanderCastCount - 1);
+      }).toList(),
+    );
+
+    _sendCommanderCastDelta(playerId, -1);
+  }
+
+  void _sendCommanderCastDelta(String playerId, int delta) {
     _send(BleMessage(
       type: BleMessageType.commanderCastFromZone,
-      payload: {'pid': playerId},
+      payload: {'pid': playerId, 'delta': delta},
       seqNum: _nextSeq(),
     ));
   }
@@ -1528,7 +1553,13 @@ class GameStateNotifier extends StateNotifier<GameState> {
 
   void _checkGameOver() {
     final alive = state.players.where((p) => !p.isEliminated).toList();
-    if (alive.length <= 1 && state.players.length > 1) {
+    if (state.players.length == 1) {
+      if (alive.isEmpty) {
+        state = state.copyWith(gameOver: true, winnerPlayerId: null);
+      }
+      return;
+    }
+    if (alive.length <= 1) {
       final winner = alive.isEmpty ? null : alive.first;
       state = state.copyWith(
           gameOver: true, winnerPlayerId: winner?.playerId);
@@ -1633,42 +1664,6 @@ class GameStateNotifier extends StateNotifier<GameState> {
       status: status,
       log:
           '${_playerLabel(item.playerId)}’s “${item.name}” $logLabel',
-    );
-  }
-
-  /// Fills the stack with a four-player tutorial example (host or solo only).
-  void loadExampleStack() {
-    if (state.players.isEmpty || state.localPlayerId.isEmpty) return;
-    if (!state.isHost && state.players.length > 1) return;
-
-    final localId = state.localPlayerId;
-    final startingLife = state.players.first.life;
-    final mergedPlayers = mergeExamplePodPlayers(
-      current: state.players,
-      localPlayerId: localId,
-      startingLife: startingLife,
-    );
-
-    final playerIds = state.players.length >= 4
-        ? (state.turnOrder.length >= 4
-            ? state.turnOrder.take(4).toList()
-            : state.players.take(4).map((p) => p.playerId).toList())
-        : exampleTurnOrder(localId);
-
-    final items = buildExampleStackItems(
-      playerIds: playerIds,
-      localPlayerId: localId,
-    );
-
-    state = state.copyWith(
-      players: mergedPlayers,
-      turnOrder: playerIds,
-      activePlayerIndex: playerIds.indexOf(localId).clamp(0, 3),
-    );
-    _mutateStack(
-      op: 'replace',
-      items: items,
-      log: 'Loaded example stack (4-player pod)',
     );
   }
 
@@ -1852,18 +1847,17 @@ class GameStateNotifier extends StateNotifier<GameState> {
         _applyProliferate();
       case BleMessageType.commanderCastFromZone:
         final pid = msg.payload['pid'] as String? ?? '';
+        final delta = (msg.payload['delta'] as num?)?.toInt() ?? 1;
         state = state.copyWith(
           players: state.players.map((p) {
             if (p.playerId != pid) return p;
-            return p.copyWith(commanderCastCount: p.commanderCastCount + 1);
+            final next = (p.commanderCastCount + delta).clamp(0, 999);
+            return p.copyWith(commanderCastCount: next);
           }).toList(),
         );
       case BleMessageType.phaseAdvance:
         final phaseName = msg.payload['phase'] as String? ?? '';
-        final phase = GamePhase.values.firstWhere(
-          (p) => p.name == phaseName,
-          orElse: () => state.currentPhase,
-        );
+        final phase = GamePhase.normalize(phaseName);
         state = state.copyWith(currentPhase: phase);
       case BleMessageType.turnEnd:
         _applyTurnEnd(msg.payload);

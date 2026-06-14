@@ -11,6 +11,7 @@ import 'resolved_commander_avatar.dart';
 class CommanderInfoBar extends StatelessWidget {
   final PlayerGameState player;
   final VoidCallback onCastCommander;
+  final VoidCallback onUncastCommander;
   /// When true, use tighter padding for embedding inside a parent card.
   final bool embeddedInCard;
   /// Optional round number to show under tax (extra info).
@@ -24,6 +25,7 @@ class CommanderInfoBar extends StatelessWidget {
     super.key,
     required this.player,
     required this.onCastCommander,
+    required this.onUncastCommander,
     this.embeddedInCard = false,
     this.roundNumber,
     this.statusTrailing,
@@ -111,6 +113,8 @@ class CommanderInfoBar extends StatelessWidget {
                   castCount: player.commanderCastCount,
                   tax: player.commanderTax,
                   compact: isVeryNarrow || isCompact,
+                  enabled: !player.isEliminated,
+                  onUncast: onUncastCommander,
                 ),
                 if (roundNumber != null) ...[
                   SizedBox(height: LayoutTokens.gr0),
@@ -253,11 +257,15 @@ class _CommanderTaxBadge extends StatelessWidget {
   final int castCount;
   final int tax;
   final bool compact;
+  final bool enabled;
+  final VoidCallback onUncast;
 
   const _CommanderTaxBadge({
     required this.castCount,
     required this.tax,
+    required this.onUncast,
     this.compact = false,
+    this.enabled = true,
   });
 
   @override
@@ -270,26 +278,45 @@ class _CommanderTaxBadge extends StatelessWidget {
         style: TextStyle(color: colors.textSecondary, fontSize: fs),
       );
     }
+
+    final canUncast = enabled && castCount > 0;
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: compact ? 6 : 8,
-            vertical: compact ? 3 : 4,
-          ),
-          decoration: BoxDecoration(
-            color: colors.textSecondary.withValues(alpha: 0.15),
-            borderRadius: RadiusTokens.radiusControlMd,
-            border: Border.all(
-                color: colors.textSecondary.withValues(alpha: 0.6)),
-          ),
-          child: Text(
-            'Tax +$tax',
-            style: TextStyle(
-              color: colors.textSecondary,
-              fontSize: fs,
-              fontWeight: FontWeight.bold,
+        Semantics(
+          button: canUncast,
+          enabled: canUncast,
+          label: canUncast ? 'Remove last commander cast' : 'Commander tax',
+          child: Tooltip(
+            message: canUncast ? 'Tap to remove last cast' : 'Tax +$tax',
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: canUncast ? onUncast : null,
+                borderRadius: RadiusTokens.radiusControlMd,
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: compact ? 6 : 8,
+                    vertical: compact ? 3 : 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.textSecondary.withValues(alpha: 0.15),
+                    borderRadius: RadiusTokens.radiusControlMd,
+                    border: Border.all(
+                      color: colors.textSecondary.withValues(alpha: 0.6),
+                    ),
+                  ),
+                  child: Text(
+                    'Tax +$tax',
+                    style: TextStyle(
+                      color: colors.textSecondary,
+                      fontSize: fs,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         ),

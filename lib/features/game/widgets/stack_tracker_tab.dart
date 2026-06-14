@@ -241,9 +241,6 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
             hasScrollBody: false,
             child: _EmptyStackState(
               onPutOnStack: () => _showAddDialog(context, parentId: null),
-              onLoadExample: game.isHost || game.players.length <= 1
-                  ? () => notifier.loadExampleStack()
-                  : null,
             ),
           )
         else
@@ -418,11 +415,9 @@ void scheduleStackAddItem(
 
 class _EmptyStackState extends StatelessWidget {
   final VoidCallback onPutOnStack;
-  final VoidCallback? onLoadExample;
 
   const _EmptyStackState({
     required this.onPutOnStack,
-    this.onLoadExample,
   });
 
   @override
@@ -451,7 +446,6 @@ class _EmptyStackState extends StatelessWidget {
             SizedBox(height: LayoutTokens.gr2),
             _emptyBullet(context, 'Put spells and abilities here before they resolve.'),
             _emptyBullet(context, 'The last one added resolves first.'),
-            _emptyBullet(context, 'Load the 4-player example to preview a full pod stack.'),
             SizedBox(height: LayoutTokens.gr4),
             FilledButton.icon(
               onPressed: onPutOnStack,
@@ -463,19 +457,6 @@ class _EmptyStackState extends StatelessWidget {
                 ),
               ),
             ),
-            if (onLoadExample != null) ...[
-              SizedBox(height: LayoutTokens.gr2),
-              OutlinedButton.icon(
-                onPressed: onLoadExample,
-                icon: Icon(Icons.science_outlined),
-                label: Text('Load 4-player example'),
-                style: OutlinedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: RadiusTokens.radiusControlSm,
-                  ),
-                ),
-              ),
-            ],
           ],
         ),
       ),

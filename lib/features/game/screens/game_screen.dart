@@ -375,6 +375,8 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
                     player: local,
                     onCastCommander: () =>
                         notifier.castCommanderFromZone(local.playerId),
+                    onUncastCommander: () =>
+                        notifier.uncastCommanderFromZone(local.playerId),
                     embeddedInCard: true,
                     roundNumber: game.roundNumber,
                     allyUsername: local.allyPlayerId == null
@@ -407,73 +409,71 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Flexible(
-                    child: SingleChildScrollView(
-                      physics: const ClampingScrollPhysics(),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Center(
-                            child: ConstrainedBox(
-                              constraints:
-                                  BoxConstraints(maxWidth: lifeBandMaxW),
-                              child: PhaseNavCluster(
-                                game: game,
-                                accentColor: chromeAccent,
-                                onBack: !game.timeoutActive
-                                    ? notifier.previousPhase
-                                    : null,
-                                onNext: !game.timeoutActive
-                                    ? notifier.advancePhase
-                                    : null,
-                                onPickPhase: game.timeoutActive
-                                    ? null
-                                    : notifier.setPhase,
-                                onEndTurn: notifier.endTurn,
-                                endTurnEnabled: !game.timeoutActive &&
-                                    (game.isLocalPlayersTurn || game.isHost),
-                              ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Center(
+                          child: ConstrainedBox(
+                            constraints:
+                                BoxConstraints(maxWidth: lifeBandMaxW),
+                            child: PhaseNavCluster(
+                              game: game,
+                              accentColor: chromeAccent,
+                              onBack: !game.timeoutActive
+                                  ? notifier.previousPhase
+                                  : null,
+                              onNext: !game.timeoutActive
+                                  ? notifier.advancePhase
+                                  : null,
+                              onPickPhase: game.timeoutActive
+                                  ? null
+                                  : notifier.setPhase,
+                              onEndTurn: notifier.endTurn,
+                              endTurnEnabled: !game.timeoutActive &&
+                                  (game.isLocalPlayersTurn || game.isHost),
                             ),
                           ),
-                          SizedBox(height: playGapSm),
-                          ActiveTurnBanner(game: game),
-                          SizedBox(height: playGapMd),
-                          Center(
+                        ),
+                        SizedBox(height: playGapSm),
+                        ActiveTurnBanner(game: game),
+                        SizedBox(height: playGapMd),
+                        Expanded(
+                          child: Align(
+                            alignment: Alignment.center,
                             child: ConstrainedBox(
                               constraints: BoxConstraints(
                                 maxWidth: lifeBandMaxW,
-                                minHeight: lifeBandH,
+                                maxHeight: lifeBandH,
                               ),
-                              child: ScopedLifeCounter(
-                                playerId: local.playerId,
+                              child: SizedBox(
                                 height: lifeBandH,
-                                onLifeChange: adjustLife,
+                                width: double.infinity,
+                                child: ScopedLifeCounter(
+                                  playerId: local.playerId,
+                                  height: lifeBandH,
+                                  onLifeChange: adjustLife,
+                                ),
                               ),
                             ),
                           ),
-                          SizedBox(height: playGapMd),
-                          const VariantCardPanel(),
+                        ),
+                        const VariantCardPanel(),
+                        if ((game.trackTurnDuration ||
+                                game.turnTimeLimitSeconds != null) &&
+                            game.turnStartTime != null) ...[
                           SizedBox(height: playGapSm),
-                          if (!local.isEliminated &&
-                              game.pendingProposalFor(local.playerId) != null)
-                            SizedBox(height: LayoutTokens.gr0),
-                          if ((game.trackTurnDuration ||
-                                  game.turnTimeLimitSeconds != null) &&
-                              game.turnStartTime != null) ...[
-                            GameTurnDurationBanner(
-                              turnStartTime: game.turnStartTime!,
-                              limitSeconds: game.turnTimeLimitSeconds,
-                              isActiveTurn: game.isLocalPlayersTurn,
-                              activePlayerName:
-                                  game.playerById(game.activePlayerId)
-                                      ?.username ??
-                                  'Player',
-                            ),
-                            SizedBox(height: playGapMd),
-                          ],
+                          GameTurnDurationBanner(
+                            turnStartTime: game.turnStartTime!,
+                            limitSeconds: game.turnTimeLimitSeconds,
+                            isActiveTurn: game.isLocalPlayersTurn,
+                            activePlayerName:
+                                game.playerById(game.activePlayerId)
+                                    ?.username ??
+                                'Player',
+                          ),
                         ],
-                      ),
+                      ],
                     ),
                   ),
                   Padding(

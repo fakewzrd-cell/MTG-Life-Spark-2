@@ -75,7 +75,7 @@ CI runs tests, analysis, and a web build (see `.github/workflows/flutter_ci.yml`
 - The **host** runs a WebSocket server on the local network and displays a QR payload clients scan to join.
 - QR codes include a short-lived **join token** (`?token=...`); clients must scan the current code (legacy codes without a token are rejected).
 - Clients apply state from the host; life-loss elimination and several table actions are **host-authoritative**.
-- **Solo games** start with only the players in your lobby (no auto-filled demo pod). Use **Load example stack** on the Stack tab when you want a four-player practice pod.
+- **Solo games** start with only the players in your lobby (no auto-filled demo pod).
 - **Table politics** (Monarch, Initiative, Day/Night) are on the in-game **Overview** screen; the lobby host can assign them even in a solo practice session on web.
 
 ## License

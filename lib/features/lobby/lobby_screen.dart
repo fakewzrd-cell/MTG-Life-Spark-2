@@ -362,7 +362,13 @@ class _QrHeader extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      color: colors.backgroundSecondary,
+      decoration: BoxDecoration(
+        color: colors.backgroundSecondary,
+        borderRadius: RadiusTokens.radiusMd,
+        border: Border.all(
+          color: colors.textSecondary.withValues(alpha: OpacityTokens.soft),
+        ),
+      ),
       padding: EdgeInsets.symmetric(vertical: pad, horizontal: pad),
       child: Column(
         mainAxisSize: MainAxisSize.min,

@@ -337,4 +337,68 @@ void main() {
       expect(ble.sentMessages, isEmpty);
     });
   });
+
+  group('GameStateNotifier concede', () {
+    test('solo forfeit ends the game with no winner', () {
+      final ble = FakeBleService();
+      final container = _container(ble: ble);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(gameProvider.notifier);
+      notifier.setGameStateForTest(
+        GameState(
+          players: [_player(id: 'solo')],
+          turnOrder: const ['solo'],
+          localPlayerId: 'solo',
+          isHost: true,
+          gameStartTime: DateTime(2026, 1, 1),
+        ),
+      );
+
+      notifier.concede('solo');
+
+      expect(notifier.state.gameOver, isTrue);
+      expect(notifier.state.winnerPlayerId, isNull);
+      expect(notifier.state.localPlayer!.isEliminated, isTrue);
+      expect(notifier.state.localPlayer!.eliminationReason, 'concede');
+    });
+
+    test('multiplayer forfeit does not end game while others remain', () {
+      final ble = FakeBleService();
+      final container = _container(ble: ble);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(gameProvider.notifier);
+      notifier.setGameStateForTest(_twoPlayerGame(
+        localId: 'alice',
+        players: [
+          _player(id: 'alice'),
+          _player(id: 'bob'),
+          _player(id: 'carol'),
+        ],
+      ));
+
+      notifier.concede('alice');
+
+      expect(notifier.state.gameOver, isFalse);
+      expect(
+        notifier.state.playerById('alice')!.isEliminated,
+        isTrue,
+      );
+    });
+
+    test('heads-up forfeit ends game with opponent as winner', () {
+      final ble = FakeBleService();
+      final container = _container(ble: ble);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(gameProvider.notifier);
+      notifier.setGameStateForTest(_twoPlayerGame(localId: 'alice'));
+
+      notifier.concede('alice');
+
+      expect(notifier.state.gameOver, isTrue);
+      expect(notifier.state.winnerPlayerId, 'bob');
+    });
+  });
 }

@@ -54,6 +54,7 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
   int? _lastDelta;
   Timer? _holdTimer;
   bool _holding = false;
+  DateTime? _lastHapticAt;
 
   /// Stride (px) of horizontal drag before committing ±1 life.
   static const double _kDragStride = 36;
@@ -68,7 +69,7 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
     super.initState();
     _deltaAnim = AnimationController(
       vsync: this,
-      duration: MotionTokens.hero,
+      duration: MotionTokens.fast,
     );
     _deltaFade = CurvedAnimation(parent: _deltaAnim, curve: Curves.easeOut);
     _deltaSlide = Tween<Offset>(
@@ -96,9 +97,19 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
 
   void _change(int delta) {
     if (widget.isEliminated) return;
+    widget.onLifeChange(delta);
     setState(() => _lastDelta = delta);
     _deltaAnim.forward(from: 0);
-    widget.onLifeChange(delta);
+    _pulseHaptic();
+  }
+
+  void _pulseHaptic() {
+    final now = DateTime.now();
+    if (_lastHapticAt != null &&
+        now.difference(_lastHapticAt!) < const Duration(milliseconds: 45)) {
+      return;
+    }
+    _lastHapticAt = now;
     if (widget.onHaptic != null) {
       widget.onHaptic!();
     } else {
@@ -159,10 +170,6 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
     final colors = context.gameColors;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final halo = CommanderIdentityColors.emphasisBorder(
-          widget.commanderColorIdentity,
-        );
-
         return Container(
           decoration: BoxDecoration(
             borderRadius: RadiusTokens.radiusBento,
@@ -171,13 +178,6 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
                 widget.commanderColorIdentity,
               ),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: halo.withValues(alpha: 0.35),
-                blurRadius: 18,
-                spreadRadius: -2,
-              ),
-            ],
           ),
           padding: const EdgeInsets.all(LayoutTokens.gr0),
           child: ClipRRect(
@@ -186,11 +186,8 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
             ),
             child: Container(
               color: colors.backgroundPrimary.withValues(alpha: 0.88),
-              child: GestureDetector(
-                onDoubleTap: widget.isEliminated ? null : _showNumberPad,
-                behavior: HitTestBehavior.deferToChild,
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
+              child: LayoutBuilder(
+                builder: (context, constraints) {
                     final wBody = constraints.maxWidth;
                     final hBody = constraints.maxHeight;
                     final tapEdge = _kStepStripWidth;
@@ -260,6 +257,9 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
                               ),
                               Expanded(
                                 child: GestureDetector(
+                                  onDoubleTap: widget.isEliminated
+                                      ? null
+                                      : _showNumberPad,
                                   onHorizontalDragUpdate: (d) =>
                                       _feedHorizontalDrag(d.delta.dx),
                                   onHorizontalDragEnd: (_) =>
@@ -310,31 +310,6 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
                                                   color: _lifeColor(colors),
                                                   letterSpacing: -2,
                                                   height: 1.0,
-                                                  shadows: [
-                                                    Shadow(
-                                                      color: _lifeColor(colors)
-                                                          .withValues(
-                                                        alpha: 0.35,
-                                                      ),
-                                                      blurRadius: 24,
-                                                      offset: const Offset(
-                                                        0,
-                                                        LayoutTokens.gr0,
-                                                      ),
-                                                    ),
-                                                    Shadow(
-                                                      color: Colors.black
-                                                          .withValues(
-                                                        alpha: 0.2,
-                                                      ),
-                                                      blurRadius:
-                                                          LayoutTokens.gr0,
-                                                      offset: const Offset(
-                                                        0,
-                                                        LayoutTokens.gr0,
-                                                      ),
-                                                    ),
-                                                  ],
                                                 ),
                                               ),
                                             ),
@@ -407,8 +382,7 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
                         ],
                       ),
                     );
-                  },
-                ),
+                },
               ),
             ),
           ),
@@ -451,32 +425,29 @@ class _LifeEdgeStepStrip extends StatelessWidget {
         button: true,
         label: semanticsLabel,
         child: GestureDetector(
+          onTap: onTap,
           onLongPressStart: (_) => onLongPressStart(),
           onLongPressEnd: (_) => onLongPressEnd(),
           onLongPressCancel: onLongPressCancel,
-          child: Material(
-            color: colors.surface.withValues(alpha: 0.92),
-            child: InkWell(
-              onTap: onTap,
-              child: DecoratedBox(
-              decoration: BoxDecoration(
-                border: Border(
-                  right: innerDividerOnRight
-                      ? BorderSide(color: dividerColor)
-                      : BorderSide.none,
-                  left: innerDividerOnRight
-                      ? BorderSide.none
-                      : BorderSide(color: dividerColor),
-                ),
-              ),
-              child: Center(
-                child: Icon(
-                  icon,
-                  size: 26,
-                  color: colors.primaryAccent,
-                ),
+          behavior: HitTestBehavior.opaque,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: colors.surface.withValues(alpha: 0.92),
+              border: Border(
+                right: innerDividerOnRight
+                    ? BorderSide(color: dividerColor)
+                    : BorderSide.none,
+                left: innerDividerOnRight
+                    ? BorderSide.none
+                    : BorderSide(color: dividerColor),
               ),
             ),
+            child: Center(
+              child: Icon(
+                icon,
+                size: 26,
+                color: colors.primaryAccent,
+              ),
             ),
           ),
         ),

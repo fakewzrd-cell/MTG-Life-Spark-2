@@ -367,10 +367,7 @@ class GameState {
           .toList(),
       turnOrder: List<String>.from(json['turnOrder'] as List),
       activePlayerIndex: (json['activePlayerIndex'] as num).toInt(),
-      currentPhase: GamePhase.values.firstWhere(
-        (p) => p.name == json['currentPhase'],
-        orElse: () => GamePhase.untap,
-      ),
+      currentPhase: GamePhase.normalize(json['currentPhase'] as String?),
       roundNumber: (json['roundNumber'] as num).toInt(),
       priorityHeld: json['priorityHeld'] as bool? ?? false,
       priorityHolderId: json['priorityHolderId'] as String?,

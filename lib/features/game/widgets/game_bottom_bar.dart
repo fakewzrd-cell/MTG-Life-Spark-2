@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/game/game_providers.dart';
 import '../../../core/game/game_state.dart';
 import '../../../core/game/game_state_notifier.dart';
 import '../../../core/game/player_game_state.dart';
 import '../../../core/models/game_feedback.dart';
+import '../../../core/network/session_providers.dart';
+import '../../../shared/utils/app_router.dart';
 import '../../../shared/widgets/home_nav_bar.dart';
 import '../../../shared/widgets/player_feedback_widgets.dart';
 import '../../../ui/tokens/color_tokens.dart';
@@ -159,20 +162,118 @@ class GameBottomBar extends ConsumerWidget {
               ref.read(gameProvider.notifier).concede(playerId);
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (!context.mounted) return;
-                final after = ref.read(gameProvider);
-                if (after.gameOver) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'You forfeited. Match results save when the game ends.',
-                    ),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
+                _showPostForfeitFollowUp(context, ref);
               });
             },
           ),
     );
+  }
+}
+
+/// After a forfeit in a continuing multiplayer pod: stay to spectate or leave.
+Future<void> _showPostForfeitFollowUp(
+  BuildContext context,
+  WidgetRef ref,
+) async {
+  final game = ref.read(gameProvider);
+  if (game.gameOver) return;
+
+  final othersStillPlaying = game.players.any(
+    (p) => p.playerId != game.localPlayerId && !p.isEliminated,
+  );
+  if (!othersStillPlaying) return;
+
+  final colors = context.gameColors;
+  final inset = GameModalChrome.horizontalInset(context);
+  final titleStyle = TextStyle(
+    color: colors.textPrimary,
+    fontSize: FontTokens.title,
+    fontWeight: FontWeight.w700,
+  );
+  final bodyStyle = TextStyle(
+    color: colors.textSecondary,
+    fontSize: FontTokens.hudSm,
+    height: 1.4,
+  );
+
+  final leave = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      backgroundColor: colors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: RadiusTokens.radiusMd,
+        side: BorderSide(color: colors.backgroundSecondary),
+      ),
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: LayoutTokens.gr3,
+        vertical: LayoutTokens.gr4,
+      ),
+      titlePadding: EdgeInsets.zero,
+      contentPadding: EdgeInsets.zero,
+      actionsPadding: EdgeInsets.zero,
+      title: Padding(
+        padding: EdgeInsets.fromLTRB(inset, LayoutTokens.gr3, inset, 0),
+        child: GameDialogTitleRow(
+          titleWidget: Text('You forfeited', style: titleStyle),
+          onClose: () => Navigator.pop(dialogContext, false),
+        ),
+      ),
+      content: Padding(
+        padding: EdgeInsets.fromLTRB(inset, LayoutTokens.gr2, inset, 0),
+        child: Text(
+          'Other players can keep playing. Stay on this device to save match '
+          'stats when the game ends. Returning to your profile hub now '
+          'disconnects you and this device will not save match stats.',
+          style: bodyStyle,
+        ),
+      ),
+      actions: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(
+            inset,
+            LayoutTokens.gr2,
+            inset,
+            LayoutTokens.gr3,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                height: LayoutTokens.minTapTarget,
+                child: FilledButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: colors.primaryAccent,
+                    foregroundColor: ColorTokens.onAccent,
+                    shape: const StadiumBorder(),
+                  ),
+                  child: const Text('Stay & spectate'),
+                ),
+              ),
+              SizedBox(height: LayoutTokens.gr2),
+              SizedBox(
+                height: LayoutTokens.minTapTarget,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(dialogContext, true),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: colors.textPrimary,
+                    side: BorderSide(color: colors.borderSubtle),
+                    shape: const StadiumBorder(),
+                  ),
+                  child: const Text('Return to profile'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+
+  if (leave != true || !context.mounted) return;
+  await quitActiveGame(ref);
+  if (context.mounted) {
+    context.go(AppRoutes.home);
   }
 }
 
@@ -269,7 +370,7 @@ class _GameConcedeDialogState extends State<_GameConcedeDialog> {
                 children: [
                   Text(
                     others.isEmpty
-                        ? 'You will leave this game immediately.'
+                        ? 'Your practice game will end. Optionally note how it went.'
                         : 'You will leave the game. Optionally rate opponents before you go.',
                     style: bodyStyle,
                   ),

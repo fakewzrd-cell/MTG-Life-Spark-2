@@ -21,25 +21,25 @@ import 'team_colors.dart';
 
 // ── Overview View ─────────────────────────────────────────────────────────
 
-class GameOverviewView extends ConsumerWidget {
+class GameOverviewView extends ConsumerStatefulWidget {
   final GameState game;
   final VoidCallback onClose;
 
-  const GameOverviewView({required this.game, required this.onClose});
+  const GameOverviewView({super.key, required this.game, required this.onClose});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GameOverviewView> createState() => _GameOverviewViewState();
+}
+
+class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
+  bool _politicsExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final game = widget.game;
+    final onClose = widget.onClose;
     final colors = context.gameColors;
     final notifier = ref.read(gameProvider.notifier);
-    final activePlayer = game.playerById(game.activePlayerId);
-    final isLocalActive = game.activePlayerId == game.localPlayerId;
-    final activeName = isLocalActive
-        ? 'You'
-        : overviewShortPlayerName(
-            activePlayer?.username ?? '—',
-            maxChars: 14,
-          );
-    final phaseLabel = game.currentPhase.streamlinedShortLabel;
     final aliveCount = game.activePlayers.length;
 
     const pageInset = LayoutTokens.shellPageInset;
@@ -128,15 +128,6 @@ class GameOverviewView extends ConsumerWidget {
                     height: LayoutTokens.minTapTarget,
                   ),
               ],
-              bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(_OverviewHeaderMetrics.bottomHeight),
-                child: _GameOverviewAppBarBottom(
-                  activeName: activeName,
-                  phaseLabel: phaseLabel,
-                  playerColor: activePlayer?.playerColor,
-                  isLocalTurn: game.isLocalPlayersTurn,
-                ),
-              ),
             ),
 
             SliverToBoxAdapter(
@@ -145,9 +136,22 @@ class GameOverviewView extends ConsumerWidget {
                   pageInset,
                   LayoutTokens.gr2,
                   pageInset,
-                  LayoutTokens.gr2,
+                  _politicsExpanded ? LayoutTokens.gr2 : 0,
                 ),
-                child: PoliticalRowWidget(game: game),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _PoliticsToggleButton(
+                      expanded: _politicsExpanded,
+                      onPressed: () =>
+                          setState(() => _politicsExpanded = !_politicsExpanded),
+                    ),
+                    if (_politicsExpanded) ...[
+                      SizedBox(height: LayoutTokens.gr2),
+                      PoliticalRowWidget(game: game),
+                    ],
+                  ],
+                ),
               ),
             ),
 
@@ -234,199 +238,61 @@ class GameOverviewView extends ConsumerWidget {
   }
 }
 
-abstract final class _OverviewHeaderMetrics {
-  static const double bottomHeight = 36;
-}
-
-/// App-bar bottom: status pill + soft separator above politics.
-class _GameOverviewAppBarBottom extends StatelessWidget {
-  const _GameOverviewAppBarBottom({
-    required this.activeName,
-    required this.phaseLabel,
-    required this.playerColor,
-    required this.isLocalTurn,
+class _PoliticsToggleButton extends StatelessWidget {
+  const _PoliticsToggleButton({
+    required this.expanded,
+    required this.onPressed,
   });
 
-  final String activeName;
-  final String phaseLabel;
-  final Color? playerColor;
-  final bool isLocalTurn;
+  final bool expanded;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(height: LayoutTokens.gr1),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr3),
-          child: Center(
-            child: _GameOverviewTurnStatusPill(
-              activeName: activeName,
-              phaseLabel: phaseLabel,
-              playerColor: playerColor,
-              isLocalTurn: isLocalTurn,
-            ),
-          ),
-        ),
-        SizedBox(height: LayoutTokens.gr1 + 2),
-        Divider(
-          height: 1,
-          thickness: 1,
-          color: colors.borderSubtle.withValues(alpha: OpacityTokens.soft),
-        ),
-      ],
-    );
-  }
-}
-
-/// Compact turn-status chip under the overview app-bar title row.
-class _GameOverviewTurnStatusPill extends StatelessWidget {
-  const _GameOverviewTurnStatusPill({
-    required this.activeName,
-    required this.phaseLabel,
-    required this.playerColor,
-    required this.isLocalTurn,
-  });
-
-  final String activeName;
-  final String phaseLabel;
-  final Color? playerColor;
-  final bool isLocalTurn;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.gameColors;
-    final accent = colors.primaryAccent;
-    final dotColor = playerColor ?? accent;
-
-    final label = isLocalTurn
-        ? 'Your turn · $activeName · $phaseLabel'
-        : '$activeName · $phaseLabel phase';
 
     return Semantics(
-      label: label,
-      child: Container(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.sizeOf(context).width * 0.72,
-        ),
-        padding: EdgeInsets.fromLTRB(
-          isLocalTurn ? LayoutTokens.gr1 : LayoutTokens.gr1 + 2,
-          LayoutTokens.gr0 + 1,
-          LayoutTokens.gr1 + 2,
-          LayoutTokens.gr0 + 1,
-        ),
-        decoration: BoxDecoration(
-          color: isLocalTurn
-              ? accent.withValues(alpha: OpacityTokens.subtle)
-              : colors.backgroundSecondary,
-          borderRadius: RadiusTokens.radiusPill,
-          border: Border.all(
-            color: isLocalTurn
-                ? accent.withValues(alpha: OpacityTokens.moderate)
-                : colors.borderSubtle.withValues(alpha: OpacityTokens.strong),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (isLocalTurn) ...[
-              _TurnStatusMicroChip(
-                label: 'Your turn',
-                backgroundColor: accent.withValues(alpha: OpacityTokens.soft),
-                foregroundColor: accent,
-              ),
-              SizedBox(width: LayoutTokens.gr0 + 2),
-              _TurnStatusMicroChip(
-                label: phaseLabel,
-                backgroundColor: accent.withValues(alpha: OpacityTokens.soft),
-                foregroundColor: accent,
-              ),
-            ] else ...[
-              Container(
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: dotColor,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: colors.textPrimary.withValues(alpha: 0.12),
-                    width: 0.5,
-                  ),
+      button: true,
+      expanded: expanded,
+      label: expanded ? 'Hide table politics' : 'Show table politics',
+      child: Material(
+        color: colors.backgroundSecondary.withValues(alpha: OpacityTokens.soft),
+        borderRadius: RadiusTokens.radiusControlSm,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: RadiusTokens.radiusControlSm,
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: LayoutTokens.gr2,
+              vertical: LayoutTokens.gr1,
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.public,
+                  size: LayoutTokens.gr3,
+                  color: colors.emphasis,
                 ),
-              ),
-              SizedBox(width: LayoutTokens.gr0 + 2),
-              Flexible(
-                child: Text(
-                  activeName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: colors.textPrimary,
-                    fontSize: FontTokens.hudXs,
-                    fontWeight: FontWeight.w700,
-                    height: 1.2,
-                  ),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr0 + 1),
-                child: Text(
-                  '·',
-                  style: TextStyle(
-                    color: colors.textSecondary.withValues(
-                      alpha: OpacityTokens.strong,
+                SizedBox(width: LayoutTokens.gr1),
+                Expanded(
+                  child: Text(
+                    'Table politics',
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontSize: FontTokens.caption,
+                      fontWeight: FontWeight.w700,
+                      height: 1.2,
                     ),
-                    fontSize: FontTokens.hudXs,
-                    height: 1.2,
                   ),
                 ),
-              ),
-              _TurnStatusMicroChip(
-                label: phaseLabel,
-                backgroundColor: accent.withValues(alpha: OpacityTokens.subtle),
-                foregroundColor: accent,
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TurnStatusMicroChip extends StatelessWidget {
-  const _TurnStatusMicroChip({
-    required this.label,
-    required this.backgroundColor,
-    required this.foregroundColor,
-  });
-
-  final String label;
-  final Color backgroundColor;
-  final Color foregroundColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: LayoutTokens.gr0 + 2,
-        vertical: 2,
-      ),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: RadiusTokens.radiusPill,
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: foregroundColor,
-          fontSize: FontTokens.hudXs,
-          fontWeight: FontWeight.w800,
-          height: 1.1,
-          letterSpacing: 0.15,
+                Icon(
+                  expanded ? Icons.expand_less : Icons.expand_more,
+                  size: LayoutTokens.gr3,
+                  color: colors.textSecondary,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -550,6 +416,44 @@ class _GameOverviewStatusChip extends StatelessWidget {
           fontSize: FontTokens.caption,
           fontWeight: FontWeight.w700,
           height: 1,
+        ),
+      ),
+    );
+  }
+}
+
+class _GameOverviewCommanderTaxChip extends StatelessWidget {
+  const _GameOverviewCommanderTaxChip({required this.tax});
+
+  final int tax;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.gameColors;
+    return Semantics(
+      label: 'Commander tax plus $tax',
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 36, minWidth: 40),
+        padding: EdgeInsets.symmetric(
+          horizontal: LayoutTokens.gr1,
+          vertical: LayoutTokens.gr0,
+        ),
+        decoration: BoxDecoration(
+          color: colors.textSecondary.withValues(alpha: 0.15),
+          borderRadius: RadiusTokens.radiusControlSm,
+          border: Border.all(
+            color: colors.textSecondary.withValues(alpha: 0.6),
+          ),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          'Tax +$tax',
+          style: TextStyle(
+            color: colors.textSecondary,
+            fontSize: FontTokens.caption,
+            fontWeight: FontWeight.w700,
+            height: 1,
+          ),
         ),
       ),
     );
@@ -718,6 +622,10 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                           isActive: isActive,
                           accent: borderColor,
                         ),
+                        SizedBox(width: LayoutTokens.gr1),
+                      ],
+                      if (p.commanderCastCount > 0) ...[
+                        _GameOverviewCommanderTaxChip(tax: p.commanderTax),
                         SizedBox(width: LayoutTokens.gr1),
                       ],
                       _GameOverviewLifeBadge(

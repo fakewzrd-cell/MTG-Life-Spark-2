@@ -50,10 +50,13 @@ class _PhasePickerSheetState extends State<PhasePickerSheet> {
   late FixedExtentScrollController _wheelCtrl;
   late int _highlightIndex;
 
+  List<GamePhase> get _phases => GamePhase.navigationOrder;
+
   @override
   void initState() {
     super.initState();
-    _highlightIndex = widget.currentPhase.index;
+    _highlightIndex = _phases.indexOf(widget.currentPhase);
+    if (_highlightIndex < 0) _highlightIndex = 0;
     _wheelCtrl = FixedExtentScrollController(initialItem: _highlightIndex);
   }
 
@@ -115,9 +118,9 @@ class _PhasePickerSheetState extends State<PhasePickerSheet> {
                       setState(() => _highlightIndex = i);
                     },
                     childDelegate: ListWheelChildBuilderDelegate(
-                      childCount: GamePhase.values.length,
+                      childCount: _phases.length,
                       builder: (context, index) {
-                        final phase = GamePhase.values[index];
+                        final phase = _phases[index];
                         final centered = index == _highlightIndex;
                         return Material(
                           color: Colors.transparent,
@@ -162,11 +165,10 @@ class _PhasePickerSheetState extends State<PhasePickerSheet> {
               Expanded(
                 flex: 2,
                 child: FilledButton(
-                  onPressed:
-                      () => _select(GamePhase.values[_highlightIndex]),
+                  onPressed: () => _select(_phases[_highlightIndex]),
                   style: GameUiTokens.sheetPrimaryButton(widget.accentColor),
                   child: Text(
-                    'Set ${GamePhase.values[_highlightIndex].displayName}',
+                    'Set ${_phases[_highlightIndex].displayName}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

@@ -77,7 +77,7 @@ void main() {
               width: 320,
               child: PhaseNavCluster(
                 game: _minimalGame().copyWith(
-                  currentPhase: GamePhase.combatDamage,
+                  currentPhase: GamePhase.combat,
                 ),
                 accentColor: Colors.purple,
                 onBack: () {},
@@ -94,7 +94,7 @@ void main() {
 
     expect(tester.takeException(), isNull);
     // Center column is narrow at 320dp — short phase label is used.
-    expect(find.text('Damage'), findsOneWidget);
+    expect(find.text('Combat'), findsOneWidget);
   });
 
   testWidgets('End turn disabled when endTurnEnabled is false', (tester) async {
