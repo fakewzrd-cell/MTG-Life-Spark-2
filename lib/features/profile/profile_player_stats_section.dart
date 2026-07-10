@@ -9,8 +9,8 @@ import '../../core/models/player_deck.dart';
 import '../../core/models/player_profile.dart';
 import '../../core/persistence/providers.dart';
 import 'profile_optional_stat_ids.dart';
-import '../../shared/constants/app_icons.dart';
 import '../../shared/utils/commander_image_resolver.dart';
+import '../../shared/widgets/profile_default_banner.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
@@ -26,40 +26,6 @@ double _profileLayoutTextScale(BuildContext context) {
   final t = MediaQuery.textScalerOf(context).scale(1.0);
   if (!t.isFinite || t <= 0) return 1.0;
   return t.clamp(1.0, 1.45);
-}
-
-Widget _defaultBannerFill(BuildContext context) {
-  final scheme = Theme.of(context).colorScheme;
-  return ColoredBox(
-    color: scheme.surfaceContainer,
-    child: DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            scheme.surfaceContainerLow,
-            scheme.surfaceContainer,
-            Color.lerp(scheme.surfaceContainer, scheme.primary, 0.06)!,
-          ],
-        ),
-      ),
-    ),
-  );
-}
-
-Widget _defaultProfileBannerArt(
-  BuildContext context, {
-  double? height,
-}) {
-  return Image.asset(
-    AppIcons.defaultProfileBanner,
-    fit: BoxFit.cover,
-    width: double.infinity,
-    height: height,
-    alignment: const Alignment(0, -0.15),
-    errorBuilder: (ctx, _, __) => _defaultBannerFill(ctx),
-  );
 }
 
 /// Counts XP-in-level numerals so the label matches the progress bar animation.
@@ -578,12 +544,12 @@ class _PlayerStatsHighlightCard extends StatelessWidget {
                           imageUrl: imageUrl!,
                           fit: BoxFit.cover,
                           placeholder: (_, __) =>
-                              _defaultBannerFill(context),
+                              defaultBannerFill(context),
                           errorWidget: (_, __, ___) =>
-                              _defaultBannerFill(context),
+                              defaultBannerFill(context),
                         )
                       else
-                        _defaultProfileBannerArt(context),
+                        defaultProfileBannerArt(context),
                       DecoratedBox(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(

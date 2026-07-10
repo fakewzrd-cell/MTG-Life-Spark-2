@@ -6,7 +6,9 @@ import '../../../ui/tokens/motion_tokens.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/game/commander_identity_colors.dart';
+import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
+import '../../../ui/tokens/opacity_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
 import '../../../ui/tokens/spacing_tokens.dart';
 import 'game_colors.dart';
@@ -14,7 +16,7 @@ import 'game_modal_chrome.dart';
 
 /// The main life counter — occupies the center of the personal view.
 ///
-/// Displays **only** `life−1`, `life`, `life+1` between the edge controls.
+/// Displays the current life total, flanked by tappable −/+ edge strips.
 ///
 /// Interactions:
 ///   • Horizontal drag on the triplet → ±1 per 36px (4dp-aligned stride)
@@ -207,27 +209,17 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
 
                     final baseFontSize =
                         (wBody < 200 || hBody < 120)
-                            ? 44.0
+                            ? FontTokens.displayLife - 12
                             : (wBody < 280 || hBody < 150)
-                            ? 56.0
+                            ? FontTokens.displayLife
                             : (widget.life.abs() >= 100 ? 72.0 : 80.0);
                     final deltaFontSize = (baseFontSize * 0.27).clamp(
                       18.0,
                       26.0,
                     );
 
-                    final neighborFontSize =
-                        (baseFontSize * 0.34).clamp(14.0, 26.0);
-                    final neighborColor = colors.textSecondary.withValues(
-                      alpha: 0.42,
-                    );
-                    final gap = LayoutTokens.gr2;
-
-                    final prev = widget.life - 1;
-                    final next = widget.life + 1;
-
                     final stepDivider = colors.textSecondary.withValues(
-                      alpha: 0.12,
+                      alpha: OpacityTokens.subtle,
                     );
 
                     return Semantics(
@@ -271,69 +263,25 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
                                     color: colors.backgroundPrimary.withValues(
                                       alpha: 0.12,
                                     ),
-                                    child: ClipRect(
-                                      child: Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          Expanded(
-                                            child: FittedBox(
-                                              fit: BoxFit.scaleDown,
-                                              alignment: Alignment.centerRight,
-                                              child: Text(
-                                                '$prev',
-                                                maxLines: 1,
-                                                textAlign: TextAlign.right,
-                                                style: TextStyle(
-                                                  fontSize: neighborFontSize,
-                                                  fontWeight: FontWeight.w700,
-                                                  color: neighborColor,
-                                                  letterSpacing: -0.5,
-                                                  height: 1.0,
-                                                ),
-                                              ),
-                                            ),
+                                    child: Center(
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        alignment: Alignment.center,
+                                        child: Text(
+                                          '${widget.life}',
+                                          maxLines: 1,
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: baseFontSize,
+                                            fontWeight: FontWeight.w800,
+                                            color: _lifeColor(colors),
+                                            letterSpacing: -2,
+                                            height: 1.0,
+                                            fontFeatures: const [
+                                              FontFeature.tabularFigures(),
+                                            ],
                                           ),
-                                          SizedBox(width: gap),
-                                          Expanded(
-                                            flex: 2,
-                                            child: FittedBox(
-                                              fit: BoxFit.scaleDown,
-                                              alignment: Alignment.center,
-                                              child: Text(
-                                                '${widget.life}',
-                                                maxLines: 1,
-                                                textAlign: TextAlign.center,
-                                                style: TextStyle(
-                                                  fontSize: baseFontSize,
-                                                  fontWeight: FontWeight.w800,
-                                                  color: _lifeColor(colors),
-                                                  letterSpacing: -2,
-                                                  height: 1.0,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          SizedBox(width: gap),
-                                          Expanded(
-                                            child: FittedBox(
-                                              fit: BoxFit.scaleDown,
-                                              alignment: Alignment.centerLeft,
-                                              child: Text(
-                                                '$next',
-                                                maxLines: 1,
-                                                textAlign: TextAlign.left,
-                                                style: TextStyle(
-                                                  fontSize: neighborFontSize,
-                                                  fontWeight: FontWeight.w700,
-                                                  color: neighborColor,
-                                                  letterSpacing: -0.5,
-                                                  height: 1.0,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
+                                        ),
                                       ),
                                     ),
                                   ),

@@ -280,7 +280,7 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
               ? Text(
                   manaCostPlainText(card.manaCost!),
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: FontTokens.caption,
                     fontWeight: FontWeight.w600,
                     color: ColorTokens.textSecondary,
                   ),

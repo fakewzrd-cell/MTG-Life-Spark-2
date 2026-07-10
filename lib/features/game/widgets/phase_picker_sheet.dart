@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import '../../../shared/utils/game_haptics.dart';
 
 import '../../../core/game/game_phase.dart';
 import '../../../ui/tokens/font_tokens.dart';
@@ -67,7 +67,7 @@ class _PhasePickerSheetState extends State<PhasePickerSheet> {
   }
 
   void _select(GamePhase phase) {
-    HapticFeedback.selectionClick();
+    context.gameHapticSelection();
     widget.onSelected(phase);
   }
 

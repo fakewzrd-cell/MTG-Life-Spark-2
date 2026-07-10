@@ -12,6 +12,7 @@ import 'package:mgt_life_spark/shared/theme/app_theme.dart';
 import 'fake_ble_service.dart';
 import 'test_profile_repository.dart';
 import 'test_progression_service.dart';
+import 'test_settings_repository.dart';
 
 PlayerGameState harnessPlayer({
   required String id,
@@ -59,6 +60,7 @@ List<Override> gameTestOverrides({
   return [
     sessionServiceProvider.overrideWith((ref) => ble),
     profileRepositoryProvider.overrideWithValue(TestProfileRepository()),
+    settingsRepositoryProvider.overrideWithValue(TestSettingsRepository()),
     progressionServiceProvider.overrideWithValue(
       progression ?? TestProgressionService(),
     ),

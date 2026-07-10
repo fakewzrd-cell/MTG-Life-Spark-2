@@ -13,27 +13,21 @@ import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/color_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 
-/// Which profile image field [ProfileBannerPickerScreen] updates.
-enum ProfileImagePickerKind { banner, avatar }
-
-/// Pick MTG card art for the profile banner or circular avatar.
-class ProfileBannerPickerScreen extends ConsumerStatefulWidget {
-  const ProfileBannerPickerScreen({
-    super.key,
-    this.kind = ProfileImagePickerKind.banner,
-  });
-
-  final ProfileImagePickerKind kind;
-
-  bool get _isAvatar => kind == ProfileImagePickerKind.avatar;
+/// Pick MTG card art for the circular profile picture.
+///
+/// The hero banner itself is a fixed default graphic (not user-selectable)
+/// so it never duplicates the same card art shown here — see
+/// `_defaultProfileBannerArt` in `profile_screen.dart`.
+class ProfilePicturePickerScreen extends ConsumerStatefulWidget {
+  const ProfilePicturePickerScreen({super.key});
 
   @override
-  ConsumerState<ProfileBannerPickerScreen> createState() =>
-      _ProfileBannerPickerScreenState();
+  ConsumerState<ProfilePicturePickerScreen> createState() =>
+      _ProfilePicturePickerScreenState();
 }
 
-class _ProfileBannerPickerScreenState
-    extends ConsumerState<ProfileBannerPickerScreen> {
+class _ProfilePicturePickerScreenState
+    extends ConsumerState<ProfilePicturePickerScreen> {
   final _searchController = TextEditingController();
   Timer? _debounce;
 
@@ -94,11 +88,7 @@ class _ProfileBannerPickerScreenState
   Future<void> _applyAndReturn(String? imageUrl) async {
     final profile = ref.read(profileRepositoryProvider).getProfile();
     if (profile == null) return;
-    if (widget._isAvatar) {
-      profile.profileAvatarImageUrl = imageUrl;
-    } else {
-      profile.profileBannerImageUrl = imageUrl;
-    }
+    profile.profileAvatarImageUrl = imageUrl;
     await ref.read(profileRepositoryProvider).saveProfile(profile);
     if (!mounted) return;
     // Navigate home before refreshing router listeners (avoids stack glitch).
@@ -127,14 +117,11 @@ class _ProfileBannerPickerScreenState
     final colors = AppColorTokens.of(context);
     final profile = ref.watch(profileRepositoryProvider).getProfile();
     final commanderUrl = profile?.selectedCommanderImageUrl;
-    final canUseCommander =
-        widget._isAvatar &&
-        commanderUrl != null &&
-        commanderUrl.isNotEmpty;
+    final canUseCommander = commanderUrl != null && commanderUrl.isNotEmpty;
 
     return Scaffold(
       appBar: UiAppBar(
-        title: widget._isAvatar ? 'Profile picture' : 'Profile banner',
+        title: 'Profile picture',
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: _returnToProfile,
@@ -172,9 +159,7 @@ class _ProfileBannerPickerScreenState
               controller: _searchController,
               autofocus: true,
               decoration: InputDecoration(
-                hintText: widget._isAvatar
-                    ? 'Search MTG cards for profile picture…'
-                    : 'Search MTG cards for banner art…',
+                hintText: 'Search MTG cards for profile picture…',
                 prefixIcon: Icon(
                   Icons.search,
                   color: colors.textSecondary,
@@ -229,9 +214,7 @@ class _ProfileBannerPickerScreenState
         child: Padding(
           padding: EdgeInsets.all(LayoutTokens.gr4),
           child: Text(
-            widget._isAvatar
-                ? 'Search for a card—its art becomes your profile picture.'
-                : 'Search for a card—its art will fill the banner behind your profile.',
+            'Search for a card—its art becomes your profile picture.',
             style: TextStyle(color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
@@ -258,7 +241,7 @@ class _ProfileBannerPickerScreenState
       itemCount: _results.length,
       itemBuilder: (context, i) {
         final card = _results[i];
-        return _BannerCard(
+        return _CardArtTile(
           card: card,
           onTap: () => _onCardTap(card),
         );
@@ -267,11 +250,11 @@ class _ProfileBannerPickerScreenState
   }
 }
 
-class _BannerCard extends StatelessWidget {
+class _CardArtTile extends StatelessWidget {
   final ScryfallCard card;
   final VoidCallback onTap;
 
-  const _BannerCard({required this.card, required this.onTap});
+  const _CardArtTile({required this.card, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

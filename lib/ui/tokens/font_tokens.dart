@@ -1,8 +1,7 @@
 /// Consistent font sizes — **multiples of 4** for alignment with the 4dp layout grid.
 /// Pair with [FontWeight] on [TextStyle] for hierarchy when two slots share a size.
 ///
-/// HUD slots ([hudXs], [hudSm]) are 11/13 — intentionally off the 4dp grid to
-/// match standard game-HUD readability convention in compact viewports.
+/// HUD slots ([hudXs], [hudSm]) align to M3 label scale (12/14) on the 4dp grid.
 class FontTokens {
   FontTokens._();
 
@@ -20,11 +19,11 @@ class FontTokens {
 
   // ── HUD / game compact slots ──────────────────────────────────────────────
 
-  /// Compact HUD micro-label (11). Smallest legible in-game text.
-  static const double hudXs = 11;
+  /// Compact HUD micro-label (12). M3 labelSmall floor for in-game text.
+  static const double hudXs = 12;
 
-  /// Compact HUD secondary label (13). Between caption and body.
-  static const double hudSm = 13;
+  /// Compact HUD secondary label (14). M3 labelLarge for phase/turn banners.
+  static const double hudSm = 14;
 
   // ── Body / UI ─────────────────────────────────────────────────────────────
 

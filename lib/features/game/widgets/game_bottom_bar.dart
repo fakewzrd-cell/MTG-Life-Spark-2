@@ -11,6 +11,7 @@ import '../../../core/network/session_providers.dart';
 import '../../../shared/utils/app_router.dart';
 import '../../../shared/widgets/home_nav_bar.dart';
 import '../../../shared/widgets/player_feedback_widgets.dart';
+import '../../../shared/utils/game_haptics.dart';
 import '../../../ui/tokens/color_tokens.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
@@ -79,6 +80,7 @@ class GameBottomBar extends ConsumerWidget {
                     icon: Icons.home_rounded,
                     label: 'Home',
                     iconSize: iconSize,
+                    compact: compact,
                     enabled: true,
                     onTap: () => HomeNavBar.promptQuitAndGoHome(context, ref),
                   ),
@@ -90,6 +92,7 @@ class GameBottomBar extends ConsumerWidget {
                     icon: Icons.undo,
                     label: 'Undo',
                     iconSize: iconSize,
+                    compact: compact,
                     enabled: !local.isEliminated,
                     onTap: () => notifier.undo(local.playerId),
                   ),
@@ -103,6 +106,7 @@ class GameBottomBar extends ConsumerWidget {
                           game.timeoutActive ? Icons.play_arrow : Icons.timer,
                       label: game.timeoutActive ? 'Resume' : 'Timeout',
                       iconSize: iconSize,
+                      compact: compact,
                       onTap: () {
                         if (game.timeoutActive) {
                           notifier.endTimeout();
@@ -119,6 +123,7 @@ class GameBottomBar extends ConsumerWidget {
                     icon: Icons.grid_view,
                     label: 'Overview',
                     iconSize: iconSize,
+                    compact: compact,
                     enabled: true,
                     onTap: onToggleOverview,
                   ),
@@ -130,6 +135,7 @@ class GameBottomBar extends ConsumerWidget {
                     icon: Icons.flag_outlined,
                     label: 'Forfeit',
                     iconSize: iconSize,
+                    compact: compact,
                     enabled: !local.isEliminated && !game.gameOver,
                     onTap:
                         () => _showConcedeDialog(context, ref, local.playerId),
@@ -479,6 +485,7 @@ class _GameBarButton extends StatelessWidget {
   final VoidCallback? onTap;
   final bool enabled;
   final double iconSize;
+  final bool compact;
 
   const _GameBarButton({
     required this.icon,
@@ -486,6 +493,7 @@ class _GameBarButton extends StatelessWidget {
     this.onTap,
     this.enabled = true,
     this.iconSize = 24,
+    this.compact = false,
   });
 
   @override
@@ -498,23 +506,49 @@ class _GameBarButton extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: enabled ? onTap : null,
+        onTap: enabled
+            ? () {
+                context.gameHapticLight();
+                onTap?.call();
+              }
+            : null,
         borderRadius: RadiusTokens.radiusMd,
-        child: Tooltip(
-          message: label,
-          child: Semantics(
-            button: true,
-            enabled: enabled,
-            label: label,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                minWidth: LayoutTokens.gr6,
-                minHeight: LayoutTokens.gr6,
+        child: Semantics(
+          button: true,
+          enabled: enabled,
+          label: label,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              minWidth: LayoutTokens.gr6,
+              minHeight: LayoutTokens.gr6,
+            ),
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: LayoutTokens.gr1,
+                vertical: compact ? LayoutTokens.gr1 : LayoutTokens.gr2,
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(LayoutTokens.gr2),
-                child: Center(
-                  child: Icon(icon, size: iconSize, color: c),
+              // Icon + label are decorative here — the explicit Semantics
+              // above is the single source of truth for the a11y label, so
+              // the Text below must not contribute its own competing node.
+              child: ExcludeSemantics(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(icon, size: iconSize, color: c),
+                    SizedBox(height: LayoutTokens.gr0),
+                    Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: FontTokens.hudXs - (compact ? 2 : 0),
+                        fontWeight: FontWeight.w600,
+                        color: c,
+                        height: 1,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

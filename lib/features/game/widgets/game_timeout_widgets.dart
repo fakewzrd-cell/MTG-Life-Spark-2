@@ -272,7 +272,7 @@ class _GameTimeoutOverlayState extends State<GameTimeoutOverlay> {
                             : '$_timeStr elapsed',
                         style: TextStyle(
                           color: colors.textPrimary,
-                          fontSize: 36,
+                          fontSize: FontTokens.displayCommander,
                           fontWeight: FontWeight.bold,
                           fontFeatures: [FontFeature.tabularFigures()],
                         ),

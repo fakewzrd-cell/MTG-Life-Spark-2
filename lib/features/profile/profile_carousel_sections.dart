@@ -11,12 +11,12 @@ import '../../core/models/match_record.dart';
 import '../../core/models/player_deck.dart';
 import '../../core/models/player_profile.dart';
 import '../../core/persistence/providers.dart';
-import '../../shared/constants/app_icons.dart';
 import '../../shared/widgets/game_icon.dart';
 import '../../shared/utils/app_router.dart';
 import '../../shared/utils/commander_image_resolver.dart';
 import '../../shared/widgets/deck_tile_visual.dart';
 import '../../shared/widgets/mana_cost_pips.dart';
+import '../../shared/widgets/profile_default_banner.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
@@ -49,25 +49,6 @@ RoundedRectangleBorder _profileCarouselCardShape(ColorScheme scheme) {
   );
 }
 
-Widget _defaultBannerFill(BuildContext context) {
-  final scheme = Theme.of(context).colorScheme;
-  return ColoredBox(color: scheme.surfaceContainerHighest);
-}
-
-Widget _defaultProfileBannerArt(
-  BuildContext context, {
-  double? height,
-}) {
-  return Image.asset(
-    AppIcons.defaultProfileBanner,
-    fit: BoxFit.cover,
-    width: double.infinity,
-    height: height,
-    alignment: const Alignment(0, -0.15),
-    errorBuilder: (ctx, _, __) => _defaultBannerFill(ctx),
-  );
-}
-
 Widget _recentMatchCommanderArt(BuildContext context, String? imageUrl) {
   if (imageUrl != null && imageUrl.isNotEmpty) {
     return CachedNetworkImage(
@@ -75,11 +56,11 @@ Widget _recentMatchCommanderArt(BuildContext context, String? imageUrl) {
       fit: BoxFit.cover,
       width: double.infinity,
       height: double.infinity,
-      placeholder: (_, __) => _defaultBannerFill(context),
-      errorWidget: (_, __, ___) => _defaultBannerFill(context),
+      placeholder: (_, __) => defaultBannerFill(context),
+      errorWidget: (_, __, ___) => defaultBannerFill(context),
     );
   }
-  return _defaultProfileBannerArt(context);
+  return defaultProfileBannerArt(context);
 }
 
 Widget _recentMatchCardVignette({bool expanded = false}) {
@@ -886,7 +867,7 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
     final structureStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
       color: colors.textSecondary,
       fontWeight: FontWeight.w600,
-      fontSize: 12,
+      fontSize: FontTokens.caption,
       height: 1.35,
     );
     final formatStyle = Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -1011,7 +992,10 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
                     horizontal: LayoutTokens.gr3,
                     vertical: LayoutTokens.gr2,
                   ),
-                  minimumSize: const Size(double.infinity, 44),
+                  minimumSize: const Size(
+                    double.infinity,
+                    LayoutTokens.minTapTarget,
+                  ),
                   tapTargetSize: MaterialTapTargetSize.padded,
                   shape: const StadiumBorder(),
                   side: BorderSide(
@@ -1198,8 +1182,8 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
                   padding: EdgeInsets.zero,
                   visualDensity: VisualDensity.compact,
                   constraints: const BoxConstraints(
-                    minWidth: 36,
-                    minHeight: 36,
+                    minWidth: LayoutTokens.minTapTarget,
+                    minHeight: LayoutTokens.minTapTarget,
                   ),
                 ),
               ),

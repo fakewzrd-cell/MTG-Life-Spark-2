@@ -54,7 +54,7 @@ class ActiveTurnBanner extends StatelessWidget {
               style: TextStyle(
                 color: isLocal ? colors.primaryAccent : colors.textPrimary,
                 fontWeight: FontWeight.w800,
-                fontSize: FontTokens.hudSm,
+                fontSize: FontTokens.body,
                 height: 1.1,
                 letterSpacing: 0.15,
               ),

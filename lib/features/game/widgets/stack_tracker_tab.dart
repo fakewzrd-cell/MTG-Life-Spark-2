@@ -1275,8 +1275,8 @@ class _StackCardInfo extends StatelessWidget {
                 visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(
-                  minWidth: LayoutTokens.gr3,
-                  minHeight: LayoutTokens.gr3,
+                  minWidth: LayoutTokens.minTapTarget,
+                  minHeight: LayoutTokens.minTapTarget,
                 ),
                 tooltip: 'Card rules',
                 icon: Icon(

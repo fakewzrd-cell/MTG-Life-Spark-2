@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import 'game_modal_chrome.dart';
 import 'game_ui_tokens.dart';
@@ -88,16 +89,25 @@ class _CounterAdjustSheetState extends State<CounterAdjustSheet> {
               _AdjBtn(label: '−5', onTap: () => _adjust(-5)),
               const SizedBox(width: LayoutTokens.gr1),
               _AdjBtn(label: '−1', onTap: () => _adjust(-1)),
-              const SizedBox(width: LayoutTokens.gr3),
-              Text(
-                '$_value',
-                style: TextStyle(
-                  color: colors.textPrimary,
-                  fontSize: LayoutTokens.gr2 * 3,
-                  fontWeight: FontWeight.bold,
+              // Flexible + FittedBox — a 4-digit value (custom counters
+              // clamp at 9999) must shrink to fit on narrow phones instead
+              // of overflowing the fixed-width +/- buttons on either side.
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr1),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      '$_value',
+                      style: TextStyle(
+                        color: colors.textPrimary,
+                        fontSize: FontTokens.displayCommander,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(width: LayoutTokens.gr3),
               _AdjBtn(label: '+1', onTap: () => _adjust(1)),
               const SizedBox(width: LayoutTokens.gr1),
               _AdjBtn(label: '+5', onTap: () => _adjust(5)),

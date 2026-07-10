@@ -2,13 +2,13 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import '../../../ui/tokens/font_tokens.dart';
-import 'package:flutter/services.dart';
 import '../../../core/game/gameplay_dial_ids.dart';
 import '../../../core/game/player_game_state.dart';
 import 'game_colors.dart';
 import '../../../ui/theme/app_color_tokens.dart';
 import 'game_modal_chrome.dart';
 import '../../../shared/widgets/game_icon.dart';
+import '../../../shared/utils/game_haptics.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/motion_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
@@ -56,18 +56,34 @@ class _DialMetrics {
   double get tileStackHeight => pillHeaderHeight + pillBodyHeight;
 
   /// [shortestSide] = `MediaQuery.sizeOf(context).shortestSide`
-  factory _DialMetrics.scale(double shortestSide) {
+  /// [compactVertical] shrinks step/wheel bands when Play tab height is tight.
+  factory _DialMetrics.scale(
+    double shortestSide, {
+    bool compactVertical = false,
+  }) {
+    if (compactVertical) {
+      return const _DialMetrics(
+        pillHeaderHeight: 36,
+        stepTapHeight: 40,
+        wheelHeight: 44,
+        itemExtent: 20,
+        leadingSize: 16,
+        stepIconSize: 20,
+        wheelFontSize: 14,
+        addIconSize: 22,
+      );
+    }
     final t = ((shortestSide - 300) / 180).clamp(0.0, 1.0);
     double lerp(double a, double b) => a + (b - a) * t;
     double r4(double x) => (x / 4).round() * 4.0;
     return _DialMetrics(
-      pillHeaderHeight: r4(lerp(32, 36)),
-      stepTapHeight: r4(lerp(32, 36)),
-      wheelHeight: r4(lerp(56, 80)),
+      pillHeaderHeight: r4(lerp(40, 44)),
+      stepTapHeight: LayoutTokens.minTapTarget,
+      wheelHeight: r4(lerp(48, 64)),
       itemExtent: r4(lerp(20, 24)),
       leadingSize: r4(lerp(16, 20)),
       stepIconSize: r4(lerp(20, 24)),
-      wheelFontSize: r4(lerp(12, 15)),
+      wheelFontSize: r4(lerp(14, 16)),
       addIconSize: r4(lerp(22, 26)),
     );
   }
@@ -95,7 +111,10 @@ class GameplayDialsStripWidget extends StatelessWidget {
     required this.onRegisterCustomDial,
     required this.onAddDialToStrip,
     required this.onRemoveDialFromStrip,
+    this.compactVertical = false,
   });
+
+  final bool compactVertical;
 
   static const Set<String> _coreFields = {
     'poison',
@@ -225,6 +244,24 @@ class GameplayDialsStripWidget extends StatelessWidget {
   /// Dial strip is always a single row (max 4 pills + optional Add).
   static int dialStripRowCount() => 1;
 
+  /// Approximate vertical space for the dial row (planning Play tab layout).
+  static double estimatedStripHeight(
+    BuildContext context, {
+    bool compactVertical = false,
+    bool hasVisibleDials = true,
+  }) {
+    if (!hasVisibleDials) return 0;
+    final shortest = MediaQuery.sizeOf(context).shortestSide;
+    final metrics = _DialMetrics.scale(
+      shortest,
+      compactVertical: compactVertical,
+    );
+    const badgePad = _kDialRemoveBadgeOverlap;
+    return metrics.tileStackHeight +
+        math.max(badgePad, LayoutTokens.gr1) +
+        LayoutTokens.gr0;
+  }
+
   List<String> _orderedStripFields() {
     final seen = <String>{};
     final out = <String>[];
@@ -253,12 +290,12 @@ class GameplayDialsStripWidget extends StatelessWidget {
     );
   }
 
-  void _resetCounterInstant(String field) {
+  void _resetCounterInstant(BuildContext context, String field) {
     if (isEliminated) return;
     final cur = _valueOf(getPlayer(), field);
     if (cur == 0) return;
     onSetCounterAbsolute(field, 0);
-    HapticFeedback.lightImpact();
+    context.gameHapticLight();
   }
 
   Future<void> _promptCustomDial(BuildContext context) async {
@@ -377,7 +414,10 @@ class GameplayDialsStripWidget extends StatelessWidget {
           MediaQuery.sizeOf(context).shortestSide,
           constraints.maxWidth,
         );
-        final metrics = _DialMetrics.scale(shortest);
+        final metrics = _DialMetrics.scale(
+          shortest,
+          compactVertical: compactVertical,
+        );
 
         final badgePad =
             fields.isNotEmpty && !isEliminated ? _kDialRemoveBadgeOverlap : 0.0;
@@ -399,6 +439,12 @@ class GameplayDialsStripWidget extends StatelessWidget {
                 livePlayer,
                 isEliminated: isEliminated,
               );
+              // The strip is always a single row and never holds more than
+              // maxStripDials (4) slots total (the Add tile only shows while
+              // the strip has room), so `slots` must always equal the actual
+              // number of rendered children — never a narrower assumption,
+              // or pills get sized for fewer slots than are actually drawn
+              // and the row overflows past the screen edge.
               final slotCount = fields.length + (showAddButton ? 1 : 0);
               final slots = math.max(1, math.min(slotCount, _kPillsPerRow));
               var pillW = (rowContentW - gap * (slots - 1)) / slots;
@@ -461,7 +507,7 @@ class GameplayDialsStripWidget extends StatelessWidget {
                                 left: -_kDialRemoveBadgeOverlap,
                                 child: _DialStripResetButton(
                                   onPressed: () =>
-                                      _resetCounterInstant(field),
+                                      _resetCounterInstant(context, field),
                                 ),
                               ),
                             if (!isEliminated)
@@ -1166,20 +1212,23 @@ class _GameplayDialPillState extends State<_GameplayDialPill> {
                                 widget.isEliminated
                                     ? null
                                     : () {
-                                      HapticFeedback.lightImpact();
+                                      context.gameHapticLight();
                                       widget.onStep(1);
                                     },
                           ),
                           SizedBox(
                             height: wheelH,
                             width: double.infinity,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: colors.backgroundPrimary.withValues(alpha: 0.12),
-                              ),
-                              child: IgnorePointer(
-                                ignoring: widget.isEliminated,
-                                child: NotificationListener<ScrollNotification>(
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: colors.backgroundPrimary.withValues(alpha: 0.12),
+                                  ),
+                                  child: IgnorePointer(
+                                    ignoring: widget.isEliminated,
+                                    child: NotificationListener<ScrollNotification>(
                                   onNotification: (n) {
                                     if (widget.isEliminated) return false;
                                     if (n is ScrollStartNotification) {
@@ -1195,7 +1244,7 @@ class _GameplayDialPillState extends State<_GameplayDialPill> {
                                           _ctrl.selectedItem,
                                         );
                                         if (t != _clampedValue) {
-                                          HapticFeedback.selectionClick();
+                                          context.gameHapticSelection();
                                           widget.onSetAbsolute(t);
                                         }
                                       });
@@ -1210,7 +1259,7 @@ class _GameplayDialPillState extends State<_GameplayDialPill> {
                                     diameterRatio: 1.45,
                                     useMagnifier: true,
                                     magnification: 1.14,
-                                    overAndUnderCenterOpacity: 0.4,
+                                    overAndUnderCenterOpacity: 0,
                                     onSelectedItemChanged: (_) {},
                                     childDelegate:
                                         ListWheelChildBuilderDelegate(
@@ -1239,6 +1288,11 @@ class _GameplayDialPillState extends State<_GameplayDialPill> {
                                 ),
                               ),
                             ),
+                                // Groove shadow — reads as a channel the wheel
+                                // is set into, rather than floating flat on the pill.
+                                const IgnorePointer(child: _WheelGrooveShadow()),
+                              ],
+                            ),
                           ),
                           _stepButton(
                             colors: colors,
@@ -1248,7 +1302,7 @@ class _GameplayDialPillState extends State<_GameplayDialPill> {
                                 widget.isEliminated
                                     ? null
                                     : () {
-                                      HapticFeedback.lightImpact();
+                                      context.gameHapticLight();
                                       widget.onStep(-1);
                                     },
                           ),
@@ -1260,8 +1314,8 @@ class _GameplayDialPillState extends State<_GameplayDialPill> {
               ],
             ),
           ),
+          ),
         ),
-      ),
       ),
     );
   }
@@ -1286,6 +1340,36 @@ class _GameplayDialPillState extends State<_GameplayDialPill> {
               color: dim ? colors.textSecondary : colors.primaryAccent,
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Soft inward-fading edges on the counter wheel — reads as a shallow
+/// carved channel the wheel sits inside (a soft-UI "inset shadow" fake,
+/// since [BoxShadow] has no inset support). Purely decorative, ignored
+/// for hit testing by the caller.
+class _WheelGrooveShadow extends StatelessWidget {
+  const _WheelGrooveShadow();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColorTokens.of(context);
+    final grooveColor =
+        Color.lerp(colors.backgroundPrimary, Colors.black, 0.55)!;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            grooveColor.withValues(alpha: 0.4),
+            Colors.transparent,
+            Colors.transparent,
+            grooveColor.withValues(alpha: 0.4),
+          ],
+          stops: const [0.0, 0.22, 0.78, 1.0],
         ),
       ),
     );

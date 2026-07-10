@@ -30,6 +30,7 @@ import '../widgets/game_hud_header.dart';
 import '../widgets/game_overview_view.dart';
 import '../widgets/game_performance_widgets.dart';
 import '../widgets/game_timeout_widgets.dart';
+import '../widgets/gameplay_dials_strip_widget.dart';
 import '../widgets/phase_nav_cluster.dart';
 import '../widgets/stack_tracker_tab.dart';
 import '../widgets/variant_card_panel.dart';
@@ -368,6 +369,9 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
           child: GameHudHeader(
             tightVertical: tightVertical,
             accentColor: chromeAccent,
+            isLocalPlayersTurn: showCommanderHud &&
+                game.isLocalPlayersTurn &&
+                !local.isEliminated,
             selectedTabIndex: _mainTabIndex,
             onTabSelected: (index) => setState(() => _mainTabIndex = index),
             statusStrip: showCommanderHud
@@ -406,111 +410,164 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
             ),
             _ => Padding(
               padding: EdgeInsets.symmetric(horizontal: horizontalInset),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Center(
-                          child: ConstrainedBox(
-                            constraints:
-                                BoxConstraints(maxWidth: lifeBandMaxW),
-                            child: PhaseNavCluster(
-                              game: game,
-                              accentColor: chromeAccent,
-                              onBack: !game.timeoutActive
-                                  ? notifier.previousPhase
-                                  : null,
-                              onNext: !game.timeoutActive
-                                  ? notifier.advancePhase
-                                  : null,
-                              onPickPhase: game.timeoutActive
-                                  ? null
-                                  : notifier.setPhase,
-                              onEndTurn: notifier.endTurn,
-                              endTurnEnabled: !game.timeoutActive &&
-                                  (game.isLocalPlayersTurn || game.isHost),
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: playGapSm),
-                        ActiveTurnBanner(game: game),
-                        SizedBox(height: playGapMd),
-                        Expanded(
-                          child: Align(
-                            alignment: Alignment.center,
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(
-                                maxWidth: lifeBandMaxW,
-                                maxHeight: lifeBandH,
-                              ),
-                              child: SizedBox(
-                                height: lifeBandH,
-                                width: double.infinity,
-                                child: ScopedLifeCounter(
-                                  playerId: local.playerId,
-                                  height: lifeBandH,
-                                  onLifeChange: adjustLife,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const VariantCardPanel(),
-                        if ((game.trackTurnDuration ||
-                                game.turnTimeLimitSeconds != null) &&
-                            game.turnStartTime != null) ...[
-                          SizedBox(height: playGapSm),
-                          GameTurnDurationBanner(
-                            turnStartTime: game.turnStartTime!,
-                            limitSeconds: game.turnTimeLimitSeconds,
-                            isActiveTurn: game.isLocalPlayersTurn,
-                            activePlayerName:
-                                game.playerById(game.activePlayerId)
-                                    ?.username ??
-                                'Player',
-                          ),
-                        ],
-                      ],
+              child: LayoutBuilder(
+                builder: (context, playConstraints) {
+                  final variantsEnabled = game.planechaseEnabled ||
+                      game.archenemyEnabled ||
+                      game.bountyEnabled;
+                  final showTurnTimer =
+                      (game.trackTurnDuration ||
+                          game.turnTimeLimitSeconds != null) &&
+                      game.turnStartTime != null;
+                  final hasExtraRows = variantsEnabled || showTurnTimer;
+                  final dialCompact =
+                      tightVertical ||
+                      playConstraints.maxHeight < 520 ||
+                      (hasExtraRows &&
+                          playConstraints.maxHeight <
+                              GameLayoutBreakpoints.shortViewport);
+
+                  final phaseBar = Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: lifeBandMaxW),
+                      child: PhaseNavCluster(
+                        game: game,
+                        accentColor: chromeAccent,
+                        onBack: !game.timeoutActive
+                            ? notifier.previousPhase
+                            : null,
+                        onNext: !game.timeoutActive
+                            ? notifier.advancePhase
+                            : null,
+                        onPickPhase: game.timeoutActive
+                            ? null
+                            : notifier.setPhase,
+                        onEndTurn: notifier.endTurn,
+                        endTurnEnabled: !game.timeoutActive &&
+                            (game.isLocalPlayersTurn || game.isHost),
+                      ),
                     ),
-                  ),
-                  Padding(
+                  );
+                  final lifeCounter = Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: lifeBandMaxW,
+                        maxHeight: lifeBandH,
+                      ),
+                      child: ScopedLifeCounter(
+                        playerId: local.playerId,
+                        onLifeChange: adjustLife,
+                      ),
+                    ),
+                  );
+                  final dialStrip = Padding(
                     padding: EdgeInsets.only(bottom: playGapSm),
                     child: ScopedGameplayDials(
                       playerId: local.playerId,
+                      compactVertical: dialCompact,
                       onAdjustCounter: (field, delta) =>
-                          notifier.adjustCounter(
-                        local.playerId,
-                        field,
-                        delta,
-                      ),
-                      onSetCounterAbsolute: (field, v) =>
-                          notifier.setGameplayDialAbsolute(
-                        local.playerId,
-                        field,
-                        v,
-                      ),
-                      onRegisterCustomDial: (key, label) =>
-                          notifier.registerCustomGameplayDial(
-                        local.playerId,
-                        key,
-                        label,
-                      ),
+                          notifier.adjustCounter(local.playerId, field, delta),
+                      onSetCounterAbsolute: (field, v) => notifier
+                          .setGameplayDialAbsolute(local.playerId, field, v),
+                      onRegisterCustomDial: (key, label) => notifier
+                          .registerCustomGameplayDial(
+                              local.playerId, key, label),
                       onAddDialToStrip: (field) =>
                           notifier.addGameplayDialToStrip(
-                        local.playerId,
-                        field,
+                              local.playerId, field),
+                      onRemoveDialFromStrip: (field) => notifier
+                          .removeGameplayDialFromStrip(local.playerId, field),
+                    ),
+                  );
+
+                  // Small pinned rows above the life counter: a variant
+                  // quick-access chip (opens full deck content in a bottom
+                  // sheet, off the Play tab's layout budget) and/or the turn
+                  // timer. Both are compact/fixed-height, so — unlike the
+                  // old inline variant card list — they never need a
+                  // flexible or scrollable region of their own.
+                  final extraRows = <Widget>[
+                    if (variantsEnabled) ...[
+                      const VariantQuickAccessChip(),
+                      SizedBox(height: playGapSm),
+                    ],
+                    if (showTurnTimer) ...[
+                      Center(
+                        child: GameTurnDurationBanner(
+                          turnStartTime: game.turnStartTime!,
+                          limitSeconds: game.turnTimeLimitSeconds,
+                          isActiveTurn: game.isLocalPlayersTurn,
+                          activePlayerName:
+                              game
+                                  .playerById(game.activePlayerId)
+                                  ?.username ??
+                              'Player',
+                        ),
                       ),
-                      onRemoveDialFromStrip: (field) =>
-                          notifier.removeGameplayDialFromStrip(
-                        local.playerId,
-                        field,
+                      SizedBox(height: playGapSm),
+                    ],
+                  ];
+
+                  // Comfortable minimum: pinned zones at their intrinsic
+                  // size, plus the life counter's legibility floor.
+                  const lifeMinFloor = 96.0;
+                  const extraRowEstimate = 44.0;
+                  final dialStripH =
+                      GameplayDialsStripWidget.estimatedStripHeight(
+                    context,
+                    compactVertical: dialCompact,
+                  );
+                  final comfortableMin = PhaseNavCluster.barHeight +
+                      playGapMd +
+                      (variantsEnabled ? extraRowEstimate : 0.0) +
+                      (showTurnTimer ? extraRowEstimate : 0.0) +
+                      lifeMinFloor +
+                      playGapSm +
+                      dialStripH;
+
+                  if (playConstraints.maxHeight >= comfortableMin) {
+                    // Normal case (virtually all portrait phones/tablets):
+                    // the life counter simply fills whatever space remains
+                    // via Expanded — no manual pixel math, and structurally
+                    // impossible to overflow here.
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        phaseBar,
+                        SizedBox(height: playGapMd),
+                        ...extraRows,
+                        Expanded(child: lifeCounter),
+                        SizedBox(height: playGapSm),
+                        dialStrip,
+                      ],
+                    );
+                  }
+
+                  // Safety net for viewports shorter than the comfortable
+                  // minimum (landscape phones, tightly split-screened
+                  // tablets/foldables): scroll the whole Play tab instead
+                  // of letting it overflow.
+                  return SingleChildScrollView(
+                    physics: const ClampingScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: playConstraints.maxHeight,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          phaseBar,
+                          SizedBox(height: playGapMd),
+                          ...extraRows,
+                          SizedBox(height: lifeMinFloor, child: lifeCounter),
+                          SizedBox(height: playGapSm),
+                          dialStrip,
+                        ],
                       ),
                     ),
-                  ),
-                ],
+                  );
+                },
               ),
             ),
           },

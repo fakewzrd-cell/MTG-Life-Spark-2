@@ -90,16 +90,19 @@ int localPlayerDialFingerprint(PlayerGameState? player) {
 }
 
 /// Life counter that rebuilds only when life / elimination / colors change.
+///
+/// Sizes itself to whatever height its parent gives it (its own internal
+/// `LayoutBuilder` derives font sizes from those constraints) — callers
+/// should bound it with `Expanded`/`ConstrainedBox` rather than passing a
+/// pre-computed pixel height.
 class ScopedLifeCounter extends ConsumerWidget {
   const ScopedLifeCounter({
     super.key,
     required this.playerId,
-    required this.height,
     required this.onLifeChange,
   });
 
   final String playerId;
-  final double height;
   final void Function(int delta) onLifeChange;
 
   @override
@@ -118,7 +121,7 @@ class ScopedLifeCounter extends ConsumerWidget {
     );
 
     if (snapshot == null) {
-      return SizedBox(height: height);
+      return const SizedBox.shrink();
     }
 
     final (life, isEliminated, playerColor, _) = snapshot;
@@ -126,7 +129,6 @@ class ScopedLifeCounter extends ConsumerWidget {
 
     return RepaintBoundary(
       child: SizedBox(
-        height: height,
         width: double.infinity,
         child: LifeCounterWidget(
           life: life,
@@ -151,6 +153,7 @@ class ScopedGameplayDials extends ConsumerWidget {
     required this.onRegisterCustomDial,
     required this.onAddDialToStrip,
     required this.onRemoveDialFromStrip,
+    this.compactVertical = false,
   });
 
   final String playerId;
@@ -159,6 +162,7 @@ class ScopedGameplayDials extends ConsumerWidget {
   final bool Function(String dialKey, String label) onRegisterCustomDial;
   final bool Function(String field) onAddDialToStrip;
   final void Function(String field) onRemoveDialFromStrip;
+  final bool compactVertical;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -174,6 +178,7 @@ class ScopedGameplayDials extends ConsumerWidget {
       child: GameplayDialsStripWidget(
         getPlayer: () => ref.read(gameProvider).playerById(playerId)!,
         isEliminated: player.isEliminated,
+        compactVertical: compactVertical,
         onAdjustCounter: onAdjustCounter,
         onSetCounterAbsolute: onSetCounterAbsolute,
         onRegisterCustomDial: onRegisterCustomDial,

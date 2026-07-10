@@ -616,6 +616,8 @@ class _JoinLobbyActionButton extends StatelessWidget {
       child: Text(
         label,
         textAlign: TextAlign.center,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(fontWeight: FontWeight.w700, fontSize: FontTokens.sm),
       ),
     );

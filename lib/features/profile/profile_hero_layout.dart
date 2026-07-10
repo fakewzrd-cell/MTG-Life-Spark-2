@@ -54,7 +54,9 @@ class ProfileHeroLayoutMetrics {
         statsPillHeight;
 
     final topInset = padding.top;
-    final overlayTopReserve = topInset + LayoutTokens.minTapTarget;
+    // No overlay controls sit above the avatar anymore (banner is a fixed
+    // default graphic), so this only needs to clear the status bar/notch.
+    final overlayTopReserve = topInset + LayoutTokens.gr2;
     const overlayBottomPadding = LayoutTokens.gr3;
     final minCardHeight =
         overlayTopReserve +

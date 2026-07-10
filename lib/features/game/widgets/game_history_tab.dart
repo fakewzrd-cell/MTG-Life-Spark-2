@@ -27,7 +27,7 @@ class GameHistoryTab extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               color: colors.textSecondary.withValues(alpha: OpacityTokens.nearOpaque),
-              fontSize: 14,
+              fontSize: FontTokens.hudSm,
             ),
           ),
         ),
@@ -121,7 +121,7 @@ class GameHistoryTab extends StatelessWidget {
                                 e.message,
                                 style: TextStyle(
                                   color: affectsYou
-                                      ? colors.textPrimary
+                                      ? colors.emphasis
                                       : colors.textPrimary,
                                   fontSize: FontTokens.hudSm,
                                   fontWeight: affectsYou

@@ -52,3 +52,15 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Test coverage reports
+/coverage/
+
+# Local install artifacts (APK/IPA builds)
+/dist/
+
+# CocoaPods vendor bundle (Ruby gems cache) - regenerate locally via bundler
+ios/.bundle/
+ios/vendor/
+macos/.bundle/
+macos/vendor/

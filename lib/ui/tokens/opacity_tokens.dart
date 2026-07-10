@@ -27,4 +27,22 @@ class OpacityTokens {
 
   /// Near-opaque — almost solid but slightly blended (0.90).
   static const double nearOpaque = 0.90;
+
+  // ── M3 state layers (dark theme) ──────────────────────────────────────────
+
+  /// Hover overlay (0.08).
+  static const double stateHover = faint;
+
+  /// Focus / pressed overlay (0.12).
+  static const double stateFocus = subtle;
+  static const double statePressed = subtle;
+
+  /// Dragged overlay (0.16).
+  static const double stateDragged = 0.16;
+
+  /// Disabled content opacity (0.38).
+  static const double disabled = 0.38;
+
+  /// Minimum opacity for muted text on surfaces — WCAG AA floor (0.60).
+  static const double mutedTextMin = 0.60;
 }

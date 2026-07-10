@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../../shared/constants/app_icons.dart';
 import '../theme/app_color_tokens.dart';
+import '../tokens/font_tokens.dart';
 import '../tokens/layout_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import '../tokens/radius_tokens.dart';
@@ -191,7 +192,7 @@ class _DockNavItem extends StatelessWidget {
                 Text(
                   destination.label,
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: FontTokens.label,
                     fontWeight: FontWeight.lerp(
                       FontWeight.w500,
                       FontWeight.w700,

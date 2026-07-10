@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import '../../../shared/utils/game_haptics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/game/game_constants.dart';
@@ -651,7 +651,7 @@ class _CommanderDamageSummary extends StatelessWidget {
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
-                      fontSize: 36,
+                      fontSize: FontTokens.displayCommander,
                       height: 1,
                       shadows: [
                         Shadow(
@@ -1056,7 +1056,7 @@ class _DmgStepButton extends StatelessWidget {
         child: InkWell(
           onTap: enabled
               ? () {
-                  HapticFeedback.lightImpact();
+                  context.gameHapticLight();
                   onTap!();
                 }
               : null,

@@ -7,6 +7,7 @@ import '../../core/game/lobby_state.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/utils/app_router.dart';
 import '../../ui/theme/app_color_tokens.dart';
+import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 
 /// Pick a registered deck for match tracking, or clear deck selection.
@@ -48,7 +49,7 @@ Future<void> showDeckPickerSheet(
                   style: TextStyle(
                     color: colors.textPrimary,
                     fontWeight: FontWeight.w800,
-                    fontSize: 16,
+                    fontSize: FontTokens.body,
                   ),
                 ),
               ),
@@ -62,7 +63,10 @@ Future<void> showDeckPickerSheet(
                   ),
                   subtitle: Text(
                     'Keep commanders as-is; do not attribute to a saved deck',
-                    style: TextStyle(color: colors.textSecondary, fontSize: 12),
+                    style: TextStyle(
+                      color: colors.textSecondary,
+                      fontSize: FontTokens.caption,
+                    ),
                   ),
                   onTap: () {
                     ref.read(lobbyProvider.notifier).clearSelectedDeck(playerId);
@@ -85,7 +89,7 @@ Future<void> showDeckPickerSheet(
                                 'Create one from the Decks tab.',
                         style: TextStyle(
                           color: colors.textSecondary,
-                          fontSize: 13,
+                          fontSize: FontTokens.hudSm,
                         ),
                       ),
                       SizedBox(height: LayoutTokens.gr2),
@@ -119,7 +123,7 @@ Future<void> showDeckPickerSheet(
                       ].join(' · '),
                       style: TextStyle(
                         color: colors.textSecondary,
-                        fontSize: 12,
+                        fontSize: FontTokens.caption,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -130,7 +134,7 @@ Future<void> showDeckPickerSheet(
                           : '—',
                       style: TextStyle(
                         color: colors.textSecondary,
-                        fontSize: 12,
+                        fontSize: FontTokens.caption,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

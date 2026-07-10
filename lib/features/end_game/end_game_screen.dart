@@ -22,6 +22,7 @@ import '../../shared/utils/wizard_rank_titles.dart';
 import '../../shared/widgets/player_feedback_widgets.dart';
 import '../../ui/components/ui_button.dart';
 import '../../ui/theme/app_color_tokens.dart';
+import '../../ui/tokens/motion_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
@@ -230,19 +231,28 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
 
                     // ── Level-up animation ─────────────────────────────────
                     if (_result != null && _result!.leveledUp)
-                      _LevelUpCard(result: _result!),
+                      _StaggerReveal(
+                        index: 0,
+                        child: _LevelUpCard(result: _result!),
+                      ),
 
                     // ── XP earned ─────────────────────────────────────────
                     if (_result != null)
-                      _XpCard(
-                        result: _result!,
-                        isWinner: isWinner,
+                      _StaggerReveal(
+                        index: 1,
+                        child: _XpCard(
+                          result: _result!,
+                          isWinner: isWinner,
+                        ),
                       ),
 
                     // ── New achievements ───────────────────────────────────
                     if (_result != null &&
                         _result!.newAchievementIds.isNotEmpty)
-                      _AchievementsCard(ids: _result!.newAchievementIds),
+                      _StaggerReveal(
+                        index: 2,
+                        child: _AchievementsCard(ids: _result!.newAchievementIds),
+                      ),
 
                     SizedBox(height: LayoutTokens.gr2),
 
@@ -514,26 +524,32 @@ class _LevelUpCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
-    return Container(
+    return Card(
       margin: EdgeInsets.fromLTRB(
         LayoutTokens.shellPageInset,
         LayoutTokens.gr1,
         LayoutTokens.shellPageInset,
         0,
       ),
-      padding: EdgeInsets.all(LayoutTokens.gr3),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            colors.emphasis.withValues(alpha: 0.15),
-            colors.primaryAccent.withValues(alpha: 0.15),
-          ],
-        ),
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
         borderRadius: RadiusTokens.radiusSm,
-        border: Border.all(
-            color: colors.emphasis.withValues(alpha: 0.5)),
+        side: BorderSide(
+          color: colors.emphasis.withValues(alpha: 0.5),
+        ),
       ),
-      child: Row(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              colors.emphasis.withValues(alpha: 0.15),
+              colors.primaryAccent.withValues(alpha: 0.15),
+            ],
+          ),
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(LayoutTokens.gr3),
+          child: Row(
         children: [
           SizedBox(
             width: 64,
@@ -578,6 +594,8 @@ class _LevelUpCard extends StatelessWidget {
             ],
           ),
         ],
+          ),
+        ),
       ),
     );
   }
@@ -995,6 +1013,48 @@ class _ActionButtons extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Fade-in reveal for end-game result sections.
+class _StaggerReveal extends StatefulWidget {
+  const _StaggerReveal({required this.index, required this.child});
+
+  final int index;
+  final Widget child;
+
+  @override
+  State<_StaggerReveal> createState() => _StaggerRevealState();
+}
+
+class _StaggerRevealState extends State<_StaggerReveal>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: MotionTokens.standard,
+    );
+    Future<void>.delayed(Duration(milliseconds: widget.index * 80), () {
+      if (mounted) _controller.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+      child: widget.child,
     );
   }
 }

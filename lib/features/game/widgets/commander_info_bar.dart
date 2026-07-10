@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/game/player_game_state.dart';
 import 'game_colors.dart';
 import '../../../ui/tokens/color_tokens.dart';
+import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
 import 'resolved_commander_avatar.dart';
@@ -38,8 +39,8 @@ class CommanderInfoBar extends StatelessWidget {
     final w = MediaQuery.sizeOf(context).width;
     final isCompact = w < GameLayoutBreakpoints.compact;
     final isVeryNarrow = w < GameLayoutBreakpoints.narrow;
-    final avatarSize = isVeryNarrow ? 36.0 : (isCompact ? 40.0 : LayoutTokens.gr6);
-    final partnerSize = isVeryNarrow ? 28.0 : 40.0;
+    final avatarSize = LayoutTokens.minTapTarget;
+    final partnerSize = LayoutTokens.minTapTarget;
     final gap = isVeryNarrow
         ? LayoutTokens.gr0
         : (isCompact ? LayoutTokens.gr1 : LayoutTokens.gr3);
@@ -94,8 +95,8 @@ class CommanderInfoBar extends StatelessWidget {
                     color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                     fontSize: isVeryNarrow
-                        ? LayoutTokens.gr2
-                        : (isCompact ? 14.0 : LayoutTokens.gr3),
+                        ? FontTokens.hudXs
+                        : (isCompact ? FontTokens.hudSm : FontTokens.body),
                   ),
                 ),
                 if (player.hasPartner && player.partnerCommanderName != null)
@@ -105,7 +106,7 @@ class CommanderInfoBar extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: colors.textSecondary,
-                      fontSize: LayoutTokens.gr2,
+                      fontSize: FontTokens.hudXs,
                     ),
                   ),
                 SizedBox(height: isVeryNarrow ? 3 : 4),
@@ -122,7 +123,7 @@ class CommanderInfoBar extends StatelessWidget {
                     'Round $roundNumber',
                     style: TextStyle(
                       color: colors.textSecondary,
-                      fontSize: LayoutTokens.gr2,
+                      fontSize: FontTokens.hudXs,
                     ),
                   ),
                 ],

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../tokens/color_tokens.dart';
+import '../tokens/elevation_tokens.dart';
+import '../tokens/layout_tokens.dart';
+import '../tokens/opacity_tokens.dart';
 import '../tokens/radius_tokens.dart';
 import '../tokens/spacing_tokens.dart';
 import 'app_color_tokens.dart';
@@ -67,7 +70,7 @@ class AppTheme {
       // Card — M3 elevated surface
       cardTheme: CardThemeData(
         color: ColorTokens.surface,
-        elevation: 1,
+        elevation: ElevationTokens.sm,
         surfaceTintColor: ColorTokens.primaryAccent.withValues(alpha: 0.08),
         margin: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
@@ -111,10 +114,10 @@ class AppTheme {
       // NavigationBar (M3 bottom navigation)
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: ColorTokens.surface,
-        surfaceTintColor: ColorTokens.primaryAccent.withValues(alpha: 0.06),
-        elevation: 3,
-        height: 80,
-        indicatorColor: ColorTokens.primaryAccent.withValues(alpha: 0.18),
+        surfaceTintColor: ColorTokens.primaryAccent.withValues(alpha: OpacityTokens.faint),
+        elevation: ElevationTokens.md,
+        height: LayoutTokens.bottomNavHeight,
+        indicatorColor: ColorTokens.primaryAccent.withValues(alpha: OpacityTokens.soft),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return GoogleFonts.lato(
@@ -169,7 +172,7 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: ColorTokens.surfaceElevated,
           foregroundColor: ColorTokens.primaryAccent,
-          elevation: 1,
+          elevation: ElevationTokens.sm,
           minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(
             borderRadius: RadiusTokens.radiusLg,
@@ -215,11 +218,11 @@ class AppTheme {
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: ColorTokens.primaryAccent,
         foregroundColor: ColorTokens.onAccent,
-        elevation: 4,
+        elevation: ElevationTokens.lg,
         focusElevation: 6,
         hoverElevation: 6,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: RadiusTokens.radiusMd,
         ),
       ),
 
@@ -312,7 +315,7 @@ class AppTheme {
         actionTextColor: ColorTokens.primaryAccent,
         shape: RoundedRectangleBorder(borderRadius: RadiusTokens.radiusMd),
         behavior: SnackBarBehavior.floating,
-        elevation: 4,
+        elevation: ElevationTokens.lg,
       ),
 
       // ListTile
@@ -449,7 +452,7 @@ class AppTheme {
 
       cardTheme: CardThemeData(
         color: ColorTokens.lightSurface,
-        elevation: 1,
+        elevation: ElevationTokens.sm,
         surfaceTintColor: ColorTokens.primaryAccent.withValues(alpha: 0.06),
         margin: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
@@ -489,10 +492,10 @@ class AppTheme {
 
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: ColorTokens.lightSurface,
-        surfaceTintColor: ColorTokens.primaryAccent.withValues(alpha: 0.04),
-        elevation: 3,
-        height: 80,
-        indicatorColor: ColorTokens.primaryAccent.withValues(alpha: 0.14),
+        surfaceTintColor: ColorTokens.primaryAccent.withValues(alpha: OpacityTokens.faint),
+        elevation: ElevationTokens.md,
+        height: LayoutTokens.bottomNavHeight,
+        indicatorColor: ColorTokens.primaryAccent.withValues(alpha: OpacityTokens.soft),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return GoogleFonts.lato(
@@ -545,7 +548,7 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: ColorTokens.lightSurfaceElevated,
           foregroundColor: ColorTokens.lightPrimaryAccent,
-          elevation: 1,
+          elevation: ElevationTokens.sm,
           minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(
             borderRadius: RadiusTokens.radiusLg,
@@ -588,11 +591,11 @@ class AppTheme {
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: ColorTokens.lightPrimaryAccent,
         foregroundColor: ColorTokens.onAccent,
-        elevation: 4,
+        elevation: ElevationTokens.lg,
         focusElevation: 6,
         hoverElevation: 6,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: RadiusTokens.radiusMd,
         ),
       ),
 
@@ -682,7 +685,7 @@ class AppTheme {
         actionTextColor: ColorTokens.lightPrimaryAccent,
         shape: RoundedRectangleBorder(borderRadius: RadiusTokens.radiusMd),
         behavior: SnackBarBehavior.floating,
-        elevation: 4,
+        elevation: ElevationTokens.lg,
       ),
 
       listTileTheme: ListTileThemeData(
@@ -822,7 +825,7 @@ class AppTheme {
           letterSpacing: 0.15,
         ),
         titleSmall: TextStyle(
-          fontSize: 16,
+          fontSize: 14,
           fontWeight: FontWeight.w500,
           color: primary,
           letterSpacing: 0.1,
@@ -835,7 +838,7 @@ class AppTheme {
           letterSpacing: 0.5,
         ),
         bodyMedium: TextStyle(
-          fontSize: 16,
+          fontSize: 14,
           fontWeight: FontWeight.w400,
           color: secondary,
           letterSpacing: 0.25,

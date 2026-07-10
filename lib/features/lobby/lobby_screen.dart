@@ -421,7 +421,7 @@ class _QrHeader extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: colors.textSecondary,
-                      fontSize: compact ? 12 : 13,
+                      fontSize: compact ? FontTokens.caption : FontTokens.hudSm,
                       height: 1.4,
                     ),
                   ),
@@ -508,6 +508,11 @@ class _PlayerSlotCard extends ConsumerWidget {
         ? colors.primaryAccent
         : slot.playerColor.withValues(alpha: 0.25);
 
+    // Resolved once so the displayed text and its color never disagree.
+    final resolvedCommanderName = isCommanderLobby
+        ? slot.commanderName
+        : linkedDeck?.commanderName ?? slot.commanderName;
+
     final compact = MediaQuery.sizeOf(context).width < 360;
 
     return Container(
@@ -566,23 +571,16 @@ class _PlayerSlotCard extends ConsumerWidget {
                     ),
                     SizedBox(height: LayoutTokens.gr1),
                     Text(
-                      isCommanderLobby
-                          ? (slot.commanderName ?? 'No commander selected')
-                          : (linkedDeck != null
-                              ? linkedDeck.commanderName
-                              : slot.commanderName ??
-                                  'No deck selected'),
+                      resolvedCommanderName ??
+                          (isCommanderLobby
+                              ? 'No commander selected'
+                              : 'No deck selected'),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color:
-                            (isCommanderLobby
-                                    ? slot.commanderName
-                                    : linkedDeck?.commanderName ??
-                                        slot.commanderName) !=
-                                null
-                                ? colors.textSecondary
-                                : colors.primaryAccent,
+                        color: resolvedCommanderName != null
+                            ? colors.textSecondary
+                            : colors.primaryAccent,
                         fontSize: FontTokens.caption,
                       ),
                     ),
@@ -966,7 +964,7 @@ class _ConfigSection extends ConsumerWidget {
             style: TextStyle(
               color: colors.textPrimary,
               fontWeight: FontWeight.bold,
-              fontSize: 14,
+              fontSize: FontTokens.hudSm,
             ),
           ),
           SizedBox(height: LayoutTokens.gr2),
@@ -1017,6 +1015,8 @@ class _ConfigDropdownRow extends StatelessWidget {
           width: 100,
           child: Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: colors.textSecondary,
               fontSize: FontTokens.label,

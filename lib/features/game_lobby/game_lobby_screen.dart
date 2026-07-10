@@ -5,8 +5,10 @@ import '../../shared/constants/app_icons.dart';
 import '../../shared/utils/app_router.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/color_tokens.dart';
+import '../../ui/tokens/elevation_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
+import '../../ui/tokens/opacity_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 
 /// Image crop alignment — subjects sit slightly right in the source PNGs.
@@ -169,30 +171,22 @@ class _BigActionButton extends StatelessWidget {
     final titleSize =
         isCompact ? FontTokens.headline : FontTokens.headline + LayoutTokens.gr1;
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
         borderRadius: RadiusTokens.radiusXl,
-        boxShadow: [
-          BoxShadow(
-            color: colors.primaryAccent.withValues(alpha: 0.14),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        side: BorderSide(
+          color: colors.primaryAccent.withValues(alpha: 0.45),
+        ),
       ),
+      elevation: ElevationTokens.sm,
       child: Material(
         color: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: RadiusTokens.radiusXl,
-          side: BorderSide(
-            color: colors.primaryAccent.withValues(alpha: 0.45),
-          ),
-        ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
-          splashColor: colors.primaryAccent.withValues(alpha: 0.14),
-          highlightColor: colors.primaryAccent.withValues(alpha: 0.08),
+          splashColor: colors.primaryAccent.withValues(alpha: OpacityTokens.subtle),
+          highlightColor: colors.primaryAccent.withValues(alpha: OpacityTokens.faint),
           child: Stack(
             fit: StackFit.expand,
             children: [

@@ -26,8 +26,8 @@ class LayoutTokens {
   static const double gr5 = 32;
   static const double gr6 = 48;
 
-  /// Minimum **44×44 dp** tap target (WCAG / Material); `11 × 4dp` on the grid.
-  static const double minTapTarget = 44;
+  /// Minimum **48×48 dp** tap target (Material 3); `12 × 4dp` on the grid.
+  static const double minTapTarget = gr6;
 
   // ── Named layout constants ────────────────────────────────────────────────
 
@@ -48,8 +48,8 @@ class LayoutTokens {
     return (h / gr0).round() * gr0;
   }
 
-  /// Height of the shell dock bar ([AppBottomNavBar] content area). 68dp.
-  static const double bottomNavHeight = 68;
+  /// Height of the shell dock bar ([AppBottomNavBar] content area). 72dp.
+  static const double bottomNavHeight = 72;
 
   /// Horizontal inset for full-width CTAs (onboarding, setup, end-game actions).
   static const double ctaHorizontal = gr5;

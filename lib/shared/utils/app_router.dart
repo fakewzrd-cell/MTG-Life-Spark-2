@@ -32,7 +32,6 @@ class AppRoutes {
   static const settings = '/settings';
   /// Primary route for deck library (shell tab).
   static const decks = '/decks';
-  static const profileBanner = '/home/banner';
   static const profileAvatar = '/home/avatar';
   static const profilePods = '/home/pods';
   static const feedback = '/settings/feedback';
@@ -111,20 +110,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) => const ProfileScreen(),
                 routes: [
                   GoRoute(
-                    path: 'banner',
-                    parentNavigatorKey: _rootNavigatorKey,
-                    builder: (context, state) =>
-                        const ProfileBannerPickerScreen(
-                          kind: ProfileImagePickerKind.banner,
-                        ),
-                  ),
-                  GoRoute(
                     path: 'avatar',
                     parentNavigatorKey: _rootNavigatorKey,
                     builder: (context, state) =>
-                        const ProfileBannerPickerScreen(
-                          kind: ProfileImagePickerKind.avatar,
-                        ),
+                        const ProfilePicturePickerScreen(),
                   ),
                   GoRoute(
                     path: 'pods',

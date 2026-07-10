@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/game/game_phase.dart';
 import '../../../core/game/game_state.dart';
 import 'game_colors.dart';
+import '../../../shared/utils/game_haptics.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
@@ -168,7 +169,7 @@ class _PhaseNavEndTurnButton extends StatelessWidget {
         : colors.backgroundSecondary.withValues(alpha: 0.35);
     final fg = enabled
         ? accentColor
-        : colors.textSecondary.withValues(alpha: 0.45);
+        : colors.textSecondary.withValues(alpha: OpacityTokens.disabled);
 
     return Semantics(
       button: true,
@@ -177,7 +178,12 @@ class _PhaseNavEndTurnButton extends StatelessWidget {
       child: Material(
         color: bg,
         child: InkWell(
-          onTap: enabled ? onPressed : null,
+          onTap: enabled
+              ? () {
+                  context.gameHapticLight();
+                  onPressed?.call();
+                }
+              : null,
           child: Center(
             child: Text(
               'End turn',
@@ -219,7 +225,7 @@ class _PhaseNavSideButton extends StatelessWidget {
     final fg =
         enabled
             ? colors.textPrimary
-            : colors.textSecondary.withValues(alpha: 0.45);
+            : colors.textSecondary.withValues(alpha: OpacityTokens.disabled);
     final iconWidget = Icon(icon, size: 20, color: fg);
     final labelWidget = Text(
       label,
@@ -241,7 +247,12 @@ class _PhaseNavSideButton extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: enabled ? onPressed : null,
+          onTap: enabled
+              ? () {
+                  context.gameHapticLight();
+                  onPressed?.call();
+                }
+              : null,
           child: Center(
             child: FittedBox(
               fit: BoxFit.scaleDown,

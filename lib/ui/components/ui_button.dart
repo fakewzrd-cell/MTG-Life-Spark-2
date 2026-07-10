@@ -32,9 +32,30 @@ class UiButton extends StatelessWidget {
     final effectiveOnPressed = enabled && !loading ? onPressed : null;
 
     if (variant == UiButtonVariant.primary) {
-      return SizedBox(
+      // Soft dual-tone shadow gives a raised, pressable feel without
+      // touching the button's own fill/text contrast. Dropped for
+      // disabled/loading so the button visually reads as flat/inert.
+      final raised = effectiveOnPressed != null;
+      return Container(
         height: 52,
         width: double.infinity,
+        decoration: BoxDecoration(
+          borderRadius: RadiusTokens.radiusLg,
+          boxShadow: raised
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.4),
+                    offset: const Offset(0, 6),
+                    blurRadius: 16,
+                  ),
+                  BoxShadow(
+                    color: Colors.white.withValues(alpha: 0.05),
+                    offset: const Offset(0, -2),
+                    blurRadius: 6,
+                  ),
+                ]
+              : null,
+        ),
         child: FilledButton.icon(
           onPressed: effectiveOnPressed,
           icon: loading
@@ -53,6 +74,8 @@ class UiButton extends StatelessWidget {
             foregroundColor: ColorTokens.onAccent,
             disabledBackgroundColor: colors.surface,
             disabledForegroundColor: colors.textMuted,
+            elevation: 0,
+            shadowColor: Colors.transparent,
             shape: RoundedRectangleBorder(
               borderRadius: RadiusTokens.radiusLg,
             ),

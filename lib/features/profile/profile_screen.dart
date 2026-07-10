@@ -6,9 +6,9 @@ import 'package:intl/intl.dart' show NumberFormat;
 
 import '../../core/models/player_profile.dart';
 import '../../core/persistence/providers.dart';
-import '../../shared/constants/app_icons.dart';
 import '../../shared/utils/app_router.dart';
 import '../../shared/widgets/default_profile_avatar.dart';
+import '../../shared/widgets/profile_default_banner.dart';
 import '../../shared/widgets/tier_badge.dart';
 import '../../ui/components/ui_button.dart';
 import '../../ui/theme/app_color_tokens.dart';
@@ -21,41 +21,6 @@ import 'profile_player_stats_section.dart';
 
 /// Camera badge diameter — centered on the avatar ring at bottom-right.
 const double _kProfileCameraBadgeSize = 32;
-
-Widget _defaultBannerFill(BuildContext context) {
-  final scheme = Theme.of(context).colorScheme;
-  return ColoredBox(
-    color: scheme.surfaceContainer,
-    child: DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            scheme.surfaceContainerLow,
-            scheme.surfaceContainer,
-            Color.lerp(scheme.surfaceContainer, scheme.primary, 0.06)!,
-          ],
-        ),
-      ),
-    ),
-  );
-}
-
-/// Bundled profile / commander art when no network image is available.
-Widget _defaultProfileBannerArt(
-  BuildContext context, {
-  double? height,
-}) {
-  return Image.asset(
-    AppIcons.defaultProfileBanner,
-    fit: BoxFit.cover,
-    width: double.infinity,
-    height: height,
-    alignment: const Alignment(0, -0.15),
-    errorBuilder: (ctx, _, __) => _defaultBannerFill(ctx),
-  );
-}
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -212,29 +177,7 @@ class _ProfileHeroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cardHeight = metrics.cardHeight;
-    void onBanner() => context.push(AppRoutes.profileBanner);
     void onAvatar() => context.push(AppRoutes.profileAvatar);
-
-    Widget background() {
-      final url = profile.profileBannerImageUrl;
-      if (url != null && url.isNotEmpty) {
-        return RepaintBoundary(
-          child: CachedNetworkImage(
-            key: ValueKey(url),
-            imageUrl: url,
-            fit: BoxFit.cover,
-            width: double.infinity,
-            height: cardHeight,
-            filterQuality: FilterQuality.medium,
-            placeholder: (ctx, _) =>
-                _defaultProfileBannerArt(ctx, height: cardHeight),
-            errorWidget: (ctx, _, stackTrace) =>
-                _defaultProfileBannerArt(ctx, height: cardHeight),
-          ),
-        );
-      }
-      return _defaultProfileBannerArt(context, height: cardHeight);
-    }
 
     return ClipRRect(
       borderRadius: _heroRadius,
@@ -244,14 +187,11 @@ class _ProfileHeroCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Positioned.fill(child: background()),
+            Positioned.fill(
+              child: defaultProfileBannerArt(context, height: cardHeight),
+            ),
             const Positioned.fill(
               child: ExcludeSemantics(child: _ProfileHeroFrostVeil()),
-            ),
-            Positioned(
-              top: metrics.topInset + LayoutTokens.gr2,
-              right: metrics.overlayHPadding,
-              child: _ProfileBannerEditButton(onTap: onBanner),
             ),
             Positioned.fill(
               child: Padding(
@@ -273,59 +213,6 @@ class _ProfileHeroCard extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Banner edit control — meets [LayoutTokens.minTapTarget].
-class _ProfileBannerEditButton extends StatelessWidget {
-  const _ProfileBannerEditButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: 'Change profile banner',
-      child: Material(
-        color: Colors.black.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(RadiusTokens.pill),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              minHeight: LayoutTokens.minTapTarget,
-              minWidth: LayoutTokens.minTapTarget,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: LayoutTokens.gr2,
-                vertical: LayoutTokens.gr1,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.wallpaper_outlined,
-                    color: ColorTokens.onAccent,
-                    size: 18,
-                  ),
-                  const SizedBox(width: LayoutTokens.gr1),
-                  Text(
-                    'Banner',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: ColorTokens.onAccent,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
         ),
       ),
     );

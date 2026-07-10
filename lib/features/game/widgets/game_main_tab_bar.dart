@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../shared/constants/app_icons.dart';
 import 'game_colors.dart';
+import '../../../ui/tokens/opacity_tokens.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 
@@ -89,7 +90,7 @@ class _GameMainTab extends StatelessWidget {
   final Color accentColor;
   final VoidCallback onTap;
 
-  static const double _iconSize = 18;
+  static const double _iconSize = 20;
 
   Widget _buildIcon(Color fg) {
     final asset = iconAsset;
@@ -113,10 +114,10 @@ class _GameMainTab extends StatelessWidget {
     final fg =
         selected
             ? accentColor
-            : colors.textSecondary.withValues(alpha: 0.88);
+            : colors.textSecondary.withValues(alpha: OpacityTokens.mutedTextMin);
     final bg =
         selected
-            ? accentColor.withValues(alpha: 0.16)
+            ? accentColor.withValues(alpha: OpacityTokens.soft)
             : Colors.transparent;
 
     return Semantics(

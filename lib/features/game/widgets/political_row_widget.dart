@@ -342,7 +342,7 @@ class _OverviewFilledMarkerButton extends StatelessWidget {
     return FilledButton(
       onPressed: enabled ? onPressed : null,
       style: FilledButton.styleFrom(
-        minimumSize: const Size(0, LayoutTokens.minTapTarget - 4),
+        minimumSize: const Size(0, LayoutTokens.minTapTarget),
         padding: EdgeInsets.symmetric(
           horizontal: LayoutTokens.gr1,
           vertical: LayoutTokens.gr2,
@@ -435,7 +435,7 @@ class _PlayerPickerSheet extends StatelessWidget {
                         : '?',
                     style: TextStyle(
                       color: ColorTokens.onAccent,
-                      fontSize: 12,
+                      fontSize: FontTokens.caption,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

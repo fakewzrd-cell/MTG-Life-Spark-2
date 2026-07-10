@@ -5,14 +5,125 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/game/game_providers.dart';
 import '../../../core/game/game_state.dart';
 import '../../../core/game/scryfall_service.dart';
+import '../../../shared/utils/game_haptics.dart';
 import 'game_colors.dart';
 import '../../../shared/widgets/game_icon.dart';
+import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
+import '../../../ui/tokens/opacity_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
 import '../../../ui/tokens/typography_tokens.dart';
 import 'game_modal_chrome.dart';
 import '../../../ui/tokens/color_tokens.dart';
 import '../../../ui/tokens/spacing_tokens.dart';
+
+/// Compact tap target that opens the full [VariantCardPanel] in a bottom
+/// sheet — keeps variant deck content (which can be tall with card art) off
+/// the Play tab's flexible layout budget entirely, so it never competes with
+/// the life counter for space. Renders nothing when no variant is enabled.
+class VariantQuickAccessChip extends ConsumerWidget {
+  const VariantQuickAccessChip({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.gameColors;
+    final variantFlags = ref.watch(
+      gameProvider.select(
+        (g) => (g.planechaseEnabled, g.archenemyEnabled, g.bountyEnabled),
+      ),
+    );
+    final activeCount =
+        [variantFlags.$1, variantFlags.$2, variantFlags.$3]
+            .where((enabled) => enabled)
+            .length;
+
+    if (activeCount == 0) return const SizedBox.shrink();
+
+    final label = activeCount == 1 ? 'Variant deck' : 'Variant decks';
+
+    return Center(
+      child: Semantics(
+        button: true,
+        label: '$label, tap to view',
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              context.gameHapticSelection();
+              _showVariantSheet(context);
+            },
+            borderRadius: RadiusTokens.radiusPill,
+            child: Container(
+              constraints: const BoxConstraints(
+                minHeight: LayoutTokens.minTapTarget,
+              ),
+              padding: EdgeInsets.symmetric(
+                horizontal: LayoutTokens.gr3,
+                vertical: LayoutTokens.gr1,
+              ),
+              decoration: BoxDecoration(
+                color: colors.backgroundSecondary.withValues(
+                  alpha: OpacityTokens.soft,
+                ),
+                borderRadius: RadiusTokens.radiusPill,
+                border: Border.all(
+                  color: colors.borderSubtle.withValues(
+                    alpha: OpacityTokens.strong,
+                  ),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.style_outlined,
+                    size: 16,
+                    color: colors.textPrimary,
+                  ),
+                  SizedBox(width: LayoutTokens.gr1),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: FontTokens.hudSm,
+                    ),
+                  ),
+                  SizedBox(width: LayoutTokens.gr0),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 16,
+                    color: colors.textSecondary,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showVariantSheet(BuildContext context) {
+    showGameBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: false,
+      builder: (ctx) => GameSheetBody(
+        scrollable: true,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            GameSheetHeader(title: 'Variant decks'),
+            SizedBox(height: LayoutTokens.gr2),
+            VariantCardPanel(),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 /// Shows current Planechase plane, Archenemy scheme, or Bounty card with
 /// advance controls. Requires internet for deck data.
@@ -260,7 +371,7 @@ class _VariantTile extends StatelessWidget {
                             title,
                             style: TextStyle(
                               color: colors.textSecondary,
-                              fontSize: 12,
+                              fontSize: FontTokens.caption,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -271,7 +382,7 @@ class _VariantTile extends StatelessWidget {
                         card.name,
                         style: TextStyle(
                           color: colors.textPrimary,
-                          fontSize: 16,
+                          fontSize: FontTokens.body,
                           fontWeight: FontWeight.w600,
                         ),
                         maxLines: 2,
@@ -284,7 +395,7 @@ class _VariantTile extends StatelessWidget {
                           card.oracleText!,
                           style: TextStyle(
                             color: colors.textSecondary,
-                            fontSize: 12,
+                            fontSize: FontTokens.caption,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -359,7 +470,7 @@ class _VariantTile extends StatelessWidget {
                   card.oracleText!,
                   style: TextStyle(
                     color: ColorTokens.textSecondary,
-                    fontSize: 16,
+                    fontSize: FontTokens.body,
                     height: 1.4,
                   ),
                 ),

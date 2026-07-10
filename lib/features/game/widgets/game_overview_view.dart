@@ -92,22 +92,21 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
                     padding: EdgeInsets.only(right: pageInset),
                     child: Align(
                       alignment: Alignment.center,
-                      child: TextButton(
+                      child: FilledButton.tonal(
                         onPressed: () => notifier.endTurn(),
-                        style: TextButton.styleFrom(
+                        style: FilledButton.styleFrom(
                           backgroundColor: colors.primaryAccent.withValues(
                             alpha: OpacityTokens.soft,
                           ),
                           foregroundColor: colors.primaryAccent,
                           padding: EdgeInsets.symmetric(
                             horizontal: LayoutTokens.gr2,
-                            vertical: LayoutTokens.gr0 + 2,
                           ),
                           minimumSize: const Size(
                             0,
-                            LayoutTokens.minTapTarget - 12,
+                            LayoutTokens.minTapTarget,
                           ),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          tapTargetSize: MaterialTapTargetSize.padded,
                           shape: RoundedRectangleBorder(
                             borderRadius: RadiusTokens.radiusControlSm,
                           ),
@@ -116,7 +115,7 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
                           'End turn',
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
-                            fontSize: FontTokens.caption,
+                            fontSize: FontTokens.body,
                             height: 1.1,
                           ),
                         ),
@@ -331,7 +330,10 @@ class _GameOverviewLifeBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minWidth: 52, minHeight: 36),
+      constraints: const BoxConstraints(
+        minWidth: 56,
+        minHeight: LayoutTokens.minTapTarget,
+      ),
       padding: EdgeInsets.symmetric(
         horizontal: LayoutTokens.gr1 + 2,
         vertical: LayoutTokens.gr0 + 2,
@@ -359,8 +361,8 @@ class _GameOverviewLifeBadge extends StatelessWidget {
             children: [
               Icon(
                 Icons.favorite_rounded,
-                size: 15,
-                color: _textColor.withValues(alpha: 0.9),
+                size: 18,
+                color: _textColor.withValues(alpha: OpacityTokens.nearOpaque),
               ),
               SizedBox(width: LayoutTokens.gr0),
               Text(
@@ -368,8 +370,9 @@ class _GameOverviewLifeBadge extends StatelessWidget {
                 style: TextStyle(
                   color: _textColor,
                   fontWeight: FontWeight.w800,
-                  fontSize: FontTokens.hudSm,
+                  fontSize: FontTokens.body,
                   height: 1,
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
             ],
@@ -393,7 +396,10 @@ class _GameOverviewStatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.gameColors;
     return Container(
-      constraints: const BoxConstraints(minHeight: 36, minWidth: 40),
+      constraints: const BoxConstraints(
+        minHeight: LayoutTokens.minTapTarget,
+        minWidth: LayoutTokens.minTapTarget,
+      ),
       padding: EdgeInsets.symmetric(
         horizontal: LayoutTokens.gr1,
         vertical: LayoutTokens.gr0,
@@ -414,7 +420,7 @@ class _GameOverviewStatusChip extends StatelessWidget {
         label,
         style: TextStyle(
           color: isActive ? accent : colors.textSecondary,
-          fontSize: FontTokens.caption,
+          fontSize: FontTokens.hudSm,
           fontWeight: FontWeight.w700,
           height: 1,
         ),
@@ -434,7 +440,10 @@ class _GameOverviewCommanderTaxChip extends StatelessWidget {
     return Semantics(
       label: 'Commander tax plus $tax',
       child: Container(
-        constraints: const BoxConstraints(minHeight: 36, minWidth: 40),
+        constraints: const BoxConstraints(
+        minHeight: LayoutTokens.minTapTarget,
+        minWidth: LayoutTokens.minTapTarget,
+      ),
         padding: EdgeInsets.symmetric(
           horizontal: LayoutTokens.gr1,
           vertical: LayoutTokens.gr0,
@@ -805,7 +814,7 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                               color: idx == 0
                                   ? colors.textSecondary
                                   : colors.textPrimary,
-                              fontSize: 14,
+                              fontSize: FontTokens.hudSm,
                               fontWeight: isSelected
                                   ? FontWeight.bold
                                   : FontWeight.normal,
