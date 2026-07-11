@@ -286,6 +286,7 @@ class ProfilePlayerStatsSection extends ConsumerWidget {
               height: cardHeight,
               child: ProfileCarouselCard(
                 padding: EdgeInsets.zero,
+                affordance: true,
                 child: ProfileCarouselAddCard(
                   colors: colors,
                   semanticsLabel: 'Add stat card',
@@ -503,6 +504,59 @@ class _PlayerStatsEmptyCard extends StatelessWidget {
   }
 }
 
+/// Compact "62% WR · 8W–5L" line — mirrors [ProfileDeckCard]'s record line
+/// so win rate leads consistently across every profile stat card, and
+/// "Tough record" actually shows the number that justifies its name.
+Widget _profileRecordLine({
+  required int wins,
+  required int losses,
+  required int gamesPlayed,
+  required AppColorTokens colors,
+}) {
+  final wr = gamesPlayed == 0 ? null : ((wins / gamesPlayed) * 100).round();
+  final base = TextStyle(
+    fontSize: FontTokens.sm,
+    fontWeight: FontWeight.w600,
+    height: 1.2,
+  );
+  return Text.rich(
+    TextSpan(
+      style: base,
+      children: [
+        TextSpan(
+          text: wr == null ? '— WR' : '$wr% WR',
+          style: base.copyWith(
+            color: colors.primaryAccent,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        TextSpan(
+          text: '  ·  ${wins}W–${losses}L',
+          style: base.copyWith(color: colors.textSecondary),
+        ),
+      ],
+    ),
+    textAlign: TextAlign.center,
+    maxLines: 1,
+    overflow: TextOverflow.ellipsis,
+  );
+}
+
+Widget _profileRecordPlaceholder(String message, AppColorTokens colors) {
+  return Text(
+    message,
+    textAlign: TextAlign.center,
+    maxLines: 1,
+    overflow: TextOverflow.ellipsis,
+    style: TextStyle(
+      fontSize: FontTokens.sm,
+      color: colors.textSecondary,
+      fontWeight: FontWeight.w600,
+      height: 1.2,
+    ),
+  );
+}
+
 /// Shared layout for Most played / Worst deck player-stats tiles.
 class _PlayerStatsHighlightCard extends StatelessWidget {
   const _PlayerStatsHighlightCard({
@@ -516,7 +570,7 @@ class _PlayerStatsHighlightCard extends StatelessWidget {
   final String title;
   final AppColorTokens colors;
   final String primaryLabel;
-  final String statsLine;
+  final Widget statsLine;
   final String? imageUrl;
 
   @override
@@ -581,18 +635,7 @@ class _PlayerStatsHighlightCard extends StatelessWidget {
                 ),
               ),
               SizedBox(height: LayoutTokens.gr0),
-              Text(
-                statsLine,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: FontTokens.sm,
-                  color: colors.textSecondary,
-                  fontWeight: FontWeight.w600,
-                  height: 1.2,
-                ),
-              ),
+              statsLine,
             ],
           ),
         ),
@@ -634,10 +677,14 @@ class _MostPlayedCard extends ConsumerWidget {
     }
 
     final commanderName = commander?.commanderName ?? 'No data yet';
-    final statsLine =
-        commander != null
-            ? '${commander.wins}W · ${commander.losses}L · ${commander.gamesPlayed} games'
-            : 'Play games to see stats';
+    final statsLine = commander != null
+        ? _profileRecordLine(
+            wins: commander.wins,
+            losses: commander.losses,
+            gamesPlayed: commander.gamesPlayed,
+            colors: colors,
+          )
+        : _profileRecordPlaceholder('Play games to see stats', colors);
 
     return _PlayerStatsHighlightCard(
       title: 'Most played',
@@ -668,10 +715,14 @@ class _WorstDeckCard extends ConsumerWidget {
             ? null
             : resolveDeckCommanderImageUrl(deck: d, profile: profile);
     final primaryLabel = d?.displayName ?? 'No data yet';
-    final statsLine =
-        d != null
-            ? '${d.wins}W · ${d.losses}L · ${d.gamesPlayed} games'
-            : 'Add a deck and play matches';
+    final statsLine = d != null
+        ? _profileRecordLine(
+            wins: d.wins,
+            losses: d.losses,
+            gamesPlayed: d.gamesPlayed,
+            colors: colors,
+          )
+        : _profileRecordPlaceholder('Add a deck and play matches', colors);
 
     return _PlayerStatsHighlightCard(
       title: 'Tough record',

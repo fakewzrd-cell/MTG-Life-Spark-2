@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../shared/constants/app_icons.dart';
 import '../../shared/utils/app_router.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/color_tokens.dart';
@@ -10,10 +9,6 @@ import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/opacity_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
-
-/// Image crop alignment — subjects sit slightly right in the source PNGs.
-const Alignment _kLobbyHostArtAlignment = Alignment(0.22, 0);
-const Alignment _kLobbyJoinArtAlignment = Alignment(0.18, 0);
 
 /// Game lobby — Host and Join split the viewport 50/50 with uniform page inset.
 class GameLobbyScreen extends StatelessWidget {
@@ -41,8 +36,6 @@ class GameLobbyScreen extends StatelessWidget {
                   label: 'Host Game',
                   subtitle: 'Create a session — others join you',
                   icon: Icons.groups_rounded,
-                  artAsset: AppIcons.lobbyHostParty,
-                  artAlignment: _kLobbyHostArtAlignment,
                   onTap: () => context.push(AppRoutes.lobbyHost),
                 ),
               ),
@@ -52,8 +45,7 @@ class GameLobbyScreen extends StatelessWidget {
                   label: 'Join Game',
                   subtitle: 'Scan for a nearby host',
                   icon: Icons.qr_code_scanner_rounded,
-                  artAsset: AppIcons.lobbyJoinPortal,
-                  artAlignment: _kLobbyJoinArtAlignment,
+                  mirrored: true,
                   onTap: () => context.push(AppRoutes.lobbyJoin),
                 ),
               ),
@@ -65,81 +57,37 @@ class GameLobbyScreen extends StatelessWidget {
   }
 }
 
-/// Full-bleed card art tinted with [AppColorTokens.primaryAccent].
-class _LobbyCardArtBackdrop extends StatelessWidget {
-  const _LobbyCardArtBackdrop({
-    required this.artAsset,
-    required this.artAlignment,
+/// Clean accent gradient fill — no illustration to compete with the icon
+/// badge/title, so the button reads as one confident shape at a glance.
+/// [mirrored] flips the gradient direction so Host/Join stay visually
+/// distinct from each other without needing separate art assets.
+class _LobbyAccentBackdrop extends StatelessWidget {
+  const _LobbyAccentBackdrop({
     required this.colors,
+    this.mirrored = false,
   });
 
-  final String artAsset;
-  final Alignment artAlignment;
   final AppColorTokens colors;
+  final bool mirrored;
 
   @override
   Widget build(BuildContext context) {
     final accent = colors.primaryAccent;
     final surface = colors.surface;
 
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                surface,
-                Color.lerp(surface, accent, 0.18)!,
-                Color.lerp(surface, accent, 0.38)!,
-              ],
-              stops: const [0.0, 0.5, 1.0],
-            ),
-          ),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: mirrored ? Alignment.topRight : Alignment.topLeft,
+          end: mirrored ? Alignment.bottomLeft : Alignment.bottomRight,
+          colors: [
+            surface,
+            Color.lerp(surface, accent, 0.22)!,
+            Color.lerp(surface, accent, 0.42)!,
+          ],
+          stops: const [0.0, 0.55, 1.0],
         ),
-        Positioned.fill(
-          child: Image.asset(
-            artAsset,
-            fit: BoxFit.cover,
-            alignment: artAlignment,
-            color: Color.lerp(accent, Colors.white, 0.12),
-            colorBlendMode: BlendMode.modulate,
-            errorBuilder: (context, error, stackTrace) =>
-                const SizedBox.shrink(),
-          ),
-        ),
-        Positioned.fill(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: RadialGradient(
-                center: Alignment.center,
-                radius: 1.05,
-                colors: [
-                  surface.withValues(alpha: 0.35),
-                  surface.withValues(alpha: 0.72),
-                ],
-              ),
-            ),
-          ),
-        ),
-        Positioned.fill(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  accent.withValues(alpha: 0.1),
-                  Colors.transparent,
-                  accent.withValues(alpha: 0.16),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
@@ -149,17 +97,15 @@ class _BigActionButton extends StatelessWidget {
     required this.label,
     required this.subtitle,
     required this.icon,
-    required this.artAsset,
-    required this.artAlignment,
     required this.onTap,
+    this.mirrored = false,
   });
 
   final String label;
   final String subtitle;
   final IconData icon;
-  final String artAsset;
-  final Alignment artAlignment;
   final VoidCallback onTap;
+  final bool mirrored;
 
   @override
   Widget build(BuildContext context) {
@@ -190,10 +136,9 @@ class _BigActionButton extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              _LobbyCardArtBackdrop(
-                artAsset: artAsset,
-                artAlignment: artAlignment,
+              _LobbyAccentBackdrop(
                 colors: colors,
+                mirrored: mirrored,
               ),
               Padding(
                 padding: EdgeInsets.all(padding),

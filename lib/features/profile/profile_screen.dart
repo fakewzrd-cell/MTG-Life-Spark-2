@@ -13,6 +13,7 @@ import '../../shared/widgets/tier_badge.dart';
 import '../../ui/components/ui_button.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/color_tokens.dart';
+import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import 'profile_carousel_sections.dart';
@@ -107,13 +108,13 @@ class ProfileScreen extends ConsumerWidget {
                         listMaxHeight: sectionCardListMaxHeight,
                         hasPlayedGames: allMatches.isNotEmpty,
                       ),
-                      SizedBox(height: LayoutTokens.gr4),
+                      SizedBox(height: LayoutTokens.gr6),
                       ProfileDeckPerformanceSection(
                         colors: colors,
                         listMaxHeight: sectionCardListMaxHeight,
                         hasPlayedGames: allMatches.isNotEmpty,
                       ),
-                      SizedBox(height: LayoutTokens.gr4),
+                      SizedBox(height: LayoutTokens.gr6),
                       ProfileRecentGamesModule(
                         matches: allMatches,
                         colors: colors,
@@ -134,31 +135,7 @@ class ProfileScreen extends ConsumerWidget {
 
 String _formatProfileStat(int n) => NumberFormat.decimalPattern().format(n);
 
-/// Subtle tint over the full hero banner so text stays legible without blurring art.
-class _ProfileHeroFrostVeil extends StatelessWidget {
-  const _ProfileHeroFrostVeil();
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.black.withValues(alpha: 0.42),
-            Colors.black.withValues(alpha: 0.30),
-            Colors.black.withValues(alpha: 0.52),
-          ],
-          stops: const [0.0, 0.55, 1.0],
-        ),
-      ),
-      child: const SizedBox.expand(),
-    );
-  }
-}
-
-/// Full-bleed hero header: edge-to-edge banner, rounded bottom only.
+/// Full-bleed hero header: edge-to-edge color banner, rounded bottom only.
 class _ProfileHeroCard extends StatelessWidget {
   const _ProfileHeroCard({
     required this.profile,
@@ -188,10 +165,7 @@ class _ProfileHeroCard extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             Positioned.fill(
-              child: defaultProfileBannerArt(context, height: cardHeight),
-            ),
-            const Positioned.fill(
-              child: ExcludeSemantics(child: _ProfileHeroFrostVeil()),
+              child: defaultBannerFill(context),
             ),
             Positioned.fill(
               child: Padding(
@@ -397,7 +371,7 @@ class _ProfileHeroAvatar extends StatelessWidget {
 
 }
 
-/// Dark pill: value + label per stat, no dividers.
+/// Dark pill: Wins as the primary career stat, honors as a quieter cluster.
 class _ProfileFloatingStatsPill extends StatelessWidget {
   const _ProfileFloatingStatsPill({required this.profile});
 
@@ -405,8 +379,8 @@ class _ProfileFloatingStatsPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = <(String, String)>[
-      (_formatProfileStat(profile.totalWins), 'Wins'),
+    final colors = AppColorTokens.of(context);
+    final honors = <(String, String)>[
       (_formatProfileStat(profile.honorsMvpReceived), 'MVP'),
       (_formatProfileStat(profile.honorsTeamPlayerReceived), 'Team'),
       (_formatProfileStat(profile.honorsUnderdogReceived), 'Underdog'),
@@ -419,10 +393,30 @@ class _ProfileFloatingStatsPill extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            for (final item in items)
-              Expanded(child: _StatColumn(value: item.$1, shortLabel: item.$2)),
+            Expanded(
+              flex: 5,
+              child: _StatColumn(
+                value: _formatProfileStat(profile.totalWins),
+                shortLabel: 'Wins',
+                emphasized: true,
+                accentColor: colors.primaryAccent,
+              ),
+            ),
+            Container(
+              width: 1,
+              height: 28,
+              margin: const EdgeInsets.symmetric(horizontal: 2),
+              color: Colors.white.withValues(alpha: 0.22),
+            ),
+            for (final item in honors)
+              Expanded(
+                flex: 4,
+                child: _StatColumn(
+                  value: item.$1,
+                  shortLabel: item.$2,
+                ),
+              ),
           ],
         ),
       ),
@@ -431,13 +425,27 @@ class _ProfileFloatingStatsPill extends StatelessWidget {
 }
 
 class _StatColumn extends StatelessWidget {
-  const _StatColumn({required this.value, required this.shortLabel});
+  const _StatColumn({
+    required this.value,
+    required this.shortLabel,
+    this.emphasized = false,
+    this.accentColor,
+  });
 
   final String value;
   final String shortLabel;
+  final bool emphasized;
+  final Color? accentColor;
 
   @override
   Widget build(BuildContext context) {
+    final valueColor = emphasized
+        ? (accentColor ?? ColorTokens.onAccent)
+        : ColorTokens.onAccent.withValues(alpha: 0.88);
+    final labelColor = emphasized
+        ? Colors.white.withValues(alpha: 0.78)
+        : Colors.white.withValues(alpha: 0.55);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -447,8 +455,9 @@ class _StatColumn extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            color: ColorTokens.onAccent,
-            fontWeight: FontWeight.w700,
+            color: valueColor,
+            fontWeight: emphasized ? FontWeight.w800 : FontWeight.w600,
+            fontSize: emphasized ? 17 : 14,
             fontFeatures: const [FontFeature.tabularFigures()],
           ),
         ),
@@ -459,9 +468,9 @@ class _StatColumn extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: Colors.white.withValues(alpha: 0.65),
-            fontWeight: FontWeight.w500,
-            fontSize: 12,
+            color: labelColor,
+            fontWeight: emphasized ? FontWeight.w600 : FontWeight.w500,
+            fontSize: FontTokens.caption,
           ),
         ),
       ],

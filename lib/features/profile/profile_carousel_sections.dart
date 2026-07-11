@@ -15,13 +15,13 @@ import '../../shared/widgets/game_icon.dart';
 import '../../shared/utils/app_router.dart';
 import '../../shared/utils/commander_image_resolver.dart';
 import '../../shared/widgets/deck_tile_visual.dart';
-import '../../shared/widgets/mana_cost_pips.dart';
 import '../../shared/widgets/profile_default_banner.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/motion_tokens.dart';
+import '../../ui/tokens/opacity_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import '../../ui/tokens/typography_tokens.dart';
 
@@ -37,13 +37,22 @@ const double kProfileCarouselCardPaddingPx = LayoutTokens.gr3;
 
 const double _kCarouselCardPaddingPx = kProfileCarouselCardPaddingPx;
 const double _kCarouselCardBorderAlpha = 0.55;
+/// Quieter border for empty-slot / add affordance cards.
+const double _kCarouselAddCardBorderAlpha = OpacityTokens.moderate;
 BorderRadius get _kProfileCarouselCardRadius => RadiusTokens.radiusCarouselCard;
 
-RoundedRectangleBorder _profileCarouselCardShape(ColorScheme scheme) {
+RoundedRectangleBorder _profileCarouselCardShape(
+  ColorScheme scheme, {
+  bool affordance = false,
+}) {
   return RoundedRectangleBorder(
     borderRadius: _kProfileCarouselCardRadius,
     side: BorderSide(
-      color: scheme.outlineVariant.withValues(alpha: _kCarouselCardBorderAlpha),
+      color: scheme.outlineVariant.withValues(
+        alpha: affordance
+            ? _kCarouselAddCardBorderAlpha
+            : _kCarouselCardBorderAlpha,
+      ),
       width: 1,
     ),
   );
@@ -202,6 +211,7 @@ class ProfileCarouselCard extends StatelessWidget {
     super.key,
     required this.child,
     this.padding,
+    this.affordance = false,
   });
 
   final Widget child;
@@ -209,16 +219,24 @@ class ProfileCarouselCard extends StatelessWidget {
   /// When null, uses standard carousel card inset ([_kCarouselCardPaddingPx]).
   final EdgeInsetsGeometry? padding;
 
+  /// Quieter empty-slot shell for "+" add tiles — lower fill opacity, no
+  /// elevation, softer border — so content cards stay visually primary.
+  final bool affordance;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final fill = affordance
+        ? scheme.surfaceContainerHigh.withValues(alpha: OpacityTokens.half)
+        : scheme.surfaceContainerHigh;
     return Card(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
-      color: scheme.surfaceContainerHigh,
-      elevation: 1,
-      surfaceTintColor: scheme.surfaceTint,
-      shape: _profileCarouselCardShape(scheme),
+      color: fill,
+      elevation: affordance ? 0 : 1,
+      shadowColor: affordance ? Colors.transparent : null,
+      surfaceTintColor: affordance ? Colors.transparent : scheme.surfaceTint,
+      shape: _profileCarouselCardShape(scheme, affordance: affordance),
       child: Padding(
         padding: padding ?? EdgeInsets.all(_kCarouselCardPaddingPx),
         child: child,
@@ -343,6 +361,9 @@ const double _kDeckCardTitleLine = 18;
 const double _kDeckCardSubtitleLine = 15;
 const double _kDeckCardMetaLine = 14;
 
+/// Single-line record ("75% WR · 12W–4L") height under the win/loss bar.
+const double _kDeckCardStatLine = 16.0;
+
 /// Estimated footer height so commander art shrinks instead of overflowing.
 double profileDeckCardFooterReserveHeight(
   PlayerDeck deck, {
@@ -353,11 +374,8 @@ double profileDeckCardFooterReserveHeight(
   var h = (_kDeckCardTitleLine + _kDeckCardSubtitleLine + _kDeckCardMetaLine) *
       ts +
       LayoutTokens.gr0;
-  if (deck.isCommanderDeck && _deckHasManaForProfile(deck)) {
-    h += (LayoutTokens.gr1 + (deck.hasPartner ? 32.0 : 16.0)) * ts;
-  }
-  // W/L bar + 2×2 carousel chip grid ([DeckStatChips.forCarousel]).
-  h += (LayoutTokens.gr1 + 8 + LayoutTokens.gr1 + 56) * ts;
+  // W/L bar + single WR/record line ([_ProfileDeckRecordLine]).
+  h += (LayoutTokens.gr1 + 8 + LayoutTokens.gr1 + _kDeckCardStatLine) * ts;
   return h + LayoutTokens.gr1 * ts;
 }
 
@@ -368,8 +386,6 @@ double profileDeckCardMinHeight({double textScale = 1.0}) {
     displayName: 'Probe',
     commanderName: 'Commander // Partner',
     partnerCommanderName: 'Partner',
-    commanderManaCost: '{2}{U}{R}',
-    partnerManaCost: '{1}{W}',
     format: 'commander',
     deckStyleId: 'voltron',
   );
@@ -413,13 +429,6 @@ Size profileCarouselCardSize() => Size(
   kProfileCarouselCardWidth,
   kProfileCarouselCardHeight,
 );
-
-bool _deckHasManaForProfile(PlayerDeck d) {
-  final c = d.commanderManaCost?.trim();
-  final p = d.partnerManaCost?.trim();
-  return (c != null && c.isNotEmpty) ||
-      (d.hasPartner && p != null && p.isNotEmpty);
-}
 
 /// Time window for Recent Games list filtering.
 enum _RecentGamesTimeFilter {
@@ -1389,6 +1398,7 @@ class _ProfileDeckPerformanceSectionState
           height: cardHeight,
           child: ProfileCarouselCard(
             padding: EdgeInsets.zero,
+            affordance: true,
             child: ProfileCarouselAddCard(
               colors: colors,
               semanticsLabel: 'Add deck',
@@ -1580,29 +1590,51 @@ class ProfileDeckCard extends StatelessWidget {
             ),
             SizedBox(height: LayoutTokens.gr0),
             _ProfileDeckFormatStyleLine(deck: deck, colors: colors),
-            if (deck.isCommanderDeck && _deckHasManaForProfile(deck)) ...[
-              SizedBox(height: LayoutTokens.gr1),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: DeckManaCostRows(
-                  commanderManaCost: deck.commanderManaCost,
-                  partnerManaCost: deck.partnerManaCost,
-                  hasPartner: deck.hasPartner,
-                  compact: true,
-                ),
-              ),
-            ],
             SizedBox(height: LayoutTokens.gr1),
             DeckWinLossRatioBar(deck: deck, colors: colors, height: 8),
             SizedBox(height: LayoutTokens.gr1),
-            DeckStatChips(
-              deck: deck,
-              colors: colors,
-              forCarousel: true,
-            ),
+            _ProfileDeckRecordLine(deck: deck, colors: colors),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Compact record line under the win/loss bar — win rate leads (accent,
+/// bold), exact W–L trails (muted). Replaces the old WR/W/L/GP chip grid,
+/// which repeated the same signal the bar above already shows.
+class _ProfileDeckRecordLine extends StatelessWidget {
+  const _ProfileDeckRecordLine({required this.deck, required this.colors});
+
+  final PlayerDeck deck;
+  final AppColorTokens colors;
+
+  @override
+  Widget build(BuildContext context) {
+    final gp = deck.gamesPlayed;
+    final wr = gp == 0 ? null : (deck.winRate * 100).round();
+    final base = _profileDeckCardMetaStyle(colors, accent: false);
+
+    return Text.rich(
+      TextSpan(
+        style: base,
+        children: [
+          TextSpan(
+            text: wr == null ? '— WR' : '$wr% WR',
+            style: base.copyWith(
+              color: colors.primaryAccent,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          TextSpan(
+            text: '  ·  ${deck.wins}W–${deck.losses}L',
+            style: base.copyWith(color: colors.textSecondary),
+          ),
+        ],
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     );
   }
 }
