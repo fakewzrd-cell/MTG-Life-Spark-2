@@ -122,18 +122,30 @@ class _PlayerStatsCarouselTile extends StatelessWidget {
     required this.width,
     required this.height,
     required this.child,
+    this.onLongPress,
+    this.semanticsHint,
   });
 
   final double width;
   final double height;
   final Widget child;
+  final VoidCallback? onLongPress;
+  final String? semanticsHint;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    Widget card = SizedBox(
       width: width,
       height: height,
       child: ProfileCarouselCard(child: child),
+    );
+    if (onLongPress == null) return card;
+    return Semantics(
+      hint: semanticsHint,
+      child: GestureDetector(
+        onLongPress: onLongPress,
+        child: card,
+      ),
     );
   }
 }
@@ -271,6 +283,13 @@ class ProfilePlayerStatsSection extends ConsumerWidget {
             _PlayerStatsCarouselTile(
               width: cardWidth,
               height: cardHeight,
+              semanticsHint: 'Long press to remove',
+              onLongPress: () => _confirmRemoveOptionalStat(
+                context,
+                ref,
+                profile,
+                statId,
+              ),
               child: _optionalStatTile(
                 statId: statId,
                 hasPlayedGames: hasPlayedGames,
@@ -371,6 +390,53 @@ Widget _optionalStatTile({
     default:
       return const SizedBox.shrink();
   }
+}
+
+Future<void> _confirmRemoveOptionalStat(
+  BuildContext context,
+  WidgetRef ref,
+  PlayerProfile profile,
+  String statId,
+) async {
+  final colors = AppColorTokens.of(context);
+  final title = ProfileOptionalStatIds.title(statId);
+  final remove = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      backgroundColor: colors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: RadiusTokens.radiusMd,
+      ),
+      title: Text(
+        'Remove $title?',
+        style: TextStyle(
+          color: colors.textPrimary,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      content: Text(
+        'You can add this card again later from the + tile.',
+        style: TextStyle(color: colors.textSecondary),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: Text('Cancel', style: TextStyle(color: colors.textSecondary)),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: Text('Remove', style: TextStyle(color: colors.primaryAccent)),
+        ),
+      ],
+    ),
+  );
+  if (remove != true) return;
+  profile.profileExtraStatIds = [
+    for (final id in profile.profileExtraStatIds)
+      if (id != statId) id,
+  ];
+  await ref.read(profileRepositoryProvider).saveProfile(profile);
+  bumpProfileRevision(ref);
 }
 
 Future<void> _showAddStatPicker(

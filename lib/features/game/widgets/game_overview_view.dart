@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/game/commander_identity_colors.dart';
 import '../../../core/game/game_phase.dart';
 import '../../../core/game/game_providers.dart';
 import '../../../core/game/game_state.dart';
@@ -98,9 +99,18 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
             : '${overviewShortPlayerName(activePlayer.username, maxChars: 16)}\'s turn';
 
     const pageInset = LayoutTokens.shellPageInset;
+    final gradientColors = CommanderIdentityColors.gameplayGradient(
+      game.localPlayer?.commanderColorIdentity ?? const [],
+    );
 
-    return ColoredBox(
-      color: colors.backgroundPrimary,
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: gradientColors,
+        ),
+      ),
       child: SafeArea(
         bottom: false,
         minimum: EdgeInsets.only(top: pageInset),
@@ -108,7 +118,7 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
           slivers: [
             SliverAppBar(
               pinned: true,
-              backgroundColor: colors.backgroundPrimary,
+              backgroundColor: colors.backgroundPrimary.withValues(alpha: 0.82),
               surfaceTintColor: Colors.transparent,
               elevation: 0,
               scrolledUnderElevation: 0,

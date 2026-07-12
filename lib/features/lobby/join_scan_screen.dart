@@ -631,12 +631,23 @@ class _WaitingSlotRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final tone = slot.isReady ? colors.primaryAccent : colors.textSecondary;
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      margin: EdgeInsets.only(bottom: LayoutTokens.gr2),
+      padding: EdgeInsets.all(LayoutTokens.gr3),
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: RadiusTokens.radiusControlSm,
+        borderRadius: RadiusTokens.radiusMd,
+        border: Border.all(
+          color: slot.playerColor.withValues(alpha: 0.25),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: OpacityTokens.subtle),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -645,30 +656,47 @@ class _WaitingSlotRow extends StatelessWidget {
               borderRadius: RadiusTokens.radiusXs,
               child: CachedNetworkImage(
                 imageUrl: slot.commanderImageUrl!,
-                width: 36,
-                height: 36,
+                width: 44,
+                height: 44,
                 fit: BoxFit.cover,
                 errorWidget: (_, __, ___) => _dot(slot.playerColor),
               ),
             )
           else
             _dot(slot.playerColor),
-          const SizedBox(width: 10),
+          SizedBox(width: LayoutTokens.gr2),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  slot.username,
-                  style: TextStyle(
-                    color: colors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
+                Row(
+                  children: [
+                    Container(
+                      width: LayoutTokens.gr1,
+                      height: LayoutTokens.gr1,
+                      decoration: BoxDecoration(
+                        color: slot.playerColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    SizedBox(width: LayoutTokens.gr1),
+                    Expanded(
+                      child: Text(
+                        slot.username,
+                        style: TextStyle(
+                          color: colors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: FontTokens.title,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                    ),
+                  ],
                 ),
-                if (slot.commanderName != null)
+                if (slot.commanderName != null) ...[
+                  SizedBox(height: LayoutTokens.gr1),
                   Text(
                     slot.commanderName!,
                     style: TextStyle(
@@ -678,31 +706,24 @@ class _WaitingSlotRow extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                   ),
+                ],
               ],
             ),
           ),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: EdgeInsets.symmetric(
+              horizontal: LayoutTokens.gr1,
+              vertical: LayoutTokens.gr0,
+            ),
             decoration: BoxDecoration(
-              color:
-                  (slot.isReady ? colors.primaryAccent : colors.textSecondary)
-                      .withValues(alpha: 0.15),
+              color: tone.withValues(alpha: OpacityTokens.soft),
               borderRadius: RadiusTokens.radiusXs,
-              border: Border.all(
-                color:
-                    slot.isReady
-                        ? colors.primaryAccent
-                        : colors.textSecondary,
-              ),
+              border: Border.all(color: tone),
             ),
             child: Text(
               slot.isReady ? 'Ready' : 'Waiting',
               style: TextStyle(
-                color:
-                    slot.isReady
-                        ? colors.primaryAccent
-                        : colors.textSecondary,
+                color: tone,
                 fontSize: FontTokens.sm,
                 fontWeight: FontWeight.w600,
               ),
@@ -714,13 +735,13 @@ class _WaitingSlotRow extends StatelessWidget {
   }
 
   Widget _dot(Color color) => Container(
-        width: 36,
-        height: 36,
+        width: 44,
+        height: 44,
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.2),
           borderRadius: RadiusTokens.radiusXs,
           border: Border.all(color: color),
         ),
-        child: Icon(Icons.person, color: color, size: 20),
+        child: Icon(Icons.person, color: color, size: 22),
       );
 }
