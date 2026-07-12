@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../shared/utils/app_router.dart';
+import '../../ui/components/ui_app_bar.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/color_tokens.dart';
 import '../../ui/tokens/elevation_tokens.dart';
@@ -19,7 +20,9 @@ class GameLobbyScreen extends StatelessWidget {
     final colors = AppColorTokens.of(context);
     return Scaffold(
       backgroundColor: colors.backgroundPrimary,
+      appBar: const UiAppBar(title: 'Lobby'),
       body: SafeArea(
+        top: false,
         bottom: false,
         child: Padding(
           padding: EdgeInsets.fromLTRB(
