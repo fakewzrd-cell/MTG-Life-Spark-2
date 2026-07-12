@@ -13,8 +13,9 @@ Future<GameFormat?> showGameFormatPickerSheet(
   BuildContext context, {
   GameFormat? selected,
 }) {
-  return showDialog<GameFormat>(
+  return showGameBottomSheet<GameFormat>(
     context: context,
+    isScrollControlled: true,
     builder: (ctx) => _GameFormatPickerSheet(initial: selected),
   );
 }
@@ -63,33 +64,16 @@ class _GameFormatPickerSheetState extends State<_GameFormatPickerSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
-    final hPad = LayoutTokens.gr2;
     final maxH = MediaQuery.sizeOf(context).height * 0.72;
 
-    return AlertDialog(
-      backgroundColor: colors.surface,
-      insetPadding: EdgeInsets.symmetric(
-        horizontal: LayoutTokens.gr4,
-        vertical: LayoutTokens.gr4,
-      ),
-      titlePadding: EdgeInsets.fromLTRB(hPad, LayoutTokens.gr2, hPad, 0),
-      contentPadding: EdgeInsets.fromLTRB(
-        hPad,
-        LayoutTokens.gr2,
-        hPad,
-        LayoutTokens.gr2,
-      ),
-      title: GameDialogTitleRow(
-        title: 'Format',
-        onClose: () => Navigator.pop(context),
-      ),
-      content: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: maxH),
-        child: SizedBox(
-        width: double.maxFinite,
+    return SizedBox(
+      height: maxH,
+      child: GameSheetBody(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            const GameSheetHeader(title: 'Format'),
+            SizedBox(height: LayoutTokens.gr2),
             TextField(
               controller: _searchCtrl,
               scrollPadding: const EdgeInsets.only(bottom: 120),
@@ -106,7 +90,7 @@ class _GameFormatPickerSheetState extends State<_GameFormatPickerSheet> {
               child: ListView.separated(
                 padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
                 itemCount: _filtered.length,
-                separatorBuilder: (_, __) =>
+                separatorBuilder: (_, _) =>
                     SizedBox(height: LayoutTokens.gr1),
                 itemBuilder: (context, i) {
                   final format = _filtered[i];
@@ -174,7 +158,6 @@ class _GameFormatPickerSheetState extends State<_GameFormatPickerSheet> {
               ),
             ),
           ],
-        ),
         ),
       ),
     );

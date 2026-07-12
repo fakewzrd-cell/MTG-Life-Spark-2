@@ -3,11 +3,11 @@ import 'package:flutter/services.dart';
 
 import '../../core/game/game_format.dart';
 import '../../core/models/player_deck.dart';
-import '../../ui/components/shell_destructive_dialog.dart';
 import '../../ui/components/ui_button.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
+import '../../ui/tokens/radius_tokens.dart';
 import '../game/widgets/game_modal_chrome.dart';
 
 /// Actions available from the deck options bottom sheet.
@@ -18,18 +18,18 @@ enum DeckSheetAction {
   delete,
 }
 
-/// Popup dialog shown when tapping a deck in [DecksManageScreen].
+/// Bottom sheet shown when tapping a deck in [DecksManageScreen].
 Future<DeckSheetAction?> showDeckOptionsSheet(
   BuildContext context,
   PlayerDeck deck,
 ) {
-  return showDialog<DeckSheetAction>(
+  return showGameBottomSheet<DeckSheetAction>(
     context: context,
-    builder: (ctx) => _DeckOptionsDialog(deck: deck),
+    builder: (ctx) => _DeckOptionsSheet(deck: deck),
   );
 }
 
-/// Keyboard-safe rename dialog matching new-deck sheet chrome.
+/// Keyboard-safe rename dialog matching shared game chrome.
 Future<String?> showRenameDeckDialog(
   BuildContext context, {
   required String initialName,
@@ -40,20 +40,21 @@ Future<String?> showRenameDeckDialog(
   );
 }
 
-/// Stacked destructive confirm for removing a deck from the library.
+/// Destructive confirm for removing a deck from the library.
 Future<bool> showDeleteDeckConfirm(
   BuildContext context,
   PlayerDeck deck,
-) {
-  return showShellDestructiveConfirm(
+) async {
+  final ok = await showGameConfirmDialog(
     context: context,
     title: 'Delete deck?',
     message:
         'Remove “${deck.displayName}” from your library? Match history stays, '
         'but this deck will no longer appear in the lobby picker.',
     confirmLabel: 'Delete',
-    cancelLabel: 'Cancel',
+    destructive: true,
   );
+  return ok == true;
 }
 
 String _deckOptionsSubtitle(PlayerDeck deck) {
@@ -71,8 +72,8 @@ String _deckOptionsSubtitle(PlayerDeck deck) {
   return parts.join(' · ');
 }
 
-class _DeckOptionsDialog extends StatelessWidget {
-  const _DeckOptionsDialog({required this.deck});
+class _DeckOptionsSheet extends StatelessWidget {
+  const _DeckOptionsSheet({required this.deck});
 
   final PlayerDeck deck;
 
@@ -84,36 +85,20 @@ class _DeckOptionsDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
-    final hPad = LayoutTokens.gr2;
     final coverLabel =
         deck.isCommanderDeck ? 'Edit commanders' : 'Edit cover card';
     final styleTitle = deck.hasDeckStyle
         ? 'Deck style: ${deck.deckStyleDisplayName}'
         : 'Set deck style (required)';
 
-    return AlertDialog(
-      backgroundColor: colors.surface,
-      insetPadding: EdgeInsets.symmetric(
-        horizontal: LayoutTokens.gr4,
-        vertical: LayoutTokens.gr4,
-      ),
-      contentPadding: EdgeInsets.fromLTRB(hPad, LayoutTokens.gr2, hPad, hPad),
-      titlePadding: EdgeInsets.fromLTRB(hPad, LayoutTokens.gr2, hPad, 0),
-      title: GameDialogTitleRow(
-        title: deck.displayName,
-        onClose: () => Navigator.pop(context),
-      ),
-      content: Column(
+    return GameSheetBody(
+      child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            _deckOptionsSubtitle(deck),
-            style: TextStyle(
-              color: colors.textSecondary,
-              fontSize: FontTokens.sm,
-              height: 1.4,
-            ),
+          GameSheetHeader(
+            title: deck.displayName,
+            subtitle: _deckOptionsSubtitle(deck),
           ),
           SizedBox(height: LayoutTokens.gr2),
           _DeckOptionTile(
@@ -139,7 +124,7 @@ class _DeckOptionsDialog extends StatelessWidget {
             onTap: () => _pick(context, DeckSheetAction.rename),
           ),
           Divider(
-            height: 1,
+            height: LayoutTokens.gr2,
             color: colors.borderSubtle.withValues(alpha: 0.45),
           ),
           _DeckOptionTile(
@@ -237,6 +222,10 @@ class _RenameDeckDialogState extends State<_RenameDeckDialog> {
 
     return AlertDialog(
       backgroundColor: colors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: RadiusTokens.radiusMd,
+        side: BorderSide(color: colors.backgroundSecondary),
+      ),
       contentPadding: const EdgeInsets.fromLTRB(
         LayoutTokens.gr3,
         LayoutTokens.gr2,

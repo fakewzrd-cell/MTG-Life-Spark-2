@@ -9,9 +9,9 @@ import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/components/ui_app_bar.dart';
 import '../../ui/components/ui_button.dart';
-import '../../ui/components/ui_dialog.dart';
-import '../../ui/components/ui_dialog_actions.dart';
 import '../../ui/components/ui_surface.dart';
+import '../../ui/tokens/radius_tokens.dart';
+import '../game/widgets/game_modal_chrome.dart';
 
 class PodsManageScreen extends ConsumerStatefulWidget {
   const PodsManageScreen({super.key});
@@ -76,18 +76,12 @@ class _PodsManageScreenState extends ConsumerState<PodsManageScreen> {
   }
 
   Future<void> _confirmDelete(PodRepository repo, PodPreset pod) async {
-    final ok = await showDialog<bool>(
+    final ok = await showGameConfirmDialog(
       context: context,
-      builder: (ctx) => UiDialog(
-        title: 'Delete pod?',
-        content: Text('Remove “${pod.name}”?'),
-        actions: UiDialogActions.cancelConfirm(
-          context: ctx,
-          confirmLabel: 'Delete',
-          onConfirm: () => Navigator.pop(ctx, true),
-          isDestructive: true,
-        ),
-      ),
+      title: 'Delete pod?',
+      message: 'Remove “${pod.name}”?',
+      confirmLabel: 'Delete',
+      destructive: true,
     );
     if (ok == true) {
       await repo.delete(pod.id);
@@ -298,7 +292,15 @@ class _PodEditorDialogState extends State<_PodEditorDialog> {
     final colors = AppColorTokens.of(context);
 
     return AlertDialog(
-      title: Text(widget.initialName.isEmpty ? 'New pod' : 'Edit pod'),
+      backgroundColor: colors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: RadiusTokens.radiusMd,
+        side: BorderSide(color: colors.backgroundSecondary),
+      ),
+      title: GameDialogTitleRow(
+        title: widget.initialName.isEmpty ? 'New pod' : 'Edit pod',
+        onClose: () => Navigator.pop(context),
+      ),
       content: SizedBox(
         width: double.maxFinite,
         child: SingleChildScrollView(
@@ -365,17 +367,14 @@ class _PodEditorDialogState extends State<_PodEditorDialog> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text('Cancel'),
-        ),
         FilledButton(
           onPressed: () {
             final name = _nameCtrl.text.trim();
             if (name.isEmpty) return;
             Navigator.pop(context, (name: name, members: List<String>.from(_members)));
           },
-          child: Text('Save'),
+          style: FilledButton.styleFrom(backgroundColor: colors.primaryAccent),
+          child: const Text('Save'),
         ),
       ],
     );

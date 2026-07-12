@@ -13,8 +13,9 @@ Future<DeckStyle?> showDeckStylePickerSheet(
   BuildContext context, {
   DeckStyle? selected,
 }) {
-  return showDialog<DeckStyle>(
+  return showGameBottomSheet<DeckStyle>(
     context: context,
+    isScrollControlled: true,
     builder: (ctx) => _DeckStylePickerSheet(initial: selected),
   );
 }
@@ -56,33 +57,16 @@ class _DeckStylePickerSheetState extends State<_DeckStylePickerSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
-    final hPad = LayoutTokens.gr2;
     final maxH = MediaQuery.sizeOf(context).height * 0.72;
 
-    return AlertDialog(
-      backgroundColor: colors.surface,
-      insetPadding: EdgeInsets.symmetric(
-        horizontal: LayoutTokens.gr4,
-        vertical: LayoutTokens.gr4,
-      ),
-      titlePadding: EdgeInsets.fromLTRB(hPad, LayoutTokens.gr2, hPad, 0),
-      contentPadding: EdgeInsets.fromLTRB(
-        hPad,
-        LayoutTokens.gr2,
-        hPad,
-        LayoutTokens.gr2,
-      ),
-      title: GameDialogTitleRow(
-        title: 'Deck style',
-        onClose: () => Navigator.pop(context),
-      ),
-      content: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: maxH),
-        child: SizedBox(
-        width: double.maxFinite,
+    return SizedBox(
+      height: maxH,
+      child: GameSheetBody(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            const GameSheetHeader(title: 'Deck style'),
+            SizedBox(height: LayoutTokens.gr2),
             TextField(
               controller: _searchCtrl,
               scrollPadding: const EdgeInsets.only(bottom: 120),
@@ -99,7 +83,7 @@ class _DeckStylePickerSheetState extends State<_DeckStylePickerSheet> {
               child: ListView.separated(
                 padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
                 itemCount: _filtered.length,
-                separatorBuilder: (_, __) =>
+                separatorBuilder: (_, _) =>
                     SizedBox(height: LayoutTokens.gr1),
                 itemBuilder: (context, i) {
                   final style = _filtered[i];
@@ -167,7 +151,6 @@ class _DeckStylePickerSheetState extends State<_DeckStylePickerSheet> {
               ),
             ),
           ],
-        ),
         ),
       ),
     );

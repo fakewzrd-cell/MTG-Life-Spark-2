@@ -17,22 +17,23 @@ typedef NewDeckSheetResult = ({
   String deckStyleId,
 });
 
-/// Centered popup for creating a deck — matches deck options / rename dialogs.
+/// Bottom sheet for creating a deck — matches style/format picker chrome.
 Future<NewDeckSheetResult?> showNewDeckSheet(BuildContext context) {
-  return showDialog<NewDeckSheetResult>(
+  return showGameBottomSheet<NewDeckSheetResult>(
     context: context,
-    builder: (ctx) => const _NewDeckDialog(),
+    isScrollControlled: true,
+    builder: (ctx) => const _NewDeckSheet(),
   );
 }
 
-class _NewDeckDialog extends StatefulWidget {
-  const _NewDeckDialog();
+class _NewDeckSheet extends StatefulWidget {
+  const _NewDeckSheet();
 
   @override
-  State<_NewDeckDialog> createState() => _NewDeckDialogState();
+  State<_NewDeckSheet> createState() => _NewDeckSheetState();
 }
 
-class _NewDeckDialogState extends State<_NewDeckDialog> {
+class _NewDeckSheetState extends State<_NewDeckSheet> {
   final _nameCtrl = TextEditingController();
   GameFormat _format = GameFormat.commander;
   DeckStyle? _style;
@@ -62,99 +63,74 @@ class _NewDeckDialogState extends State<_NewDeckDialog> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
-    final hPad = LayoutTokens.gr2;
-    // Dialog route already applies [MediaQuery.viewInsets] — do not pad again.
-    final maxH = MediaQuery.sizeOf(context).height * 0.75;
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
 
-    return AlertDialog(
-      backgroundColor: colors.surface,
-      insetPadding: EdgeInsets.symmetric(
-        horizontal: LayoutTokens.gr4,
-        vertical: LayoutTokens.gr4,
-      ),
-      titlePadding: EdgeInsets.fromLTRB(hPad, LayoutTokens.gr2, hPad, 0),
-      contentPadding: EdgeInsets.fromLTRB(
-        hPad,
-        LayoutTokens.gr2,
-        hPad,
-        LayoutTokens.gr2,
-      ),
-      actionsPadding: EdgeInsets.fromLTRB(
-        hPad,
-        0,
-        hPad,
-        LayoutTokens.gr3,
-      ),
-      title: GameDialogTitleRow(
-        title: 'New deck',
-        onClose: () => Navigator.pop(context),
-      ),
-      content: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: maxH),
-        child: SingleChildScrollView(
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Name your deck, pick a format and playstyle, then choose '
-                'your commander or cover card.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: colors.textSecondary,
-                  fontSize: FontTokens.sm,
-                  height: 1.45,
-                ),
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: GameSheetBody(
+        scrollable: true,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const GameSheetHeader(title: 'New deck'),
+            SizedBox(height: LayoutTokens.gr2),
+            Text(
+              'Name your deck, pick a format and playstyle, then choose '
+              'your commander or cover card.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: colors.textSecondary,
+                fontSize: FontTokens.sm,
+                height: 1.45,
               ),
-              SizedBox(height: LayoutTokens.gr3),
-              TextField(
-                controller: _nameCtrl,
-                scrollPadding: const EdgeInsets.only(bottom: 120),
-                onChanged: (_) => setState(() {}),
-                decoration: InputDecoration(
-                  labelText: 'Deck name',
-                  hintText: 'e.g. Raffine Tempo',
-                  hintStyle: TextStyle(color: colors.textSecondary),
-                ),
-                style: TextStyle(color: colors.textPrimary),
+            ),
+            SizedBox(height: LayoutTokens.gr3),
+            TextField(
+              controller: _nameCtrl,
+              scrollPadding: const EdgeInsets.only(bottom: 120),
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                labelText: 'Deck name',
+                hintText: 'e.g. Raffine Tempo',
+                hintStyle: TextStyle(color: colors.textSecondary),
               ),
-              SizedBox(height: LayoutTokens.gr3),
-              GameFormatPickerField(
-                selected: _format,
-                onPick: () async {
-                  final picked = await showGameFormatPickerSheet(
-                    context,
-                    selected: _format,
-                  );
-                  if (picked == null || !mounted) return;
-                  setState(() => _format = picked);
-                },
-              ),
-              SizedBox(height: LayoutTokens.gr3),
-              DeckStylePickerField(
-                selected: _style,
-                errorText: _style == null ? 'Required' : null,
-                onPick: () async {
-                  final picked = await showDeckStylePickerSheet(
-                    context,
-                    selected: _style,
-                  );
-                  if (picked == null || !mounted) return;
-                  setState(() => _style = picked);
-                },
-              ),
-            ],
-          ),
+              style: TextStyle(color: colors.textPrimary),
+            ),
+            SizedBox(height: LayoutTokens.gr3),
+            GameFormatPickerField(
+              selected: _format,
+              onPick: () async {
+                final picked = await showGameFormatPickerSheet(
+                  context,
+                  selected: _format,
+                );
+                if (picked == null || !mounted) return;
+                setState(() => _format = picked);
+              },
+            ),
+            SizedBox(height: LayoutTokens.gr3),
+            DeckStylePickerField(
+              selected: _style,
+              errorText: _style == null ? 'Required' : null,
+              onPick: () async {
+                final picked = await showDeckStylePickerSheet(
+                  context,
+                  selected: _style,
+                );
+                if (picked == null || !mounted) return;
+                setState(() => _style = picked);
+              },
+            ),
+            SizedBox(height: LayoutTokens.gr3),
+            UiButton(
+              label: 'Next',
+              icon: const Icon(Icons.arrow_forward_rounded, size: 22),
+              enabled: _canNext,
+              onPressed: _canNext ? _submit : null,
+            ),
+          ],
         ),
       ),
-      actions: [
-        UiButton(
-          label: 'Next',
-          icon: const Icon(Icons.arrow_forward_rounded, size: 22),
-          enabled: _canNext,
-          onPressed: _canNext ? _submit : null,
-        ),
-      ],
     );
   }
 }
