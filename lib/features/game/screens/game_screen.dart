@@ -31,6 +31,7 @@ import '../widgets/game_overview_view.dart';
 import '../widgets/game_performance_widgets.dart';
 import '../widgets/game_timeout_widgets.dart';
 import '../widgets/gameplay_dials_strip_widget.dart';
+import '../widgets/opponent_glance_strip.dart';
 import '../widgets/phase_nav_cluster.dart';
 import '../widgets/stack_tracker_tab.dart';
 import '../widgets/variant_card_panel.dart';
@@ -399,6 +400,21 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
                 : ActiveTurnBanner(game: game),
           ),
         ),
+        if (_mainTabIndex == 0 &&
+            game.players.any((p) => p.playerId != local.playerId))
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              horizontalInset,
+              0,
+              horizontalInset,
+              tightVertical ? LayoutTokens.gr1 : LayoutTokens.gr2,
+            ),
+            child: OpponentGlanceStrip(
+              game: game,
+              localPlayerId: local.playerId,
+              onOpenTable: widget.onToggleOverview,
+            ),
+          ),
         Expanded(
           child: switch (_mainTabIndex) {
             1 => StackTrackerTab(game: ref.read(gameProvider)),
