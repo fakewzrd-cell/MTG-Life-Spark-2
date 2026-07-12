@@ -12,6 +12,7 @@ import '../../ui/components/ui_app_bar.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/color_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
+import '../../ui/tokens/radius_tokens.dart';
 
 /// Pick MTG card art for the circular profile picture.
 ///
@@ -263,11 +264,11 @@ class _CardArtTile extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: card.imageUrl != null ? onTap : null,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: RadiusTokens.radiusSm,
         child: Container(
           decoration: BoxDecoration(
             color: colors.surface,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: RadiusTokens.radiusSm,
             border: Border.all(
               color: colors.borderSubtle.withValues(alpha: 0.5),
             ),
@@ -278,7 +279,7 @@ class _CardArtTile extends StatelessWidget {
               Expanded(
                 child: ClipRRect(
                   borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(11),
+                    top: Radius.circular(RadiusTokens.sm - 1),
                   ),
                   child: card.imageUrl != null
                       ? CachedNetworkImage(

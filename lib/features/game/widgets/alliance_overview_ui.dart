@@ -14,6 +14,7 @@ import '../../../ui/tokens/radius_tokens.dart';
 import 'game_modal_chrome.dart';
 import 'game_colors.dart';
 import 'game_ui_tokens.dart';
+import '../../../ui/components/ui_snack_bar.dart';
 
 /// Shows alliance-related dialogs when [allianceUiEventProvider] updates.
 void handleAllianceUiEvent(
@@ -40,9 +41,7 @@ void handleAllianceUiEvent(
         durationLabel: event.durationLabel,
       );
     case AllianceUiEventKind.allianceDeclined:
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Secret alliance offer declined')),
-      );
+      showUiSnackBar(context, 'Secret alliance offer declined');
     case AllianceUiEventKind.allianceRevealed:
       showAllianceRevealedDialog(
         context: context,
@@ -57,9 +56,7 @@ void handleAllianceUiEvent(
           playerB: event.allyUsername ?? '?',
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Secret alliance ended')),
-        );
+        showUiSnackBar(context, 'Secret alliance ended');
       }
   }
 
@@ -91,14 +88,11 @@ Future<void> showProposeAllianceSheet({
                 delaySeconds: delaySeconds,
               );
           Navigator.pop(ctx);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                timing == AllianceDeliveryTiming.now
-                    ? 'Whisper sent to ${target.username}'
-                    : 'Whisper scheduled for ${target.username}',
-              ),
-            ),
+          showUiSnackBar(
+            context,
+            timing == AllianceDeliveryTiming.now
+                ? 'Whisper sent to ${target.username}'
+                : 'Whisper scheduled for ${target.username}',
           );
         }
 

@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -18,11 +17,12 @@ import '../../core/persistence/providers.dart';
 import '../../shared/utils/app_router.dart';
 import '../../shared/widgets/session_leave_dialog.dart';
 import 'deck_picker_sheet.dart';
+import 'lobby_slot_widgets.dart';
 import '../../ui/components/ui_button.dart';
+import '../../ui/components/ui_snack_bar.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
-import '../../ui/tokens/opacity_tokens.dart';
 import '../../ui/tokens/color_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import '../../ui/components/ui_app_bar.dart';
@@ -304,11 +304,7 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
 
   void _showSnackbar(String msg, {bool isError = false}) {
     if (!mounted) return;
-    final colors = AppColorTokens.of(context);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
-      backgroundColor: isError ? ColorTokens.danger : colors.surface,
-    ));
+    showUiSnackBar(context, msg, isError: isError);
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
@@ -561,7 +557,7 @@ class _WaitingRoomViewState extends ConsumerState<_WaitingRoomView> {
                   Row(
                     children: [
                       Expanded(
-                        child: _JoinLobbyActionButton(
+                        child: LobbyActionButton(
                           label: 'Select deck',
                           highlighted: mySlot?.selectedDeckId != null,
                           onPressed: () => showDeckPickerSheet(
@@ -573,7 +569,7 @@ class _WaitingRoomViewState extends ConsumerState<_WaitingRoomView> {
                       ),
                       SizedBox(width: LayoutTokens.gr2),
                       Expanded(
-                        child: _JoinLobbyActionButton(
+                        child: LobbyActionButton(
                           label: 'Select commander',
                           highlighted: mySlot?.commanderName != null,
                           filled: true,
@@ -590,7 +586,7 @@ class _WaitingRoomViewState extends ConsumerState<_WaitingRoomView> {
                 else
                   SizedBox(
                     width: double.infinity,
-                    child: _JoinLobbyActionButton(
+                    child: LobbyActionButton(
                       label: 'Select deck',
                       highlighted: mySlot?.selectedDeckId != null,
                       filled: true,
@@ -604,7 +600,7 @@ class _WaitingRoomViewState extends ConsumerState<_WaitingRoomView> {
                 SizedBox(height: LayoutTokens.gr2),
                 SizedBox(
                   width: double.infinity,
-                  child: _JoinLobbyActionButton(
+                  child: LobbyActionButton(
                     label: mySlot?.isReady == true ? 'Ready' : 'Mark ready',
                     highlighted: mySlot?.isReady == true,
                     filled: true,
@@ -625,68 +621,6 @@ class _WaitingRoomViewState extends ConsumerState<_WaitingRoomView> {
   }
 }
 
-class _JoinLobbyActionButton extends StatelessWidget {
-  const _JoinLobbyActionButton({
-    required this.label,
-    required this.onPressed,
-    this.highlighted = false,
-    this.filled = false,
-  });
-
-  final String label;
-  final VoidCallback onPressed;
-  final bool highlighted;
-  final bool filled;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = AppColorTokens.of(context);
-    final accent = colors.primaryAccent;
-
-    Color? bg;
-    Color fg;
-    Color border;
-
-    if (filled && highlighted) {
-      bg = accent;
-      fg = ColorTokens.onAccent;
-      border = accent;
-    } else if (highlighted) {
-      bg = accent.withValues(alpha: OpacityTokens.soft);
-      fg = colors.textPrimary;
-      border = accent;
-    } else {
-      bg = colors.surface;
-      fg = colors.textPrimary;
-      border = colors.textSecondary.withValues(alpha: 0.55);
-    }
-
-    return OutlinedButton(
-      style: OutlinedButton.styleFrom(
-        minimumSize: Size(0, LayoutTokens.minTapTarget),
-        padding: EdgeInsets.symmetric(
-          horizontal: LayoutTokens.gr2,
-          vertical: LayoutTokens.gr1,
-        ),
-        backgroundColor: bg,
-        foregroundColor: fg,
-        side: BorderSide(color: border, width: highlighted ? 1.5 : 1),
-        shape: RoundedRectangleBorder(
-          borderRadius: RadiusTokens.radiusControlSm,
-        ),
-      ),
-      onPressed: onPressed,
-      child: Text(
-        label,
-        textAlign: TextAlign.center,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(fontWeight: FontWeight.w700, fontSize: FontTokens.sm),
-      ),
-    );
-  }
-}
-
 class _WaitingSlotRow extends StatelessWidget {
   final PlayerSlot slot;
   const _WaitingSlotRow({required this.slot});
@@ -694,69 +628,20 @@ class _WaitingSlotRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
-    final tone = slot.isReady ? colors.primaryAccent : colors.textSecondary;
-    return Container(
-      margin: EdgeInsets.only(bottom: LayoutTokens.gr2),
-      padding: EdgeInsets.all(LayoutTokens.gr3),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: RadiusTokens.radiusMd,
-        border: Border.all(
-          color: slot.playerColor.withValues(alpha: 0.25),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: OpacityTokens.subtle),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    return LobbySlotCardShell(
+      borderColor: slot.playerColor.withValues(alpha: 0.25),
       child: Row(
         children: [
-          if (slot.commanderImageUrl != null)
-            ClipRRect(
-              borderRadius: RadiusTokens.radiusXs,
-              child: CachedNetworkImage(
-                imageUrl: slot.commanderImageUrl!,
-                width: 44,
-                height: 44,
-                fit: BoxFit.cover,
-                errorWidget: (_, __, ___) => _dot(slot.playerColor),
-              ),
-            )
-          else
-            _dot(slot.playerColor),
+          LobbySlotAvatar(slot: slot, size: 44),
           SizedBox(width: LayoutTokens.gr2),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: LayoutTokens.gr1,
-                      height: LayoutTokens.gr1,
-                      decoration: BoxDecoration(
-                        color: slot.playerColor,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    SizedBox(width: LayoutTokens.gr1),
-                    Expanded(
-                      child: Text(
-                        slot.username,
-                        style: TextStyle(
-                          color: colors.textPrimary,
-                          fontWeight: FontWeight.w600,
-                          fontSize: FontTokens.title,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                    ),
-                  ],
+                LobbyPlayerIdentityRow(
+                  username: slot.username,
+                  playerColor: slot.playerColor,
                 ),
                 if (slot.commanderName != null) ...[
                   SizedBox(height: LayoutTokens.gr1),
@@ -773,38 +658,9 @@ class _WaitingSlotRow extends StatelessWidget {
               ],
             ),
           ),
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: LayoutTokens.gr1,
-              vertical: LayoutTokens.gr0,
-            ),
-            decoration: BoxDecoration(
-              color: tone.withValues(alpha: OpacityTokens.soft),
-              borderRadius: RadiusTokens.radiusXs,
-              border: Border.all(color: tone),
-            ),
-            child: Text(
-              slot.isReady ? 'Ready' : 'Waiting',
-              style: TextStyle(
-                color: tone,
-                fontSize: FontTokens.sm,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
+          LobbyReadyBadge(isReady: slot.isReady),
         ],
       ),
     );
   }
-
-  Widget _dot(Color color) => Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.2),
-          borderRadius: RadiusTokens.radiusXs,
-          border: Border.all(color: color),
-        ),
-        child: Icon(Icons.person, color: color, size: 22),
-      );
 }

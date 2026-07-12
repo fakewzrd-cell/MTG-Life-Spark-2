@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../ui/components/ui_app_bar.dart';
 import '../../ui/components/ui_button.dart';
+import '../../ui/components/ui_snack_bar.dart';
 import '../../ui/components/ui_text_field.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
@@ -38,11 +39,12 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
 
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
+      if (mounted) {
+        showUiSnackBar(context, 'Opening your mail app…');
+      }
     } else {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open mail app.')),
-        );
+        showUiSnackBar(context, 'Could not open mail app.', isError: true);
       }
     }
 

@@ -388,7 +388,7 @@ class _ProfileFloatingStatsPill extends StatelessWidget {
 
     return Material(
       color: Colors.black.withValues(alpha: 0.72),
-      borderRadius: BorderRadius.circular(999),
+      borderRadius: RadiusTokens.radiusPill,
       clipBehavior: Clip.antiAlias,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),

@@ -10,7 +10,6 @@ import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/components/ui_app_bar.dart';
 import '../../ui/components/ui_button.dart';
 import '../../ui/components/ui_surface.dart';
-import '../../ui/tokens/radius_tokens.dart';
 import '../game/widgets/game_modal_chrome.dart';
 
 class PodsManageScreen extends ConsumerStatefulWidget {
@@ -337,17 +336,23 @@ class _PodEditorDialogState extends State<_PodEditorDialog> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final canSave = _nameCtrl.text.trim().isNotEmpty;
 
-    return AlertDialog(
-      backgroundColor: colors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: RadiusTokens.radiusMd,
-        side: BorderSide(color: colors.backgroundSecondary),
-      ),
-      title: GameDialogTitleRow(
-        title: widget.initialName.isEmpty ? 'New pod' : 'Edit pod',
-        onClose: () => Navigator.pop(context),
-      ),
+    return GameFormDialog(
+      title: widget.initialName.isEmpty ? 'New pod' : 'Edit pod',
+      submitLabel: 'Save',
+      enabled: canSave,
+      onSubmit: canSave
+          ? () {
+              Navigator.pop(
+                context,
+                (
+                  name: _nameCtrl.text.trim(),
+                  members: List<String>.from(_members),
+                ),
+              );
+            }
+          : null,
       content: SizedBox(
         width: double.maxFinite,
         child: SingleChildScrollView(
@@ -357,6 +362,7 @@ class _PodEditorDialogState extends State<_PodEditorDialog> {
             children: [
               TextField(
                 controller: _nameCtrl,
+                onChanged: (_) => setState(() {}),
                 decoration: const InputDecoration(
                   labelText: 'Pod name',
                   hintText: 'e.g. Friday Night Commander',
@@ -369,13 +375,16 @@ class _PodEditorDialogState extends State<_PodEditorDialog> {
                 style: TextStyle(
                   color: colors.textSecondary,
                   fontWeight: FontWeight.w600,
-                  fontSize: 12,
+                  fontSize: FontTokens.sm,
                 ),
               ),
               SizedBox(height: LayoutTokens.gr1),
               Text(
                 'Use the same names players use in the app (their profile name).',
-                style: TextStyle(color: colors.textSecondary, fontSize: 11),
+                style: TextStyle(
+                  color: colors.textSecondary,
+                  fontSize: FontTokens.caption,
+                ),
               ),
               SizedBox(height: LayoutTokens.gr2),
               Row(
@@ -393,7 +402,7 @@ class _PodEditorDialogState extends State<_PodEditorDialog> {
                   ),
                   IconButton(
                     onPressed: _addMember,
-                    icon: Icon(Icons.person_add_outlined),
+                    icon: const Icon(Icons.person_add_outlined),
                     tooltip: 'Add player',
                   ),
                 ],
@@ -413,17 +422,6 @@ class _PodEditorDialogState extends State<_PodEditorDialog> {
           ),
         ),
       ),
-      actions: [
-        FilledButton(
-          onPressed: () {
-            final name = _nameCtrl.text.trim();
-            if (name.isEmpty) return;
-            Navigator.pop(context, (name: name, members: List<String>.from(_members)));
-          },
-          style: FilledButton.styleFrom(backgroundColor: colors.primaryAccent),
-          child: const Text('Save'),
-        ),
-      ],
     );
   }
 }

@@ -3,11 +3,9 @@ import 'package:flutter/services.dart';
 
 import '../../core/game/game_format.dart';
 import '../../core/models/player_deck.dart';
-import '../../ui/components/ui_button.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
-import '../../ui/tokens/radius_tokens.dart';
 import '../game/widgets/game_modal_chrome.dart';
 
 /// Actions available from the deck options bottom sheet.
@@ -220,22 +218,11 @@ class _RenameDeckDialogState extends State<_RenameDeckDialog> {
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
 
-    return AlertDialog(
-      backgroundColor: colors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: RadiusTokens.radiusMd,
-        side: BorderSide(color: colors.backgroundSecondary),
-      ),
-      contentPadding: const EdgeInsets.fromLTRB(
-        LayoutTokens.gr3,
-        LayoutTokens.gr2,
-        LayoutTokens.gr3,
-        LayoutTokens.gr2,
-      ),
-      title: GameDialogTitleRow(
-        title: 'Rename deck',
-        onClose: () => Navigator.pop(context),
-      ),
+    return GameFormDialog(
+      title: 'Rename deck',
+      submitLabel: 'Save',
+      enabled: _canSave,
+      onSubmit: _canSave ? _submit : null,
       content: TextField(
         controller: _controller,
         autofocus: true,
@@ -251,21 +238,6 @@ class _RenameDeckDialogState extends State<_RenameDeckDialog> {
         ),
         style: TextStyle(color: colors.textPrimary),
       ),
-      actions: [
-        Padding(
-          padding: EdgeInsets.fromLTRB(
-            LayoutTokens.gr3,
-            0,
-            LayoutTokens.gr3,
-            LayoutTokens.gr3,
-          ),
-          child: UiButton(
-            label: 'Save',
-            enabled: _canSave,
-            onPressed: _canSave ? _submit : null,
-          ),
-        ),
-      ],
     );
   }
 }

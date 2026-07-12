@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'game_colors.dart';
 import '../../../ui/tokens/layout_tokens.dart';
+import '../../../ui/components/ui_snack_bar.dart';
 import 'game_modal_chrome.dart';
 
 const _kStackArticleUrl =
@@ -73,9 +74,7 @@ class StackHelpSheet extends StatelessWidget {
     final uri = Uri.parse(_kStackArticleUrl);
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open link')),
-        );
+        showUiSnackBar(context, 'Could not open link', isError: true);
       }
     }
   }

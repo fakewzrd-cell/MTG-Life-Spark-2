@@ -297,3 +297,64 @@ Future<bool?> showGameChoiceDialog({
     },
   );
 }
+
+/// Form dialog shell: title + close, [content], single primary submit.
+class GameFormDialog extends StatelessWidget {
+  const GameFormDialog({
+    super.key,
+    required this.title,
+    required this.content,
+    required this.submitLabel,
+    required this.onSubmit,
+    this.enabled = true,
+  });
+
+  final String title;
+  final Widget content;
+  final String submitLabel;
+  final VoidCallback? onSubmit;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.gameColors;
+    return AlertDialog(
+      backgroundColor: colors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: RadiusTokens.radiusMd,
+        side: BorderSide(color: colors.backgroundSecondary),
+      ),
+      contentPadding: const EdgeInsets.fromLTRB(
+        LayoutTokens.gr3,
+        LayoutTokens.gr2,
+        LayoutTokens.gr3,
+        LayoutTokens.gr2,
+      ),
+      title: GameDialogTitleRow(
+        title: title,
+        onClose: () => Navigator.pop(context),
+      ),
+      content: content,
+      actions: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(
+            LayoutTokens.gr3,
+            0,
+            LayoutTokens.gr3,
+            LayoutTokens.gr3,
+          ),
+          child: SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: enabled ? onSubmit : null,
+              style: FilledButton.styleFrom(
+                backgroundColor: colors.primaryAccent,
+              ),
+              child: Text(submitLabel),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

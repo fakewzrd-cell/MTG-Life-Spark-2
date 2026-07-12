@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,6 +16,7 @@ import '../../core/persistence/providers.dart';
 import '../../shared/utils/app_router.dart';
 import '../../shared/widgets/session_leave_dialog.dart';
 import 'deck_picker_sheet.dart';
+import 'lobby_slot_widgets.dart';
 import '../game/widgets/game_modal_chrome.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/color_tokens.dart';
@@ -516,59 +516,30 @@ class _PlayerSlotCard extends ConsumerWidget {
 
     final compact = MediaQuery.sizeOf(context).width < 360;
 
-    return Container(
-      margin: EdgeInsets.only(bottom: LayoutTokens.gr2),
-      padding: EdgeInsets.all(compact ? LayoutTokens.gr2 : LayoutTokens.gr3),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: RadiusTokens.radiusMd,
-        border: Border.all(
-          color: borderColor,
-          width: isMe ? 2 : 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: OpacityTokens.subtle),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+    return LobbySlotCardShell(
+      borderColor: borderColor,
+      borderWidth: isMe ? 2 : 1,
+      compact: compact,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _CommanderAvatar(slot: slot, compact: compact),
+              LobbySlotAvatar(
+                slot: slot,
+                size: compact
+                    ? LayoutTokens.minTapTarget
+                    : LayoutTokens.gr6 + LayoutTokens.gr0,
+              ),
               SizedBox(width: LayoutTokens.gr2),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: LayoutTokens.gr1,
-                          height: LayoutTokens.gr1,
-                          decoration: BoxDecoration(
-                            color: slot.playerColor,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        SizedBox(width: LayoutTokens.gr1),
-                        Expanded(
-                          child: Text(
-                            slot.username,
-                            style: TextStyle(
-                              color: colors.textPrimary,
-                              fontWeight: FontWeight.w600,
-                              fontSize: FontTokens.title,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
+                    LobbyPlayerIdentityRow(
+                      username: slot.username,
+                      playerColor: slot.playerColor,
                     ),
                     SizedBox(height: LayoutTokens.gr1),
                     Text(
@@ -618,7 +589,7 @@ class _PlayerSlotCard extends ConsumerWidget {
               if (isMe)
                 _SlotReadyButton(slot: slot)
               else
-                _SlotReadyBadge(isReady: slot.isReady),
+                LobbyReadyBadge(isReady: slot.isReady),
             ],
           ),
           if (isMe) ...[
@@ -649,7 +620,7 @@ class _SlotCommanderControls extends ConsumerWidget {
     final gap = LayoutTokens.gr1;
 
     if (!isCommanderLobby) {
-      return _SlotActionButton(
+      return LobbyActionButton(
         label: 'Deck',
         highlighted: slot.selectedDeckId != null,
         filled: true,
@@ -660,7 +631,7 @@ class _SlotCommanderControls extends ConsumerWidget {
     return Row(
       children: [
         Expanded(
-          child: _SlotActionButton(
+          child: LobbyActionButton(
             label: 'Deck',
             highlighted: slot.selectedDeckId != null,
             filled: false,
@@ -670,7 +641,7 @@ class _SlotCommanderControls extends ConsumerWidget {
         ),
         SizedBox(width: gap),
         Expanded(
-          child: _SlotActionButton(
+          child: LobbyActionButton(
             label: 'Commander',
             highlighted: slot.commanderName != null,
             filled: true,
@@ -687,37 +658,6 @@ class _SlotCommanderControls extends ConsumerWidget {
         SizedBox(width: gap),
         Expanded(child: _PartnerChip(slot: slot)),
       ],
-    );
-  }
-}
-
-class _SlotReadyBadge extends StatelessWidget {
-  final bool isReady;
-
-  const _SlotReadyBadge({required this.isReady});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = AppColorTokens.of(context);
-    final tone = isReady ? colors.primaryAccent : colors.textSecondary;
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: LayoutTokens.gr1,
-        vertical: LayoutTokens.gr0,
-      ),
-      decoration: BoxDecoration(
-        color: tone.withValues(alpha: OpacityTokens.soft),
-        borderRadius: RadiusTokens.radiusXs,
-        border: Border.all(color: tone),
-      ),
-      child: Text(
-        isReady ? 'Ready' : 'Waiting',
-        style: TextStyle(
-          color: tone,
-          fontSize: FontTokens.sm,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
     );
   }
 }
@@ -752,112 +692,6 @@ class _SlotReadyButton extends ConsumerWidget {
         notifier.setReady(slot.playerId, ready: !slot.isReady);
       },
       icon: const Icon(Icons.check_rounded, size: 24),
-    );
-  }
-}
-
-class _SlotActionButton extends StatelessWidget {
-  final String label;
-  final bool highlighted;
-  final bool filled;
-  final VoidCallback onPressed;
-
-  const _SlotActionButton({
-    required this.label,
-    required this.highlighted,
-    required this.filled,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = AppColorTokens.of(context);
-    final accent = colors.primaryAccent;
-
-    Color? bg;
-    Color fg;
-    Color border;
-
-    if (filled && highlighted) {
-      bg = accent;
-      fg = ColorTokens.onAccent;
-      border = accent;
-    } else if (highlighted) {
-      bg = accent.withValues(alpha: 0.35);
-      fg = colors.textPrimary;
-      border = accent;
-    } else {
-      bg = Colors.transparent;
-      fg = colors.textSecondary;
-      border = colors.textSecondary;
-    }
-
-    return OutlinedButton(
-      style: OutlinedButton.styleFrom(
-        minimumSize: const Size(0, LayoutTokens.minTapTarget),
-        padding: const EdgeInsets.symmetric(horizontal: LayoutTokens.gr2),
-        backgroundColor: bg,
-        foregroundColor: fg,
-        side: BorderSide(color: border),
-        shape: RoundedRectangleBorder(
-          borderRadius: RadiusTokens.radiusControlMd,
-        ),
-        textStyle: TextStyle(
-          fontSize: FontTokens.sm,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      onPressed: onPressed,
-      child: Text(
-        label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-    );
-  }
-}
-
-class _CommanderAvatar extends StatelessWidget {
-  final PlayerSlot slot;
-  final bool compact;
-  const _CommanderAvatar({required this.slot, this.compact = false});
-
-  @override
-  Widget build(BuildContext context) {
-    final size =
-        compact ? LayoutTokens.minTapTarget : LayoutTokens.gr6 + LayoutTokens.gr0;
-    if (slot.commanderImageUrl != null) {
-      return ClipRRect(
-        borderRadius: RadiusTokens.radiusControlMd,
-        child: CachedNetworkImage(
-          imageUrl: slot.commanderImageUrl!,
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-          errorWidget: (_, __, ___) => _ColorDot(color: slot.playerColor, size: size),
-        ),
-      );
-    }
-    return _ColorDot(color: slot.playerColor, size: size);
-  }
-}
-
-class _ColorDot extends StatelessWidget {
-  final Color color;
-  final double size;
-  const _ColorDot({required this.color, this.size = LayoutTokens.gr6});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.25),
-        borderRadius: RadiusTokens.radiusControlMd,
-        border: Border.all(color: color, width: 2),
-      ),
-      child: Icon(Icons.person, color: color, size: size * 0.56),
     );
   }
 }
@@ -1120,7 +954,6 @@ class _StartingLifeDropdown extends StatelessWidget {
     showDialog<void>(
       context: context,
       builder: (dialogContext) {
-        final colors = AppColorTokens.of(dialogContext);
         void submit() {
           final v = int.tryParse(controller.text);
           if (v != null && v >= 1 && v <= 999) {
@@ -1129,16 +962,10 @@ class _StartingLifeDropdown extends StatelessWidget {
           }
         }
 
-        return AlertDialog(
-          backgroundColor: colors.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: RadiusTokens.radiusMd,
-            side: BorderSide(color: colors.backgroundSecondary),
-          ),
-          title: GameDialogTitleRow(
-            title: 'Custom starting life',
-            onClose: () => Navigator.pop(dialogContext),
-          ),
+        return GameFormDialog(
+          title: 'Custom starting life',
+          submitLabel: 'OK',
+          onSubmit: submit,
           content: TextField(
             controller: controller,
             keyboardType: TextInputType.number,
@@ -1148,15 +975,6 @@ class _StartingLifeDropdown extends StatelessWidget {
             ),
             onSubmitted: (_) => submit(),
           ),
-          actions: [
-            FilledButton(
-              onPressed: submit,
-              style: FilledButton.styleFrom(
-                backgroundColor: colors.primaryAccent,
-              ),
-              child: const Text('OK'),
-            ),
-          ],
         );
       },
     ).whenComplete(controller.dispose);

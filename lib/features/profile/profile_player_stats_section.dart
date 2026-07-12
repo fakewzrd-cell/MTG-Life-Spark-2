@@ -838,7 +838,7 @@ Widget _behaviourSpectrumTrack({
             width: w,
             height: barHeight,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: RadiusTokens.radiusPill,
               border: Border.all(
                 color: colors.borderSubtle.withValues(alpha: 0.55),
                 width: 1,

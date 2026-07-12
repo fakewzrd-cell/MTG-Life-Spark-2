@@ -12,9 +12,7 @@ import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
-import '../../../ui/tokens/typography_tokens.dart';
 import 'game_modal_chrome.dart';
-import '../../../ui/tokens/color_tokens.dart';
 import '../../../ui/tokens/spacing_tokens.dart';
 
 /// Compact tap target that opens the full [VariantCardPanel] in a bottom
@@ -423,6 +421,7 @@ class _VariantTile extends StatelessWidget {
   }
 
   void _showCardDetail(BuildContext context) {
+    final colors = context.gameColors;
     showGameBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -433,43 +432,35 @@ class _VariantTile extends StatelessWidget {
         expand: false,
         builder: (_, scrollController) => SingleChildScrollView(
           controller: scrollController,
-          padding: EdgeInsets.all(GameModalChrome.horizontalInset(context)),
+          padding: GameModalChrome.sheetPadding(context),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: ColorTokens.textSecondary.withValues(alpha: 0.22),
-                    borderRadius: RadiusTokens.radiusPill,
-                  ),
-                ),
+              const GameSheetHandle(),
+              SizedBox(height: LayoutTokens.gr2),
+              GameSheetHeader(
+                title: card.name,
+                showHandle: false,
               ),
-              const SizedBox(height: LayoutTokens.gr3),
+              SizedBox(height: LayoutTokens.gr3),
               if (card.imageUrl != null)
                 Center(
                   child: ClipRRect(
                     borderRadius: RadiusTokens.radiusSm,
                     child: CachedNetworkImage(
                       imageUrl: card.imageUrl!,
-                      width: (MediaQuery.sizeOf(context).width - 40).clamp(200.0, 280.0),
+                      width: (MediaQuery.sizeOf(context).width - 40)
+                          .clamp(200.0, 280.0),
                       fit: BoxFit.contain,
                     ),
                   ),
                 ),
-              SizedBox(height: LayoutTokens.gr3),
-              Text(
-                card.name,
-                style: TypographyTokens.sectionTitle(ColorTokens.textPrimary),
-              ),
               if (card.oracleText != null && card.oracleText!.isNotEmpty) ...[
-                SizedBox(height: LayoutTokens.gr2),
+                SizedBox(height: LayoutTokens.gr3),
                 Text(
                   card.oracleText!,
                   style: TextStyle(
-                    color: ColorTokens.textSecondary,
+                    color: colors.textSecondary,
                     fontSize: FontTokens.body,
                     height: 1.4,
                   ),

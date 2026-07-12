@@ -7,6 +7,7 @@ import '../../../core/game/player_game_state.dart';
 import 'game_colors.dart';
 import '../../../ui/theme/app_color_tokens.dart';
 import 'game_modal_chrome.dart';
+import '../../../ui/components/ui_snack_bar.dart';
 import '../../../shared/widgets/game_icon.dart';
 import '../../../shared/utils/game_haptics.dart';
 import '../../../ui/tokens/layout_tokens.dart';
@@ -172,17 +173,14 @@ class GameplayDialsStripWidget extends StatelessWidget {
   PlayerGameState get player => getPlayer();
 
   static void _showStripLimitSnack(BuildContext context, {bool custom = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          custom
-              ? 'You can have up to ${GameplayDialIds.maxCustomDials} custom counters '
-                  'and ${GameplayDialIds.maxStripDials} counters total on your strip. '
-                  'Remove one to add another.'
-              : 'Your strip holds up to ${GameplayDialIds.maxStripDials} counters. '
-                  'Remove one to add another.',
-        ),
-      ),
+    showUiSnackBar(
+      context,
+      custom
+          ? 'You can have up to ${GameplayDialIds.maxCustomDials} custom counters '
+              'and ${GameplayDialIds.maxStripDials} counters total on your strip. '
+              'Remove one to add another.'
+          : 'Your strip holds up to ${GameplayDialIds.maxStripDials} counters. '
+              'Remove one to add another.',
     );
   }
 

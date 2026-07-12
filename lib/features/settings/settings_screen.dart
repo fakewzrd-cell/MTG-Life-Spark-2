@@ -11,6 +11,7 @@ import '../../core/persistence/providers.dart';
 import '../../shared/theme/theme_provider.dart';
 import '../../shared/utils/app_router.dart';
 import '../../ui/components/ui_app_bar.dart';
+import '../../ui/components/ui_snack_bar.dart';
 import '../../ui/components/ui_surface.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/app_color_palettes.dart';
@@ -264,15 +265,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     try {
       await DefaultCacheManager().emptyCache();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Image cache cleared.')),
-      );
+      showUiSnackBar(context, 'Image cache cleared.');
     } catch (e, st) {
       appLog('Settings: clear image cache failed', error: e, stackTrace: st);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not clear image cache.')),
-      );
+      showUiSnackBar(context, 'Could not clear image cache.', isError: true);
     }
   }
 }
