@@ -24,8 +24,8 @@ void main() {
     );
 
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 1500));
-    await tester.pump(const Duration(milliseconds: 800));
+    await tester.pump(const Duration(milliseconds: 1000));
+    await tester.pump(const Duration(milliseconds: 1000));
 
     expect(completed, isTrue);
   });
