@@ -16,6 +16,7 @@ import '../../core/network/session_join_uri.dart';
 import '../../core/network/ws_client_service.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/utils/app_router.dart';
+import '../../shared/widgets/session_leave_dialog.dart';
 import 'deck_picker_sheet.dart';
 import '../../ui/components/ui_button.dart';
 import '../../ui/theme/app_color_tokens.dart';
@@ -289,6 +290,12 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
   }
 
   Future<void> _leaveJoinFlow() async {
+    final needsConfirm = _phase == _JoinPhase.connecting ||
+        _phase == _JoinPhase.waitingRoom;
+    if (needsConfirm) {
+      final ok = await confirmLeaveActiveSession(context);
+      if (!ok || !mounted) return;
+    }
     await _cancelConnectAttempt();
     await _stopScanner();
     await endSession(ref);
@@ -314,7 +321,8 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
       appBar: UiAppBar(
         title: 'Join a Game',
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Leave',
           onPressed: () => unawaited(_leaveJoinFlow()),
         ),
       ),

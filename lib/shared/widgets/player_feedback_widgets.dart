@@ -57,6 +57,7 @@ class PlayerFeedbackRow extends StatelessWidget {
               size: 20,
               color: isLiked ? colors.success : colors.textSecondary,
             ),
+            tooltip: isLiked ? 'Clear like' : 'Like',
             onPressed: onLike,
             style: IconButton.styleFrom(
               backgroundColor: isLiked
@@ -74,6 +75,7 @@ class PlayerFeedbackRow extends StatelessWidget {
               size: 20,
               color: isDisliked ? colors.primaryAccent : colors.textSecondary,
             ),
+            tooltip: isDisliked ? 'Clear dislike' : 'Dislike',
             onPressed: onDislike,
             style: IconButton.styleFrom(
               backgroundColor: isDisliked

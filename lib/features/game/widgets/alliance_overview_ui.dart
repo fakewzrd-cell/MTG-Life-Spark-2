@@ -230,94 +230,40 @@ Future<void> showAllianceInviteDialog({
   required WidgetRef ref,
   required String fromUsername,
   required String durationLabel,
-}) {
-  return showDialog<void>(
+}) async {
+  final accepted = await showGameChoiceDialog(
     context: context,
     barrierDismissible: false,
-    builder: (dialogContext) {
-      final colors = dialogContext.gameColors;
-      return AlertDialog(
-      backgroundColor: colors.surface,
-      shape: RoundedRectangleBorder(borderRadius: RadiusTokens.radiusMd),
-      title: Row(
-        children: [
-          Icon(Icons.handshake, color: colors.emphasis),
-          SizedBox(width: LayoutTokens.gr1),
-          Expanded(
-            child: Text(
-              'Secret offer',
-              style: TextStyle(color: colors.textPrimary),
-            ),
-          ),
-        ],
-      ),
-      content: Text(
-        '$fromUsername proposes a secret alliance.\n\nDuration: $durationLabel\n\nOnly you can see this.',
-        style: TextStyle(color: colors.textSecondary, height: 1.4),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            final localId = ref.read(gameProvider).localPlayerId;
-            ref.read(gameProvider.notifier).respondToAlliance(localId, false);
-            Navigator.pop(dialogContext);
-          },
-          child: Text('Decline', style: TextStyle(color: colors.textSecondary)),
-        ),
-        FilledButton(
-          style: GameUiTokens.sheetPrimaryButton(colors.emphasis),
-          onPressed: () {
-            final localId = ref.read(gameProvider).localPlayerId;
-            ref.read(gameProvider.notifier).respondToAlliance(localId, true);
-            Navigator.pop(dialogContext);
-          },
-          child: Text('Accept'),
-        ),
-      ],
-    );
-    },
+    title: 'Secret offer',
+    content: Text(
+      '$fromUsername proposes a secret alliance.\n\n'
+      'Duration: $durationLabel\n\n'
+      'Only you can see this.',
+      style: GameModalChrome.dialogBodyStyle(context),
+    ),
+    primaryLabel: 'Accept',
+    secondaryLabel: 'Decline',
   );
+  if (!context.mounted) return;
+  final localId = ref.read(gameProvider).localPlayerId;
+  ref.read(gameProvider.notifier).respondToAlliance(
+        localId,
+        accepted == true,
+      );
 }
 
 Future<void> showAllianceFormedDialog({
   required BuildContext context,
   required String allyUsername,
   String? durationLabel,
-}) {
-  return showDialog<void>(
+}) async {
+  await showGameConfirmDialog(
     context: context,
-    builder: (dialogContext) {
-      final colors = dialogContext.gameColors;
-      return AlertDialog(
-      backgroundColor: colors.surface,
-      shape: RoundedRectangleBorder(borderRadius: RadiusTokens.radiusMd),
-      title: Row(
-        children: [
-          Icon(Icons.handshake, color: colors.emphasis, size: 28),
-          SizedBox(width: LayoutTokens.gr1),
-          Expanded(
-            child: Text(
-              'Alliance formed',
-              style: TextStyle(color: colors.textPrimary),
-            ),
-          ),
-        ],
-      ),
-      content: Text(
-        'You and $allyUsername are now secretly allied'
+    title: 'Alliance formed',
+    message: 'You and $allyUsername are now secretly allied'
         '${durationLabel != null ? ' ($durationLabel)' : ''}.\n\n'
         'The table does not know — unless you reveal or betray.',
-        style: TextStyle(color: colors.textSecondary, height: 1.4),
-      ),
-      actions: [
-        FilledButton(
-          style: GameUiTokens.sheetPrimaryButton(colors.emphasis),
-          onPressed: () => Navigator.pop(dialogContext),
-          child: Text('Understood'),
-        ),
-      ],
-    );
-    },
+    confirmLabel: 'Understood',
   );
 }
 
@@ -325,29 +271,13 @@ Future<void> showAllianceRevealedDialog({
   required BuildContext context,
   required String playerA,
   required String playerB,
-}) {
-  return showDialog<void>(
+}) async {
+  await showGameConfirmDialog(
     context: context,
-    builder: (dialogContext) {
-      final colors = dialogContext.gameColors;
-      return AlertDialog(
-      backgroundColor: colors.surface,
-      title: Text(
-        'Alliance revealed',
-        style: TextStyle(color: colors.textPrimary),
-      ),
-      content: Text(
+    title: 'Alliance revealed',
+    message:
         '$playerA and $playerB have revealed their secret alliance to the table.',
-        style: TextStyle(color: colors.textSecondary, height: 1.4),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(dialogContext),
-          child: Text('OK', style: TextStyle(color: colors.textSecondary)),
-        ),
-      ],
-    );
-    },
+    confirmLabel: 'OK',
   );
 }
 
@@ -355,29 +285,15 @@ Future<void> showAllianceBetrayalDialog({
   required BuildContext context,
   required String playerA,
   required String playerB,
-}) {
-  return showDialog<void>(
+}) async {
+  await showGameConfirmDialog(
     context: context,
-    builder: (dialogContext) {
-      final colors = dialogContext.gameColors;
-      return AlertDialog(
-      backgroundColor: colors.surface,
-      title: Text(
-        'Betrayal!',
-        style: TextStyle(color: colors.error),
-      ),
-      content: Text(
-        'The secret alliance between $playerA and $playerB has been broken by betrayal.',
-        style: TextStyle(color: colors.textSecondary, height: 1.4),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(dialogContext),
-          child: Text('OK', style: TextStyle(color: colors.textSecondary)),
-        ),
-      ],
-    );
-    },
+    title: 'Betrayal!',
+    message:
+        'The secret alliance between $playerA and $playerB has been broken '
+        'by betrayal.',
+    confirmLabel: 'OK',
+    destructive: true,
   );
 }
 

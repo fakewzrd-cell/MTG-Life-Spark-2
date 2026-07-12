@@ -4,6 +4,7 @@ import '../../../core/game/game_log_entry.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
+import '../../../ui/tokens/radius_tokens.dart';
 import 'game_colors.dart';
 
 class GameHistoryTab extends StatelessWidget {
@@ -22,13 +23,37 @@ class GameHistoryTab extends StatelessWidget {
       return Center(
         child: Padding(
           padding: EdgeInsets.all(LayoutTokens.gr4),
-          child: Text(
-            'No actions logged yet.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: colors.textSecondary.withValues(alpha: OpacityTokens.nearOpaque),
-              fontSize: FontTokens.hudSm,
-            ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.history_rounded,
+                size: 48,
+                color: colors.textSecondary.withValues(alpha: 0.5),
+              ),
+              SizedBox(height: LayoutTokens.gr3),
+              Text(
+                'No actions yet',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: FontTokens.body,
+                ),
+              ),
+              SizedBox(height: LayoutTokens.gr2),
+              Text(
+                'Life changes, counters, and other table actions '
+                'will show up here as the game goes on.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: colors.textSecondary
+                      .withValues(alpha: OpacityTokens.nearOpaque),
+                  fontSize: FontTokens.hudSm,
+                  height: 1.4,
+                ),
+              ),
+            ],
           ),
         ),
       );
@@ -81,7 +106,7 @@ class GameHistoryTab extends StatelessWidget {
                               color: colors.emphasis.withValues(
                                 alpha: 0.1,
                               ),
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: RadiusTokens.radiusSm,
                               border: Border.all(
                                 color: colors.emphasis.withValues(
                                   alpha: 0.35,

@@ -85,29 +85,12 @@ void main() {
     await tester.tap(find.text('Default Format'));
     await tester.pumpAndSettle();
 
-    expect(find.byType(Dialog), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byType(Dialog),
-        matching: find.text('Standard'),
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(
-        of: find.byType(Dialog),
-        matching: find.text('Commander'),
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('Default format'), findsOneWidget);
+    expect(find.text('Standard'), findsWidgets);
+    expect(find.text('Commander'), findsWidgets);
 
-    final dialogContext = tester.element(
-      find.descendant(
-        of: find.byType(Dialog),
-        matching: find.text('Standard'),
-      ),
-    );
-    final colors = AppColorTokens.of(dialogContext);
+    final sheetContext = tester.element(find.text('Default format'));
+    final colors = AppColorTokens.of(sheetContext);
     expect(colors.textPrimary, isNotNull);
   });
 

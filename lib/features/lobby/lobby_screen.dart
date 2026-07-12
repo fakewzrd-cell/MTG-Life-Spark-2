@@ -15,7 +15,9 @@ import '../../core/network/session_join_uri.dart';
 import '../../core/network/ws_host_service.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/utils/app_router.dart';
+import '../../shared/widgets/session_leave_dialog.dart';
 import 'deck_picker_sheet.dart';
+import '../game/widgets/game_modal_chrome.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
@@ -23,8 +25,6 @@ import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import '../../ui/tokens/typography_tokens.dart';
 import '../../ui/components/ui_app_bar.dart';
-import '../../ui/components/ui_dialog.dart';
-import '../../ui/components/ui_dialog_actions.dart';
 import '../../ui/components/ui_button.dart';
 import '../../ui/tokens/opacity_tokens.dart';
 
@@ -158,10 +158,11 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
       appBar: UiAppBar(
         title: 'Host Lobby',
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Leave lobby',
           onPressed: () async {
-            await endSession(ref);
-            if (context.mounted) context.pop();
+            final left = await leaveActiveSessionIfConfirmed(context, ref);
+            if (left && context.mounted) context.pop();
           },
         ),
       ),
@@ -730,6 +731,7 @@ class _SlotReadyButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColorTokens.of(context);
     return IconButton(
+      tooltip: slot.isReady ? 'Mark not ready' : 'Mark ready',
       style: IconButton.styleFrom(
         minimumSize: const Size(
           LayoutTokens.minTapTarget,
@@ -749,7 +751,7 @@ class _SlotReadyButton extends ConsumerWidget {
         final notifier = ref.read(lobbyProvider.notifier);
         notifier.setReady(slot.playerId, ready: !slot.isReady);
       },
-      icon: Icon(Icons.check_rounded, size: 24),
+      icon: const Icon(Icons.check_rounded, size: 24),
     );
   }
 }
@@ -1115,31 +1117,48 @@ class _StartingLifeDropdown extends StatelessWidget {
     required ValueChanged<int> onChanged,
   }) {
     final controller = TextEditingController(text: current.toString());
-    void submit(BuildContext dialogContext) {
-      final v = int.tryParse(controller.text);
-      if (v != null && v >= 1 && v <= 999) {
-        onChanged(v);
-        Navigator.pop(dialogContext);
-      }
-    }
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        final colors = AppColorTokens.of(dialogContext);
+        void submit() {
+          final v = int.tryParse(controller.text);
+          if (v != null && v >= 1 && v <= 999) {
+            onChanged(v);
+            Navigator.pop(dialogContext);
+          }
+        }
 
-    UiDialog.show<void>(
-      context,
-      title: 'Custom Starting Life',
-      content: TextField(
-        controller: controller,
-        keyboardType: TextInputType.number,
-        autofocus: true,
-        decoration: const InputDecoration(
-          hintText: 'Enter life total (1–999)',
-        ),
-        onSubmitted: (_) => submit(context),
-      ),
-      actions: UiDialogActions.cancelConfirm(
-        context: context,
-        confirmLabel: 'OK',
-        onConfirm: () => submit(context),
-      ),
+        return AlertDialog(
+          backgroundColor: colors.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: RadiusTokens.radiusMd,
+            side: BorderSide(color: colors.backgroundSecondary),
+          ),
+          title: GameDialogTitleRow(
+            title: 'Custom starting life',
+            onClose: () => Navigator.pop(dialogContext),
+          ),
+          content: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            autofocus: true,
+            decoration: const InputDecoration(
+              hintText: 'Enter life total (1–999)',
+            ),
+            onSubmitted: (_) => submit(),
+          ),
+          actions: [
+            FilledButton(
+              onPressed: submit,
+              style: FilledButton.styleFrom(
+                backgroundColor: colors.primaryAccent,
+              ),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
     ).whenComplete(controller.dispose);
   }
 

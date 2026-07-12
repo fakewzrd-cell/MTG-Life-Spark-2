@@ -11,6 +11,7 @@ import '../../../core/game/scryfall_service.dart';
 import 'game_colors.dart';
 import '../../../shared/mana/mana_symbol_assets.dart';
 import '../../../ui/tokens/layout_tokens.dart';
+import '../../../ui/tokens/radius_tokens.dart';
 import 'game_modal_chrome.dart';
 
 /// Pick a card from Scryfall so the stack entry stores the official name and rules.
@@ -153,6 +154,10 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
 
     return AlertDialog(
       backgroundColor: colors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: RadiusTokens.radiusMd,
+        side: BorderSide(color: colors.backgroundSecondary),
+      ),
       title: GameDialogTitleRow(
         title: widget.title,
         onClose: () => Navigator.pop(context),
@@ -176,7 +181,8 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
                 hintText: 'e.g. Lightning Bolt',
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
-                        icon: Icon(Icons.clear),
+                        icon: const Icon(Icons.clear),
+                        tooltip: 'Clear search',
                         onPressed: () {
                           _searchController.clear();
                           setState(() {

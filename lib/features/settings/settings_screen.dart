@@ -11,7 +11,6 @@ import '../../core/persistence/providers.dart';
 import '../../shared/theme/theme_provider.dart';
 import '../../shared/utils/app_router.dart';
 import '../../ui/components/ui_app_bar.dart';
-import '../../ui/components/ui_dialog.dart';
 import '../../ui/components/ui_surface.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/app_color_palettes.dart';
@@ -19,6 +18,7 @@ import '../../ui/tokens/color_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import '../../ui/tokens/typography_tokens.dart';
+import '../game/widgets/game_modal_chrome.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -175,43 +175,88 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<String?> _pickFormat(BuildContext context) {
-    return UiDialog.show<String>(
-      context,
-      title: 'Default Format',
-      content: Builder(
-        builder: (dialogContext) {
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: GameFormatDetails.lobbyPickerOrder.map((f) {
-              final label = f.displayName;
-              return ListTile(
-                title: Text(label),
-                onTap: () => Navigator.pop(dialogContext, label),
-              );
-            }).toList(),
-          );
-        },
-      ),
+    return showGameBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        final colors = AppColorTokens.of(sheetContext);
+        final formats = GameFormatDetails.lobbyPickerOrder;
+        final maxH = MediaQuery.sizeOf(sheetContext).height * 0.55;
+        return SizedBox(
+          height: maxH,
+          child: GameSheetBody(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const GameSheetHeader(title: 'Default format'),
+                SizedBox(height: LayoutTokens.gr2),
+                Expanded(
+                  child: ListView(
+                    children: formats.map((f) {
+                      final label = f.displayName;
+                      final selected = label == _settings.defaultFormat;
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          label,
+                          style: TextStyle(
+                            color: colors.textPrimary,
+                            fontWeight:
+                                selected ? FontWeight.w700 : FontWeight.w500,
+                          ),
+                        ),
+                        trailing: selected
+                            ? Icon(Icons.check_circle_rounded,
+                                color: colors.primaryAccent)
+                            : null,
+                        onTap: () => Navigator.pop(sheetContext, label),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
   Future<int?> _pickStartingLife(BuildContext context) {
-    return UiDialog.show<int>(
-      context,
-      title: 'Default Starting Life',
-      content: Builder(
-        builder: (dialogContext) {
-          return Column(
+    return showGameBottomSheet<int>(
+      context: context,
+      builder: (sheetContext) {
+        final colors = AppColorTokens.of(sheetContext);
+        return GameSheetBody(
+          child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: [20, 30, 40, 50].map((l) {
-              return ListTile(
-                title: Text('$l life'),
-                onTap: () => Navigator.pop(dialogContext, l),
-              );
-            }).toList(),
-          );
-        },
-      ),
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const GameSheetHeader(title: 'Default starting life'),
+              SizedBox(height: LayoutTokens.gr2),
+              ...[20, 30, 40, 50].map((l) {
+                final selected = l == _settings.defaultStartingLife;
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    '$l life',
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontWeight:
+                          selected ? FontWeight.w700 : FontWeight.w500,
+                    ),
+                  ),
+                  trailing: selected
+                      ? Icon(Icons.check_circle_rounded,
+                          color: colors.primaryAccent)
+                      : null,
+                  onTap: () => Navigator.pop(sheetContext, l),
+                );
+              }),
+            ],
+          ),
+        );
+      },
     );
   }
 

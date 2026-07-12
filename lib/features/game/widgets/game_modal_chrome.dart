@@ -218,9 +218,11 @@ Future<bool?> showGameConfirmDialog({
   required String message,
   required String confirmLabel,
   bool destructive = false,
+  bool barrierDismissible = true,
 }) {
   return showDialog<bool>(
     context: context,
+    barrierDismissible: barrierDismissible,
     builder: (ctx) {
       final colors = ctx.gameColors;
       return AlertDialog(
@@ -256,9 +258,11 @@ Future<bool?> showGameChoiceDialog({
   required String primaryLabel,
   String? secondaryLabel,
   bool primaryDestructive = false,
+  bool barrierDismissible = true,
 }) {
   return showDialog<bool>(
     context: context,
+    barrierDismissible: barrierDismissible,
     builder: (ctx) {
       final colors = ctx.gameColors;
       return AlertDialog(

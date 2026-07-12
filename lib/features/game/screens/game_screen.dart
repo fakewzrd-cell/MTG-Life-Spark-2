@@ -115,8 +115,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     if (!localPresent) {
       final elapsed = DateTime.now().difference(_localInitStarted);
       if (elapsed < const Duration(seconds: 15)) {
-        return const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
+        return Scaffold(
+          backgroundColor: colors.backgroundPrimary,
+          body: Center(
+            child: CircularProgressIndicator(color: colors.primaryAccent),
+          ),
         );
       }
       return Scaffold(

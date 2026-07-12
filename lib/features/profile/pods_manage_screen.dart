@@ -92,7 +92,7 @@ class _PodsManageScreenState extends ConsumerState<PodsManageScreen> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(podPresetsRevisionProvider, (_, __) => _reload());
+    ref.listen(podPresetsRevisionProvider, (_, _) => _reload());
     final colors = AppColorTokens.of(context);
     final repo = ref.read(podRepositoryProvider);
     final bottomBarPad = LayoutTokens.shellBottomInset(context);
@@ -103,118 +103,165 @@ class _PodsManageScreenState extends ConsumerState<PodsManageScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
-            child: ListView.builder(
+            child: ListView(
               padding: LayoutTokens.shellScrollPadding(context),
-              itemCount: _pods.length + 1,
-              itemBuilder: (context, i) {
-          if (i == 0) {
-            return Padding(
-              padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
-              child: Text(
-                'Create a pod with a name and the player names you play with. '
-                'Select it in the host lobby when you set up a match.',
-                style: TextStyle(color: colors.textSecondary, fontSize: 13),
-              ),
-            );
-          }
-          final pod = _pods[i - 1];
-          final n = pod.memberPlayerIds.length;
-          return Padding(
-            padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
-            child: UiSurface(
-              padding: EdgeInsets.zero,
-              child: ExpansionTile(
-              title: Text(
-                pod.name,
-                style: TextStyle(
-                  color: colors.textPrimary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              subtitle: Text(
-                n == 0 ? 'No players yet' : '$n player${n == 1 ? '' : 's'}',
-                style: TextStyle(color: colors.textSecondary, fontSize: 12),
-              ),
               children: [
-                if (pod.memberPlayerIds.isEmpty)
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      LayoutTokens.gr3,
-                      0,
-                      LayoutTokens.gr3,
-                      LayoutTokens.gr2,
+                Padding(
+                  padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
+                  child: Text(
+                    'Create a pod with a name and the player names you play with. '
+                    'Select it in the host lobby when you set up a match.',
+                    style: TextStyle(
+                      color: colors.textSecondary,
+                      fontSize: FontTokens.sm,
+                      height: 1.4,
                     ),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Add players when you edit this pod.',
-                        style: TextStyle(
-                          color: colors.textSecondary,
-                          fontSize: FontTokens.hudSm,
+                  ),
+                ),
+                if (_pods.isEmpty)
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: LayoutTokens.gr6),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.groups_outlined,
+                          size: 48,
+                          color: colors.textSecondary.withValues(alpha: 0.5),
                         ),
-                      ),
+                        SizedBox(height: LayoutTokens.gr3),
+                        Text(
+                          'No pods yet',
+                          style: TextStyle(
+                            color: colors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                            fontSize: FontTokens.body,
+                          ),
+                        ),
+                        SizedBox(height: LayoutTokens.gr2),
+                        Text(
+                          'Save a group of regulars so you can fill the lobby in one tap.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: colors.textSecondary,
+                            fontSize: FontTokens.sm,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
                     ),
                   )
                 else
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      LayoutTokens.gr2,
-                      0,
-                      LayoutTokens.gr2,
-                      LayoutTokens.gr2,
-                    ),
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: pod.memberPlayerIds.map((id) {
-                        return Chip(
-                          avatar: CircleAvatar(
-                            backgroundColor:
-                                colors.primaryAccent.withValues(alpha: 0.35),
-                            child: Text(
-                              _initials(id),
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: colors.textPrimary,
-                              ),
-                            ),
-                          ),
-                          label: Text(
-                            id,
+                  ..._pods.map((pod) {
+                    final n = pod.memberPlayerIds.length;
+                    return Padding(
+                      padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
+                      child: UiSurface(
+                        padding: EdgeInsets.zero,
+                        child: ExpansionTile(
+                          title: Text(
+                            pod.name,
                             style: TextStyle(
                               color: colors.textPrimary,
-                              fontSize: FontTokens.hudSm,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          backgroundColor: colors.backgroundSecondary,
-                          side: BorderSide(
-                            color: colors.textSecondary.withValues(alpha: 0.2),
+                          subtitle: Text(
+                            n == 0
+                                ? 'No players yet'
+                                : '$n player${n == 1 ? '' : 's'}',
+                            style: TextStyle(
+                              color: colors.textSecondary,
+                              fontSize: FontTokens.sm,
+                            ),
                           ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton.icon(
-                      onPressed: () => _editPod(repo, pod),
-                      icon: Icon(Icons.edit_outlined, size: 18),
-                      label: Text('Edit'),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.delete_outline),
-                      onPressed: () => _confirmDelete(repo, pod),
-                      color: colors.primaryAccent,
-                    ),
-                  ],
-                ),
+                          children: [
+                            if (pod.memberPlayerIds.isEmpty)
+                              Padding(
+                                padding: EdgeInsets.fromLTRB(
+                                  LayoutTokens.gr3,
+                                  0,
+                                  LayoutTokens.gr3,
+                                  LayoutTokens.gr2,
+                                ),
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    'Add players when you edit this pod.',
+                                    style: TextStyle(
+                                      color: colors.textSecondary,
+                                      fontSize: FontTokens.hudSm,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            else
+                              Padding(
+                                padding: EdgeInsets.fromLTRB(
+                                  LayoutTokens.gr2,
+                                  0,
+                                  LayoutTokens.gr2,
+                                  LayoutTokens.gr2,
+                                ),
+                                child: Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: pod.memberPlayerIds.map((id) {
+                                    return Chip(
+                                      avatar: CircleAvatar(
+                                        backgroundColor: colors.primaryAccent
+                                            .withValues(alpha: 0.35),
+                                        child: Text(
+                                          _initials(id),
+                                          style: TextStyle(
+                                            fontSize: FontTokens.xs,
+                                            fontWeight: FontWeight.w700,
+                                            color: colors.textPrimary,
+                                          ),
+                                        ),
+                                      ),
+                                      label: Text(
+                                        id,
+                                        style: TextStyle(
+                                          color: colors.textPrimary,
+                                          fontSize: FontTokens.hudSm,
+                                        ),
+                                      ),
+                                      backgroundColor:
+                                          colors.backgroundSecondary,
+                                      side: BorderSide(
+                                        color: colors.textSecondary
+                                            .withValues(alpha: 0.2),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                TextButton.icon(
+                                  onPressed: () => _editPod(repo, pod),
+                                  icon: const Icon(
+                                    Icons.edit_outlined,
+                                    size: 18,
+                                  ),
+                                  label: const Text('Edit'),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline),
+                                  tooltip: 'Delete pod',
+                                  onPressed: () =>
+                                      _confirmDelete(repo, pod),
+                                  color: colors.primaryAccent,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
               ],
-            ),
-            ),
-          );
-              },
             ),
           ),
           Padding(

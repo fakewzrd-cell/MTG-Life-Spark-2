@@ -244,6 +244,7 @@ class _GameTimeoutOverlayState extends State<GameTimeoutOverlay> {
                         Icons.close,
                         color: colors.textSecondary,
                       ),
+                      tooltip: 'Minimize timer',
                       onPressed: () => setState(() => _minimized = true),
                       style: IconButton.styleFrom(
                         backgroundColor: colors.backgroundSecondary,
