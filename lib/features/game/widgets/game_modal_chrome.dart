@@ -225,6 +225,10 @@ Future<bool?> showGameConfirmDialog({
       final colors = ctx.gameColors;
       return AlertDialog(
         backgroundColor: colors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: RadiusTokens.radiusMd,
+          side: BorderSide(color: colors.backgroundSecondary),
+        ),
         title: GameDialogTitleRow(
           title: title,
           onClose: () => Navigator.pop(ctx, false),
@@ -259,6 +263,10 @@ Future<bool?> showGameChoiceDialog({
       final colors = ctx.gameColors;
       return AlertDialog(
         backgroundColor: colors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: RadiusTokens.radiusMd,
+          side: BorderSide(color: colors.backgroundSecondary),
+        ),
         title: GameDialogTitleRow(
           title: title,
           onClose: () => Navigator.pop(ctx, false),

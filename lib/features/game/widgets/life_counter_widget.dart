@@ -468,6 +468,10 @@ class _LifeInputDialogState extends State<_LifeInputDialog> {
     final colors = context.gameColors;
     return AlertDialog(
       backgroundColor: colors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: RadiusTokens.radiusMd,
+        side: BorderSide(color: colors.backgroundSecondary),
+      ),
       title: GameDialogTitleRow(
         titleWidget: Text(
           _input.isEmpty ? 'Set Life Total' : _input,

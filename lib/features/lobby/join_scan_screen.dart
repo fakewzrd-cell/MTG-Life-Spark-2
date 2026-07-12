@@ -343,40 +343,95 @@ class _QrScanView extends StatelessWidget {
 
   const _QrScanView({required this.controller, required this.onDetect});
 
+  static const double _cutoutSize = 240;
+
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
     return Stack(
+      fit: StackFit.expand,
       children: [
         MobileScanner(controller: controller, onDetect: onDetect),
-        // Overlay with cut-out guide
-        Center(
-          child: Container(
-            width: 240,
-            height: 240,
-            decoration: BoxDecoration(
-              border: Border.all(color: colors.primaryAccent, width: 3),
-              borderRadius: RadiusTokens.radiusMd,
-            ),
+        CustomPaint(
+          painter: _QrScanOverlayPainter(
+            cutoutSize: _cutoutSize,
+            accent: colors.primaryAccent,
+            dimColor: Colors.black.withValues(alpha: 0.58),
           ),
         ),
         Positioned(
           bottom: 48,
-          left: 0,
-          right: 0,
+          left: LayoutTokens.gr4,
+          right: LayoutTokens.gr4,
           child: Text(
             'Point the camera at the host\'s QR code',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: ColorTokens.onAccent,
               fontSize: FontTokens.body,
-              shadows: [Shadow(blurRadius: 4, color: Colors.black)],
+              fontWeight: FontWeight.w600,
+              shadows: const [Shadow(blurRadius: 6, color: Colors.black)],
             ),
           ),
         ),
       ],
     );
   }
+}
+
+class _QrScanOverlayPainter extends CustomPainter {
+  const _QrScanOverlayPainter({
+    required this.cutoutSize,
+    required this.accent,
+    required this.dimColor,
+  });
+
+  final double cutoutSize;
+  final Color accent;
+  final Color dimColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cutoutRect = Rect.fromCenter(
+      center: Offset(size.width / 2, size.height / 2),
+      width: cutoutSize,
+      height: cutoutSize,
+    );
+    final cutout = RRect.fromRectAndRadius(
+      cutoutRect,
+      const Radius.circular(RadiusTokens.md),
+    );
+
+    final overlay = Path()
+      ..addRect(Offset.zero & size)
+      ..addRRect(cutout)
+      ..fillType = PathFillType.evenOdd;
+    canvas.drawPath(overlay, Paint()..color = dimColor);
+
+    const arm = 28.0;
+    const stroke = 4.0;
+    final paint = Paint()
+      ..color = accent
+      ..strokeWidth = stroke
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    void corner(Offset origin, double dx, double dy) {
+      canvas.drawLine(origin, origin.translate(dx * arm, 0), paint);
+      canvas.drawLine(origin, origin.translate(0, dy * arm), paint);
+    }
+
+    corner(cutoutRect.topLeft, 1, 1);
+    corner(cutoutRect.topRight, -1, 1);
+    corner(cutoutRect.bottomLeft, 1, -1);
+    corner(cutoutRect.bottomRight, -1, -1);
+  }
+
+  @override
+  bool shouldRepaint(covariant _QrScanOverlayPainter oldDelegate) =>
+      oldDelegate.cutoutSize != cutoutSize ||
+      oldDelegate.accent != accent ||
+      oldDelegate.dimColor != dimColor;
 }
 
 class _PermissionDeniedView extends StatelessWidget {

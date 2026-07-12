@@ -17,6 +17,7 @@ import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/motion_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import '../../ui/tokens/typography_tokens.dart';
+import '../game/widgets/game_modal_chrome.dart';
 import 'profile_carousel_sections.dart';
 
 const String _kProfileUntilFirstGameMessage =
@@ -398,37 +399,17 @@ Future<void> _confirmRemoveOptionalStat(
   PlayerProfile profile,
   String statId,
 ) async {
-  final colors = AppColorTokens.of(context);
   final title = ProfileOptionalStatIds.title(statId);
-  final remove = await showDialog<bool>(
+  final remove = await showGameChoiceDialog(
     context: context,
-    builder: (ctx) => AlertDialog(
-      backgroundColor: colors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: RadiusTokens.radiusMd,
-      ),
-      title: Text(
-        'Remove $title?',
-        style: TextStyle(
-          color: colors.textPrimary,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-      content: Text(
-        'You can add this card again later from the + tile.',
-        style: TextStyle(color: colors.textSecondary),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, false),
-          child: Text('Cancel', style: TextStyle(color: colors.textSecondary)),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, true),
-          child: Text('Remove', style: TextStyle(color: colors.primaryAccent)),
-        ),
-      ],
+    title: 'Remove $title?',
+    content: Text(
+      'You can add this card again later from the + tile.',
+      style: GameModalChrome.dialogBodyStyle(context),
     ),
+    primaryLabel: 'Remove',
+    secondaryLabel: 'Cancel',
+    primaryDestructive: true,
   );
   if (remove != true) return;
   profile.profileExtraStatIds = [
@@ -446,83 +427,61 @@ Future<void> _showAddStatPicker(
   List<String> availableIds,
 ) {
   final colors = AppColorTokens.of(context);
-  return showModalBottomSheet<void>(
+  return showGameBottomSheet<void>(
     context: context,
-    backgroundColor: colors.surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
     builder: (ctx) {
-      return SafeArea(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            LayoutTokens.gr3,
-            LayoutTokens.gr2,
-            LayoutTokens.gr3,
-            LayoutTokens.gr3,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Add stat card',
-                style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
-                  color: colors.textPrimary,
-                  fontWeight: FontWeight.w800,
+      return GameSheetBody(
+        scrollable: true,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const GameSheetHeader(title: 'Add stat card'),
+            SizedBox(height: LayoutTokens.gr1),
+            Text(
+              'Choose a card to show in your player stats row.',
+              style: GameModalChrome.dialogBodyStyle(ctx),
+            ),
+            SizedBox(height: LayoutTokens.gr2),
+            for (final id in availableIds) ...[
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                shape: RoundedRectangleBorder(
+                  borderRadius: RadiusTokens.radiusMd,
                 ),
+                title: Text(
+                  ProfileOptionalStatIds.title(id),
+                  style: TextStyle(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                subtitle: Text(
+                  ProfileOptionalStatIds.description(id),
+                  style: TextStyle(
+                    color: colors.textSecondary,
+                    height: 1.3,
+                  ),
+                ),
+                trailing: Icon(
+                  Icons.add_circle_outline,
+                  color: colors.primaryAccent,
+                ),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  profile.profileExtraStatIds = [
+                    ...profile.profileExtraStatIds,
+                    id,
+                  ];
+                  await ref
+                      .read(profileRepositoryProvider)
+                      .saveProfile(profile);
+                  bumpProfileRevision(ref);
+                },
               ),
               SizedBox(height: LayoutTokens.gr1),
-              Text(
-                'Choose a card to show in your player stats row.',
-                style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
-                  color: colors.textSecondary,
-                  height: 1.35,
-                ),
-              ),
-              SizedBox(height: LayoutTokens.gr2),
-              for (final id in availableIds) ...[
-                ListTile(
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: LayoutTokens.gr1,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: RadiusTokens.radiusMd,
-                  ),
-                  title: Text(
-                    ProfileOptionalStatIds.title(id),
-                    style: TextStyle(
-                      color: colors.textPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  subtitle: Text(
-                    ProfileOptionalStatIds.description(id),
-                    style: TextStyle(
-                      color: colors.textSecondary,
-                      height: 1.3,
-                    ),
-                  ),
-                  trailing: Icon(
-                    Icons.add_circle_outline,
-                    color: colors.primaryAccent,
-                  ),
-                  onTap: () async {
-                    Navigator.pop(ctx);
-                    profile.profileExtraStatIds = [
-                      ...profile.profileExtraStatIds,
-                      id,
-                    ];
-                    await ref
-                        .read(profileRepositoryProvider)
-                        .saveProfile(profile);
-                    bumpProfileRevision(ref);
-                  },
-                ),
-                SizedBox(height: LayoutTokens.gr1),
-              ],
             ],
-          ),
+          ],
         ),
       );
     },

@@ -4,6 +4,7 @@ import '../theme/app_color_tokens.dart';
 import '../tokens/color_tokens.dart';
 import '../tokens/font_tokens.dart';
 import '../tokens/layout_tokens.dart';
+import '../tokens/radius_tokens.dart';
 
 /// Stacked confirm/cancel dialog for shell and in-game leave flows.
 Future<bool> showShellDestructiveConfirm({
@@ -18,6 +19,10 @@ Future<bool> showShellDestructiveConfirm({
     context: context,
     builder: (ctx) => AlertDialog(
       backgroundColor: colors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: RadiusTokens.radiusMd,
+        side: BorderSide(color: colors.borderSubtle),
+      ),
       title: Text(
         title,
         style: TextStyle(
