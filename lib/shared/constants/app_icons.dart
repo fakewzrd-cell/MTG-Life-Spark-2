@@ -34,8 +34,20 @@ class AppIcons {
   static const String defaultProfileAvatar =
       'assets/images/default_profile_avatar.png';
 
-  /// Launch / bootstrap splash (lightning + speed lines).
-  static const String splashLogo = 'assets/images/splash_logo.svg';
+  /// Launch / bootstrap splash — Life Spark mark (white on transparent).
+  static const String splashLogo = 'assets/images/splash_logo.png';
+
+  /// Brand mark only (white on transparent) — same art as splash.
+  static const String lifeSparkLogo = 'assets/images/life_spark_logo.png';
+
+  /// Horizontal wordmark (mark + LIFE SPARK) for app bars / headers.
+  static const String logoHorizontal = 'assets/images/logo_horizontal.png';
+
+  /// Vertical wordmark (mark above LIFE SPARK) for splash reveal / setup.
+  static const String logoVertical = 'assets/images/logo_vertical.png';
+
+  /// Full app icon (mark on brand gradient).
+  static const String appIcon = 'assets/images/app_icon.png';
 
   /// Game lobby — host card background (dungeon party silhouettes).
   static const String lobbyHostParty = 'assets/images/lobby_host_party.png';

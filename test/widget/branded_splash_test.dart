@@ -11,4 +11,22 @@ void main() {
     expect(find.text('Loading MTG Life Spark…'), findsOneWidget);
     expect(find.byType(BrandedSplash), findsOneWidget);
   });
+
+  testWidgets('BrandedSplash reveals vertical wordmark when ready', (tester) async {
+    var completed = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BrandedSplash(
+          ready: true,
+          onRevealComplete: () => completed = true,
+        ),
+      ),
+    );
+
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1500));
+    await tester.pump(const Duration(milliseconds: 800));
+
+    expect(completed, isTrue);
+  });
 }

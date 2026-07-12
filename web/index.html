@@ -37,7 +37,6 @@
       height: 100%;
       background: #12121a;
       color: #ffffff;
-      font-family: system-ui, -apple-system, sans-serif;
     }
     #app-loading {
       display: flex;
@@ -45,42 +44,43 @@
       align-items: center;
       justify-content: center;
       height: 100%;
-      gap: 20px;
+      gap: 28px;
+      background: linear-gradient(180deg, #12121a 0%, #2a1f45 100%);
     }
-    #app-loading .splash-mark {
-      width: 128px;
-      height: 64px;
-      animation: splash-breathe 1.8s ease-in-out infinite;
+    #app-loading .splash-dice {
+      width: 112px;
+      height: 112px;
+      perspective: 600px;
     }
-    #app-loading .splash-mark svg {
+    #app-loading .splash-dice-inner {
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      animation: splash-dice-roll 1.6s linear infinite;
+    }
+    #app-loading .splash-dice-inner img {
       width: 100%;
       height: 100%;
       display: block;
+      object-fit: contain;
+      filter: drop-shadow(0 8px 18px rgba(155, 109, 255, 0.35));
     }
-    #app-loading .splash-bolt {
-      animation: splash-bolt 1.2s ease-in-out infinite;
-    }
-    #app-loading .splash-line-1 {
-      animation: splash-line 1s ease-out infinite;
-    }
-    #app-loading .splash-line-2 {
-      animation: splash-line 1s ease-out 0.12s infinite;
-    }
-    #app-loading .splash-line-3 {
-      animation: splash-line 1s ease-out 0.24s infinite;
-    }
-    @keyframes splash-breathe {
-      0%, 100% { transform: scale(0.94); opacity: 0.72; }
-      50% { transform: scale(1.06); opacity: 1; }
-    }
-    @keyframes splash-bolt {
-      0%, 100% { opacity: 0.55; }
-      50% { opacity: 1; }
-    }
-    @keyframes splash-line {
-      0% { transform: translateX(-6px); opacity: 0.35; }
-      60% { opacity: 1; }
-      100% { transform: translateX(8px); opacity: 0.35; }
+    @keyframes splash-dice-roll {
+      0% {
+        transform: translateY(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(0.94);
+      }
+      25% {
+        transform: translateY(-28px) rotateX(180deg) rotateY(20deg) rotateZ(8deg) scale(1.02);
+      }
+      50% {
+        transform: translateY(0) rotateX(360deg) rotateY(0deg) rotateZ(0deg) scale(0.94);
+      }
+      75% {
+        transform: translateY(-28px) rotateX(540deg) rotateY(-20deg) rotateZ(-8deg) scale(1.02);
+      }
+      100% {
+        transform: translateY(0) rotateX(720deg) rotateY(0deg) rotateZ(0deg) scale(0.94);
+      }
     }
     #app-loading p {
       margin: 0;
@@ -90,9 +90,10 @@
       max-width: 280px;
       line-height: 1.4;
       letter-spacing: 0.02em;
+      font-family: system-ui, -apple-system, sans-serif;
     }
     #app-loading .hint {
-      margin-top: 12px;
+      margin-top: 4px;
       font-size: 12px;
       opacity: 0.55;
     }
@@ -100,21 +101,10 @@
 </head>
 <body>
   <div id="app-loading" aria-live="polite">
-    <div class="splash-mark" aria-hidden="true">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 48" fill="none">
-        <circle cx="18" cy="24" r="13" stroke="#FFFFFF" stroke-width="2"/>
-        <path
-          class="splash-bolt"
-          d="M14 13 L20 23 L16.5 23 L22 33"
-          stroke="#FFFFFF"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-        <line class="splash-line splash-line-1" x1="40" y1="17" x2="68" y2="17" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
-        <line class="splash-line splash-line-2" x1="44" y1="24" x2="84" y2="24" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
-        <line class="splash-line splash-line-3" x1="40" y1="31" x2="68" y2="31" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
-      </svg>
+    <div class="splash-dice" aria-hidden="true">
+      <div class="splash-dice-inner">
+        <img src="icons/life_spark_logo.png" alt="" width="112" height="112"/>
+      </div>
     </div>
     <p id="app-loading-text">Loading MTG Life Spark…</p>
     <p id="app-loading-hint" class="hint" hidden></p>

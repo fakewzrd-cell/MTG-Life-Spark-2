@@ -4,11 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/models/player_profile.dart';
 import '../../core/persistence/providers.dart';
-import '../../ui/theme/app_color_tokens.dart';
 import '../../shared/utils/app_router.dart';
+import '../../shared/widgets/brand_logo.dart';
 import '../../ui/components/ui_button.dart';
 import '../../ui/tokens/layout_tokens.dart';
-import '../../ui/tokens/radius_tokens.dart';
 
 class ProfileSetupScreen extends ConsumerStatefulWidget {
   const ProfileSetupScreen({super.key});
@@ -49,7 +48,6 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = AppColorTokens.of(context);
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -67,25 +65,11 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                       Center(
                         child: Column(
                           children: [
-                            Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                color: colors.surface,
-                                borderRadius: RadiusTokens.radiusChip,
-                              ),
-                              child: Icon(
-                                Icons.shield,
-                                size: 48,
-                                color: colors.primaryAccent,
-                              ),
+                            const BrandLogo(
+                              layout: BrandLogoLayout.vertical,
+                              height: 140,
                             ),
                             SizedBox(height: LayoutTokens.gr4),
-                            Text(
-                              'MTG Life Spark',
-                              style: Theme.of(context).textTheme.headlineLarge,
-                            ),
-                            SizedBox(height: LayoutTokens.gr1),
                             Text(
                               'Commander 2.0 — your digital battlefield.',
                               style: Theme.of(context).textTheme.bodyMedium,

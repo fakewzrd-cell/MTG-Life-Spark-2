@@ -10,6 +10,7 @@ import '../../core/models/app_settings.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/theme/theme_provider.dart';
 import '../../shared/utils/app_router.dart';
+import '../../shared/widgets/brand_logo.dart';
 import '../../ui/components/ui_app_bar.dart';
 import '../../ui/components/ui_snack_bar.dart';
 import '../../ui/components/ui_surface.dart';
@@ -170,6 +171,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               });
             },
           ),
+          SizedBox(height: LayoutTokens.gr6),
+          const Center(
+            child: BrandLogo(
+              layout: BrandLogoLayout.horizontal,
+              height: 28,
+            ),
+          ),
+          SizedBox(height: LayoutTokens.gr4),
         ],
       ),
     );

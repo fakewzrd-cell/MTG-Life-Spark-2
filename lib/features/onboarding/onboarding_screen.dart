@@ -7,6 +7,7 @@ import '../../core/persistence/providers.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/color_tokens.dart';
 import '../../shared/utils/app_router.dart';
+import '../../shared/widgets/brand_logo.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/components/ui_button.dart';
 import '../../ui/tokens/radius_tokens.dart';
@@ -23,6 +24,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   int _currentPage = 0;
 
   static final _slides = [
+    _OnboardingSlide(
+      icon: Icons.auto_awesome,
+      title: 'Welcome to Life Spark',
+      body:
+          'Your Commander battlefield companion — life, counters, politics, '
+          'and the stack, synced at the table.',
+      color: ColorTokens.primaryAccent,
+      showBrandLogo: true,
+    ),
     _OnboardingSlide(
       icon: Icons.wifi_tethering,
       title: 'Host or Join',
@@ -149,12 +159,14 @@ class _OnboardingSlide {
   final String title;
   final String body;
   final Color color;
+  final bool showBrandLogo;
 
   const _OnboardingSlide({
     required this.icon,
     required this.title,
     required this.body,
     required this.color,
+    this.showBrandLogo = false,
   });
 }
 
@@ -170,29 +182,35 @@ class _SlideView extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            width: 110,
-            height: 110,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  slide.color.withValues(alpha: 0.25),
-                  slide.color.withValues(alpha: 0.08),
+          if (slide.showBrandLogo)
+            const BrandLogo(
+              layout: BrandLogoLayout.vertical,
+              height: 160,
+            )
+          else
+            Container(
+              width: 110,
+              height: 110,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    slide.color.withValues(alpha: 0.25),
+                    slide.color.withValues(alpha: 0.08),
+                  ],
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: slide.color.withValues(alpha: 0.2),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
+                  ),
                 ],
               ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: slide.color.withValues(alpha: 0.2),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
-                ),
-              ],
+              child: Icon(slide.icon, size: 52, color: slide.color),
             ),
-            child: Icon(slide.icon, size: 52, color: slide.color),
-          ),
           SizedBox(height: LayoutTokens.gr5),
           Text(
             slide.title,

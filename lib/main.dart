@@ -58,6 +58,8 @@ class _AppBootstrap extends StatefulWidget {
 
 class _AppBootstrapState extends State<_AppBootstrap> {
   late final Future<void> _initFuture = _initHive();
+  var _initDone = false;
+  var _revealDone = false;
 
   @override
   Widget build(BuildContext context) {
@@ -70,13 +72,26 @@ class _AppBootstrapState extends State<_AppBootstrap> {
             stack: snapshot.stackTrace.toString(),
           );
         }
-        if (snapshot.connectionState == ConnectionState.done) {
+        if (snapshot.connectionState == ConnectionState.done && !_initDone) {
+          _initDone = true;
           dismissWebSplash();
+          // Defer so we don't setState during build.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) setState(() {});
+          });
+        }
+        if (_initDone && _revealDone) {
           return const MgtLifeSparkApp();
         }
-        return const MaterialApp(
+        return MaterialApp(
           debugShowCheckedModeBanner: false,
-          home: BrandedSplash(),
+          home: BrandedSplash(
+            ready: _initDone,
+            onRevealComplete: () {
+              if (!mounted || _revealDone) return;
+              setState(() => _revealDone = true);
+            },
+          ),
         );
       },
     );
