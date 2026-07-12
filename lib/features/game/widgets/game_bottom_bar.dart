@@ -121,7 +121,7 @@ class GameBottomBar extends ConsumerWidget {
                 child: Center(
                   child: _GameBarButton(
                     icon: Icons.grid_view,
-                    label: 'Overview',
+                    label: 'Table',
                     iconSize: iconSize,
                     compact: compact,
                     enabled: true,
@@ -505,50 +505,55 @@ class _GameBarButton extends StatelessWidget {
             : colors.textSecondary.withValues(alpha: 0.4);
     return Material(
       color: Colors.transparent,
-      child: InkWell(
-        onTap: enabled
-            ? () {
-                context.gameHapticLight();
-                onTap?.call();
-              }
-            : null,
-        borderRadius: RadiusTokens.radiusMd,
-        child: Semantics(
-          button: true,
-          enabled: enabled,
-          label: label,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              minWidth: LayoutTokens.gr6,
-              minHeight: LayoutTokens.gr6,
-            ),
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: LayoutTokens.gr1,
-                vertical: compact ? LayoutTokens.gr1 : LayoutTokens.gr2,
+      child: Tooltip(
+        message: compact ? label : '',
+        child: InkWell(
+          onTap: enabled
+              ? () {
+                  context.gameHapticLight();
+                  onTap?.call();
+                }
+              : null,
+          borderRadius: RadiusTokens.radiusMd,
+          child: Semantics(
+            button: true,
+            enabled: enabled,
+            label: label,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                minWidth: LayoutTokens.gr6,
+                minHeight: LayoutTokens.gr6,
               ),
-              // Icon + label are decorative here — the explicit Semantics
-              // above is the single source of truth for the a11y label, so
-              // the Text below must not contribute its own competing node.
-              child: ExcludeSemantics(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(icon, size: iconSize, color: c),
-                    SizedBox(height: LayoutTokens.gr0),
-                    Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: FontTokens.hudXs - (compact ? 2 : 0),
-                        fontWeight: FontWeight.w600,
-                        color: c,
-                        height: 1,
-                      ),
-                    ),
-                  ],
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: LayoutTokens.gr1,
+                  vertical: compact ? LayoutTokens.gr1 : LayoutTokens.gr2,
+                ),
+                // Icon + label are decorative here — the explicit Semantics
+                // above is the single source of truth for the a11y label, so
+                // the Text below must not contribute its own competing node.
+                child: ExcludeSemantics(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(icon, size: iconSize, color: c),
+                      if (!compact) ...[
+                        SizedBox(height: LayoutTokens.gr0),
+                        Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: FontTokens.hudXs,
+                            fontWeight: FontWeight.w600,
+                            color: c,
+                            height: 1,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ),
             ),

@@ -614,7 +614,10 @@ class _PlayerSlotCard extends ConsumerWidget {
                   ],
                 ),
               ),
-              if (isMe) _SlotReadyButton(slot: slot),
+              if (isMe)
+                _SlotReadyButton(slot: slot)
+              else
+                _SlotReadyBadge(isReady: slot.isReady),
             ],
           ),
           if (isMe) ...[
@@ -683,6 +686,37 @@ class _SlotCommanderControls extends ConsumerWidget {
         SizedBox(width: gap),
         Expanded(child: _PartnerChip(slot: slot)),
       ],
+    );
+  }
+}
+
+class _SlotReadyBadge extends StatelessWidget {
+  final bool isReady;
+
+  const _SlotReadyBadge({required this.isReady});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColorTokens.of(context);
+    final tone = isReady ? colors.primaryAccent : colors.textSecondary;
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: LayoutTokens.gr1,
+        vertical: LayoutTokens.gr0,
+      ),
+      decoration: BoxDecoration(
+        color: tone.withValues(alpha: OpacityTokens.soft),
+        borderRadius: RadiusTokens.radiusXs,
+        border: Border.all(color: tone),
+      ),
+      child: Text(
+        isReady ? 'Ready' : 'Waiting',
+        style: TextStyle(
+          color: tone,
+          fontSize: FontTokens.sm,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }

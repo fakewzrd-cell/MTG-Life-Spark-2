@@ -5,6 +5,7 @@ import '../../../core/game/game_phase.dart';
 import '../../../core/game/game_providers.dart';
 import '../../../core/game/game_state.dart';
 import '../../../core/game/player_game_state.dart';
+import '../../../ui/theme/app_color_tokens.dart';
 import '../../../ui/tokens/color_tokens.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
@@ -19,6 +20,16 @@ import 'overview_commander_art_backdrop.dart';
 import 'political_row_widget.dart';
 import 'team_colors.dart';
 import '../../../shared/widgets/game_icon.dart';
+
+/// Short label for an elimination reason (compact eliminated row).
+String? eliminationReasonShortLabel(String? reason) => switch (reason) {
+      'life' => 'Life loss',
+      'poison' => 'Poison',
+      'commanderDamage' => 'Commander dmg',
+      'concede' => 'Conceded',
+      'disconnect' => 'Disconnected',
+      _ => null,
+    };
 
 // ── Overview View ─────────────────────────────────────────────────────────
 
@@ -35,6 +46,43 @@ class GameOverviewView extends ConsumerStatefulWidget {
 class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
   bool _politicsExpanded = false;
 
+  Widget _rowFor(PlayerGameState p, GameState game) {
+    return p.isEliminated
+        ? _EliminatedPlayerRow(p: p, game: game)
+        : _GameOverviewPlayerCard(p: p, game: game);
+  }
+
+  /// Groups by team when any team is assigned; otherwise a flat roster.
+  /// Unassigned players (team 0) render as their own trailing group.
+  List<Widget> _buildPlayerListChildren(GameState game) {
+    final colors = context.gameColors;
+    final assignments = game.teamAssignments;
+    final hasTeams = assignments.values.any((t) => t > 0);
+
+    if (!hasTeams) {
+      return game.players.map((p) => _rowFor(p, game)).toList();
+    }
+
+    final byTeam = <int, List<PlayerGameState>>{};
+    for (final p in game.players) {
+      final t = assignments[p.playerId] ?? 0;
+      byTeam.putIfAbsent(t, () => []).add(p);
+    }
+    final teamIds = byTeam.keys.where((t) => t > 0).toList()..sort();
+
+    final children = <Widget>[];
+    for (final t in teamIds) {
+      children.add(_TeamGroupHeader(teamIndex: t, colors: colors));
+      children.addAll(byTeam[t]!.map((p) => _rowFor(p, game)));
+    }
+    final unassigned = byTeam[0];
+    if (unassigned != null && unassigned.isNotEmpty) {
+      children.add(_TeamGroupHeader(teamIndex: 0, colors: colors));
+      children.addAll(unassigned.map((p) => _rowFor(p, game)));
+    }
+    return children;
+  }
+
   @override
   Widget build(BuildContext context) {
     final game = widget.game;
@@ -42,6 +90,12 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
     final colors = context.gameColors;
     final notifier = ref.read(gameProvider.notifier);
     final aliveCount = game.activePlayers.length;
+    final activePlayer = game.playerById(game.activePlayerId);
+    final turnSubtitle = activePlayer == null
+        ? null
+        : activePlayer.playerId == game.localPlayerId
+            ? 'Your turn'
+            : '${overviewShortPlayerName(activePlayer.username, maxChars: 16)}\'s turn';
 
     const pageInset = LayoutTokens.shellPageInset;
 
@@ -58,18 +112,39 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
               surfaceTintColor: Colors.transparent,
               elevation: 0,
               scrolledUnderElevation: 0,
-              toolbarHeight: LayoutTokens.minTapTarget,
+              toolbarHeight: turnSubtitle == null
+                  ? LayoutTokens.minTapTarget
+                  : LayoutTokens.minTapTarget + LayoutTokens.gr2,
               leadingWidth: pageInset + LayoutTokens.minTapTarget,
               centerTitle: true,
-              title: Text(
-                'Round ${game.roundNumber}',
-                style: TextStyle(
-                  color: colors.textPrimary,
-                  fontSize: FontTokens.title,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.2,
-                  height: 1,
-                ),
+              title: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Round ${game.roundNumber}',
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontSize: FontTokens.title,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.2,
+                      height: 1,
+                    ),
+                  ),
+                  if (turnSubtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      turnSubtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: colors.textSecondary,
+                        fontSize: FontTokens.hudXs,
+                        fontWeight: FontWeight.w600,
+                        height: 1,
+                      ),
+                    ),
+                  ],
+                ],
               ),
               leading: SizedBox(
                 width: pageInset + LayoutTokens.minTapTarget,
@@ -130,6 +205,22 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
               ],
             ),
 
+            if (activePlayer != null)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    pageInset,
+                    LayoutTokens.gr2,
+                    pageInset,
+                    0,
+                  ),
+                  child: _ActivePlayerSpotlight(
+                    game: game,
+                    player: activePlayer,
+                  ),
+                ),
+              ),
+
             SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
@@ -142,6 +233,7 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _PoliticsToggleButton(
+                      game: game,
                       expanded: _politicsExpanded,
                       onPressed: () =>
                           setState(() => _politicsExpanded = !_politicsExpanded),
@@ -224,11 +316,9 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
                 LayoutTokens.gr4,
               ),
               sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  ...game.players.map(
-                    (p) => _GameOverviewPlayerCard(p: p, game: game),
-                  ),
-                ]),
+                delegate: SliverChildListDelegate(
+                  _buildPlayerListChildren(game),
+                ),
               ),
             ),
           ],
@@ -240,16 +330,19 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
 
 class _PoliticsToggleButton extends StatelessWidget {
   const _PoliticsToggleButton({
+    required this.game,
     required this.expanded,
     required this.onPressed,
   });
 
+  final GameState game;
   final bool expanded;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final showPeek = !expanded && _hasActivePolitics(game);
 
     return Semantics(
       button: true,
@@ -266,34 +359,418 @@ class _PoliticsToggleButton extends StatelessWidget {
               horizontal: LayoutTokens.gr2,
               vertical: LayoutTokens.gr1,
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Icon(
-                  Icons.public,
-                  size: LayoutTokens.gr3,
-                  color: colors.emphasis,
-                ),
-                SizedBox(width: LayoutTokens.gr1),
-                Expanded(
-                  child: Text(
-                    'Table politics',
-                    style: TextStyle(
-                      color: colors.textPrimary,
-                      fontSize: FontTokens.caption,
-                      fontWeight: FontWeight.w700,
-                      height: 1.2,
+                Row(
+                  children: [
+                    Icon(
+                      Icons.public,
+                      size: LayoutTokens.gr3,
+                      color: colors.emphasis,
                     ),
-                  ),
+                    SizedBox(width: LayoutTokens.gr1),
+                    Expanded(
+                      child: Text(
+                        'Table politics',
+                        style: TextStyle(
+                          color: colors.textPrimary,
+                          fontSize: FontTokens.caption,
+                          fontWeight: FontWeight.w700,
+                          height: 1.2,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      expanded ? Icons.expand_less : Icons.expand_more,
+                      size: LayoutTokens.gr3,
+                      color: colors.textSecondary,
+                    ),
+                  ],
                 ),
-                Icon(
-                  expanded ? Icons.expand_less : Icons.expand_more,
-                  size: LayoutTokens.gr3,
-                  color: colors.textSecondary,
-                ),
+                if (showPeek) ...[
+                  SizedBox(height: LayoutTokens.gr1),
+                  _PoliticsPeekSummary(game: game),
+                ],
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  static bool _hasActivePolitics(GameState game) =>
+      game.monarchPlayerId != null ||
+      game.initiativePlayerId != null ||
+      game.dayNight != DayNightState.none;
+}
+
+/// Compact "who has what" chips shown when the politics panel is collapsed.
+class _PoliticsPeekSummary extends StatelessWidget {
+  const _PoliticsPeekSummary({required this.game});
+
+  final GameState game;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.gameColors;
+    final chips = <Widget>[];
+
+    final monarch = game.monarchPlayerId != null
+        ? game.playerById(game.monarchPlayerId!)
+        : null;
+    if (monarch != null) {
+      chips.add(_chip(
+        context: context,
+        icon: GameIcon.monarch(size: 13, color: colors.emphasis),
+        label: overviewShortPlayerName(monarch.username, maxChars: 7),
+      ));
+    }
+
+    final initiative = game.initiativePlayerId != null
+        ? game.playerById(game.initiativePlayerId!)
+        : null;
+    if (initiative != null) {
+      chips.add(_chip(
+        context: context,
+        icon: GameIcon.initiative(size: 13, color: colors.emphasis),
+        label: overviewShortPlayerName(initiative.username, maxChars: 7),
+      ));
+    }
+
+    if (game.dayNight != DayNightState.none) {
+      final isDay = game.dayNight == DayNightState.day;
+      chips.add(_chip(
+        context: context,
+        icon: isDay
+            ? GameIcon.day(size: 13, color: colors.emphasis)
+            : GameIcon.night(size: 13, color: colors.emphasis),
+        label: isDay ? 'Day' : 'Night',
+      ));
+    }
+
+    if (chips.isEmpty) return const SizedBox.shrink();
+
+    return Wrap(
+      spacing: LayoutTokens.gr1,
+      runSpacing: LayoutTokens.gr0,
+      children: chips,
+    );
+  }
+
+  Widget _chip({
+    required BuildContext context,
+    required Widget icon,
+    required String label,
+  }) {
+    final colors = context.gameColors;
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: LayoutTokens.gr1,
+        vertical: LayoutTokens.gr0 - 1,
+      ),
+      decoration: BoxDecoration(
+        color: colors.emphasis.withValues(alpha: 0.12),
+        borderRadius: RadiusTokens.radiusControlSm,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          icon,
+          SizedBox(width: LayoutTokens.gr0 - 1),
+          Text(
+            label,
+            style: TextStyle(
+              color: colors.emphasis,
+              fontSize: FontTokens.hudXs,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Hero band for the current turn holder — answers "whose turn?" at a glance
+/// without scrolling the roster below.
+class _ActivePlayerSpotlight extends StatelessWidget {
+  const _ActivePlayerSpotlight({required this.game, required this.player});
+
+  final GameState game;
+  final PlayerGameState player;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.gameColors;
+    final isLocal = player.playerId == game.localPlayerId;
+    final teamIdx = game.teamAssignments[player.playerId] ?? 0;
+    final accent = teamIdx > 0 ? teamColor(teamIdx) : player.playerColor;
+    final isMonarch = game.isMonarch(player.playerId);
+    final hasInit = game.hasInitiative(player.playerId);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            accent.withValues(alpha: 0.22),
+            colors.surface,
+          ],
+        ),
+        borderRadius: RadiusTokens.radiusMd,
+        border: Border.all(color: accent.withValues(alpha: 0.5), width: 1.5),
+      ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: LayoutTokens.gr2,
+          vertical: LayoutTokens.gr2,
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: accent,
+              child: Text(
+                player.username.isNotEmpty
+                    ? player.username[0].toUpperCase()
+                    : '?',
+                style: TextStyle(
+                  color: ColorTokens.onAccent,
+                  fontWeight: FontWeight.w800,
+                  fontSize: FontTokens.body,
+                ),
+              ),
+            ),
+            SizedBox(width: LayoutTokens.gr2),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'NOW PLAYING',
+                        style: TextStyle(
+                          color: accent,
+                          fontSize: FontTokens.hudXs,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
+                      if (isMonarch) ...[
+                        SizedBox(width: LayoutTokens.gr1),
+                        GameIcon.monarch(
+                          size: 14,
+                          color: politicsIconTone(context),
+                        ),
+                      ],
+                      if (hasInit) ...[
+                        SizedBox(width: LayoutTokens.gr0),
+                        GameIcon.initiative(
+                          size: 14,
+                          color: politicsIconTone(context),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: player.username,
+                          style: TextStyle(
+                            color: colors.textPrimary,
+                            fontWeight: FontWeight.w800,
+                            fontSize: FontTokens.title,
+                            height: 1.1,
+                          ),
+                        ),
+                        if (isLocal)
+                          TextSpan(
+                            text: ' · you',
+                            style: TextStyle(
+                              color: colors.textSecondary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: FontTokens.hudXs,
+                            ),
+                          ),
+                      ],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    game.currentPhase.streamlinedShortLabel,
+                    style: TextStyle(
+                      color: colors.textSecondary,
+                      fontSize: FontTokens.hudSm,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: LayoutTokens.gr2),
+            _GameOverviewLifeBadge(
+              life: player.life,
+              eliminated: false,
+              isActive: true,
+              accent: accent,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Section header for a team cluster in the roster ("Team 1", "Unassigned").
+class _TeamGroupHeader extends StatelessWidget {
+  const _TeamGroupHeader({required this.teamIndex, required this.colors});
+
+  final int teamIndex;
+  final AppColorTokens colors;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = teamIndex == 0 ? colors.textSecondary : teamColor(teamIndex);
+    final label = teamIndex == 0 ? 'Unassigned' : 'Team $teamIndex';
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        LayoutTokens.gr0,
+        LayoutTokens.gr2,
+        LayoutTokens.gr0,
+        LayoutTokens.gr1,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          SizedBox(width: LayoutTokens.gr1),
+          Text(
+            label,
+            style: TextStyle(
+              color: colors.textSecondary,
+              fontSize: FontTokens.hudXs,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.4,
+            ),
+          ),
+          SizedBox(width: LayoutTokens.gr1),
+          Expanded(
+            child: Divider(
+              height: 1,
+              thickness: 1,
+              color: colors.textSecondary.withValues(alpha: 0.14),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Compact single-line row for eliminated players — keeps focus on the
+/// table that's still playing instead of matching the full card height.
+class _EliminatedPlayerRow extends StatelessWidget {
+  const _EliminatedPlayerRow({required this.p, required this.game});
+
+  final PlayerGameState p;
+  final GameState game;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.gameColors;
+    final isLocal = p.playerId == game.localPlayerId;
+    final reasonLabel = eliminationReasonShortLabel(p.eliminationReason);
+
+    return Container(
+      margin: EdgeInsets.only(bottom: LayoutTokens.gr1),
+      padding: EdgeInsets.symmetric(
+        horizontal: LayoutTokens.gr2,
+        vertical: LayoutTokens.gr1,
+      ),
+      decoration: BoxDecoration(
+        color: colors.backgroundSecondary.withValues(alpha: OpacityTokens.half),
+        borderRadius: RadiusTokens.radiusSm,
+        border: Border.all(
+          color: colors.textSecondary.withValues(alpha: OpacityTokens.soft),
+        ),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 12,
+            backgroundColor: p.playerColor.withValues(alpha: 0.25),
+            child: Text(
+              p.username.isNotEmpty ? p.username[0].toUpperCase() : '?',
+              style: TextStyle(
+                color: colors.textSecondary,
+                fontWeight: FontWeight.w700,
+                fontSize: FontTokens.hudXs,
+              ),
+            ),
+          ),
+          SizedBox(width: LayoutTokens.gr1 + 2),
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: p.username,
+                    style: TextStyle(
+                      color: colors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: FontTokens.hudSm,
+                      decoration: TextDecoration.lineThrough,
+                      decorationColor: colors.textSecondary.withValues(
+                        alpha: 0.6,
+                      ),
+                    ),
+                  ),
+                  if (isLocal)
+                    TextSpan(
+                      text: ' · you',
+                      style: TextStyle(
+                        color: colors.textSecondary,
+                        fontWeight: FontWeight.w500,
+                        fontSize: FontTokens.hudXs,
+                      ),
+                    ),
+                  if (reasonLabel != null)
+                    TextSpan(
+                      text: '  ·  $reasonLabel',
+                      style: TextStyle(
+                        color: colors.textSecondary.withValues(alpha: 0.75),
+                        fontWeight: FontWeight.w500,
+                        fontSize: FontTokens.hudXs,
+                      ),
+                    ),
+                ],
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          SizedBox(width: LayoutTokens.gr1),
+          Text(
+            'OUT',
+            style: TextStyle(
+              color: colors.textSecondary,
+              fontWeight: FontWeight.w800,
+              fontSize: FontTokens.hudXs,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
       ),
     );
   }

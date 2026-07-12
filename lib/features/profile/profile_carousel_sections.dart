@@ -141,6 +141,70 @@ class ProfileCarouselPlaceholderCard extends StatelessWidget {
   }
 }
 
+/// Empty-state CTA: message + add glyph in one tappable carousel card.
+class ProfileCarouselAddPromptCard extends StatelessWidget {
+  const ProfileCarouselAddPromptCard({
+    required this.message,
+    required this.colors,
+    required this.width,
+    required this.height,
+    required this.onTap,
+    required this.semanticsLabel,
+  });
+
+  final String message;
+  final AppColorTokens colors;
+  final double width;
+  final double height;
+  final VoidCallback onTap;
+  final String semanticsLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: width,
+      height: height,
+      child: ProfileCarouselCard(
+        padding: EdgeInsets.zero,
+        child: Semantics(
+          button: true,
+          label: semanticsLabel,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: RadiusTokens.radiusCarouselCard,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: LayoutTokens.gr3,
+                  vertical: LayoutTokens.gr2,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ProfileCarouselAddGlyph(colors: colors),
+                    SizedBox(height: LayoutTokens.gr3),
+                    Text(
+                      message,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                        height: 1.4,
+                        fontSize: FontTokens.sm,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Shared add affordance for carousel cards (decks shelf, optional stats).
 class ProfileCarouselAddGlyph extends StatelessWidget {
   const ProfileCarouselAddGlyph({required this.colors});
@@ -478,7 +542,8 @@ List<MatchRecord> _filterMatchesForRecentGames(
 
 Color _recentMatchResultColor(MatchRecord m, AppColorTokens colors) {
   if (m.result == 'win') return ColorTokens.success;
-  return colors.primaryAccent;
+  if (m.result == 'concede') return ColorTokens.warning;
+  return ColorTokens.danger;
 }
 
 String _recentMatchResultLabel(MatchRecord m) {
@@ -627,11 +692,13 @@ class _ProfileRecentGamesModuleState extends State<ProfileRecentGamesModule> {
               clipBehavior: Clip.none,
               physics: kProfileHorizontalCarouselPhysics,
               children: [
-                ProfileCarouselPlaceholderCard(
+                ProfileCarouselAddPromptCard(
                   message: _kProfileUntilFirstGameMessage,
                   colors: c,
                   width: kProfileCarouselCardWidth,
                   height: cardHeight,
+                  onTap: () => context.go(AppRoutes.lobby),
+                  semanticsLabel: 'Open lobby to host or join a game',
                 ),
               ],
             ),
@@ -1350,10 +1417,13 @@ class _ProfileDeckPerformanceSectionState
     final deckTitleStyle = TypographyTokens.sectionTitle(colors.textPrimary);
     final showPlaceholder =
         repoDecks.isEmpty || !widget.hasPlayedGames;
+    final needsAddPrompt = repoDecks.isEmpty;
     final placeholderMessage =
-        repoDecks.isEmpty
+        needsAddPrompt
             ? _kProfileAddDeckMessage
             : _kProfileUntilFirstGameMessage;
+
+    void openDecks() => context.go(AppRoutes.decks);
 
     Widget titleRow() {
       return ProfileSectionHeader(
@@ -1363,21 +1433,50 @@ class _ProfileDeckPerformanceSectionState
         count: repoDecks.length,
         singularUnit: 'deck',
         pluralUnit: 'decks',
+        // Empty CTA lives on the fused card; header + only when decks are listed.
+        trailing: !needsAddPrompt
+            ? IconButton(
+                tooltip: 'Add deck',
+                onPressed: openDecks,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: kMinInteractiveDimension,
+                  minHeight: kMinInteractiveDimension,
+                ),
+                icon: Icon(
+                  Icons.add_rounded,
+                  size: 22,
+                  color: colors.primaryAccent,
+                ),
+              )
+            : null,
       );
     }
 
     Widget carouselRow(double cardHeight) {
       final children = <Widget>[];
       if (showPlaceholder) {
-        children.add(
-          ProfileCarouselPlaceholderCard(
-            message: placeholderMessage,
-            colors: colors,
-            width: kProfileCarouselCardWidth,
-            height: cardHeight,
-          ),
-        );
-        children.add(SizedBox(width: LayoutTokens.gr2));
+        if (needsAddPrompt) {
+          children.add(
+            ProfileCarouselAddPromptCard(
+              message: placeholderMessage,
+              colors: colors,
+              width: kProfileCarouselCardWidth,
+              height: cardHeight,
+              onTap: openDecks,
+              semanticsLabel: 'Add deck',
+            ),
+          );
+        } else {
+          children.add(
+            ProfileCarouselPlaceholderCard(
+              message: placeholderMessage,
+              colors: colors,
+              width: kProfileCarouselCardWidth,
+              height: cardHeight,
+            ),
+          );
+        }
       } else {
         for (var i = 0; i < repoDecks.length; i++) {
           if (i > 0) children.add(SizedBox(width: LayoutTokens.gr2));
@@ -1390,23 +1489,7 @@ class _ProfileDeckPerformanceSectionState
             ),
           );
         }
-        children.add(SizedBox(width: LayoutTokens.gr2));
       }
-      children.add(
-        SizedBox(
-          width: kProfileCarouselCardWidth,
-          height: cardHeight,
-          child: ProfileCarouselCard(
-            padding: EdgeInsets.zero,
-            affordance: true,
-            child: ProfileCarouselAddCard(
-              colors: colors,
-              semanticsLabel: 'Add deck',
-              onTap: () => context.go(AppRoutes.decks),
-            ),
-          ),
-        ),
-      );
 
       return SizedBox(
         height: cardHeight,

@@ -8,7 +8,6 @@ import '../theme/app_color_tokens.dart';
 import '../tokens/font_tokens.dart';
 import '../tokens/layout_tokens.dart';
 import '../tokens/motion_tokens.dart';
-import '../tokens/radius_tokens.dart';
 
 /// Shell tab descriptor for [AppBottomNavBar].
 class AppNavDestination {
@@ -17,18 +16,25 @@ class AppNavDestination {
     this.icon,
     this.selectedIcon,
     this.iconAsset,
+    this.selectedIconAsset,
   }) : assert(
-         iconAsset != null || (icon != null && selectedIcon != null),
+         (iconAsset != null) || (icon != null && selectedIcon != null),
          'Provide iconAsset or both icon and selectedIcon',
        );
 
   final IconData? icon;
   final IconData? selectedIcon;
+
+  /// Inactive raster icon (tinted). Optional [selectedIconAsset] for morph.
   final String? iconAsset;
+
+  /// Active raster icon. Falls back to [iconAsset] when null.
+  final String? selectedIconAsset;
+
   final String label;
 }
 
-/// Edge-to-edge glass bottom nav — soft indicator, fluid tab transitions.
+/// Edge-to-edge glass bottom nav — color + icon morph, no selection pill.
 class AppBottomNavBar extends StatelessWidget {
   const AppBottomNavBar({
     super.key,
@@ -45,7 +51,7 @@ class AppBottomNavBar extends StatelessWidget {
     AppNavDestination(
       icon: Icons.home_outlined,
       selectedIcon: Icons.home_rounded,
-      label: 'Home',
+      label: 'Profile',
     ),
     AppNavDestination(
       icon: Icons.groups_outlined,
@@ -64,8 +70,6 @@ class AppBottomNavBar extends StatelessWidget {
   ];
 
   static const double barHeight = LayoutTokens.bottomNavHeight;
-  static const _pillInsetV = 8.0;
-  static const _pillInsetH = 0.08;
 
   @override
   Widget build(BuildContext context) {
@@ -87,53 +91,23 @@ class AppBottomNavBar extends StatelessWidget {
             top: false,
             child: SizedBox(
               height: barHeight,
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final itemWidth = constraints.maxWidth / destinations.length;
-                  final pillW = itemWidth * (1 - 2 * _pillInsetH);
-                  final pillLeft =
-                      selectedIndex * itemWidth + itemWidth * _pillInsetH;
-
-                  return Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      AnimatedPositioned(
-                        duration: MotionTokens.slow,
-                        curve: Curves.easeOutCubic,
-                        left: pillLeft,
-                        width: pillW,
-                        top: _pillInsetV,
-                        bottom: _pillInsetV,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            borderRadius: RadiusTokens.radiusPill,
-                            color: colors.primaryAccent.withValues(
-                              alpha: 0.14,
-                            ),
-                          ),
-                        ),
+              child: Row(
+                children: [
+                  for (var i = 0; i < destinations.length; i++)
+                    Expanded(
+                      child: _DockNavItem(
+                        destination: destinations[i],
+                        selected: selectedIndex == i,
+                        accent: colors.primaryAccent,
+                        inactive: colors.textMuted,
+                        onTap: () {
+                          if (i == selectedIndex) return;
+                          HapticFeedback.lightImpact();
+                          onDestinationSelected(i);
+                        },
                       ),
-                      Row(
-                        children: [
-                          for (var i = 0; i < destinations.length; i++)
-                            Expanded(
-                              child: _DockNavItem(
-                                destination: destinations[i],
-                                selected: selectedIndex == i,
-                                accent: colors.primaryAccent,
-                                inactive: colors.textMuted,
-                                onTap: () {
-                                  if (i == selectedIndex) return;
-                                  HapticFeedback.lightImpact();
-                                  onDestinationSelected(i);
-                                },
-                              ),
-                            ),
-                        ],
-                      ),
-                    ],
-                  );
-                },
+                    ),
+                ],
               ),
             ),
           ),
@@ -170,8 +144,8 @@ class _DockNavItem extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
         child: TweenAnimationBuilder<double>(
-          duration: MotionTokens.slow,
-          curve: Curves.easeOutCubic,
+          duration: MotionTokens.standard,
+          curve: MotionTokens.easeOut,
           tween: Tween(end: selected ? 1.0 : 0.0),
           builder: (context, t, _) {
             final fg = Color.lerp(inactive, accent, t)!;
@@ -181,11 +155,11 @@ class _DockNavItem extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Transform.scale(
-                  scale: lerpDouble(0.94, 1.0, t)!,
+                  scale: lerpDouble(0.96, 1.0, t)!,
                   child: _NavIcon(
                     destination: destination,
                     color: fg,
-                    emphasis: t,
+                    progress: t,
                   ),
                 ),
                 const SizedBox(height: 3),
@@ -216,46 +190,89 @@ class _NavIcon extends StatelessWidget {
   const _NavIcon({
     required this.destination,
     required this.color,
-    required this.emphasis,
+    required this.progress,
   });
 
   final AppNavDestination destination;
   final Color color;
-  final double emphasis;
+
+  /// 0 = inactive icon, 1 = selected icon (synced with color tween).
+  final double progress;
 
   @override
   Widget build(BuildContext context) {
     final asset = destination.iconAsset;
     if (asset != null) {
-      return Image.asset(
-        asset,
+      final selectedAsset = destination.selectedIconAsset ?? asset;
+      if (selectedAsset == asset) {
+        return Image.asset(
+          asset,
+          width: _DockNavItem._iconSize,
+          height: _DockNavItem._iconSize,
+          fit: BoxFit.contain,
+          color: color,
+          colorBlendMode: BlendMode.srcIn,
+          filterQuality: FilterQuality.medium,
+        );
+      }
+      return SizedBox(
         width: _DockNavItem._iconSize,
         height: _DockNavItem._iconSize,
-        fit: BoxFit.contain,
-        color: color,
-        colorBlendMode: BlendMode.srcIn,
-        filterQuality: FilterQuality.medium,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Opacity(
+              opacity: (1.0 - progress).clamp(0.0, 1.0),
+              child: Image.asset(
+                asset,
+                width: _DockNavItem._iconSize,
+                height: _DockNavItem._iconSize,
+                fit: BoxFit.contain,
+                color: color,
+                colorBlendMode: BlendMode.srcIn,
+                filterQuality: FilterQuality.medium,
+              ),
+            ),
+            Opacity(
+              opacity: progress.clamp(0.0, 1.0),
+              child: Image.asset(
+                selectedAsset,
+                width: _DockNavItem._iconSize,
+                height: _DockNavItem._iconSize,
+                fit: BoxFit.contain,
+                color: color,
+                colorBlendMode: BlendMode.srcIn,
+                filterQuality: FilterQuality.medium,
+              ),
+            ),
+          ],
+        ),
       );
     }
 
-    return AnimatedCrossFade(
-      duration: MotionTokens.standard,
-      sizeCurve: Curves.easeOutCubic,
-      firstCurve: Curves.easeOutCubic,
-      secondCurve: Curves.easeOutCubic,
-      crossFadeState:
-          emphasis > 0.5
-              ? CrossFadeState.showSecond
-              : CrossFadeState.showFirst,
-      firstChild: Icon(
-        destination.icon,
-        size: _DockNavItem._iconSize,
-        color: color,
-      ),
-      secondChild: Icon(
-        destination.selectedIcon,
-        size: _DockNavItem._iconSize,
-        color: color,
+    return SizedBox(
+      width: _DockNavItem._iconSize,
+      height: _DockNavItem._iconSize,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Opacity(
+            opacity: (1.0 - progress).clamp(0.0, 1.0),
+            child: Icon(
+              destination.icon,
+              size: _DockNavItem._iconSize,
+              color: color,
+            ),
+          ),
+          Opacity(
+            opacity: progress.clamp(0.0, 1.0),
+            child: Icon(
+              destination.selectedIcon,
+              size: _DockNavItem._iconSize,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }

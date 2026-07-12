@@ -16,9 +16,9 @@ import '../../ui/components/ui_surface.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/app_color_palettes.dart';
 import '../../ui/tokens/color_tokens.dart';
-import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
+import '../../ui/tokens/typography_tokens.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -245,13 +245,8 @@ class _SectionHeader extends StatelessWidget {
         bottom: LayoutTokens.gr2,
       ),
       child: Text(
-        title.toUpperCase(),
-        style: TextStyle(
-          color: colors.primaryAccent,
-          fontSize: FontTokens.sm,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1.2,
-        ),
+        title,
+        style: TypographyTokens.sectionTitle(colors.textPrimary),
       ),
     );
   }
