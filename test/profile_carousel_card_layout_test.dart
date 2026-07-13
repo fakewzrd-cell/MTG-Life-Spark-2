@@ -21,7 +21,7 @@ void main() {
     test('footer reserve leaves room for minimum art at canonical size', () {
       const w = LayoutTokens.profileCarouselCardWidth;
       const h = LayoutTokens.profileCarouselCardCanonicalHeight;
-      final innerH = h - 2 * 16; // kProfileCarouselCardPaddingPx == gr3
+      final innerH = h - 2 * kProfileCarouselCardPaddingPx;
       final footer = profileDeckCardFooterReserveHeight(heavyDeck);
       final art = profileDeckCardArtHeight(
         w,
@@ -36,13 +36,13 @@ void main() {
     test('min card height covers scaled heavy footer', () {
       const ts = 1.25;
       final minH = profileDeckCardMinHeight(textScale: ts);
-      final innerH = minH - 32;
+      final innerH = minH - 2 * kProfileCarouselCardPaddingPx;
       final footer =
           profileDeckCardFooterReserveHeight(heavyDeck, textScale: ts);
       expect(innerH, greaterThanOrEqualTo(footer + 72));
     });
 
-    test('light deck footer is smaller than heavy partner deck', () {
+    test('footer reserve is a fixed worst-case estimate', () {
       final light = PlayerDeck(
         id: '2',
         displayName: 'Std',
@@ -50,9 +50,11 @@ void main() {
         format: GameFormat.standard.name,
         deckStyleId: DeckStyle.spellslinger.id,
       );
+      // Reserve height does not vary by deck fields — it budgets the densest
+      // footer layout so art can shrink safely for every deck.
       expect(
         profileDeckCardFooterReserveHeight(light),
-        lessThan(profileDeckCardFooterReserveHeight(heavyDeck)),
+        profileDeckCardFooterReserveHeight(heavyDeck),
       );
     });
 
@@ -75,7 +77,7 @@ void main() {
       for (final ts in <double>[1.0, 1.15, 1.35]) {
         final footer =
             profileDeckCardFooterReserveHeight(heavyDeck, textScale: ts);
-        final innerH = canonical - 2 * 16;
+        final innerH = canonical - 2 * kProfileCarouselCardPaddingPx;
         // Footer + a usable art band must fit the fixed card at every scale.
         expect(
           footer + minArt,

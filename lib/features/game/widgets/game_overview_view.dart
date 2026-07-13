@@ -105,7 +105,6 @@ class GameOverviewView extends ConsumerWidget {
       ),
       child: SafeArea(
         bottom: false,
-        minimum: EdgeInsets.only(top: pageInset),
         child: CustomScrollView(
           slivers: [
             SliverAppBar(
@@ -127,7 +126,7 @@ class GameOverviewView extends ConsumerWidget {
                     style: TextStyle(
                       color: colors.textPrimary,
                       fontSize: FontTokens.title,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                       letterSpacing: 0.2,
                       height: 1,
                     ),
@@ -266,7 +265,7 @@ class GameOverviewView extends ConsumerWidget {
                       style: TextStyle(
                         color: colors.textPrimary,
                         fontSize: FontTokens.caption,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                         letterSpacing: 0.4,
                       ),
                     ),
@@ -344,7 +343,6 @@ class _ActivePlayerSpotlight extends StatelessWidget {
           ],
         ),
         borderRadius: RadiusTokens.radiusMd,
-        border: Border.all(color: accent.withValues(alpha: 0.5), width: 1.5),
       ),
       child: Padding(
         padding: EdgeInsets.symmetric(
@@ -362,7 +360,7 @@ class _ActivePlayerSpotlight extends StatelessWidget {
                     : '?',
                 style: TextStyle(
                   color: ColorTokens.onAccent,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   fontSize: FontTokens.body,
                 ),
               ),
@@ -380,7 +378,7 @@ class _ActivePlayerSpotlight extends StatelessWidget {
                         style: TextStyle(
                           color: accent,
                           fontSize: FontTokens.hudXs,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                           letterSpacing: 0.6,
                         ),
                       ),
@@ -408,7 +406,7 @@ class _ActivePlayerSpotlight extends StatelessWidget {
                           text: player.username,
                           style: TextStyle(
                             color: colors.textPrimary,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w700,
                             fontSize: FontTokens.title,
                             height: 1.1,
                           ),
@@ -483,7 +481,7 @@ class _TeamGroupHeader extends StatelessWidget {
             style: TextStyle(
               color: colors.textSecondary,
               fontSize: FontTokens.hudXs,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               letterSpacing: 0.4,
             ),
           ),
@@ -524,9 +522,6 @@ class _EliminatedPlayerRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.backgroundSecondary.withValues(alpha: OpacityTokens.half),
         borderRadius: RadiusTokens.radiusSm,
-        border: Border.all(
-          color: colors.textSecondary.withValues(alpha: OpacityTokens.soft),
-        ),
       ),
       child: Row(
         children: [
@@ -588,7 +583,7 @@ class _EliminatedPlayerRow extends StatelessWidget {
             'OUT',
             style: TextStyle(
               color: colors.textSecondary,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               fontSize: FontTokens.hudXs,
               letterSpacing: 0.3,
             ),
@@ -619,14 +614,6 @@ class _GameOverviewLifeBadge extends StatelessWidget {
     return ColorTokens.textPrimary;
   }
 
-  Color get _borderColor {
-    if (eliminated) {
-      return ColorTokens.textSecondary.withValues(alpha: OpacityTokens.soft);
-    }
-    if (isActive) return accent.withValues(alpha: OpacityTokens.moderate);
-    return ColorTokens.textSecondary.withValues(alpha: OpacityTokens.soft);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -643,7 +630,6 @@ class _GameOverviewLifeBadge extends StatelessWidget {
             ? accent.withValues(alpha: OpacityTokens.subtle)
             : ColorTokens.backgroundSecondary.withValues(alpha: OpacityTokens.half),
         borderRadius: RadiusTokens.radiusControlSm,
-        border: Border.all(color: _borderColor),
       ),
       alignment: Alignment.center,
       child: eliminated
@@ -651,7 +637,7 @@ class _GameOverviewLifeBadge extends StatelessWidget {
             'OUT',
             style: TextStyle(
               color: _textColor,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               fontSize: FontTokens.hudSm,
               height: 1,
             ),
@@ -669,7 +655,7 @@ class _GameOverviewLifeBadge extends StatelessWidget {
                 '$life',
                 style: TextStyle(
                   color: _textColor,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   fontSize: FontTokens.body,
                   height: 1,
                   fontFeatures: const [FontFeature.tabularFigures()],
@@ -712,11 +698,6 @@ class _GameOverviewLifeStepper extends StatelessWidget {
             ? accent.withValues(alpha: OpacityTokens.subtle)
             : colors.backgroundSecondary.withValues(alpha: OpacityTokens.half),
         borderRadius: RadiusTokens.radiusControlSm,
-        border: Border.all(
-          color: isActive
-              ? accent.withValues(alpha: OpacityTokens.moderate)
-              : colors.textSecondary.withValues(alpha: OpacityTokens.soft),
-        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -747,7 +728,7 @@ class _GameOverviewLifeStepper extends StatelessWidget {
                   '$life',
                   style: TextStyle(
                     color: _textColor,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     fontSize: FontTokens.body,
                     height: 1,
                     fontFeatures: const [FontFeature.tabularFigures()],
@@ -837,9 +818,6 @@ class _GameOverviewCommanderTaxChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: colors.textSecondary.withValues(alpha: 0.15),
           borderRadius: RadiusTokens.radiusControlSm,
-          border: Border.all(
-            color: colors.textSecondary.withValues(alpha: 0.6),
-          ),
         ),
         alignment: Alignment.center,
         child: Text(
@@ -902,9 +880,6 @@ class _PlayerPoliticsBadges extends StatelessWidget {
         decoration: BoxDecoration(
           color: colors.emphasis.withValues(alpha: OpacityTokens.soft),
           borderRadius: RadiusTokens.radiusControlSm,
-          border: Border.all(
-            color: colors.emphasis.withValues(alpha: OpacityTokens.moderate),
-          ),
         ),
         child: child,
       ),
@@ -931,13 +906,6 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
     final hasInit = game.hasInitiative(p.playerId);
 
     final borderColor = teamIdx > 0 ? teamColor(teamIdx) : p.playerColor;
-    var borderColorResolved =
-        isActive ? borderColor : borderColor.withValues(alpha: 0.25);
-    if (isMonarch || hasInit) {
-      borderColorResolved = colors.emphasis.withValues(
-        alpha: isActive ? 0.95 : 0.55,
-      );
-    }
 
     final myAlliance =
         local != null ? game.allianceFor(local.playerId) : null;
@@ -964,10 +932,6 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                     ? colors.surface.withValues(alpha: OpacityTokens.nearOpaque)
                     : colors.surface,
         borderRadius: RadiusTokens.radiusSm,
-        border: Border.all(
-          color: borderColorResolved,
-          width: isActive || isMonarch || hasInit ? 2 : 1,
-        ),
       ),
       child: ClipRRect(
         borderRadius: RadiusTokens.radiusSm,

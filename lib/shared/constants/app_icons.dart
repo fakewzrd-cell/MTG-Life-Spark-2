@@ -41,9 +41,11 @@ class AppIcons {
   static const String lifeSparkLogo = 'assets/images/life_spark_logo.png';
 
   /// Horizontal wordmark (mark + LIFE SPARK) for app bars / headers.
+  /// Placeholder until final art is dropped in.
   static const String logoHorizontal = 'assets/images/logo_horizontal.png';
 
   /// Vertical wordmark (mark above LIFE SPARK) for splash reveal / setup.
+  /// Placeholder until final art is dropped in.
   static const String logoVertical = 'assets/images/logo_vertical.png';
 
   /// Full app icon (mark on brand gradient).

@@ -16,6 +16,7 @@ import '../../shared/mana/mana_symbol_assets.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
+import '../../ui/tokens/opacity_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import '../game/widgets/game_modal_chrome.dart';
 
@@ -527,11 +528,6 @@ class _SelectionPreview extends StatelessWidget {
                             ? colors.primaryAccent.withValues(alpha: 0.15)
                             : colors.surface,
                         borderRadius: RadiusTokens.radiusControlMd,
-                        border: Border.all(
-                          color: pickingPartner
-                              ? colors.primaryAccent
-                              : colors.textSecondary.withValues(alpha: 0.4),
-                        ),
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -641,22 +637,12 @@ class _CommanderCard extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: MotionTokens.fast,
+        curve: MotionTokens.easeOut,
         decoration: BoxDecoration(
-          color: colors.surface,
+          color: isSelected
+              ? colors.primaryAccent.withValues(alpha: OpacityTokens.subtle)
+              : colors.surface,
           borderRadius: RadiusTokens.radiusSm,
-          border: Border.all(
-            color: isSelected ? colors.primaryAccent : Colors.transparent,
-            width: 2,
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: colors.primaryAccent.withValues(alpha: 0.35),
-                    blurRadius: 8,
-                    spreadRadius: 1,
-                  ),
-                ]
-              : null,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

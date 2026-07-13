@@ -67,18 +67,15 @@ class AppTheme {
 
       // ── Component themes ──────────────────────────────────────────────
 
-      // Card — M3 elevated surface
+      // Card — tonal surface (flat, borderless)
       cardTheme: CardThemeData(
         color: ColorTokens.surface,
-        elevation: ElevationTokens.sm,
-        surfaceTintColor: ColorTokens.primaryAccent.withValues(alpha: 0.08),
+        elevation: ElevationTokens.none,
+        surfaceTintColor: Colors.transparent,
         margin: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
           borderRadius: RadiusTokens.radiusMd,
-          side: BorderSide(
-            color: ColorTokens.borderSubtle.withValues(alpha: 0.5),
-          ),
         ),
       ),
 
@@ -98,7 +95,7 @@ class AppTheme {
         centerTitle: true,
         titleTextStyle: GoogleFonts.lato(
           fontSize: 20,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           color: ColorTokens.textPrimary,
           letterSpacing: 0.2,
         ),
@@ -148,20 +145,22 @@ class AppTheme {
         }),
       ),
 
-      // FilledButton — M3 primary action (high emphasis)
+      // FilledButton — M3 primary action (high emphasis, flat)
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: ColorTokens.primaryAccent,
           foregroundColor: ColorTokens.onAccent,
           disabledBackgroundColor: ColorTokens.surfaceElevated,
           disabledForegroundColor: ColorTokens.textMuted,
+          elevation: 0,
+          shadowColor: Colors.transparent,
           minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(
-            borderRadius: RadiusTokens.radiusLg,
+            borderRadius: RadiusTokens.radiusMd,
           ),
           textStyle: GoogleFonts.lato(
             fontSize: 16,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
             letterSpacing: 0.1,
           ),
         ),
@@ -172,14 +171,15 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: ColorTokens.surfaceElevated,
           foregroundColor: ColorTokens.primaryAccent,
-          elevation: ElevationTokens.sm,
+          elevation: ElevationTokens.none,
+          shadowColor: Colors.transparent,
           minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(
-            borderRadius: RadiusTokens.radiusLg,
+            borderRadius: RadiusTokens.radiusMd,
           ),
           textStyle: GoogleFonts.lato(
             fontSize: 16,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
             letterSpacing: 0.1,
           ),
         ),
@@ -192,11 +192,11 @@ class AppTheme {
           side: BorderSide(color: ColorTokens.borderSubtle),
           minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(
-            borderRadius: RadiusTokens.radiusLg,
+            borderRadius: RadiusTokens.radiusMd,
           ),
           textStyle: GoogleFonts.lato(
             fontSize: 16,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
             letterSpacing: 0.1,
           ),
         ),
@@ -452,15 +452,12 @@ class AppTheme {
 
       cardTheme: CardThemeData(
         color: ColorTokens.lightSurface,
-        elevation: ElevationTokens.sm,
-        surfaceTintColor: ColorTokens.primaryAccent.withValues(alpha: 0.06),
+        elevation: ElevationTokens.none,
+        surfaceTintColor: Colors.transparent,
         margin: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
           borderRadius: RadiusTokens.radiusMd,
-          side: BorderSide(
-            color: ColorTokens.lightBorderSubtle.withValues(alpha: 0.8),
-          ),
         ),
       ),
 
@@ -478,7 +475,7 @@ class AppTheme {
         centerTitle: true,
         titleTextStyle: GoogleFonts.lato(
           fontSize: 20,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           color: ColorTokens.lightTextPrimary,
           letterSpacing: 0.2,
         ),
@@ -532,13 +529,15 @@ class AppTheme {
           foregroundColor: ColorTokens.onAccent,
           disabledBackgroundColor: ColorTokens.lightSurfaceElevated,
           disabledForegroundColor: ColorTokens.lightTextMuted,
+          elevation: 0,
+          shadowColor: Colors.transparent,
           minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(
-            borderRadius: RadiusTokens.radiusLg,
+            borderRadius: RadiusTokens.radiusMd,
           ),
           textStyle: GoogleFonts.lato(
             fontSize: 16,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
             letterSpacing: 0.1,
           ),
         ),
@@ -548,14 +547,15 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: ColorTokens.lightSurfaceElevated,
           foregroundColor: ColorTokens.lightPrimaryAccent,
-          elevation: ElevationTokens.sm,
+          elevation: ElevationTokens.none,
+          shadowColor: Colors.transparent,
           minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(
-            borderRadius: RadiusTokens.radiusLg,
+            borderRadius: RadiusTokens.radiusMd,
           ),
           textStyle: GoogleFonts.lato(
             fontSize: 16,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
             letterSpacing: 0.1,
           ),
         ),
@@ -567,11 +567,11 @@ class AppTheme {
           side: BorderSide(color: ColorTokens.lightBorderSubtle),
           minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(
-            borderRadius: RadiusTokens.radiusLg,
+            borderRadius: RadiusTokens.radiusMd,
           ),
           textStyle: GoogleFonts.lato(
             fontSize: 16,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
             letterSpacing: 0.1,
           ),
         ),
@@ -775,7 +775,7 @@ class AppTheme {
   }) {
     final latoBase = GoogleFonts.latoTextTheme(
       TextTheme(
-        // Display roles
+        // Display roles — one heavy weight for heroes
         displayLarge: TextStyle(
           fontSize: 40,
           fontWeight: FontWeight.w700,
@@ -794,21 +794,21 @@ class AppTheme {
           color: primary,
           letterSpacing: 0,
         ),
-        // Headline roles
+        // Headline roles — section-level, not bold-everything
         headlineLarge: TextStyle(
           fontSize: 28,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           color: primary,
           letterSpacing: 0.4,
         ),
         headlineMedium: TextStyle(
           fontSize: 24,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           color: primary,
         ),
         headlineSmall: TextStyle(
           fontSize: 20,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           color: primary,
         ),
         // Title roles — Lato

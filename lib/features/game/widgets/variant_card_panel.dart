@@ -64,11 +64,6 @@ class VariantQuickAccessChip extends ConsumerWidget {
                   alpha: OpacityTokens.soft,
                 ),
                 borderRadius: RadiusTokens.radiusPill,
-                border: Border.all(
-                  color: colors.borderSubtle.withValues(
-                    alpha: OpacityTokens.strong,
-                  ),
-                ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,

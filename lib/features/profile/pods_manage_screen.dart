@@ -227,10 +227,7 @@ class _PodsManageScreenState extends ConsumerState<PodsManageScreen> {
                                       ),
                                       backgroundColor:
                                           colors.backgroundSecondary,
-                                      side: BorderSide(
-                                        color: colors.textSecondary
-                                            .withValues(alpha: 0.2),
-                                      ),
+                                      side: BorderSide.none,
                                     );
                                   }).toList(),
                                 ),

@@ -181,17 +181,17 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
             playerCount: lobby.players.length,
             maxPlayers: lobby.config.maxPlayers,
           ),
-          SizedBox(height: LayoutTokens.gr4),
+          SizedBox(height: LayoutTokens.shellSectionGap),
           ...lobby.players.map((slot) => _PlayerSlotCard(slot: slot)),
           if (lobby.players.length < lobby.config.maxPlayers)
             _EmptySlotCard(
               remaining: lobby.config.maxPlayers - lobby.players.length,
             ),
-          SizedBox(height: LayoutTokens.gr4),
+          SizedBox(height: LayoutTokens.shellSectionGap),
           const _PodSection(),
-          SizedBox(height: LayoutTokens.gr4),
+          SizedBox(height: LayoutTokens.shellSectionGap),
           _ConfigSection(config: lobby.config),
-          SizedBox(height: LayoutTokens.gr4),
+          SizedBox(height: LayoutTokens.shellSectionGap),
           _StartGameButton(
             canStart: lobby.canStart,
             hint: lobby.players.isEmpty
@@ -308,9 +308,7 @@ class _PodSection extends ConsumerWidget {
                     style: TextStyle(color: colors.textPrimary, fontSize: FontTokens.caption),
                   ),
                   backgroundColor: colors.backgroundSecondary,
-                  side: BorderSide(
-                    color: colors.textSecondary.withValues(alpha: 0.25),
-                  ),
+                  side: BorderSide.none,
                 );
               }).toList(),
             ),
@@ -364,11 +362,8 @@ class _QrHeader extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: colors.backgroundSecondary,
+        color: colors.surface,
         borderRadius: RadiusTokens.radiusMd,
-        border: Border.all(
-          color: colors.textSecondary.withValues(alpha: OpacityTokens.soft),
-        ),
       ),
       padding: EdgeInsets.symmetric(vertical: pad, horizontal: pad),
       child: Column(
@@ -441,13 +436,6 @@ class _QrHeader extends StatelessWidget {
               decoration: BoxDecoration(
                 color: ColorTokens.onAccent,
                 borderRadius: RadiusTokens.radiusSm,
-                boxShadow: [
-                  BoxShadow(
-                    color: colors.primaryAccent.withValues(alpha: 0.15),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
               ),
               padding: EdgeInsets.all(compact ? 10 : 12),
               child: QrImageView(
@@ -517,8 +505,8 @@ class _PlayerSlotCard extends ConsumerWidget {
     final compact = MediaQuery.sizeOf(context).width < 360;
 
     return LobbySlotCardShell(
-      borderColor: borderColor,
-      borderWidth: isMe ? 2 : 1,
+      emphasized: isMe,
+      emphasizeColor: borderColor,
       compact: compact,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -675,12 +663,9 @@ class _SlotReadyButton extends ConsumerWidget {
         backgroundColor:
             slot.isReady
                 ? colors.primaryAccent.withValues(alpha: OpacityTokens.soft)
-                : colors.surface,
+                : colors.backgroundSecondary,
         foregroundColor:
             slot.isReady ? colors.primaryAccent : colors.textSecondary,
-        side: BorderSide(
-          color: slot.isReady ? colors.primaryAccent : colors.textSecondary,
-        ),
       ),
       onPressed: () {
         final notifier = ref.read(lobbyProvider.notifier);
@@ -706,10 +691,6 @@ class _EmptySlotCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.backgroundSecondary,
         borderRadius: RadiusTokens.radiusMd,
-        border: Border.all(
-          color: colors.textSecondary.withValues(alpha: OpacityTokens.soft),
-          style: BorderStyle.solid,
-        ),
       ),
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr2),
@@ -785,7 +766,7 @@ class _ConfigSection extends ConsumerWidget {
             'Gameplay',
             style: TextStyle(
               color: colors.textPrimary,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w600,
               fontSize: FontTokens.hudSm,
             ),
           ),
@@ -801,9 +782,7 @@ InputDecoration _lobbyDropdownDecoration(BuildContext context) {
   final colors = AppColorTokens.of(context);
   final border = OutlineInputBorder(
     borderRadius: RadiusTokens.radiusSm,
-    borderSide: BorderSide(
-      color: colors.textSecondary.withValues(alpha: OpacityTokens.moderate),
-    ),
+    borderSide: BorderSide.none,
   );
   return InputDecoration(
     filled: true,
@@ -814,8 +793,9 @@ InputDecoration _lobbyDropdownDecoration(BuildContext context) {
     ),
     border: border,
     enabledBorder: border,
-    focusedBorder: border.copyWith(
-      borderSide: BorderSide(color: colors.primaryAccent),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: RadiusTokens.radiusSm,
+      borderSide: BorderSide(color: colors.primaryAccent, width: 1.5),
     ),
   );
 }
@@ -1119,45 +1099,38 @@ class _GameplaySwitchTile extends StatelessWidget {
     final colors = AppColorTokens.of(context);
     final compact = MediaQuery.sizeOf(context).width < 360;
 
-    return Container(
-      margin: EdgeInsets.only(bottom: compact ? 8 : 12),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: RadiusTokens.radiusSm,
+    return SwitchListTile(
+      title: Text(
+        title,
+        style: TextStyle(
+          color: colors.textPrimary,
+          fontSize: compact ? FontTokens.body : FontTokens.title,
+          fontWeight: FontWeight.w500,
+        ),
+        overflow: TextOverflow.ellipsis,
+        maxLines: 1,
       ),
-      child: SwitchListTile(
-        title: Text(
-          title,
-          style: TextStyle(
-            color: colors.textPrimary,
-            fontSize: compact ? FontTokens.body : FontTokens.title,
-            fontWeight: FontWeight.w500,
-          ),
-          overflow: TextOverflow.ellipsis,
-          maxLines: 1,
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(
+          color: colors.textSecondary,
+          fontSize: FontTokens.caption,
         ),
-        subtitle: Text(
-          subtitle,
-          style: TextStyle(
-            color: colors.textSecondary,
-            fontSize: FontTokens.caption,
-          ),
-          overflow: TextOverflow.ellipsis,
-          maxLines: 2,
-        ),
-        value: value,
-        onChanged: onChanged,
-        activeTrackColor: colors.primaryAccent.withValues(alpha: OpacityTokens.half),
-        thumbColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return colors.primaryAccent;
-          }
-          return null;
-        }),
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: compact ? 12 : 16,
-          vertical: 8,
-        ),
+        overflow: TextOverflow.ellipsis,
+        maxLines: 2,
+      ),
+      value: value,
+      onChanged: onChanged,
+      activeTrackColor: colors.primaryAccent.withValues(alpha: OpacityTokens.half),
+      thumbColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return colors.primaryAccent;
+        }
+        return null;
+      }),
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: compact ? LayoutTokens.gr2 : LayoutTokens.gr3,
+        vertical: LayoutTokens.gr1,
       ),
     );
   }

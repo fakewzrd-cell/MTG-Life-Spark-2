@@ -7,6 +7,10 @@ import 'app_color_palettes.dart';
 /// The active palette comes from [AppColorPalettes] and is switched in Settings.
 /// [applyPalette] is called when building [ThemeData]; legacy [AppTheme] getters
 /// read through this class so game + shell stay in sync.
+///
+/// **In widgets, prefer [AppColorTokens.of]** (theme extension) so palette
+/// switches and light/dark stay correct. Use this class for theme construction,
+/// non-UI services, and places without a [BuildContext].
 class ColorTokens {
   ColorTokens._();
 

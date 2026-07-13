@@ -379,7 +379,7 @@ Widget _profileRecordLine({
           text: wr == null ? '— WR' : '$wr% WR',
           style: base.copyWith(
             color: colors.primaryAccent,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
           ),
         ),
         TextSpan(
@@ -462,8 +462,8 @@ class _PlayerStatsHighlightCard extends StatelessWidget {
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              Colors.black.withValues(alpha: 0.08),
-                              Colors.black.withValues(alpha: 0.65),
+                              Colors.black.withValues(alpha: 0.04),
+                              Colors.black.withValues(alpha: 0.38),
                             ],
                           ),
                         ),
@@ -480,7 +480,7 @@ class _PlayerStatsHighlightCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: FontTokens.hudSm + 1,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                   color: colors.textPrimary,
                   height: 1.2,
                   letterSpacing: -0.1,
@@ -666,10 +666,6 @@ Widget _behaviourSpectrumTrack({
             height: barHeight,
             decoration: BoxDecoration(
               borderRadius: RadiusTokens.radiusPill,
-              border: Border.all(
-                color: colors.borderSubtle.withValues(alpha: 0.55),
-                width: 1,
-              ),
               gradient: LinearGradient(
                 colors: [
                   colors.textMuted,
@@ -693,12 +689,6 @@ Widget _behaviourSpectrumTrack({
                 color: colors.backgroundPrimary,
                 width: 2,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.35),
-                  blurRadius: 4,
-                ),
-              ],
             ),
           ),
         ),
@@ -780,7 +770,7 @@ class _LevelDonutCard extends StatelessWidget {
               Text(
                 '$pct%',
                 style: Theme.of(ctx).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   color: colors.textPrimary,
                   fontFeatures: const [FontFeature.tabularFigures()],
                   fontSize: size < 100 ? 17 : 20,

@@ -56,16 +56,20 @@ class LayoutTokens {
 
   // ── Shell tab insets ([MainShell] + floating [AppBottomNavBar]) ───────────
   //
-  // • [shellPageInset] (gr3) — default left/right for tab content, lists, profile hero.
+  // • [shellPageInset] (gr4 / 24) — default left/right for tab content, lists,
+  //   profile hero.
+  // • [shellSectionGap] (gr5 / 32) — vertical gap between page sections.
   // • [shellListPadding] — full ListView pad including [shellBottomInset] when
   //   the list scrolls above the dock with no sticky footer.
   // • [shellScrollPadding] — same horizontal/top when a bottom bar or CTA row
   //   applies [shellBottomInset] outside the scroll view.
-  // • [gr4] — section gaps inside a page, not page margins (e.g. lobby cards).
   // • [ctaHorizontal] (gr5) — primary full-width buttons on setup/onboarding.
 
   /// Default horizontal margin for shell tabs (Home, Lobby, Decks, Settings).
-  static const double shellPageInset = gr3;
+  static const double shellPageInset = gr4;
+
+  /// Vertical gap between major sections on shell pages.
+  static const double shellSectionGap = gr5;
 
   /// Bottom clearance for content under [MainShell]'s floating nav + home indicator.
   static double shellBottomInset(BuildContext context) {

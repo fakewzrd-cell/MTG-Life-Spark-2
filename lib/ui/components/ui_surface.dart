@@ -3,7 +3,11 @@ import 'package:flutter/material.dart';
 import '../tokens/radius_tokens.dart';
 import '../tokens/spacing_tokens.dart';
 
-/// Material 3 surface: [Material] with [ColorScheme] container roles and optional elevation.
+/// Material 3 tonal surface — fill step only by default (no border).
+///
+/// Pass [borderColor] when a stroke is intentionally needed (e.g. focus,
+/// destructive, or selected). Prefer nesting tonal containers over
+/// bordered-card-in-card stacks.
 class UiSurface extends StatelessWidget {
   const UiSurface({
     super.key,
@@ -19,6 +23,7 @@ class UiSurface extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final Color? color;
+  /// When non-null, draws a 1px stroke. Default is borderless.
   final Color? borderColor;
   final BorderRadius? borderRadius;
   final double elevation;
@@ -32,7 +37,6 @@ class UiSurface extends StatelessWidget {
         (glass
             ? scheme.surfaceContainer.withValues(alpha: 0.72)
             : scheme.surfaceContainer);
-    final outline = borderColor ?? scheme.outlineVariant;
 
     return Material(
       color: bg,
@@ -41,7 +45,9 @@ class UiSurface extends StatelessWidget {
       shadowColor: scheme.shadow,
       shape: RoundedRectangleBorder(
         borderRadius: radius,
-        side: BorderSide(color: outline, width: 1),
+        side: borderColor != null
+            ? BorderSide(color: borderColor!, width: 1)
+            : BorderSide.none,
       ),
       clipBehavior: Clip.antiAlias,
       child: Padding(

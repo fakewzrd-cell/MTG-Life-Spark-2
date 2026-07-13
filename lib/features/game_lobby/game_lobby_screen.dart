@@ -4,8 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../../shared/utils/app_router.dart';
 import '../../ui/components/ui_app_bar.dart';
 import '../../ui/theme/app_color_tokens.dart';
-import '../../ui/tokens/color_tokens.dart';
-import '../../ui/tokens/elevation_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/opacity_tokens.dart';
@@ -42,7 +40,7 @@ class GameLobbyScreen extends StatelessWidget {
                   onTap: () => context.push(AppRoutes.lobbyHost),
                 ),
               ),
-              SizedBox(height: LayoutTokens.gr2),
+              SizedBox(height: LayoutTokens.shellSectionGap),
               Expanded(
                 child: _BigActionButton(
                   label: 'Join Game',
@@ -60,10 +58,7 @@ class GameLobbyScreen extends StatelessWidget {
   }
 }
 
-/// Clean accent gradient fill — no illustration to compete with the icon
-/// badge/title, so the button reads as one confident shape at a glance.
-/// [mirrored] flips the gradient direction so Host/Join stay visually
-/// distinct from each other without needing separate art assets.
+/// Soft tonal gradient — Host/Join stay distinct without bordered cards.
 class _LobbyAccentBackdrop extends StatelessWidget {
   const _LobbyAccentBackdrop({
     required this.colors,
@@ -85,8 +80,8 @@ class _LobbyAccentBackdrop extends StatelessWidget {
           end: mirrored ? Alignment.bottomLeft : Alignment.bottomRight,
           colors: [
             surface,
-            Color.lerp(surface, accent, 0.22)!,
-            Color.lerp(surface, accent, 0.42)!,
+            Color.lerp(surface, accent, 0.10)!,
+            Color.lerp(surface, accent, 0.18)!,
           ],
           stops: const [0.0, 0.55, 1.0],
         ),
@@ -120,73 +115,69 @@ class _BigActionButton extends StatelessWidget {
     final titleSize =
         isCompact ? FontTokens.headline : FontTokens.headline + LayoutTokens.gr1;
 
-    return Card(
+    return Material(
+      color: colors.surface,
+      elevation: 0,
+      shadowColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: RadiusTokens.radiusXl),
       clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: RadiusTokens.radiusXl,
-        side: BorderSide(
-          color: colors.primaryAccent.withValues(alpha: 0.45),
-        ),
-      ),
-      elevation: ElevationTokens.sm,
-      child: Material(
-        color: Colors.transparent,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          splashColor: colors.primaryAccent.withValues(alpha: OpacityTokens.subtle),
-          highlightColor: colors.primaryAccent.withValues(alpha: OpacityTokens.faint),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              _LobbyAccentBackdrop(
-                colors: colors,
-                mirrored: mirrored,
-              ),
-              Padding(
-                padding: EdgeInsets.all(padding),
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      _LobbyIconBadge(
-                        icon: icon,
-                        isCompact: isCompact,
-                        colors: colors,
+      child: InkWell(
+        onTap: onTap,
+        splashColor:
+            colors.primaryAccent.withValues(alpha: OpacityTokens.subtle),
+        highlightColor:
+            colors.primaryAccent.withValues(alpha: OpacityTokens.faint),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            _LobbyAccentBackdrop(
+              colors: colors,
+              mirrored: mirrored,
+            ),
+            Padding(
+              padding: EdgeInsets.all(padding),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    _LobbyIconBadge(
+                      icon: icon,
+                      isCompact: isCompact,
+                      colors: colors,
+                    ),
+                    SizedBox(height: LayoutTokens.gr3),
+                    Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(
+                            fontSize: titleSize,
+                            fontWeight: FontWeight.w600,
+                            color: colors.textPrimary,
+                            height: 1.1,
+                          ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: LayoutTokens.gr1),
+                    Text(
+                      subtitle,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: colors.textSecondary,
+                        height: 1.35,
                       ),
-                      SizedBox(height: LayoutTokens.gr3),
-                      Text(
-                        label,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.headlineMedium
-                            ?.copyWith(
-                              fontSize: titleSize,
-                              fontWeight: FontWeight.w800,
-                              color: colors.textPrimary,
-                              height: 1.1,
-                            ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      SizedBox(height: LayoutTokens.gr1),
-                      Text(
-                        subtitle,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: colors.textSecondary,
-                          height: 1.35,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -215,17 +206,14 @@ class _LobbyIconBadge extends StatelessWidget {
       height: badgeSize,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: colors.primaryAccent.withValues(alpha: 0.22),
+          color: colors.primaryAccent.withValues(alpha: OpacityTokens.subtle),
           shape: BoxShape.circle,
-          border: Border.all(
-            color: colors.primaryAccent.withValues(alpha: 0.55),
-          ),
         ),
         child: Center(
           child: Icon(
             icon,
             size: iconSize,
-            color: ColorTokens.onAccent,
+            color: colors.primaryAccent,
           ),
         ),
       ),

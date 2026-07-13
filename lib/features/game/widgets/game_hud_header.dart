@@ -44,18 +44,6 @@ class GameHudHeader extends StatelessWidget {
                 )
               : colors.surface,
           borderRadius: RadiusTokens.radiusMd,
-          border: Border.all(
-            color: activeTurn
-                ? accentColor.withValues(alpha: OpacityTokens.moderate)
-                : colors.textSecondary.withValues(alpha: 0.14),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: OpacityTokens.faint),
-              blurRadius: LayoutTokens.gr2,
-              offset: const Offset(0, 2),
-            ),
-          ],
         ),
         child: ClipRRect(
           borderRadius: RadiusTokens.radiusMd,

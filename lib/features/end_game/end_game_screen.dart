@@ -22,9 +22,9 @@ import '../../shared/utils/wizard_rank_titles.dart';
 import '../../shared/widgets/player_feedback_widgets.dart';
 import '../../ui/components/ui_button.dart';
 import '../../ui/theme/app_color_tokens.dart';
-import '../../ui/tokens/motion_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
+import '../../ui/tokens/opacity_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import '../../ui/tokens/typography_tokens.dart';
 import '../../ui/tokens/color_tokens.dart';
@@ -231,28 +231,19 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
 
                     // ── Level-up animation ─────────────────────────────────
                     if (_result != null && _result!.leveledUp)
-                      _StaggerReveal(
-                        index: 0,
-                        child: _LevelUpCard(result: _result!),
-                      ),
+                      _LevelUpCard(result: _result!),
 
                     // ── XP earned (competitive matches only) ──────────────
                     if (_result != null && _result!.awardsProgression)
-                      _StaggerReveal(
-                        index: 1,
-                        child: _XpCard(
-                          result: _result!,
-                          isWinner: isWinner,
-                        ),
+                      _XpCard(
+                        result: _result!,
+                        isWinner: isWinner,
                       ),
 
                     // ── New achievements ───────────────────────────────────
                     if (_result != null &&
                         _result!.newAchievementIds.isNotEmpty)
-                      _StaggerReveal(
-                        index: 2,
-                        child: _AchievementsCard(ids: _result!.newAchievementIds),
-                      ),
+                      _AchievementsCard(ids: _result!.newAchievementIds),
 
                     SizedBox(height: LayoutTokens.gr2),
 
@@ -419,7 +410,7 @@ class _WinnerBanner extends StatelessWidget {
           style: TextStyle(
             color: colors.textPrimary,
             fontSize: FontTokens.headline,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
           ),
           textAlign: TextAlign.center,
         ),
@@ -445,17 +436,7 @@ class _WinnerBanner extends StatelessWidget {
               height: 120,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: winner!.playerColor,
-                  width: 3,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: winner!.playerColor.withValues(alpha: 0.4),
-                    blurRadius: 20,
-                    spreadRadius: 2,
-                  ),
-                ],
+                color: winner!.playerColor.withValues(alpha: 0.2),
               ),
               child: ClipOval(
                 child: CachedNetworkImage(
@@ -497,7 +478,7 @@ class _WinnerBanner extends StatelessWidget {
             style: TextStyle(
               color: winner!.playerColor,
               fontSize: FontTokens.headline,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
             ),
           ),
           if (winner!.commanderName != null)
@@ -524,42 +505,31 @@ class _LevelUpCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
-    return Card(
+    return Container(
       margin: EdgeInsets.fromLTRB(
         LayoutTokens.shellPageInset,
         LayoutTokens.gr1,
         LayoutTokens.shellPageInset,
         0,
       ),
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
+      padding: EdgeInsets.all(LayoutTokens.gr3),
+      decoration: BoxDecoration(
+        color: colors.emphasis.withValues(alpha: OpacityTokens.subtle),
         borderRadius: RadiusTokens.radiusSm,
-        side: BorderSide(
-          color: colors.emphasis.withValues(alpha: 0.5),
-        ),
       ),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              colors.emphasis.withValues(alpha: 0.15),
-              colors.primaryAccent.withValues(alpha: 0.15),
-            ],
-          ),
-        ),
-        child: Padding(
-          padding: EdgeInsets.all(LayoutTokens.gr3),
-          child: Row(
+      child: Row(
         children: [
           SizedBox(
             width: 64,
             height: 64,
             child: Lottie.asset(
               'assets/animations/level_up.json',
-              repeat: true,
-              errorBuilder: (_, __, ___) =>
-                  Icon(Icons.arrow_upward,
-                      size: 48, color: colors.emphasis),
+              repeat: false,
+              errorBuilder: (_, __, ___) => Icon(
+                Icons.arrow_upward,
+                size: 48,
+                color: colors.emphasis,
+              ),
             ),
           ),
           SizedBox(width: LayoutTokens.gr3),
@@ -571,7 +541,7 @@ class _LevelUpCard extends StatelessWidget {
                 style: TextStyle(
                   color: colors.emphasis,
                   fontSize: FontTokens.bodyLg,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   letterSpacing: 1.5,
                 ),
               ),
@@ -594,8 +564,6 @@ class _LevelUpCard extends StatelessWidget {
             ],
           ),
         ],
-          ),
-        ),
       ),
     );
   }
@@ -636,7 +604,7 @@ class _XpCard extends StatelessWidget {
                 style: TextStyle(
                   color: colors.emphasis,
                   fontSize: FontTokens.bodyLg,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               Text(
@@ -720,8 +688,6 @@ class _FeedbackCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: colors.success.withValues(alpha: 0.15),
           borderRadius: RadiusTokens.radiusMd,
-          border: Border.all(
-              color: colors.success.withValues(alpha: 0.4)),
         ),
         child: Row(
           children: [
@@ -748,7 +714,6 @@ class _FeedbackCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: RadiusTokens.radiusMd,
-        border: Border.all(color: colors.backgroundSecondary),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -810,18 +775,16 @@ class _AchievementsCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: RadiusTokens.radiusChip,
-        border: Border.all(
-            color: colors.success.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '🏅 New Achievements',
+            'New Achievements',
             style: TextStyle(
               color: colors.success,
               fontSize: FontTokens.hudSm,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w600,
             ),
           ),
           SizedBox(height: LayoutTokens.gr1),
@@ -880,14 +843,9 @@ class _FinalPlayerRow extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: isWinner
-            ? colors.emphasis.withValues(alpha: 0.1)
+            ? colors.emphasis.withValues(alpha: OpacityTokens.subtle)
             : colors.surface,
         borderRadius: RadiusTokens.radiusControlSm,
-        border: Border.all(
-          color: isWinner
-              ? colors.emphasis.withValues(alpha: 0.4)
-              : colors.backgroundSecondary,
-        ),
       ),
       child: Row(
         children: [
@@ -1013,48 +971,6 @@ class _ActionButtons extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-/// Fade-in reveal for end-game result sections.
-class _StaggerReveal extends StatefulWidget {
-  const _StaggerReveal({required this.index, required this.child});
-
-  final int index;
-  final Widget child;
-
-  @override
-  State<_StaggerReveal> createState() => _StaggerRevealState();
-}
-
-class _StaggerRevealState extends State<_StaggerReveal>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: MotionTokens.standard,
-    );
-    Future<void>.delayed(Duration(milliseconds: widget.index * 80), () {
-      if (mounted) _controller.forward();
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-      child: widget.child,
     );
   }
 }

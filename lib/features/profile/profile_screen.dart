@@ -108,13 +108,13 @@ class ProfileScreen extends ConsumerWidget {
                         listMaxHeight: sectionCardListMaxHeight,
                         hasPlayedGames: allMatches.isNotEmpty,
                       ),
-                      SizedBox(height: LayoutTokens.gr6),
+                      SizedBox(height: LayoutTokens.shellSectionGap),
                       ProfileDeckPerformanceSection(
                         colors: colors,
                         listMaxHeight: sectionCardListMaxHeight,
                         hasPlayedGames: allMatches.isNotEmpty,
                       ),
-                      SizedBox(height: LayoutTokens.gr6),
+                      SizedBox(height: LayoutTokens.shellSectionGap),
                       ProfileRecentGamesModule(
                         matches: allMatches,
                         colors: colors,
@@ -194,7 +194,7 @@ class _ProfileHeroCard extends StatelessWidget {
 }
 
 /// Avatar, name, tier badge, and stats pill (inside hero gradient).
-class _ProfileHeroIdentityAndStats extends StatelessWidget {
+class _ProfileHeroIdentityAndStats extends ConsumerWidget {
   const _ProfileHeroIdentityAndStats({
     required this.profile,
     required this.colors,
@@ -207,42 +207,142 @@ class _ProfileHeroIdentityAndStats extends StatelessWidget {
   final double avatarSize;
   final VoidCallback onAvatarTap;
 
+  Future<void> _editUsername(BuildContext context, WidgetRef ref) async {
+    final controller = TextEditingController(text: profile.username);
+    final formKey = GlobalKey<FormState>();
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: colors.surface,
+          title: Text(
+            'Edit name',
+            style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
+              color: colors.textPrimary,
+            ),
+          ),
+          content: Form(
+            key: formKey,
+            child: TextFormField(
+              controller: controller,
+              autofocus: true,
+              maxLength: 20,
+              textCapitalization: TextCapitalization.words,
+              style: TextStyle(color: colors.textPrimary),
+              decoration: const InputDecoration(
+                labelText: 'Username',
+                hintText: 'e.g. The Archduke',
+              ),
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) {
+                  return 'Enter a username';
+                }
+                if (v.trim().length < 2) {
+                  return 'Must be at least 2 characters';
+                }
+                return null;
+              },
+              onFieldSubmitted: (_) {
+                if (formKey.currentState?.validate() ?? false) {
+                  Navigator.pop(ctx, true);
+                }
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: colors.textSecondary),
+              ),
+            ),
+            FilledButton(
+              onPressed: () {
+                if (formKey.currentState?.validate() ?? false) {
+                  Navigator.pop(ctx, true);
+                }
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: colors.primaryAccent,
+              ),
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+
+    final next = controller.text.trim();
+    controller.dispose();
+    if (saved != true || !context.mounted) return;
+    if (next == profile.username) return;
+
+    profile.username = next;
+    await ref.read(profileRepositoryProvider).saveProfile(profile);
+    bumpProfileRevision(ref);
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Center(
-          child: _ProfileHeroAvatar(
-            profile: profile,
-            colors: colors,
-            size: avatarSize,
-            onTap: onAvatarTap,
-          ),
-        ),
-        SizedBox(height: LayoutTokens.gr2),
-        Text(
-          profile.username,
-          textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            color: ColorTokens.onAccent,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.3,
-            shadows: [
-              Shadow(
-                color: Colors.black.withValues(alpha: 0.65),
-                blurRadius: 12,
-                offset: const Offset(0, 1),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            _ProfileHeroAvatar(
+              profile: profile,
+              colors: colors,
+              size: avatarSize,
+              onTap: onAvatarTap,
+            ),
+            SizedBox(width: LayoutTokens.gr3),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          profile.username,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: ColorTokens.onAccent,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => _editUsername(context, ref),
+                        tooltip: 'Edit name',
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: LayoutTokens.minTapTarget,
+                          minHeight: LayoutTokens.minTapTarget,
+                        ),
+                        icon: Icon(
+                          Icons.edit_rounded,
+                          size: 20,
+                          color: ColorTokens.onAccent.withValues(alpha: 0.92),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: LayoutTokens.gr0),
+                  TierBadge(tier: profile.tier, level: profile.level),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-        SizedBox(height: LayoutTokens.gr0),
-        Center(child: TierBadge(tier: profile.tier, level: profile.level)),
-        SizedBox(height: LayoutTokens.gr2),
+        SizedBox(height: LayoutTokens.gr4),
         _ProfileFloatingStatsPill(profile: profile),
       ],
     );
@@ -257,7 +357,7 @@ String? _profileAvatarImageUrl(PlayerProfile profile) {
   return null;
 }
 
-/// Tappable circular profile picture above the username.
+/// Tappable circular profile picture beside the username.
 class _ProfileHeroAvatar extends StatelessWidget {
   const _ProfileHeroAvatar({
     required this.profile,
@@ -322,13 +422,6 @@ class _ProfileHeroAvatar extends StatelessWidget {
                       color: Colors.white.withValues(alpha: 0.9),
                       width: ringWidth,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.45),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
                   ),
                   child: ClipOval(child: avatarChild),
                 ),
@@ -345,13 +438,6 @@ class _ProfileHeroAvatar extends StatelessWidget {
                         color: Colors.white.withValues(alpha: 0.9),
                         width: 2,
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.35),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
                     ),
                     alignment: Alignment.center,
                     child: const Icon(
@@ -387,7 +473,7 @@ class _ProfileFloatingStatsPill extends StatelessWidget {
     ];
 
     return Material(
-      color: Colors.black.withValues(alpha: 0.72),
+      color: colors.surface.withValues(alpha: 0.88),
       borderRadius: RadiusTokens.radiusPill,
       clipBehavior: Clip.antiAlias,
       child: Padding(
@@ -407,7 +493,7 @@ class _ProfileFloatingStatsPill extends StatelessWidget {
               width: 1,
               height: 28,
               margin: const EdgeInsets.symmetric(horizontal: 2),
-              color: Colors.white.withValues(alpha: 0.22),
+              color: colors.borderSubtle.withValues(alpha: 0.55),
             ),
             for (final item in honors)
               Expanded(
@@ -439,12 +525,13 @@ class _StatColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColorTokens.of(context);
     final valueColor = emphasized
-        ? (accentColor ?? ColorTokens.onAccent)
-        : ColorTokens.onAccent.withValues(alpha: 0.88);
+        ? (accentColor ?? colors.textPrimary)
+        : colors.textPrimary.withValues(alpha: 0.88);
     final labelColor = emphasized
-        ? Colors.white.withValues(alpha: 0.78)
-        : Colors.white.withValues(alpha: 0.55);
+        ? colors.textSecondary
+        : colors.textMuted;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -456,7 +543,7 @@ class _StatColumn extends StatelessWidget {
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
             color: valueColor,
-            fontWeight: emphasized ? FontWeight.w800 : FontWeight.w600,
+            fontWeight: emphasized ? FontWeight.w700 : FontWeight.w600,
             fontSize: emphasized ? 17 : 14,
             fontFeatures: const [FontFeature.tabularFigures()],
           ),

@@ -184,8 +184,8 @@ class _SlideView extends StatelessWidget {
         children: [
           if (slide.showBrandLogo)
             const BrandLogo(
-              layout: BrandLogoLayout.vertical,
-              height: 160,
+              layout: BrandLogoLayout.horizontal,
+              height: 48,
             )
           else
             Container(

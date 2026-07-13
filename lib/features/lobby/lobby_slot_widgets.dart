@@ -9,38 +9,34 @@ import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/opacity_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 
-/// Shared surface chrome for host/join lobby player cards.
+/// Shared surface chrome for host/join lobby player cards — tonal, borderless.
 class LobbySlotCardShell extends StatelessWidget {
   const LobbySlotCardShell({
     super.key,
-    required this.borderColor,
     required this.child,
-    this.borderWidth = 1,
+    this.emphasized = false,
+    this.emphasizeColor,
     this.compact = false,
   });
 
-  final Color borderColor;
-  final double borderWidth;
+  final bool emphasized;
+  final Color? emphasizeColor;
   final bool compact;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final fill = emphasized
+        ? (emphasizeColor ?? colors.primaryAccent)
+            .withValues(alpha: OpacityTokens.subtle)
+        : colors.surface;
     return Container(
       margin: EdgeInsets.only(bottom: LayoutTokens.gr2),
       padding: EdgeInsets.all(compact ? LayoutTokens.gr2 : LayoutTokens.gr3),
       decoration: BoxDecoration(
-        color: colors.surface,
+        color: fill,
         borderRadius: RadiusTokens.radiusMd,
-        border: Border.all(color: borderColor, width: borderWidth),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: OpacityTokens.subtle),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: child,
     );
@@ -135,7 +131,6 @@ class _LobbyColorDot extends StatelessWidget {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.25),
         borderRadius: RadiusTokens.radiusControlMd,
-        border: Border.all(color: color, width: 2),
       ),
       child: Icon(Icons.person, color: color, size: size * 0.56),
     );
@@ -160,7 +155,6 @@ class LobbyReadyBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: tone.withValues(alpha: OpacityTokens.soft),
         borderRadius: RadiusTokens.radiusXs,
-        border: Border.all(color: tone),
       ),
       child: Text(
         isReady ? 'Ready' : 'Waiting',
@@ -196,24 +190,20 @@ class LobbyActionButton extends StatelessWidget {
 
     late final Color? bg;
     late final Color fg;
-    late final Color border;
 
     if (filled && highlighted) {
       bg = accent;
       fg = ColorTokens.onAccent;
-      border = accent;
     } else if (highlighted) {
       bg = accent.withValues(alpha: OpacityTokens.soft);
       fg = colors.textPrimary;
-      border = accent;
     } else {
       bg = colors.surface;
       fg = colors.textPrimary;
-      border = colors.textSecondary.withValues(alpha: 0.55);
     }
 
-    return OutlinedButton(
-      style: OutlinedButton.styleFrom(
+    return TextButton(
+      style: TextButton.styleFrom(
         minimumSize: const Size(0, LayoutTokens.minTapTarget),
         padding: EdgeInsets.symmetric(
           horizontal: LayoutTokens.gr2,
@@ -221,13 +211,12 @@ class LobbyActionButton extends StatelessWidget {
         ),
         backgroundColor: bg,
         foregroundColor: fg,
-        side: BorderSide(color: border, width: highlighted ? 1.5 : 1),
         shape: RoundedRectangleBorder(
           borderRadius: RadiusTokens.radiusControlSm,
         ),
         textStyle: TextStyle(
           fontSize: FontTokens.sm,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
         ),
       ),
       onPressed: onPressed,

@@ -213,15 +213,9 @@ class CommanderDamageBarButton extends StatelessWidget {
             ),
             decoration: BoxDecoration(
               color: urgent
-                  ? accent.withValues(alpha: 0.12)
-                  : colors.primaryAccent.withValues(alpha: 0.08),
+                  ? accent.withValues(alpha: OpacityTokens.subtle)
+                  : colors.primaryAccent.withValues(alpha: OpacityTokens.subtle),
               borderRadius: RadiusTokens.radiusControlSm,
-              border: Border.all(
-                color: urgent
-                    ? accent.withValues(alpha: lethal ? 0.95 : 0.65)
-                    : colors.primaryAccent.withValues(alpha: 0.45),
-                width: lethal ? 2 : 1,
-              ),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -238,7 +232,7 @@ class CommanderDamageBarButton extends StatelessWidget {
                   '$remaining',
                   style: TextStyle(
                     color: enabled ? accent : colors.textSecondary,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     fontSize: remaining >= ko ? 18 : 16,
                     height: 1,
                   ),
@@ -589,20 +583,9 @@ class _SummaryStat extends StatelessWidget {
           '$value',
           style: TextStyle(
             color: Colors.white,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
             fontSize: primary ? FontTokens.displayCommander : 28,
             height: 1,
-            shadows: [
-              Shadow(
-                color: accent.withValues(alpha: primary ? 0.85 : 0.35),
-                blurRadius: primary ? 16 : 8,
-              ),
-              Shadow(
-                color: Colors.black.withValues(alpha: 0.45),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
           ),
         ),
       ],
@@ -674,7 +657,7 @@ class _OpponentPickerStrip extends StatelessWidget {
                         style: TextStyle(
                           color: colors.textPrimary,
                           fontWeight:
-                              selected ? FontWeight.w800 : FontWeight.w600,
+                              selected ? FontWeight.w700 : FontWeight.w600,
                           fontSize: FontTokens.hudXs,
                         ),
                       ),
@@ -789,7 +772,7 @@ class _DirectionSection extends StatelessWidget {
               title,
               style: TextStyle(
                 color: colors.textPrimary,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
                 fontSize: FontTokens.hudSm,
               ),
             ),
@@ -966,16 +949,8 @@ class _DamageTrack extends StatelessWidget {
                 style: TextStyle(
                   color: color,
                   fontSize: 28,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   height: 1,
-                  shadows: damage >= 10
-                      ? [
-                          Shadow(
-                            color: color.withValues(alpha: 0.35),
-                            blurRadius: 12,
-                          ),
-                        ]
-                      : null,
                 ),
                 child: Text('$damage'),
               ),
@@ -1010,9 +985,6 @@ class _DmgStepButton extends StatelessWidget {
     final fill = isAdd
         ? colors.primaryAccent.withValues(alpha: enabled ? 0.22 : 0.08)
         : colors.success.withValues(alpha: enabled ? 0.2 : 0.08);
-    final border = isAdd
-        ? colors.primaryAccent.withValues(alpha: enabled ? 0.75 : 0.25)
-        : colors.success.withValues(alpha: enabled ? 0.7 : 0.25);
     final iconColor = enabled
         ? (isAdd ? colors.primaryAccent : colors.success)
         : colors.textSecondary.withValues(alpha: 0.45);
@@ -1038,17 +1010,6 @@ class _DmgStepButton extends StatelessWidget {
             decoration: BoxDecoration(
               color: fill,
               shape: BoxShape.circle,
-              border: Border.all(color: border, width: enabled ? 2 : 1),
-              boxShadow: enabled
-                  ? [
-                      BoxShadow(
-                        color: (isAdd ? colors.primaryAccent : colors.success)
-                            .withValues(alpha: 0.18),
-                        blurRadius: LayoutTokens.gr1,
-                        offset: const Offset(0, 2),
-                      ),
-                    ]
-                  : null,
             ),
             child: Icon(icon, size: 22, color: iconColor),
           ),

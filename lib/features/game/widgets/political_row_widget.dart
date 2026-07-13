@@ -205,6 +205,7 @@ class _TablePoliticsSheet extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const GameSheetHeader(title: 'Assign table politics'),
+          SizedBox(height: LayoutTokens.gr4),
           PoliticalRowWidget(game: game),
         ],
       ),
@@ -509,7 +510,7 @@ class _OverviewFilledMarkerButton extends StatelessWidget {
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: FontTokens.hudXs,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
             color: foregroundColor,
             height: 1.15,
           ),

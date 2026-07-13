@@ -8,7 +8,6 @@ import 'package:flutter/services.dart';
 import '../../../core/game/commander_identity_colors.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
-import '../../../ui/tokens/opacity_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
 import '../../../ui/tokens/spacing_tokens.dart';
 import 'game_colors.dart';
@@ -200,7 +199,7 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
                           '☠',
                           style: TextStyle(
                             fontSize: (hBody * 0.45).clamp(40.0, 96.0),
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w700,
                             color: colors.textSecondary,
                           ),
                         ),
@@ -216,10 +215,6 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
                     final deltaFontSize = (baseFontSize * 0.27).clamp(
                       18.0,
                       26.0,
-                    );
-
-                    final stepDivider = colors.textSecondary.withValues(
-                      alpha: OpacityTokens.subtle,
                     );
 
                     return Semantics(
@@ -240,8 +235,6 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
                                 width: tapEdge,
                                 icon: Icons.remove_rounded,
                                 semanticsLabel: 'Decrease life',
-                                innerDividerOnRight: true,
-                                dividerColor: stepDivider,
                                 onTap: () => _change(-1),
                                 onLongPressStart: () => _startHold(-1),
                                 onLongPressEnd: _stopHold,
@@ -273,9 +266,9 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
                                             fontSize: baseFontSize,
-                                            fontWeight: FontWeight.w800,
+                                            fontWeight: FontWeight.w700,
                                             color: _lifeColor(colors),
-                                            letterSpacing: -2,
+                                            letterSpacing: -1,
                                             height: 1.0,
                                             fontFeatures: const [
                                               FontFeature.tabularFigures(),
@@ -291,8 +284,6 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
                                 width: tapEdge,
                                 icon: Icons.add_rounded,
                                 semanticsLabel: 'Increase life',
-                                innerDividerOnRight: false,
-                                dividerColor: stepDivider,
                                 onTap: () => _change(1),
                                 onLongPressStart: () => _startHold(1),
                                 onLongPressEnd: _stopHold,
@@ -346,8 +337,6 @@ class _LifeEdgeStepStrip extends StatelessWidget {
     required this.width,
     required this.icon,
     required this.semanticsLabel,
-    required this.innerDividerOnRight,
-    required this.dividerColor,
     required this.onTap,
     required this.onLongPressStart,
     required this.onLongPressEnd,
@@ -357,8 +346,6 @@ class _LifeEdgeStepStrip extends StatelessWidget {
   final double width;
   final IconData icon;
   final String semanticsLabel;
-  final bool innerDividerOnRight;
-  final Color dividerColor;
   final VoidCallback onTap;
   final VoidCallback onLongPressStart;
   final VoidCallback onLongPressEnd;
@@ -380,21 +367,13 @@ class _LifeEdgeStepStrip extends StatelessWidget {
           behavior: HitTestBehavior.opaque,
           child: DecoratedBox(
             decoration: BoxDecoration(
-              color: colors.surface.withValues(alpha: 0.92),
-              border: Border(
-                right: innerDividerOnRight
-                    ? BorderSide(color: dividerColor)
-                    : BorderSide.none,
-                left: innerDividerOnRight
-                    ? BorderSide.none
-                    : BorderSide(color: dividerColor),
-              ),
+              color: colors.surface.withValues(alpha: 0.72),
             ),
             child: Center(
               child: Icon(
                 icon,
                 size: 26,
-                color: colors.primaryAccent,
+                color: colors.textSecondary,
               ),
             ),
           ),

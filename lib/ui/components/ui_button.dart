@@ -7,7 +7,7 @@ import '../tokens/radius_tokens.dart';
 
 enum UiButtonVariant { primary, secondary, ghost }
 
-/// Rounded (18) bold button. Variants: primary (blurple), secondary, ghost.
+/// Full-width action button. Primary is flat fill (no glow / dual shadow).
 class UiButton extends StatelessWidget {
   const UiButton({
     super.key,
@@ -30,32 +30,15 @@ class UiButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
     final effectiveOnPressed = enabled && !loading ? onPressed : null;
+    final labelStyle = TextStyle(
+      fontSize: FontTokens.bodyLg,
+      fontWeight: FontWeight.w600,
+    );
 
     if (variant == UiButtonVariant.primary) {
-      // Soft dual-tone shadow gives a raised, pressable feel without
-      // touching the button's own fill/text contrast. Dropped for
-      // disabled/loading so the button visually reads as flat/inert.
-      final raised = effectiveOnPressed != null;
-      return Container(
+      return SizedBox(
         height: 52,
         width: double.infinity,
-        decoration: BoxDecoration(
-          borderRadius: RadiusTokens.radiusLg,
-          boxShadow: raised
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.4),
-                    offset: const Offset(0, 6),
-                    blurRadius: 16,
-                  ),
-                  BoxShadow(
-                    color: Colors.white.withValues(alpha: 0.05),
-                    offset: const Offset(0, -2),
-                    blurRadius: 6,
-                  ),
-                ]
-              : null,
-        ),
         child: FilledButton.icon(
           onPressed: effectiveOnPressed,
           icon: loading
@@ -68,7 +51,9 @@ class UiButton extends StatelessWidget {
                   ),
                 )
               : (icon ?? const SizedBox.shrink()),
-          label: loading ? const SizedBox.shrink() : Text(label, overflow: TextOverflow.ellipsis, maxLines: 1),
+          label: loading
+              ? const SizedBox.shrink()
+              : Text(label, overflow: TextOverflow.ellipsis, maxLines: 1),
           style: FilledButton.styleFrom(
             backgroundColor: colors.primaryAccent,
             foregroundColor: ColorTokens.onAccent,
@@ -77,12 +62,9 @@ class UiButton extends StatelessWidget {
             elevation: 0,
             shadowColor: Colors.transparent,
             shape: RoundedRectangleBorder(
-              borderRadius: RadiusTokens.radiusLg,
+              borderRadius: RadiusTokens.radiusMd,
             ),
-            textStyle: TextStyle(
-              fontSize: FontTokens.bodyLg,
-              fontWeight: FontWeight.w700,
-            ),
+            textStyle: labelStyle,
           ),
         ),
       );
@@ -101,17 +83,16 @@ class UiButton extends StatelessWidget {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : (icon ?? const SizedBox.shrink()),
-          label: loading ? const SizedBox.shrink() : Text(label, overflow: TextOverflow.ellipsis, maxLines: 1),
+          label: loading
+              ? const SizedBox.shrink()
+              : Text(label, overflow: TextOverflow.ellipsis, maxLines: 1),
           style: OutlinedButton.styleFrom(
             foregroundColor: colors.textPrimary,
             side: BorderSide(color: colors.borderSubtle),
             shape: RoundedRectangleBorder(
-              borderRadius: RadiusTokens.radiusLg,
+              borderRadius: RadiusTokens.radiusMd,
             ),
-            textStyle: TextStyle(
-              fontSize: FontTokens.bodyLg,
-              fontWeight: FontWeight.w700,
-            ),
+            textStyle: labelStyle,
           ),
         ),
       );
@@ -130,13 +111,12 @@ class UiButton extends StatelessWidget {
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
             : (icon ?? const SizedBox.shrink()),
-        label: loading ? const SizedBox.shrink() : Text(label, overflow: TextOverflow.ellipsis, maxLines: 1),
+        label: loading
+            ? const SizedBox.shrink()
+            : Text(label, overflow: TextOverflow.ellipsis, maxLines: 1),
         style: TextButton.styleFrom(
           foregroundColor: colors.textPrimary,
-          textStyle: TextStyle(
-            fontSize: FontTokens.bodyLg,
-            fontWeight: FontWeight.w700,
-          ),
+          textStyle: labelStyle,
         ),
       ),
     );

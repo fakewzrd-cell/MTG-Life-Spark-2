@@ -146,8 +146,6 @@ class CommanderInfoBar extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: colors.emphasis.withValues(alpha: 0.12),
                   borderRadius: RadiusTokens.radiusControlMd,
-                  border: Border.all(
-                      color: colors.emphasis.withValues(alpha: 0.6)),
                 ),
                 child: Icon(Icons.handshake,
                     size: LayoutTokens.gr3, color: colors.emphasis),
@@ -226,13 +224,6 @@ class _CastableCommanderAvatar extends StatelessWidget {
                               color: colors.surface,
                               width: 2,
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.25),
-                                blurRadius: LayoutTokens.gr0,
-                                offset: Offset(0, LayoutTokens.gr0),
-                              ),
-                            ],
                           ),
                           child: Icon(
                             Icons.bolt_rounded,
@@ -304,9 +295,6 @@ class _CommanderTaxBadge extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: colors.textSecondary.withValues(alpha: 0.15),
                     borderRadius: RadiusTokens.radiusControlMd,
-                    border: Border.all(
-                      color: colors.textSecondary.withValues(alpha: 0.6),
-                    ),
                   ),
                   child: Text(
                     'Tax +$tax',

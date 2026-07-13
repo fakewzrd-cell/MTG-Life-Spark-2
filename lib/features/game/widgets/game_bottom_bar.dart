@@ -15,7 +15,6 @@ import '../../../shared/utils/game_haptics.dart';
 import '../../../ui/tokens/color_tokens.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
-import '../../../ui/tokens/opacity_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
 import 'game_colors.dart';
 import 'game_modal_chrome.dart';
@@ -62,14 +61,6 @@ class GameBottomBar extends ConsumerWidget {
           decoration: BoxDecoration(
             color: colors.surface,
             borderRadius: RadiusTokens.radiusMd,
-            border: Border.all(color: colors.backgroundSecondary),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: OpacityTokens.faint),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,

@@ -552,7 +552,7 @@ class _WaitingRoomViewState extends ConsumerState<_WaitingRoomView> {
               SizedBox(height: LayoutTokens.gr3),
               ...lobby.players.map((slot) => _WaitingSlotRow(slot: slot)),
               if (profile != null) ...[
-                SizedBox(height: LayoutTokens.gr4),
+                SizedBox(height: LayoutTokens.shellSectionGap),
                 if (isCommanderLobby)
                   Row(
                     children: [
@@ -628,7 +628,6 @@ class _WaitingSlotRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
     return LobbySlotCardShell(
-      borderColor: slot.playerColor.withValues(alpha: 0.25),
       child: Row(
         children: [
           LobbySlotAvatar(slot: slot, size: 44),

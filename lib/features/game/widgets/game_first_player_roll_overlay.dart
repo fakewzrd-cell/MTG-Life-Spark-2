@@ -79,17 +79,17 @@ class _GameFirstPlayerRollOverlayState extends State<GameFirstPlayerRollOverlay>
     super.initState();
     _tumbleController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: MotionTokens.hero,
     );
     _landController = AnimationController(
       vsync: this,
       duration: MotionTokens.slow,
     );
     _wobble = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _tumbleController, curve: Curves.easeInOut),
+      CurvedAnimation(parent: _tumbleController, curve: MotionTokens.easeOut),
     );
-    _landScale = Tween<double>(begin: 0.82, end: 1).animate(
-      CurvedAnimation(parent: _landController, curve: Curves.elasticOut),
+    _landScale = Tween<double>(begin: 0.92, end: 1).animate(
+      CurvedAnimation(parent: _landController, curve: MotionTokens.enter),
     );
     _tumbleController.addListener(_onTumbleTick);
   }
@@ -258,28 +258,8 @@ class _DieFace extends StatelessWidget {
       width: 120,
       height: 120,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colors.surface,
-            colors.backgroundSecondary,
-          ],
-        ),
+        color: colors.surface,
         borderRadius: RadiusTokens.radiusLg,
-        border: Border.all(
-          color: highlighted ? colors.emphasis : colors.primaryAccent,
-          width: 3,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: colors.primaryAccent.withValues(
-              alpha: OpacityTokens.moderate,
-            ),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
       ),
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -355,7 +335,7 @@ class _RollProgressList extends StatelessWidget {
                   '$roll',
                   style: TextStyle(
                     color: colors.emphasis,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     fontSize: 16,
                   ),
                 ),
@@ -506,7 +486,7 @@ class _TurnOrderSlotCard extends StatelessWidget {
               placeLabel,
               style: TextStyle(
                 color: colors.textPrimary,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
                 fontSize: 13,
               ),
             ),
@@ -552,7 +532,7 @@ class _TurnOrderSlotCard extends StatelessWidget {
                     '$roll',
                     style: TextStyle(
                       color: colors.textPrimary,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ],

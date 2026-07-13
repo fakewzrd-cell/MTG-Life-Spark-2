@@ -36,20 +36,11 @@ class PhaseNavCluster extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
-    final borderColor = accentColor.withValues(alpha: 0.45);
 
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.surface.withValues(alpha: 0.94),
         borderRadius: RadiusTokens.radiusControlSm,
-        border: Border.all(color: borderColor),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: ClipRRect(
         borderRadius: RadiusTokens.radiusControlSm,
@@ -191,7 +182,7 @@ class _PhaseNavEndTurnButton extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: FontTokens.hudXs,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
                 letterSpacing: 0.05,
                 color: fg,
                 height: 1.1,
@@ -307,7 +298,7 @@ class _PhaseNavCenter extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
                 fontSize: fontSize,
                 letterSpacing: 0.05,
                 height: 1.1,

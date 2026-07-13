@@ -87,7 +87,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               }
             },
           ),
-          SizedBox(height: LayoutTokens.gr4),
+          SizedBox(height: LayoutTokens.shellSectionGap),
           _SectionHeader('Misc'),
           _SwitchTile(
             title: 'Keep display awake',
@@ -109,7 +109,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             },
             icon: Icons.fullscreen,
           ),
-          SizedBox(height: LayoutTokens.gr4),
+          SizedBox(height: LayoutTokens.shellSectionGap),
           _SectionHeader('Appearance'),
           _ColorSchemePicker(
             selected: ref.watch(colorSchemePreferenceProvider),
@@ -117,7 +117,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ref.read(colorSchemePreferenceProvider.notifier).setColorScheme(id);
             },
           ),
-          SizedBox(height: LayoutTokens.gr4),
+          SizedBox(height: LayoutTokens.shellSectionGap),
           _SectionHeader('Feel'),
           _SwitchTile(
             title: 'Haptic Feedback',
@@ -137,7 +137,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               _save();
             },
           ),
-          SizedBox(height: LayoutTokens.gr4),
+          SizedBox(height: LayoutTokens.shellSectionGap),
           _SectionHeader('Data'),
           _SwitchTile(
             title: 'Cache Commander Images',
@@ -154,7 +154,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onTap: _clearCache,
             isDestructive: true,
           ),
-          SizedBox(height: LayoutTokens.gr4),
+          SizedBox(height: LayoutTokens.shellSectionGap),
           _SectionHeader('Help'),
           _SettingTile(
             title: 'Feedback',
@@ -185,47 +185,42 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<String?> _pickFormat(BuildContext context) {
+    // isScrollControlled lets the content-sized column grow past the default
+    // half-screen sheet cap (formats + header overflow otherwise).
     return showGameBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       builder: (sheetContext) {
         final colors = AppColorTokens.of(sheetContext);
         final formats = GameFormatDetails.lobbyPickerOrder;
-        final maxH = MediaQuery.sizeOf(sheetContext).height * 0.55;
-        return SizedBox(
-          height: maxH,
-          child: GameSheetBody(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const GameSheetHeader(title: 'Default format'),
-                SizedBox(height: LayoutTokens.gr2),
-                Expanded(
-                  child: ListView(
-                    children: formats.map((f) {
-                      final label = f.displayName;
-                      final selected = label == _settings.defaultFormat;
-                      return ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(
-                          label,
-                          style: TextStyle(
-                            color: colors.textPrimary,
-                            fontWeight:
-                                selected ? FontWeight.w700 : FontWeight.w500,
-                          ),
-                        ),
-                        trailing: selected
-                            ? Icon(Icons.check_circle_rounded,
-                                color: colors.primaryAccent)
-                            : null,
-                        onTap: () => Navigator.pop(sheetContext, label),
-                      );
-                    }).toList(),
+        return GameSheetBody(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const GameSheetHeader(title: 'Default format'),
+              SizedBox(height: LayoutTokens.gr2),
+              ...formats.map((f) {
+                final label = f.displayName;
+                final selected = label == _settings.defaultFormat;
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    label,
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontWeight:
+                          selected ? FontWeight.w700 : FontWeight.w500,
+                    ),
                   ),
-                ),
-              ],
-            ),
+                  trailing: selected
+                      ? Icon(Icons.check_circle_rounded,
+                          color: colors.primaryAccent)
+                      : null,
+                  onTap: () => Navigator.pop(sheetContext, label),
+                );
+              }),
+            ],
           ),
         );
       },
@@ -291,10 +286,7 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
     return Padding(
-      padding: EdgeInsets.only(
-        top: LayoutTokens.gr4,
-        bottom: LayoutTokens.gr2,
-      ),
+      padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
       child: Text(
         title,
         style: TypographyTokens.sectionTitle(colors.textPrimary),
@@ -343,13 +335,9 @@ class _ColorSchemePicker extends StatelessWidget {
                     padding: EdgeInsets.all(LayoutTokens.gr3),
                     decoration: BoxDecoration(
                       borderRadius: RadiusTokens.radiusMd,
-                      border: Border.all(
-                        color: isSelected
-                            ? palette.previewAccent
-                            : ColorTokens.borderSubtle,
-                        width: isSelected ? 2 : 1,
-                      ),
-                      color: palette.previewBackground.withValues(alpha: 0.35),
+                      color: isSelected
+                          ? palette.previewAccent.withValues(alpha: 0.14)
+                          : palette.previewBackground.withValues(alpha: 0.28),
                     ),
                     child: Row(
                       children: [
@@ -359,10 +347,6 @@ class _ColorSchemePicker extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: palette.previewBackground,
                             borderRadius: RadiusTokens.radiusSm,
-                            border: Border.all(
-                              color: palette.previewAccent,
-                              width: 2,
-                            ),
                           ),
                           child: Center(
                             child: Container(
@@ -429,25 +413,31 @@ class _SwitchTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
-      child: UiSurface(
-        padding: EdgeInsets.zero,
-        borderRadius: RadiusTokens.radiusMd,
-        child: SwitchListTile(
-        secondary: icon != null
-            ? Icon(icon, size: 22, color: Theme.of(context).colorScheme.onSurfaceVariant)
-            : null,
-        title: Text(title, style: Theme.of(context).textTheme.bodyLarge, overflow: TextOverflow.ellipsis),
-        subtitle: Text(subtitle, style: Theme.of(context).textTheme.bodyMedium, maxLines: 2, overflow: TextOverflow.ellipsis),
-        value: value,
-        onChanged: onChanged,
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: LayoutTokens.gr3,
-          vertical: LayoutTokens.gr1,
-        ),
+    return SwitchListTile(
+      secondary: icon != null
+          ? Icon(
+              icon,
+              size: 22,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            )
+          : null,
+      title: Text(
+        title,
+        style: Theme.of(context).textTheme.bodyLarge,
+        overflow: TextOverflow.ellipsis,
       ),
-    ),
+      subtitle: Text(
+        subtitle,
+        style: Theme.of(context).textTheme.bodyMedium,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
+      value: value,
+      onChanged: onChanged,
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: LayoutTokens.gr1,
+        vertical: LayoutTokens.gr0,
+      ),
     );
   }
 }
@@ -469,28 +459,26 @@ class _SettingTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final color = isDestructive ? ColorTokens.danger : scheme.onSurfaceVariant;
-    return Padding(
-      padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
-      child: UiSurface(
-        padding: EdgeInsets.zero,
-        borderRadius: RadiusTokens.radiusMd,
-        child: ListTile(
-        title: Text(
-          title,
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: isDestructive ? ColorTokens.danger : null,
-              ),
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Text(subtitle, style: Theme.of(context).textTheme.bodyMedium, maxLines: 2, overflow: TextOverflow.ellipsis),
-        trailing: Icon(Icons.chevron_right_rounded, color: color),
-        onTap: onTap,
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: LayoutTokens.gr3,
-          vertical: LayoutTokens.gr1,
-        ),
+    return ListTile(
+      title: Text(
+        title,
+        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: isDestructive ? ColorTokens.danger : null,
+            ),
+        overflow: TextOverflow.ellipsis,
       ),
-    ),
+      subtitle: Text(
+        subtitle,
+        style: Theme.of(context).textTheme.bodyMedium,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
+      trailing: Icon(Icons.chevron_right_rounded, color: color),
+      onTap: onTap,
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: LayoutTokens.gr1,
+        vertical: LayoutTokens.gr0,
+      ),
     );
   }
 }

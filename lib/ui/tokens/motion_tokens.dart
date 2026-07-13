@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 ///
 /// Standard durations follow Material motion guidance (100–300 ms for micro
 /// interactions, 500 ms+ for emphasis / celebrations).
+/// Prefer these over ad-hoc ms values and bounce/elastic curves in product UI.
 class MotionTokens {
   MotionTokens._();
 

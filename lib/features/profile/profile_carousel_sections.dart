@@ -31,32 +31,12 @@ const String _kProfileUntilFirstGameMessage =
 const String _kProfileAddDeckMessage =
     'Add a deck to track commander performance here.';
 
-/// Interior padding for 240×360 carousel cards ([LayoutTokens.gr3]).
+/// Interior padding for 240×360 carousel cards ([LayoutTokens.gr2]).
 /// Inner art radius = [RadiusTokens.carouselCard] − padding (nested radius rule).
-const double kProfileCarouselCardPaddingPx = LayoutTokens.gr3;
+const double kProfileCarouselCardPaddingPx = LayoutTokens.gr2;
 
 const double _kCarouselCardPaddingPx = kProfileCarouselCardPaddingPx;
-const double _kCarouselCardBorderAlpha = 0.55;
-/// Quieter border for empty-slot / add affordance cards.
-const double _kCarouselAddCardBorderAlpha = OpacityTokens.moderate;
 BorderRadius get _kProfileCarouselCardRadius => RadiusTokens.radiusCarouselCard;
-
-RoundedRectangleBorder _profileCarouselCardShape(
-  ColorScheme scheme, {
-  bool affordance = false,
-}) {
-  return RoundedRectangleBorder(
-    borderRadius: _kProfileCarouselCardRadius,
-    side: BorderSide(
-      color: scheme.outlineVariant.withValues(
-        alpha: affordance
-            ? _kCarouselAddCardBorderAlpha
-            : _kCarouselCardBorderAlpha,
-      ),
-      width: 1,
-    ),
-  );
-}
 
 Widget _recentMatchCommanderArt(BuildContext context, String? imageUrl) {
   if (imageUrl != null && imageUrl.isNotEmpty) {
@@ -73,33 +53,28 @@ Widget _recentMatchCommanderArt(BuildContext context, String? imageUrl) {
 }
 
 Widget _recentMatchCardVignette({bool expanded = false}) {
-  if (expanded) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        ColoredBox(color: Colors.black.withValues(alpha: 0.38)),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.black.withValues(alpha: 0.05),
+  // Bottom-weighted scrim: art stays visible up top; text/CTA sit on darker band.
+  return DecoratedBox(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: expanded
+            ? [
                 Colors.black.withValues(alpha: 0.55),
+                Colors.black.withValues(alpha: 0.78),
+                Colors.black.withValues(alpha: 0.92),
+              ]
+            : [
+                Colors.black.withValues(alpha: 0.08),
+                Colors.black.withValues(alpha: 0.22),
+                Colors.black.withValues(alpha: 0.62),
               ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-  return ColoredBox(color: Colors.black.withValues(alpha: 0.42));
+        stops: expanded ? const [0.0, 0.35, 1.0] : const [0.0, 0.42, 1.0],
+      ),
+    ),
+  );
 }
-
-const List<Shadow> _recentMatchOverlayShadow = [
-  Shadow(color: Color(0xF0000000), blurRadius: 16, offset: Offset(0, 2)),
-  Shadow(color: Color(0xB3000000), blurRadius: 6, offset: Offset(0, 1)),
-];
 
 /// Full-height carousel card with centered guidance copy (empty profile sections).
 class ProfileCarouselPlaceholderCard extends StatelessWidget {
@@ -221,11 +196,7 @@ class ProfileCarouselAddGlyph extends StatelessWidget {
       height: circleSize,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: colors.primaryAccent.withValues(alpha: 0.14),
-        border: Border.all(
-          color: colors.primaryAccent.withValues(alpha: 0.45),
-          width: 2,
-        ),
+        color: colors.primaryAccent.withValues(alpha: OpacityTokens.subtle),
       ),
       alignment: Alignment.center,
       child: Icon(
@@ -283,8 +254,8 @@ class ProfileCarouselCard extends StatelessWidget {
   /// When null, uses standard carousel card inset ([_kCarouselCardPaddingPx]).
   final EdgeInsetsGeometry? padding;
 
-  /// Quieter empty-slot shell for "+" add tiles — lower fill opacity, no
-  /// elevation, softer border — so content cards stay visually primary.
+  /// Quieter empty-slot shell for "+" add tiles — lower fill opacity so content
+  /// cards stay visually primary.
   final bool affordance;
 
   @override
@@ -293,14 +264,13 @@ class ProfileCarouselCard extends StatelessWidget {
     final fill = affordance
         ? scheme.surfaceContainerHigh.withValues(alpha: OpacityTokens.half)
         : scheme.surfaceContainerHigh;
-    return Card(
-      margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
+    return Material(
       color: fill,
-      elevation: affordance ? 0 : 1,
-      shadowColor: affordance ? Colors.transparent : null,
-      surfaceTintColor: affordance ? Colors.transparent : scheme.surfaceTint,
-      shape: _profileCarouselCardShape(scheme, affordance: affordance),
+      elevation: 0,
+      shadowColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: _kProfileCarouselCardRadius),
+      clipBehavior: Clip.antiAlias,
       child: Padding(
         padding: padding ?? EdgeInsets.all(_kCarouselCardPaddingPx),
         child: child,
@@ -389,18 +359,15 @@ class ProfileSectionCountPill extends StatelessWidget {
         vertical: LayoutTokens.gr1,
       ),
       decoration: BoxDecoration(
-        color: colors.primaryAccent.withValues(alpha: 0.12),
+        color: colors.primaryAccent.withValues(alpha: OpacityTokens.subtle),
         borderRadius: RadiusTokens.radiusChip,
-        border: Border.all(
-          color: colors.primaryAccent.withValues(alpha: 0.35),
-        ),
       ),
       child: Text(
         label,
         style: TextStyle(
           color: colors.primaryAccent,
           fontSize: FontTokens.sm,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           letterSpacing: 0.1,
         ),
       ),
@@ -947,19 +914,14 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
       height: 1.35,
     );
     final formatStyle = Theme.of(context).textTheme.titleSmall?.copyWith(
-      fontWeight: FontWeight.w800,
+      fontWeight: FontWeight.w600,
       letterSpacing: -0.15,
       height: 1.25,
       color: colors.textPrimary,
     );
     final metaStyle = Theme.of(context).textTheme.titleSmall?.copyWith(
       color: colors.textSecondary,
-      fontWeight: FontWeight.w700,
-      height: 1.2,
-    );
-    final dateStyle = Theme.of(context).textTheme.titleSmall?.copyWith(
-      fontWeight: FontWeight.w800,
-      color: colors.textPrimary,
+      fontWeight: FontWeight.w600,
       height: 1.2,
     );
 
@@ -971,19 +933,14 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.48),
         borderRadius: RadiusTokens.radiusSm,
-        border: Border.all(
-          color: resultColor.withValues(alpha: 0.65),
-          width: 1,
-        ),
       ),
       child: Text(
         resultLabel,
         style: TextStyle(
           color: resultColor,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w600,
           fontSize: FontTokens.caption,
           letterSpacing: 0.15,
-          shadows: _recentMatchOverlayShadow,
         ),
         overflow: TextOverflow.ellipsis,
         maxLines: 1,
@@ -1006,23 +963,23 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
     Widget summaryForeground() {
       final overlayFormatStyle = formatStyle!.copyWith(
         color: Colors.white,
-        fontSize: 17,
-        fontWeight: FontWeight.w900,
-        height: 1.32,
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+        height: 1.28,
         letterSpacing: -0.2,
-        shadows: _recentMatchOverlayShadow,
+        shadows: const [
+          Shadow(
+            color: Color(0x99000000),
+            blurRadius: 10,
+            offset: Offset(0, 1),
+          ),
+        ],
       );
       final overlayMetaStyle = metaStyle!.copyWith(
-        color: Colors.white.withValues(alpha: 0.94),
+        color: Colors.white.withValues(alpha: 0.82),
         fontSize: 13,
+        fontWeight: FontWeight.w500,
         height: 1.35,
-        shadows: _recentMatchOverlayShadow,
-      );
-      final overlayDateStyle = dateStyle!.copyWith(
-        color: Colors.white,
-        fontSize: 14,
-        height: 1.3,
-        shadows: _recentMatchOverlayShadow,
       );
 
       return Padding(
@@ -1043,26 +1000,19 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
             ),
             SizedBox(height: LayoutTokens.gr1),
             Text(
-              playerLine,
+              '$playerLine · $dateStr · $timeStr',
               style: overlayMetaStyle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            SizedBox(height: LayoutTokens.gr1),
-            Text(
-              '$dateStr · $timeStr',
-              style: overlayDateStyle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
             SizedBox(height: LayoutTokens.gr3),
             SizedBox(
               width: double.infinity,
-              child: OutlinedButton(
+              child: FilledButton(
                 onPressed: () {
                   if (!_expanded) setState(() => _expanded = true);
                 },
-                style: OutlinedButton.styleFrom(
+                style: FilledButton.styleFrom(
                   visualDensity: VisualDensity.standard,
                   padding: EdgeInsets.symmetric(
                     horizontal: LayoutTokens.gr3,
@@ -1074,21 +1024,18 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
                   ),
                   tapTargetSize: MaterialTapTargetSize.padded,
                   shape: const StadiumBorder(),
-                  side: BorderSide(
-                    color: Colors.white.withValues(alpha: 0.72),
-                    width: 1.25,
-                  ),
-                  foregroundColor: Colors.white,
-                  backgroundColor: Colors.black.withValues(alpha: 0.38),
+                  foregroundColor: colors.textPrimary,
+                  backgroundColor: colors.surface,
+                  elevation: 0,
+                  shadowColor: Colors.transparent,
                 ),
                 child: Text(
                   'Show more',
                   style: TextStyle(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     fontSize: 15,
                     letterSpacing: 0.2,
-                    color: Colors.white,
-                    shadows: _recentMatchOverlayShadow,
+                    color: colors.textPrimary,
                   ),
                 ),
               ),
@@ -1181,7 +1128,7 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
                             chipInitials,
                             style: TextStyle(
                               fontSize: 7,
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w600,
                               color: colors.textPrimary,
                             ),
                           )
@@ -1205,7 +1152,7 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
                             color: colors.textPrimary,
                             fontSize: FontTokens.hudXs,
                             fontWeight:
-                                p.isWinner ? FontWeight.w800 : FontWeight.w600,
+                                p.isWinner ? FontWeight.w700 : FontWeight.w500,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -1214,9 +1161,7 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
                     ],
                   ),
                   backgroundColor: scheme.surfaceContainerLow,
-                  side: BorderSide(
-                    color: scheme.outlineVariant.withValues(alpha: 0.45),
-                  ),
+                  side: BorderSide.none,
                 );
               }).toList(),
             ),
@@ -1525,7 +1470,7 @@ class _ProfileDeckPerformanceSectionState
 
 TextStyle _profileDeckCardTitleStyle(AppColorTokens colors) => TextStyle(
   fontSize: FontTokens.hudSm + 2,
-  fontWeight: FontWeight.w800,
+  fontWeight: FontWeight.w600,
   height: 1.2,
   letterSpacing: -0.15,
   color: colors.textPrimary,
@@ -1707,7 +1652,7 @@ class _ProfileDeckRecordLine extends StatelessWidget {
             text: wr == null ? '— WR' : '$wr% WR',
             style: base.copyWith(
               color: colors.primaryAccent,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
             ),
           ),
           TextSpan(

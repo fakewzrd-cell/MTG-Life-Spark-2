@@ -2,6 +2,10 @@
 ///
 /// Values sit on standard 5% increments with named semantic slots so that
 /// tinting, disabling, and layering remain consistent across the codebase.
+///
+/// **Accent rule:** use soft fills / borders for selection. Do not use
+/// `BoxShadow` + `spreadRadius` on the brand accent except on a single
+/// primary CTA or one active indicator per view.
 class OpacityTokens {
   OpacityTokens._();
 

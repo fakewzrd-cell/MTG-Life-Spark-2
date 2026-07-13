@@ -160,11 +160,8 @@ class _GameTimeoutOverlayState extends State<GameTimeoutOverlay> {
                         vertical: LayoutTokens.gr1,
                       ),
                       decoration: BoxDecoration(
-                        color: colors.backgroundSecondary.withValues(alpha: 0.95),
+                        color: colors.emphasis.withValues(alpha: OpacityTokens.subtle),
                         borderRadius: RadiusTokens.radiusLg,
-                        border: Border.all(
-                          color: colors.emphasis.withValues(alpha: 0.6),
-                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -244,17 +241,6 @@ class _GameTimeoutOverlayState extends State<GameTimeoutOverlay> {
               decoration: BoxDecoration(
                 color: colors.surface,
                 borderRadius: RadiusTokens.radiusLg,
-                border: Border.all(
-                  color: colors.emphasis.withValues(alpha: 0.8),
-                  width: 3,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: colors.emphasis.withValues(alpha: OpacityTokens.moderate),
-                    blurRadius: 24,
-                    spreadRadius: 4,
-                  ),
-                ],
               ),
               child: Stack(
                 clipBehavior: Clip.none,
@@ -285,7 +271,7 @@ class _GameTimeoutOverlayState extends State<GameTimeoutOverlay> {
                         style: TextStyle(
                           color: colors.emphasis,
                           fontSize: 28,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w700,
                           letterSpacing: 2,
                         ),
                       ),
@@ -297,7 +283,7 @@ class _GameTimeoutOverlayState extends State<GameTimeoutOverlay> {
                         style: TextStyle(
                           color: colors.textPrimary,
                           fontSize: FontTokens.displayCommander,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w700,
                           fontFeatures: [FontFeature.tabularFigures()],
                         ),
                       ),
@@ -396,7 +382,6 @@ class _GameTimeoutBannerState extends State<GameTimeoutBanner> {
       decoration: BoxDecoration(
         color: colors.emphasis.withValues(alpha: OpacityTokens.subtle),
         borderRadius: RadiusTokens.radiusControlSm,
-        border: Border.all(color: colors.emphasis.withValues(alpha: OpacityTokens.half)),
       ),
       child: Row(
         children: [
@@ -485,7 +470,6 @@ class _GameTurnDurationBannerState extends State<GameTurnDurationBanner> {
       decoration: BoxDecoration(
         color: colors.primaryAccent.withValues(alpha: OpacityTokens.subtle),
         borderRadius: RadiusTokens.radiusControlSm,
-        border: Border.all(color: colors.primaryAccent.withValues(alpha: OpacityTokens.half)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

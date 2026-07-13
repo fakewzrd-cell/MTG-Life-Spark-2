@@ -41,16 +41,11 @@ class ActiveTurnBanner extends StatelessWidget {
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
             colors: [
-              accent.withValues(alpha: isLocal ? 0.22 : 0.14),
+              accent.withValues(alpha: isLocal ? 0.18 : 0.10),
               colors.surface.withValues(alpha: OpacityTokens.nearOpaque),
             ],
           ),
           borderRadius: RadiusTokens.radiusControlMd,
-          border: Border.all(
-            color: accent.withValues(
-              alpha: isLocal ? OpacityTokens.moderate : OpacityTokens.soft,
-            ),
-          ),
         ),
         child: Padding(
           padding: EdgeInsets.symmetric(
@@ -75,7 +70,7 @@ class ActiveTurnBanner extends StatelessWidget {
                   initial,
                   style: TextStyle(
                     color: ColorTokens.onAccent,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     fontSize: FontTokens.hudSm,
                   ),
                 ),
@@ -91,7 +86,7 @@ class ActiveTurnBanner extends StatelessWidget {
                       style: TextStyle(
                         color: accent,
                         fontSize: FontTokens.hudXs,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                         letterSpacing: 0.5,
                         height: 1,
                       ),
@@ -103,7 +98,7 @@ class ActiveTurnBanner extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: colors.textPrimary,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                         fontSize: FontTokens.title,
                         height: 1.1,
                       ),

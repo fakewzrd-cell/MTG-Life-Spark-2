@@ -179,7 +179,7 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
           onDeckTap: (deck) => _onDeckTap(deck, repo),
         ),
       );
-      sectionChildren.add(SizedBox(height: LayoutTokens.gr4));
+      sectionChildren.add(SizedBox(height: LayoutTokens.shellSectionGap));
     }
 
     Widget scrollBody;

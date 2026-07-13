@@ -44,14 +44,14 @@ class ProfileHeroLayoutMetrics {
     const tierBadgeHeight = 30.0;
     const statsPillHeight = 56.0;
 
+    // Identity is a horizontal row (avatar | name+tier); avatar height dominates.
+    final identityRowHeight = math.max(
+      avatarDiameter,
+      titleLineHeight + LayoutTokens.gr0 + tierBadgeHeight * textScale,
+    );
+
     final overlayContentHeight =
-        avatarDiameter +
-        LayoutTokens.gr2 +
-        titleLineHeight +
-        LayoutTokens.gr0 +
-        tierBadgeHeight * textScale +
-        LayoutTokens.gr2 +
-        statsPillHeight;
+        identityRowHeight + LayoutTokens.gr4 + statsPillHeight;
 
     final topInset = padding.top;
     // No overlay controls sit above the avatar anymore (banner is a fixed
@@ -66,14 +66,14 @@ class ProfileHeroLayoutMetrics {
 
     final availH = math.max(200.0, size.height - padding.vertical);
     final portrait = size.height >= size.width;
-    final visualFrac = portrait ? 0.36 : 0.30;
+    final visualFrac = portrait ? 0.32 : 0.28;
     final visualHeight =
         (availH * visualFrac * (0.88 + 0.12 * (textScale - 1))).clamp(
-          260.0,
-          380.0,
+          240.0,
+          360.0,
         );
 
-    final cardHeight = math.max(visualHeight, minCardHeight).clamp(280.0, 420.0);
+    final cardHeight = math.max(visualHeight, minCardHeight).clamp(260.0, 400.0);
 
     final overlayHPadding = LayoutTokens.shellPageInset;
 

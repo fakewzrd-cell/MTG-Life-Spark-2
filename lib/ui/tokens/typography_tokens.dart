@@ -4,74 +4,70 @@ import 'package:google_fonts/google_fonts.dart';
 import 'color_tokens.dart';
 import 'font_tokens.dart';
 
-/// Bold typography helpers. **Lato** — matches [AppTheme] / Material [TextTheme].
+/// Typography helpers. **Lato** — matches [AppTheme] / Material [TextTheme].
+///
+/// Hierarchy rule: at most one heavy weight (`w700`) per screen for the hero
+/// title; section headers use `w600`; body stays `w400`/`w500`.
 class TypographyTokens {
   TypographyTokens._();
 
-  static TextStyle headline(BuildContext context) =>
-      GoogleFonts.lato(
+  static TextStyle headline(BuildContext context) => GoogleFonts.lato(
         fontSize: 28,
-        fontWeight: FontWeight.w800,
-        color: ColorTokens.textPrimary,
-      );
-
-  static TextStyle title(BuildContext context) =>
-      GoogleFonts.lato(
-        fontSize: 20,
         fontWeight: FontWeight.w700,
         color: ColorTokens.textPrimary,
       );
 
-  /// Module headers — profile sections, lobby blocks, decks screen (20dp w800).
+  static TextStyle title(BuildContext context) => GoogleFonts.lato(
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        color: ColorTokens.textPrimary,
+      );
+
+  /// Module headers — profile sections, lobby blocks, decks screen.
   static TextStyle sectionTitle(Color primary) => GoogleFonts.lato(
         fontSize: FontTokens.headline,
-        fontWeight: FontWeight.w800,
+        fontWeight: FontWeight.w600,
         letterSpacing: -0.2,
         height: 1.2,
         color: primary,
       );
 
-  /// In-card titles — profile carousel cards (16dp w800).
+  /// In-card titles — profile carousel cards.
   static TextStyle cardTitle(Color primary) => GoogleFonts.lato(
         fontSize: FontTokens.title,
-        fontWeight: FontWeight.w800,
+        fontWeight: FontWeight.w600,
         letterSpacing: -0.15,
         height: 1.2,
         color: primary,
       );
 
-  static TextStyle body(BuildContext context) =>
-      GoogleFonts.lato(
+  static TextStyle body(BuildContext context) => GoogleFonts.lato(
         fontSize: 16,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w400,
         color: ColorTokens.textPrimary,
       );
 
-  static TextStyle bodySecondary(BuildContext context) =>
-      GoogleFonts.lato(
+  static TextStyle bodySecondary(BuildContext context) => GoogleFonts.lato(
         fontSize: 16,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w400,
         color: ColorTokens.textSecondary,
       );
 
-  static TextStyle label(BuildContext context) =>
-      GoogleFonts.lato(
+  static TextStyle label(BuildContext context) => GoogleFonts.lato(
         fontSize: 16,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w600,
         color: ColorTokens.textPrimary,
       );
 
-  static TextStyle caption(BuildContext context) =>
-      GoogleFonts.lato(
+  static TextStyle caption(BuildContext context) => GoogleFonts.lato(
         fontSize: 12,
         fontWeight: FontWeight.w500,
         color: ColorTokens.textMuted,
       );
 
-  static TextStyle button(BuildContext context) =>
-      GoogleFonts.lato(
+  static TextStyle button(BuildContext context) => GoogleFonts.lato(
         fontSize: 16,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w600,
         color: ColorTokens.textPrimary,
       );
 }

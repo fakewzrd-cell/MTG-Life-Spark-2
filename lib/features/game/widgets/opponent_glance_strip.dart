@@ -50,9 +50,6 @@ class OpponentGlanceStrip extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               borderRadius: RadiusTokens.radiusControlMd,
-              border: Border.all(
-                color: colors.borderSubtle.withValues(alpha: OpacityTokens.soft),
-              ),
             ),
             padding: EdgeInsets.symmetric(
               horizontal: LayoutTokens.gr1,
@@ -116,11 +113,6 @@ class _OpponentGlanceChip extends StatelessWidget {
             ? colors.backgroundSecondary.withValues(alpha: OpacityTokens.half)
             : player.playerColor.withValues(alpha: 0.12),
         borderRadius: RadiusTokens.radiusControlSm,
-        border: Border.all(
-          color: eliminated
-              ? colors.textSecondary.withValues(alpha: OpacityTokens.soft)
-              : player.playerColor.withValues(alpha: 0.35),
-        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -151,7 +143,7 @@ class _OpponentGlanceChip extends StatelessWidget {
             style: TextStyle(
               color: lifeTone,
               fontSize: FontTokens.hudSm,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),

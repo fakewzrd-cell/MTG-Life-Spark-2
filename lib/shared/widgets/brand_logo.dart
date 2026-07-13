@@ -18,6 +18,8 @@ class BrandLogo extends StatelessWidget {
   final double? width;
 
   String get _asset => switch (layout) {
+        // Placeholder wordmarks until final art is provided — still use the
+        // dedicated H/V assets (currently generated stand-ins from the mark).
         BrandLogoLayout.mark => AppIcons.lifeSparkLogo,
         BrandLogoLayout.horizontal => AppIcons.logoHorizontal,
         BrandLogoLayout.vertical => AppIcons.logoVertical,
