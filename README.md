@@ -1,4 +1,4 @@
-# MTG Life Spark
+# Life Spark
 
 Commander-focused multiplayer life tracker for Magic: The Gathering pods. Host a LAN session from your phone, share a QR code, and keep life totals, counters, stack order, alliances, and match history in sync across the table.
 

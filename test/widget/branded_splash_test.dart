@@ -8,7 +8,7 @@ void main() {
       const MaterialApp(home: BrandedSplash()),
     );
 
-    expect(find.text('Loading MTG Life Spark…'), findsOneWidget);
+    expect(find.text('Loading Life Spark…'), findsOneWidget);
     expect(find.byType(BrandedSplash), findsOneWidget);
   });
 

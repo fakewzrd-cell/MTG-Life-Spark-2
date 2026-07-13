@@ -1,4 +1,4 @@
-# MTG Life Spark — Release audit plan
+# Life Spark — Release audit plan
 
 **App version (current):** `1.0.6+6`  
 **Audit date:** 2026-05-30  

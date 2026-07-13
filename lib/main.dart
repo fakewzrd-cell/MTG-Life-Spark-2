@@ -301,7 +301,7 @@ class MgtLifeSparkApp extends ConsumerWidget {
     final theme = ref.watch(effectiveThemeProvider);
 
     return MaterialApp.router(
-      title: 'MTG Life Spark',
+      title: 'Life Spark',
       theme: theme,
       routerConfig: router,
       debugShowCheckedModeBanner: false,

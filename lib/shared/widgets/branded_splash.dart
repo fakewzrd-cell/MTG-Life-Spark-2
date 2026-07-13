@@ -16,7 +16,7 @@ import 'brand_logo.dart';
 class BrandedSplash extends StatefulWidget {
   const BrandedSplash({
     super.key,
-    this.message = 'Loading MTG Life Spark…',
+    this.message = 'Loading Life Spark…',
     this.ready = false,
     this.onRevealComplete,
   });

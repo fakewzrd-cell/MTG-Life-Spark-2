@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'app_color_palettes.dart';
 
-/// MTG Life Spark color system — **dark-first**, scheme-aware palette.
+/// Life Spark color system — **dark-first**, scheme-aware palette.
 ///
 /// The active palette comes from [AppColorPalettes] and is switched in Settings.
 /// [applyPalette] is called when building [ThemeData]; legacy [AppTheme] getters

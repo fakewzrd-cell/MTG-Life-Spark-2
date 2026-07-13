@@ -149,4 +149,4 @@ Use this spec to recreate the Host Lobby screen in Figma. Edit in Figma, then **
 
 ---
 
-*Generated from `lib/features/lobby/lobby_screen.dart` — MGT Life Spark*
+*Generated from `lib/features/lobby/lobby_screen.dart` — Life Spark*

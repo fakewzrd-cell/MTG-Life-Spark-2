@@ -32,7 +32,7 @@ class SessionJoinUri {
   /// Parses a scanned QR into WebSocket URI and optional join token.
   static ({String wsUri, String? token}) parse(String raw) {
     if (!raw.startsWith('$scheme://')) {
-      throw FormatException('Not a valid MTG Life Spark QR code.');
+      throw FormatException('Not a valid Life Spark QR code.');
     }
 
     final withoutScheme = raw.substring('$scheme://'.length);

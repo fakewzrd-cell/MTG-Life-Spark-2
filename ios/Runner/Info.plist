@@ -5,16 +5,16 @@
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>
-		<string>MGT Life Spark</string>
+		<string>Life Spark</string>
 		<!-- Permission usage descriptions (required by App Store) -->
 		<key>NSLocalNetworkUsageDescription</key>
-		<string>MGT Life Spark uses your local network so other players on the same Wi‑Fi can join your hosted game.</string>
+		<string>Life Spark uses your local network so other players on the same Wi‑Fi can join your hosted game.</string>
 		<key>NSBonjourServices</key>
 		<array>
 			<string>_mgtlifespark._tcp</string>
 		</array>
 		<key>NSCameraUsageDescription</key>
-		<string>MGT Life Spark uses the camera to scan the host QR code when joining a game.</string>
+		<string>Life Spark uses the camera to scan the host QR code when joining a game.</string>
 		<key>CFBundleExecutable</key>
 		<string>$(EXECUTABLE_NAME)</string>
 		<key>CFBundleIdentifier</key>

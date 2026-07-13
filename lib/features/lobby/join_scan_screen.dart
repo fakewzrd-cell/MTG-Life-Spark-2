@@ -185,7 +185,7 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
         }
       }));
     } on FormatException {
-      _showSnackbar('Not a valid MTG Life Spark QR code.', isError: true);
+      _showSnackbar('Not a valid Life Spark QR code.', isError: true);
     }
   }
 
