@@ -55,12 +55,16 @@
       width: 100%;
       height: 100%;
       animation: splash-mark-spin 2s ease-in-out infinite;
+      will-change: transform;
+      backface-visibility: hidden;
     }
     #app-loading .splash-dice-inner img {
       width: 100%;
       height: 100%;
       display: block;
       object-fit: contain;
+      /* Prefer crisp downscale from the 1024px mark while spinning. */
+      image-rendering: -webkit-optimize-contrast;
       filter: drop-shadow(0 8px 18px rgba(155, 109, 255, 0.35));
     }
     /* Rotate, pause, rotate again — matches Flutter BrandedSplash. */

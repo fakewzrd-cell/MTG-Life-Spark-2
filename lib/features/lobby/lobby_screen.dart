@@ -605,7 +605,7 @@ class _PlayerSlotCard extends ConsumerWidget {
   }
 }
 
-/// Partner / Deck / Commander actions for the local player's slot (full-width row).
+/// Deck / Commander actions for the local player's slot (full-width row).
 class _SlotCommanderControls extends ConsumerWidget {
   final PlayerSlot slot;
   final bool isCommanderLobby;
@@ -648,15 +648,10 @@ class _SlotCommanderControls extends ConsumerWidget {
             onPressed:
                 () => context.push(
                   AppRoutes.commanderSelect,
-                  extra: {
-                    'playerId': slot.playerId,
-                    'hasPartner': slot.hasPartner,
-                  },
+                  extra: {'playerId': slot.playerId},
                 ),
           ),
         ),
-        SizedBox(width: gap),
-        Expanded(child: _PartnerChip(slot: slot)),
       ],
     );
   }
@@ -692,49 +687,6 @@ class _SlotReadyButton extends ConsumerWidget {
         notifier.setReady(slot.playerId, ready: !slot.isReady);
       },
       icon: const Icon(Icons.check_rounded, size: 24),
-    );
-  }
-}
-
-class _PartnerChip extends ConsumerWidget {
-  final PlayerSlot slot;
-  const _PartnerChip({required this.slot});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = AppColorTokens.of(context);
-    final accent = colors.primaryAccent;
-    return OutlinedButton(
-      style: OutlinedButton.styleFrom(
-        minimumSize: const Size(0, LayoutTokens.minTapTarget),
-        padding: const EdgeInsets.symmetric(horizontal: LayoutTokens.gr2),
-        backgroundColor:
-            slot.hasPartner
-                ? accent.withValues(alpha: 0.15)
-                : Colors.transparent,
-        foregroundColor:
-            slot.hasPartner ? accent : colors.textSecondary,
-        side: BorderSide(
-          color:
-              slot.hasPartner
-                  ? accent
-                  : colors.textSecondary.withValues(alpha: 0.4),
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: RadiusTokens.radiusControlMd,
-        ),
-        textStyle: TextStyle(
-          fontSize: FontTokens.sm,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      onPressed:
-          () => ref.read(lobbyProvider.notifier).togglePartner(slot.playerId),
-      child: Text(
-        'Partner',
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
     );
   }
 }

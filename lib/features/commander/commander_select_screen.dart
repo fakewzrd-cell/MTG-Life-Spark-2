@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../ui/components/ui_app_bar.dart';
-import '../../ui/tokens/color_tokens.dart';
 import '../../ui/tokens/motion_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -58,9 +57,6 @@ class CommanderSelectScreen extends ConsumerStatefulWidget {
 
 class _CommanderSelectScreenState
     extends ConsumerState<CommanderSelectScreen> {
-  // Route extra also passes hasPartner
-  bool _hasPartner = false;
-
   final _searchController = TextEditingController();
   Timer? _debounce;
 
@@ -72,6 +68,10 @@ class _CommanderSelectScreenState
   ScryfallCard? _primary;
   ScryfallCard? _partner;
   bool _pickingPartner = false; // true when user is selecting the 2nd card
+  var _seededFromLobby = false;
+
+  /// Dual-commander UI is available for commander-style picks; partner is optional.
+  bool get _offersPartnerSlot => _isCommanderPick;
 
   bool get _isCommanderPick {
     if (!widget._deckMode) return true;
@@ -102,7 +102,6 @@ class _CommanderSelectScreenState
         ref.read(deckRepositoryProvider).getById(widget.editDeckId!);
     if (deck == null || !mounted) return;
     setState(() {
-      _hasPartner = deck.hasPartner;
       _primary = ScryfallCard(
         name: deck.commanderName,
         imageUrl: deck.commanderImageUrl,
@@ -124,11 +123,25 @@ class _CommanderSelectScreenState
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (widget._deckMode) return;
-    // Resolve hasPartner from lobby state for this player
+    if (widget._deckMode || _seededFromLobby) return;
     final lobbySlots = ref.read(lobbyProvider).players;
     final slot = lobbySlots.where((p) => p.playerId == widget.playerId);
-    if (slot.isNotEmpty) _hasPartner = slot.first.hasPartner;
+    if (slot.isEmpty) return;
+    final s = slot.first;
+    _seededFromLobby = true;
+    if (s.commanderName == null || s.commanderName!.isEmpty) return;
+    _primary = ScryfallCard(
+      name: s.commanderName!,
+      imageUrl: s.commanderImageUrl,
+      colorIdentity: List<String>.from(s.commanderColorIdentity),
+    );
+    final partnerName = s.partnerCommanderName;
+    if (partnerName != null && partnerName.isNotEmpty) {
+      _partner = ScryfallCard(
+        name: partnerName,
+        imageUrl: s.partnerCommanderImageUrl,
+      );
+    }
   }
 
   @override
@@ -203,18 +216,14 @@ class _CommanderSelectScreenState
     }
   }
 
-  bool get _canConfirm {
-    if (_primary == null) return false;
-    if (_isCommanderPick && _hasPartner && _partner == null) return false;
-    return true;
-  }
+  bool get _canConfirm => _primary != null;
 
   Future<void> _confirm() async {
     if (!_canConfirm) return;
+    final usePartner = _offersPartnerSlot && _partner != null;
     if (widget.newDeckDisplayName != null &&
         widget.newDeckDisplayName!.trim().isNotEmpty) {
       final fmt = _deckGameFormat;
-      final usePartner = fmt.isCommanderStyle && _hasPartner;
       final ci = ScryfallCard.unionColorIdentity(
         _primary!,
         usePartner ? _partner : null,
@@ -244,7 +253,6 @@ class _CommanderSelectScreenState
         if (mounted) context.pop();
         return;
       }
-      final usePartner = deck.isCommanderDeck && _hasPartner;
       final ci = ScryfallCard.unionColorIdentity(
         _primary!,
         usePartner ? _partner : null,
@@ -266,11 +274,13 @@ class _CommanderSelectScreenState
           playerId: widget.playerId,
           commanderName: _primary!.name,
           commanderImageUrl: _primary!.imageUrl ?? '',
-          partnerCommanderName: _hasPartner ? _partner?.name : null,
+          partnerCommanderName: usePartner ? _partner?.name : null,
           partnerCommanderImageUrl:
-              _hasPartner ? (_partner?.imageUrl ?? '') : null,
-          commanderColorIdentity:
-              ScryfallCard.unionColorIdentity(_primary!, _hasPartner ? _partner : null),
+              usePartner ? (_partner?.imageUrl ?? '') : null,
+          commanderColorIdentity: ScryfallCard.unionColorIdentity(
+            _primary!,
+            usePartner ? _partner : null,
+          ),
         );
     if (mounted) context.pop();
   }
@@ -312,41 +322,22 @@ class _CommanderSelectScreenState
       ),
       body: Column(
         children: [
-          // Selected preview
-          if (_primary != null || (_hasPartner && _partner != null))
+          // After primary is chosen, show it + optional partner slot.
+          if (_primary != null)
             _SelectionPreview(
               primary: _primary,
-              partner: _isCommanderPick && _hasPartner ? _partner : null,
-              hasPartner: _isCommanderPick && _hasPartner,
-              onPickPartner: _primary != null
+              partner: _offersPartnerSlot ? _partner : null,
+              showPartnerSlot: _offersPartnerSlot,
+              onPickPartner: _offersPartnerSlot
                   ? () => setState(() => _pickingPartner = !_pickingPartner)
                   : null,
-              pickingPartner: _pickingPartner,
-            ),
-          if (widget._deckMode && _isCommanderPick)
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                LayoutTokens.gr3,
-                LayoutTokens.gr1,
-                LayoutTokens.gr3,
-                0,
-              ),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: FilterChip(
-                  label: Text('Partner commander'),
-                  selected: _hasPartner,
-                  onSelected: (v) {
-                    setState(() {
-                      _hasPartner = v;
-                      if (!v) {
+              onClearPartner: _offersPartnerSlot && _partner != null
+                  ? () => setState(() {
                         _partner = null;
                         _pickingPartner = false;
-                      }
-                    });
-                  },
-                ),
-              ),
+                      })
+                  : null,
+              pickingPartner: _pickingPartner,
             ),
           if (widget._deckMode && !_isCommanderPick)
             Padding(
@@ -443,10 +434,9 @@ class _CommanderSelectScreenState
       itemCount: _results.length,
       itemBuilder: (_, i) {
         final card = _results[i];
-        final isSelected = card.name == _primary?.name ||
-            (_isCommanderPick &&
-                card.name == _partner?.name &&
-                _hasPartner);
+        final isSelected = _pickingPartner
+            ? card.name == _partner?.name
+            : card.name == _primary?.name;
         return _CommanderCard(
           card: card,
           isSelected: isSelected,
@@ -462,15 +452,17 @@ class _CommanderSelectScreenState
 class _SelectionPreview extends StatelessWidget {
   final ScryfallCard? primary;
   final ScryfallCard? partner;
-  final bool hasPartner;
+  final bool showPartnerSlot;
   final VoidCallback? onPickPartner;
+  final VoidCallback? onClearPartner;
   final bool pickingPartner;
 
   const _SelectionPreview({
     required this.primary,
     required this.partner,
-    required this.hasPartner,
+    required this.showPartnerSlot,
     this.onPickPartner,
+    this.onClearPartner,
     required this.pickingPartner,
   });
 
@@ -491,10 +483,39 @@ class _SelectionPreview extends StatelessWidget {
           Row(
             children: [
               if (primary != null) _MiniCard(card: primary!, label: 'Commander'),
-              if (hasPartner) ...[
+              if (showPartnerSlot) ...[
                 const SizedBox(width: 8),
                 if (partner != null)
-                  _MiniCard(card: partner!, label: 'Partner')
+                  GestureDetector(
+                    onTap: onPickPartner,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        _MiniCard(card: partner!, label: 'Partner'),
+                        if (onClearPartner != null)
+                          Positioned(
+                            top: -6,
+                            right: -6,
+                            child: Material(
+                              color: colors.surface,
+                              shape: const CircleBorder(),
+                              child: InkWell(
+                                customBorder: const CircleBorder(),
+                                onTap: onClearPartner,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(2),
+                                  child: Icon(
+                                    Icons.close,
+                                    size: 14,
+                                    color: colors.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  )
                 else
                   GestureDetector(
                     onTap: onPickPartner,
@@ -530,6 +551,13 @@ class _SelectionPreview extends StatelessWidget {
                                   ? colors.primaryAccent
                                   : colors.textSecondary,
                               fontSize: FontTokens.hudXs,
+                            ),
+                          ),
+                          Text(
+                            'optional',
+                            style: TextStyle(
+                              color: colors.textSecondary.withValues(alpha: 0.75),
+                              fontSize: 9,
                             ),
                           ),
                         ],
@@ -680,29 +708,6 @@ class _CommanderCard extends StatelessWidget {
                 ],
               ),
             ),
-            if (isSelected)
-              Container(
-                decoration: BoxDecoration(
-                  color: colors.primaryAccent,
-                  borderRadius:
-                      BorderRadius.vertical(bottom: Radius.circular(10)),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.check, size: 14, color: ColorTokens.onAccent),
-                    SizedBox(width: 4),
-                    Text(
-                      'Selected',
-                      style: TextStyle(
-                          color: ColorTokens.onAccent,
-                          fontSize: FontTokens.hudXs,
-                          fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-              ),
           ],
         ),
       ),

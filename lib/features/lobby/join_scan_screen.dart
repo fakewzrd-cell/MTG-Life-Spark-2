@@ -576,7 +576,6 @@ class _WaitingRoomViewState extends ConsumerState<_WaitingRoomView> {
                           onPressed: () {
                             context.push(AppRoutes.commanderSelect, extra: {
                               'playerId': profile.username,
-                              'hasPartner': mySlot?.hasPartner ?? false,
                             });
                           },
                         ),

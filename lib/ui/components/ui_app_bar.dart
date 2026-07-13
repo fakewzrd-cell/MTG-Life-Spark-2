@@ -40,11 +40,15 @@ class UiAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final Widget? resolvedTitle = titleWidget ??
         (title != null && title!.isNotEmpty
             ? Text(
                 title!,
-                style: Theme.of(context).textTheme.titleLarge,
+                style: theme.appBarTheme.titleTextStyle ??
+                    theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
               )
             : null);
 

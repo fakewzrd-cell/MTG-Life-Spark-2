@@ -317,13 +317,17 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
     String? partnerCommanderImageUrl,
     List<String> commanderColorIdentity = const [],
   }) {
+    final partnerName = partnerCommanderName?.trim();
+    final hasPartner = partnerName != null && partnerName.isNotEmpty;
     final players = state.players.map((p) {
       if (p.playerId != playerId) return p;
       return p.copyWith(
         commanderName: commanderName,
         commanderImageUrl: commanderImageUrl,
-        partnerCommanderName: partnerCommanderName,
-        partnerCommanderImageUrl: partnerCommanderImageUrl,
+        partnerCommanderName: hasPartner ? partnerName : null,
+        partnerCommanderImageUrl:
+            hasPartner ? (partnerCommanderImageUrl ?? '') : null,
+        hasPartner: hasPartner,
         selectedDeckId: null,
         commanderColorIdentity: List<String>.from(commanderColorIdentity),
       );

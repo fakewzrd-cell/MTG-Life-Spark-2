@@ -38,8 +38,8 @@ class PlayerSlot {
   PlayerSlot copyWith({
     String? commanderName,
     String? commanderImageUrl,
-    String? partnerCommanderName,
-    String? partnerCommanderImageUrl,
+    Object? partnerCommanderName = _sentinelPartner,
+    Object? partnerCommanderImageUrl = _sentinelPartnerImg,
     bool? hasPartner,
     bool? isHost,
     bool? isReady,
@@ -51,9 +51,13 @@ class PlayerSlot {
       username: username,
       commanderName: commanderName ?? this.commanderName,
       commanderImageUrl: commanderImageUrl ?? this.commanderImageUrl,
-      partnerCommanderName: partnerCommanderName ?? this.partnerCommanderName,
+      partnerCommanderName: identical(partnerCommanderName, _sentinelPartner)
+          ? this.partnerCommanderName
+          : partnerCommanderName as String?,
       partnerCommanderImageUrl:
-          partnerCommanderImageUrl ?? this.partnerCommanderImageUrl,
+          identical(partnerCommanderImageUrl, _sentinelPartnerImg)
+              ? this.partnerCommanderImageUrl
+              : partnerCommanderImageUrl as String?,
       hasPartner: hasPartner ?? this.hasPartner,
       playerColor: playerColor,
       isHost: isHost ?? this.isHost,
@@ -69,6 +73,8 @@ class PlayerSlot {
 
   static const Object _sentinelDeck = Object();
   static const Object _sentinelCi = Object();
+  static const Object _sentinelPartner = Object();
+  static const Object _sentinelPartnerImg = Object();
 
   Map<String, dynamic> toJson() => {
         'pid': playerId,
