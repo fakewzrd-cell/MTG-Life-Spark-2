@@ -236,8 +236,8 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
                         child: _LevelUpCard(result: _result!),
                       ),
 
-                    // ── XP earned ─────────────────────────────────────────
-                    if (_result != null)
+                    // ── XP earned (competitive matches only) ──────────────
+                    if (_result != null && _result!.awardsProgression)
                       _StaggerReveal(
                         index: 1,
                         child: _XpCard(

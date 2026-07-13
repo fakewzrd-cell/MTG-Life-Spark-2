@@ -6,6 +6,8 @@ import '../debug/app_log.dart';
 import 'package:http/http.dart' as http;
 
 class ScryfallCard {
+  /// Scryfall UUID — needed for `/cards/{id}/rulings`.
+  final String? id;
   final String name;
   final String? imageUrl; // null = offline / not found
   final String? oracleText;
@@ -18,6 +20,7 @@ class ScryfallCard {
   final List<String> colorIdentity;
 
   const ScryfallCard({
+    this.id,
     required this.name,
     this.imageUrl,
     this.oracleText,
@@ -45,6 +48,19 @@ class ScryfallCard {
     final out = order.where(set.contains).toList();
     return out;
   }
+}
+
+/// One official ruling from Scryfall (`/cards/{id}/rulings`).
+class ScryfallRuling {
+  const ScryfallRuling({
+    required this.comment,
+    this.publishedAt,
+    this.source,
+  });
+
+  final String comment;
+  final String? publishedAt;
+  final String? source;
 }
 
 class ScryfallService {
@@ -193,9 +209,41 @@ class ScryfallService {
     }
   }
 
+  /// Official Wizards / Scryfall rulings for a card UUID from [ScryfallCard.id].
+  /// Returns an empty list when the card has no rulings or the id is missing.
+  Future<List<ScryfallRuling>> fetchRulings(String? cardId) async {
+    final id = cardId?.trim();
+    if (id == null || id.isEmpty) return const [];
+    try {
+      final uri = Uri.parse('$_base/cards/$id/rulings');
+      final response = await _client
+          .get(uri, headers: _headers)
+          .timeout(const Duration(seconds: 15));
+      if (response.statusCode == 404) return const [];
+      if (response.statusCode != 200) {
+        throw Exception('Scryfall rulings error: ${response.statusCode}');
+      }
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final data = json['data'] as List<dynamic>? ?? [];
+      return [
+        for (final raw in data)
+          if (raw is Map<String, dynamic>)
+            ScryfallRuling(
+              comment: (raw['comment'] as String?)?.trim() ?? '',
+              publishedAt: raw['published_at'] as String?,
+              source: raw['source'] as String?,
+            ),
+      ].where((r) => r.comment.isNotEmpty).toList();
+    } catch (e, st) {
+      appLog('Scryfall rulings fetch failed for $id', error: e, stackTrace: st);
+      return const [];
+    }
+  }
+
   // ── Parsing ───────────────────────────────────────────────────────────────
 
   ScryfallCard _parseCard(Map<String, dynamic> card) {
+    final id = card['id'] as String?;
     final name = card['name'] as String? ?? '';
 
     // Double-faced cards store images in card_faces[].
@@ -242,6 +290,7 @@ class ScryfallService {
         : <String>[];
 
     return ScryfallCard(
+      id: id,
       name: name,
       imageUrl: imageUrl,
       oracleText: oracleText,

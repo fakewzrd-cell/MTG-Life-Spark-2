@@ -262,6 +262,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               GameTimeoutOverlay(
                 startTime: timeoutStartTime,
                 durationSeconds: timeoutDurationSeconds,
+                onEndTimeout: () =>
+                    ref.read(gameProvider.notifier).endTimeout(),
               ),
           ],
         ),
@@ -499,12 +501,9 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
                     ),
                   );
 
-                  // Small pinned rows above the life counter: a variant
-                  // quick-access chip (opens full deck content in a bottom
-                  // sheet, off the Play tab's layout budget) and/or the turn
-                  // timer. Both are compact/fixed-height, so — unlike the
-                  // old inline variant card list — they never need a
-                  // flexible or scrollable region of their own.
+                  // Small pinned rows above the life counter: optional variant
+                  // deck chip and/or the turn timer. Compact/fixed-height so they
+                  // never compete with life for flexible space.
                   final extraRows = <Widget>[
                     if (variantsEnabled) ...[
                       const VariantQuickAccessChip(),
@@ -538,6 +537,7 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
                   );
                   final comfortableMin = PhaseNavCluster.barHeight +
                       playGapMd +
+                      extraRowEstimate + // Card lookup always present
                       (variantsEnabled ? extraRowEstimate : 0.0) +
                       (showTurnTimer ? extraRowEstimate : 0.0) +
                       lifeMinFloor +

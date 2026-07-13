@@ -6,7 +6,7 @@ import '../../../ui/tokens/opacity_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
 import 'game_main_tab_bar.dart';
 
-/// Optional status strip + Play/Stack/History in one header card.
+/// Optional status strip + Play/Stack/Lookup/History in one header card.
 class GameHudHeader extends StatelessWidget {
   const GameHudHeader({
     super.key,

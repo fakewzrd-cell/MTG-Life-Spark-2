@@ -20,7 +20,8 @@ class GameState {
   // Timeout
   final bool timeoutActive;
   final DateTime? timeoutStartTime;
-  final int? timeoutDurationSeconds; // 120 or 300; null = no auto-end timer
+  /// Timed pause while someone rules-checks or resolves. Null = no auto-end.
+  final int? timeoutDurationSeconds;
 
   // Global markers
   final String? monarchPlayerId;

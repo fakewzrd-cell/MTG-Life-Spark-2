@@ -10,6 +10,9 @@ import '../constants/app_icons.dart';
 import 'brand_logo.dart';
 
 /// Launch splash: mark rotates → pauses in a loop, then full logo fades in.
+///
+/// Spin always runs for at least one full cycle even if bootstrap finishes
+/// early — otherwise a warm start skips straight to the reveal.
 class BrandedSplash extends StatefulWidget {
   const BrandedSplash({
     super.key,
@@ -20,11 +23,15 @@ class BrandedSplash extends StatefulWidget {
 
   final String message;
 
-  /// When true, stop the spin loop and fade in the full vertical logo.
+  /// When true (and the minimum spin has elapsed), stop the spin loop and
+  /// fade in the full vertical logo.
   final bool ready;
 
   /// Called after the post-load brand reveal finishes (if [ready] was set).
   final VoidCallback? onRevealComplete;
+
+  /// One rotate-then-pause cycle; also the minimum spin time before reveal.
+  static const spinCycle = Duration(milliseconds: 2000);
 
   @override
   State<BrandedSplash> createState() => _BrandedSplashState();
@@ -34,22 +41,25 @@ class _BrandedSplashState extends State<BrandedSplash>
     with TickerProviderStateMixin {
   late final AnimationController _spinController;
   late final AnimationController _revealController;
+  late final DateTime _startedAt;
   var _revealing = false;
+  var _revealScheduled = false;
 
   @override
   void initState() {
     super.initState();
+    _startedAt = DateTime.now();
     // One cycle = rotate once, then pause, then repeat.
     _spinController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2000),
+      duration: BrandedSplash.spinCycle,
     )..repeat();
     _revealController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
     );
     if (widget.ready) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _startReveal());
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scheduleReveal());
     }
   }
 
@@ -57,8 +67,25 @@ class _BrandedSplashState extends State<BrandedSplash>
   void didUpdateWidget(covariant BrandedSplash oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.ready && !oldWidget.ready) {
-      _startReveal();
+      _scheduleReveal();
     }
+  }
+
+  /// Wait out the remainder of [BrandedSplash.spinCycle] so the rotate loop
+  /// is always visible, then start the logo fade-in.
+  void _scheduleReveal() {
+    if (_revealScheduled || _revealing) return;
+    _revealScheduled = true;
+    final elapsed = DateTime.now().difference(_startedAt);
+    final remaining = BrandedSplash.spinCycle - elapsed;
+    if (remaining <= Duration.zero) {
+      _startReveal();
+      return;
+    }
+    Future<void>.delayed(remaining, () {
+      if (!mounted || !widget.ready) return;
+      _startReveal();
+    });
   }
 
   Future<void> _startReveal() async {

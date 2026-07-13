@@ -15,11 +15,14 @@ import 'player_game_state.dart';
 import 'game_format.dart';
 import 'lobby_state.dart';
 
-/// XP award constants.
+/// XP award constants (competitive multiplayer matches only).
 const int kXpParticipate = 50;
 const int kXpWin = 100;
 const int kXpFirstWin = 75;
 const int kXpPerLike = 5;
+
+/// True when the session has real opponents (not solo / practice).
+bool matchAwardsProgression(GameState state) => state.players.length >= 2;
 
 class ProgressResult {
   final String matchId;
@@ -28,12 +31,16 @@ class ProgressResult {
   final int newLevel;
   final List<String> newAchievementIds;
 
+  /// False for solo/practice — no XP or ranked profile updates.
+  final bool awardsProgression;
+
   const ProgressResult({
     required this.matchId,
     required this.xpGained,
     required this.oldLevel,
     required this.newLevel,
     required this.newAchievementIds,
+    this.awardsProgression = true,
   });
 
   bool get leveledUp => newLevel > oldLevel;
@@ -74,7 +81,25 @@ class ProgressionService {
           xpGained: 0,
           oldLevel: 1,
           newLevel: 1,
-          newAchievementIds: []);
+          newAchievementIds: [],
+          awardsProgression: false);
+    }
+
+    final awardsProgression = matchAwardsProgression(finalState);
+    if (!awardsProgression) {
+      // Solo / practice: no XP, no profile history, no ranked stats.
+      final deckId = local.selectedDeckId;
+      if (deckId != null && deckId.isNotEmpty) {
+        await _backfillDeckCommanderArt(deckId, local);
+      }
+      return ProgressResult(
+        matchId: '',
+        xpGained: 0,
+        oldLevel: profile.level,
+        newLevel: profile.level,
+        newAchievementIds: const [],
+        awardsProgression: false,
+      );
     }
 
     final resolvedMatchId =
@@ -96,7 +121,7 @@ class ProgressionService {
     final oldLevel = profile.level;
 
     // ── Calculate XP ──────────────────────────────────────────────────────
-    int xp = kXpParticipate;
+    var xp = kXpParticipate;
     if (won) {
       xp += kXpWin;
       if (profile.totalWins == 0) xp += kXpFirstWin;
@@ -160,7 +185,7 @@ class ProgressionService {
       localDeckIdSnapshot: local.selectedDeckId,
     ));
 
-    // ── Update profile via repository ─────────────────────────────────────
+    // ── Update profile / deck / achievements ──────────────────────────────
     await _profileRepo.recordMatchResult(
       commanderName: local.commanderName ?? 'Unknown',
       won: won,
@@ -176,10 +201,8 @@ class ProgressionService {
       }
     }
 
-    // ── Check achievements ────────────────────────────────────────────────
     final updatedProfile = _profileRepo.getProfile()!;
     final newAchievements = await _checkAchievements(updatedProfile, won);
-
     final newLevel = updatedProfile.level;
 
     return ProgressResult(

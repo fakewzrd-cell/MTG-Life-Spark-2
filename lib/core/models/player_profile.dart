@@ -76,7 +76,7 @@ class PlayerProfile extends HiveObject {
   @HiveField(22)
   String? profileBannerImageUrl;
 
-  /// User-picked optional stat carousel cards (see [ProfileOptionalStatIds]).
+  /// Legacy optional-stat IDs (unused — all player-stat cards are always shown).
   @HiveField(23, defaultValue: <String>[])
   List<String> profileExtraStatIds;
 

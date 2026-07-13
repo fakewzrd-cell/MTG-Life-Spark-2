@@ -102,9 +102,10 @@ class GameBottomBar extends ConsumerWidget {
                 Expanded(
                   child: Center(
                     child: _GameBarButton(
-                      icon:
-                          game.timeoutActive ? Icons.play_arrow : Icons.timer,
-                      label: game.timeoutActive ? 'Resume' : 'Timeout',
+                      icon: game.timeoutActive
+                          ? Icons.timer_off_outlined
+                          : Icons.timer,
+                      label: game.timeoutActive ? 'End' : 'Timeout',
                       iconSize: iconSize,
                       compact: compact,
                       onTap: () {

@@ -4,13 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/game/game_providers.dart';
 import '../../../core/game/game_state.dart';
 import '../../../core/game/player_game_state.dart';
+import '../../../shared/utils/game_haptics.dart';
 import '../../../shared/widgets/game_icon.dart';
-import 'game_colors.dart';
-import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/color_tokens.dart';
+import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
-import 'game_modal_chrome.dart';
+import '../../../ui/tokens/opacity_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
+import 'game_colors.dart';
+import 'game_modal_chrome.dart';
 
 /// Matches gameplay dial / counter glyph tint on the strip.
 Color politicsIconTone(BuildContext context) =>
@@ -23,7 +25,194 @@ String overviewShortPlayerName(String name, {int maxChars = 9}) {
   return '${trimmed.substring(0, maxChars - 1)}…';
 }
 
-/// Monarch, Initiative, and Day/Night controls for the overview board.
+/// Opens Monarch / Initiative / Day-Night assignment controls.
+Future<void> showTablePoliticsSheet(BuildContext context) {
+  return showGameBottomSheet<void>(
+    context: context,
+    builder: (_) => const _TablePoliticsSheet(),
+  );
+}
+
+/// One-line politics status under Now Playing — tap to assign.
+class TablePoliticsStatusLine extends StatelessWidget {
+  const TablePoliticsStatusLine({super.key, required this.game});
+
+  final GameState game;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.gameColors;
+    final segments = _statusSegments(game);
+    final hasActive = game.monarchPlayerId != null ||
+        game.initiativePlayerId != null ||
+        game.dayNight != DayNightState.none;
+
+    return Semantics(
+      button: true,
+      label: 'Table politics. Tap to assign.',
+      child: Material(
+        color: colors.backgroundSecondary.withValues(alpha: OpacityTokens.soft),
+        borderRadius: RadiusTokens.radiusControlSm,
+        child: InkWell(
+          onTap: () {
+            context.gameHapticSelection();
+            showTablePoliticsSheet(context);
+          },
+          borderRadius: RadiusTokens.radiusControlSm,
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: LayoutTokens.gr2,
+              vertical: LayoutTokens.gr1 + 2,
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.public,
+                  size: LayoutTokens.gr3,
+                  color: hasActive ? colors.emphasis : colors.textSecondary,
+                ),
+                SizedBox(width: LayoutTokens.gr1),
+                Expanded(
+                  child: segments.isEmpty
+                      ? Text(
+                          'No monarch · No initiative · —',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: colors.textSecondary,
+                            fontSize: FontTokens.hudXs,
+                            fontWeight: FontWeight.w600,
+                            height: 1.2,
+                          ),
+                        )
+                      : Wrap(
+                          spacing: LayoutTokens.gr1,
+                          runSpacing: LayoutTokens.gr0,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            for (var i = 0; i < segments.length; i++) ...[
+                              if (i > 0)
+                                Text(
+                                  '·',
+                                  style: TextStyle(
+                                    color: colors.textSecondary
+                                        .withValues(alpha: 0.55),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              segments[i],
+                            ],
+                          ],
+                        ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: LayoutTokens.gr3,
+                  color: colors.textSecondary,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _statusSegments(GameState game) {
+    final segments = <Widget>[];
+
+    final monarch = game.monarchPlayerId != null
+        ? game.playerById(game.monarchPlayerId!)
+        : null;
+    if (monarch != null) {
+      segments.add(
+        _StatusSegment(
+          iconBuilder: (c) => GameIcon.monarch(size: 13, color: c),
+          label: overviewShortPlayerName(monarch.username, maxChars: 8),
+        ),
+      );
+    }
+
+    final initiative = game.initiativePlayerId != null
+        ? game.playerById(game.initiativePlayerId!)
+        : null;
+    if (initiative != null) {
+      segments.add(
+        _StatusSegment(
+          iconBuilder: (c) => GameIcon.initiative(size: 13, color: c),
+          label: overviewShortPlayerName(initiative.username, maxChars: 8),
+        ),
+      );
+    }
+
+    if (game.dayNight != DayNightState.none) {
+      final isDay = game.dayNight == DayNightState.day;
+      segments.add(
+        _StatusSegment(
+          iconBuilder: (c) => isDay
+              ? GameIcon.day(size: 13, color: c)
+              : GameIcon.night(size: 13, color: c),
+          label: isDay ? 'Day' : 'Night',
+        ),
+      );
+    }
+
+    return segments;
+  }
+}
+
+class _StatusSegment extends StatelessWidget {
+  const _StatusSegment({
+    required this.iconBuilder,
+    required this.label,
+  });
+
+  final Widget Function(Color color) iconBuilder;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.gameColors;
+    final tone = colors.emphasis;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        iconBuilder(tone),
+        SizedBox(width: LayoutTokens.gr0 - 1),
+        Text(
+          label,
+          style: TextStyle(
+            color: tone,
+            fontSize: FontTokens.hudXs,
+            fontWeight: FontWeight.w700,
+            height: 1.15,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TablePoliticsSheet extends ConsumerWidget {
+  const _TablePoliticsSheet();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final game = ref.watch(gameProvider);
+    return GameSheetBody(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const GameSheetHeader(title: 'Assign table politics'),
+          PoliticalRowWidget(game: game),
+        ],
+      ),
+    );
+  }
+}
+
+/// Monarch, Initiative, and Day/Night assign controls (sheet body).
 class PoliticalRowWidget extends ConsumerWidget {
   final GameState game;
 
@@ -34,114 +223,63 @@ class PoliticalRowWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.gameColors;
     final notifier = ref.read(gameProvider.notifier);
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colors.emphasis.withValues(alpha: 0.14),
-            colors.surface,
-          ],
-        ),
-        borderRadius: RadiusTokens.radiusMd,
-        border: Border.all(
-          color: colors.emphasis.withValues(alpha: 0.45),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: colors.emphasis.withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(LayoutTokens.gr3),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.public, color: colors.emphasis, size: 18),
-                SizedBox(width: LayoutTokens.gr1),
-                Expanded(
-                  child: Text(
-                    'Table politics',
-                    style: TextStyle(
-                      color: colors.textPrimary,
-                      fontSize: FontTokens.hudSm,
-                      fontWeight: FontWeight.w800,
-                      height: 1.2,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: LayoutTokens.gr2),
-            IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: _PoliticalBadge(
-                      label: 'Monarch',
-                      headerIcon: GameIcon.monarch(
-                        size: 16,
-                        color: politicsIconTone(context),
-                      ),
-                      holderId: game.monarchPlayerId,
-                      players: game.players,
-                      canAssign: true,
-                      onTap: () => _showAssignPicker(
-                        context,
-                        ref,
-                        'Assign Monarch',
-                        game.monarchPlayerId,
-                        (pid) => notifier.setMonarch(pid),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: LayoutTokens.gr1),
-                  Expanded(
-                    child: _PoliticalBadge(
-                      label: 'Initiative',
-                      headerIcon: GameIcon.initiative(
-                        size: 16,
-                        color: politicsIconTone(context),
-                      ),
-                      holderId: game.initiativePlayerId,
-                      players: game.players,
-                      canAssign: true,
-                      onTap: () => _showAssignPicker(
-                        context,
-                        ref,
-                        'Assign Initiative',
-                        game.initiativePlayerId,
-                        (pid) => notifier.setInitiative(pid),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: LayoutTokens.gr1),
-                  Expanded(
-                    child: _DayNightToggle(
-                      dayNight: game.dayNight,
-                      isHost: true,
-                      onTap: () {
-                        final next = _nextDayNight(game.dayNight);
-                        notifier.setDayNight(next);
-                      },
-                    ),
-                  ),
-                ],
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: _PoliticalBadge(
+              label: 'Monarch',
+              headerIcon: GameIcon.monarch(
+                size: 16,
+                color: politicsIconTone(context),
+              ),
+              holderId: game.monarchPlayerId,
+              players: game.players,
+              canAssign: true,
+              onTap: () => _showAssignPicker(
+                context,
+                ref,
+                'Assign Monarch',
+                game.monarchPlayerId,
+                (pid) => notifier.setMonarch(pid),
               ),
             ),
-          ],
-        ),
+          ),
+          SizedBox(width: LayoutTokens.gr1),
+          Expanded(
+            child: _PoliticalBadge(
+              label: 'Initiative',
+              headerIcon: GameIcon.initiative(
+                size: 16,
+                color: politicsIconTone(context),
+              ),
+              holderId: game.initiativePlayerId,
+              players: game.players,
+              canAssign: true,
+              onTap: () => _showAssignPicker(
+                context,
+                ref,
+                'Assign Initiative',
+                game.initiativePlayerId,
+                (pid) => notifier.setInitiative(pid),
+              ),
+            ),
+          ),
+          SizedBox(width: LayoutTokens.gr1),
+          Expanded(
+            child: _DayNightToggle(
+              dayNight: game.dayNight,
+              isHost: true,
+              onTap: () {
+                final next = _nextDayNight(game.dayNight);
+                notifier.setDayNight(next);
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -256,9 +394,9 @@ class _DayNightToggle extends StatelessWidget {
       DayNightState.day => GameIcon.day(size: 16, color: iconTone),
       DayNightState.night => GameIcon.night(size: 16, color: iconTone),
       DayNightState.none => GameIcon.day(
-        size: 16,
-        color: iconTone.withValues(alpha: 0.45),
-      ),
+          size: 16,
+          color: iconTone.withValues(alpha: 0.45),
+        ),
     };
 
     return Column(
@@ -274,7 +412,8 @@ class _DayNightToggle extends StatelessWidget {
             fillColor: isActive
                 ? color.withValues(alpha: 0.88)
                 : colors.backgroundSecondary.withValues(alpha: 0.9),
-            foregroundColor: isActive ? colors.backgroundPrimary : colors.textSecondary,
+            foregroundColor:
+                isActive ? colors.backgroundPrimary : colors.textSecondary,
             value: valueLabel,
           ),
         ),
@@ -349,9 +488,9 @@ class _OverviewFilledMarkerButton extends StatelessWidget {
         ),
         backgroundColor: fillColor,
         foregroundColor: foregroundColor,
-        disabledBackgroundColor: colors.backgroundSecondary.withValues(alpha: 0.6),
-        disabledForegroundColor:
-            colors.textSecondary.withValues(alpha: 0.5),
+        disabledBackgroundColor:
+            colors.backgroundSecondary.withValues(alpha: 0.6),
+        disabledForegroundColor: colors.textSecondary.withValues(alpha: 0.5),
         elevation: filled ? 1 : 0,
         shape: RoundedRectangleBorder(
           borderRadius: RadiusTokens.radiusControlMd,
@@ -430,9 +569,7 @@ class _PlayerPickerSheet extends StatelessWidget {
                   backgroundColor: p.playerColor,
                   radius: 14,
                   child: Text(
-                    p.username.isNotEmpty
-                        ? p.username[0].toUpperCase()
-                        : '?',
+                    p.username.isNotEmpty ? p.username[0].toUpperCase() : '?',
                     style: TextStyle(
                       color: ColorTokens.onAccent,
                       fontSize: FontTokens.caption,

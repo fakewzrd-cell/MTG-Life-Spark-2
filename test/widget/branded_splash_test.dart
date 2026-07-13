@@ -23,7 +23,10 @@ void main() {
       ),
     );
 
+    // Minimum one spin cycle before reveal is allowed to start.
     await tester.pump();
+    await tester.pump(BrandedSplash.spinCycle);
+    // Reveal fade (900ms) + hold (850ms).
     await tester.pump(const Duration(milliseconds: 1000));
     await tester.pump(const Duration(milliseconds: 1000));
 

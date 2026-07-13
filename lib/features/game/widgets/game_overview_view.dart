@@ -20,6 +20,7 @@ import 'game_timeout_widgets.dart';
 import 'overview_commander_art_backdrop.dart';
 import 'political_row_widget.dart';
 import 'team_colors.dart';
+import '../../../shared/utils/game_haptics.dart';
 import '../../../shared/widgets/game_icon.dart';
 
 /// Short label for an elimination reason (compact eliminated row).
@@ -34,18 +35,11 @@ String? eliminationReasonShortLabel(String? reason) => switch (reason) {
 
 // ── Overview View ─────────────────────────────────────────────────────────
 
-class GameOverviewView extends ConsumerStatefulWidget {
+class GameOverviewView extends ConsumerWidget {
   final GameState game;
   final VoidCallback onClose;
 
   const GameOverviewView({super.key, required this.game, required this.onClose});
-
-  @override
-  ConsumerState<GameOverviewView> createState() => _GameOverviewViewState();
-}
-
-class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
-  bool _politicsExpanded = false;
 
   Widget _rowFor(PlayerGameState p, GameState game) {
     return p.isEliminated
@@ -55,7 +49,7 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
 
   /// Groups by team when any team is assigned; otherwise a flat roster.
   /// Unassigned players (team 0) render as their own trailing group.
-  List<Widget> _buildPlayerListChildren(GameState game) {
+  List<Widget> _buildPlayerListChildren(BuildContext context, GameState game) {
     final colors = context.gameColors;
     final assignments = game.teamAssignments;
     final hasTeams = assignments.values.any((t) => t > 0);
@@ -85,9 +79,7 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final game = widget.game;
-    final onClose = widget.onClose;
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.gameColors;
     final notifier = ref.read(gameProvider.notifier);
     final aliveCount = game.activePlayers.length;
@@ -215,6 +207,18 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
               ],
             ),
 
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  pageInset,
+                  LayoutTokens.gr2,
+                  pageInset,
+                  0,
+                ),
+                child: TablePoliticsStatusLine(game: game),
+              ),
+            ),
+
             if (activePlayer != null)
               SliverToBoxAdapter(
                 child: Padding(
@@ -230,32 +234,6 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
                   ),
                 ),
               ),
-
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  pageInset,
-                  LayoutTokens.gr2,
-                  pageInset,
-                  _politicsExpanded ? LayoutTokens.gr2 : 0,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _PoliticsToggleButton(
-                      game: game,
-                      expanded: _politicsExpanded,
-                      onPressed: () =>
-                          setState(() => _politicsExpanded = !_politicsExpanded),
-                    ),
-                    if (_politicsExpanded) ...[
-                      SizedBox(height: LayoutTokens.gr2),
-                      PoliticalRowWidget(game: game),
-                    ],
-                  ],
-                ),
-              ),
-            ),
 
             if (game.timeoutActive)
               SliverToBoxAdapter(
@@ -327,177 +305,12 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
               ),
               sliver: SliverList(
                 delegate: SliverChildListDelegate(
-                  _buildPlayerListChildren(game),
+                  _buildPlayerListChildren(context, game),
                 ),
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _PoliticsToggleButton extends StatelessWidget {
-  const _PoliticsToggleButton({
-    required this.game,
-    required this.expanded,
-    required this.onPressed,
-  });
-
-  final GameState game;
-  final bool expanded;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.gameColors;
-    final showPeek = !expanded && _hasActivePolitics(game);
-
-    return Semantics(
-      button: true,
-      expanded: expanded,
-      label: expanded ? 'Hide table politics' : 'Show table politics',
-      child: Material(
-        color: colors.backgroundSecondary.withValues(alpha: OpacityTokens.soft),
-        borderRadius: RadiusTokens.radiusControlSm,
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: RadiusTokens.radiusControlSm,
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: LayoutTokens.gr2,
-              vertical: LayoutTokens.gr1,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.public,
-                      size: LayoutTokens.gr3,
-                      color: colors.emphasis,
-                    ),
-                    SizedBox(width: LayoutTokens.gr1),
-                    Expanded(
-                      child: Text(
-                        'Table politics',
-                        style: TextStyle(
-                          color: colors.textPrimary,
-                          fontSize: FontTokens.caption,
-                          fontWeight: FontWeight.w700,
-                          height: 1.2,
-                        ),
-                      ),
-                    ),
-                    Icon(
-                      expanded ? Icons.expand_less : Icons.expand_more,
-                      size: LayoutTokens.gr3,
-                      color: colors.textSecondary,
-                    ),
-                  ],
-                ),
-                if (showPeek) ...[
-                  SizedBox(height: LayoutTokens.gr1),
-                  _PoliticsPeekSummary(game: game),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  static bool _hasActivePolitics(GameState game) =>
-      game.monarchPlayerId != null ||
-      game.initiativePlayerId != null ||
-      game.dayNight != DayNightState.none;
-}
-
-/// Compact "who has what" chips shown when the politics panel is collapsed.
-class _PoliticsPeekSummary extends StatelessWidget {
-  const _PoliticsPeekSummary({required this.game});
-
-  final GameState game;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.gameColors;
-    final chips = <Widget>[];
-
-    final monarch = game.monarchPlayerId != null
-        ? game.playerById(game.monarchPlayerId!)
-        : null;
-    if (monarch != null) {
-      chips.add(_chip(
-        context: context,
-        icon: GameIcon.monarch(size: 13, color: colors.emphasis),
-        label: overviewShortPlayerName(monarch.username, maxChars: 7),
-      ));
-    }
-
-    final initiative = game.initiativePlayerId != null
-        ? game.playerById(game.initiativePlayerId!)
-        : null;
-    if (initiative != null) {
-      chips.add(_chip(
-        context: context,
-        icon: GameIcon.initiative(size: 13, color: colors.emphasis),
-        label: overviewShortPlayerName(initiative.username, maxChars: 7),
-      ));
-    }
-
-    if (game.dayNight != DayNightState.none) {
-      final isDay = game.dayNight == DayNightState.day;
-      chips.add(_chip(
-        context: context,
-        icon: isDay
-            ? GameIcon.day(size: 13, color: colors.emphasis)
-            : GameIcon.night(size: 13, color: colors.emphasis),
-        label: isDay ? 'Day' : 'Night',
-      ));
-    }
-
-    if (chips.isEmpty) return const SizedBox.shrink();
-
-    return Wrap(
-      spacing: LayoutTokens.gr1,
-      runSpacing: LayoutTokens.gr0,
-      children: chips,
-    );
-  }
-
-  Widget _chip({
-    required BuildContext context,
-    required Widget icon,
-    required String label,
-  }) {
-    final colors = context.gameColors;
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: LayoutTokens.gr1,
-        vertical: LayoutTokens.gr0 - 1,
-      ),
-      decoration: BoxDecoration(
-        color: colors.emphasis.withValues(alpha: 0.12),
-        borderRadius: RadiusTokens.radiusControlSm,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          icon,
-          SizedBox(width: LayoutTokens.gr0 - 1),
-          Text(
-            label,
-            style: TextStyle(
-              color: colors.emphasis,
-              fontSize: FontTokens.hudXs,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -868,48 +681,134 @@ class _GameOverviewLifeBadge extends StatelessWidget {
   }
 }
 
-class _GameOverviewStatusChip extends StatelessWidget {
-  const _GameOverviewStatusChip({
-    required this.label,
+/// Compact − / life / + for Table roster — host can edit anyone; others only self.
+class _GameOverviewLifeStepper extends StatelessWidget {
+  const _GameOverviewLifeStepper({
+    required this.life,
     required this.isActive,
     required this.accent,
+    required this.enabled,
+    required this.onDelta,
   });
 
-  final String label;
+  final int life;
   final bool isActive;
   final Color accent;
+  final bool enabled;
+  final void Function(int delta) onDelta;
+
+  Color get _textColor {
+    if (life <= 5) return ColorTokens.danger;
+    if (life <= 10) return ColorTokens.emphasis;
+    return ColorTokens.textPrimary;
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
-    return Container(
-      constraints: const BoxConstraints(
-        minHeight: LayoutTokens.minTapTarget,
-        minWidth: LayoutTokens.minTapTarget,
-      ),
-      padding: EdgeInsets.symmetric(
-        horizontal: LayoutTokens.gr1,
-        vertical: LayoutTokens.gr0,
-      ),
+    return DecoratedBox(
       decoration: BoxDecoration(
         color: isActive
-            ? accent.withValues(alpha: OpacityTokens.soft)
+            ? accent.withValues(alpha: OpacityTokens.subtle)
             : colors.backgroundSecondary.withValues(alpha: OpacityTokens.half),
         borderRadius: RadiusTokens.radiusControlSm,
         border: Border.all(
           color: isActive
-              ? accent.withValues(alpha: OpacityTokens.half)
+              ? accent.withValues(alpha: OpacityTokens.moderate)
               : colors.textSecondary.withValues(alpha: OpacityTokens.soft),
         ),
       ),
-      alignment: Alignment.center,
-      child: Text(
-        label,
-        style: TextStyle(
-          color: isActive ? accent : colors.textSecondary,
-          fontSize: FontTokens.hudSm,
-          fontWeight: FontWeight.w700,
-          height: 1,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _LifeStepButton(
+            icon: Icons.remove_rounded,
+            enabled: enabled,
+            semanticLabel: 'Decrease life',
+            onTap: enabled
+                ? () {
+                    context.gameHapticLight();
+                    onDelta(-1);
+                  }
+                : null,
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.favorite_rounded,
+                  size: 16,
+                  color: _textColor.withValues(alpha: OpacityTokens.nearOpaque),
+                ),
+                SizedBox(width: LayoutTokens.gr0 - 1),
+                Text(
+                  '$life',
+                  style: TextStyle(
+                    color: _textColor,
+                    fontWeight: FontWeight.w800,
+                    fontSize: FontTokens.body,
+                    height: 1,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _LifeStepButton(
+            icon: Icons.add_rounded,
+            enabled: enabled,
+            semanticLabel: 'Increase life',
+            onTap: enabled
+                ? () {
+                    context.gameHapticLight();
+                    onDelta(1);
+                  }
+                : null,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LifeStepButton extends StatelessWidget {
+  const _LifeStepButton({
+    required this.icon,
+    required this.enabled,
+    required this.semanticLabel,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final bool enabled;
+  final String semanticLabel;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.gameColors;
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: semanticLabel,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: RadiusTokens.radiusControlSm,
+          child: SizedBox(
+            width: LayoutTokens.minTapTarget,
+            height: LayoutTokens.minTapTarget,
+            child: Icon(
+              icon,
+              size: 20,
+              color: enabled
+                  ? colors.textPrimary
+                  : colors.textSecondary.withValues(alpha: 0.4),
+            ),
+          ),
         ),
       ),
     );
@@ -957,6 +856,62 @@ class _GameOverviewCommanderTaxChip extends StatelessWidget {
   }
 }
 
+/// Compact monarch / initiative markers on a player card.
+class _PlayerPoliticsBadges extends StatelessWidget {
+  const _PlayerPoliticsBadges({
+    required this.isMonarch,
+    required this.hasInitiative,
+  });
+
+  final bool isMonarch;
+  final bool hasInitiative;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.gameColors;
+    final tone = politicsIconTone(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (isMonarch)
+          _badge(
+            colors: colors,
+            child: GameIcon.monarch(size: 14, color: tone),
+            semanticsLabel: 'Monarch',
+          ),
+        if (isMonarch && hasInitiative) SizedBox(width: LayoutTokens.gr0),
+        if (hasInitiative)
+          _badge(
+            colors: colors,
+            child: GameIcon.initiative(size: 14, color: tone),
+            semanticsLabel: 'Initiative',
+          ),
+      ],
+    );
+  }
+
+  Widget _badge({
+    required AppColorTokens colors,
+    required Widget child,
+    required String semanticsLabel,
+  }) {
+    return Semantics(
+      label: semanticsLabel,
+      child: Container(
+        padding: EdgeInsets.all(LayoutTokens.gr0),
+        decoration: BoxDecoration(
+          color: colors.emphasis.withValues(alpha: OpacityTokens.soft),
+          borderRadius: RadiusTokens.radiusControlSm,
+          border: Border.all(
+            color: colors.emphasis.withValues(alpha: OpacityTokens.moderate),
+          ),
+        ),
+        child: child,
+      ),
+    );
+  }
+}
+
 class _GameOverviewPlayerCard extends ConsumerWidget {
   final PlayerGameState p;
   final GameState game;
@@ -984,9 +939,6 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
       );
     }
 
-    final statusLabel = isActive
-        ? game.currentPhase.streamlinedShortLabel
-        : 'Waiting';
     final myAlliance =
         local != null ? game.allianceFor(local.playerId) : null;
     final hasAllianceMenu = game.alliancesEnabled &&
@@ -997,6 +949,8 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                 (isLocal || myAlliance.involves(p.playerId))));
     final showMenu =
         !p.isEliminated && local != null && (isLocal || hasAllianceMenu);
+    final canEditLife = !p.isEliminated &&
+        (game.isHost || p.playerId == game.localPlayerId);
 
     Widget card = AnimatedContainer(
       duration: MotionTokens.slow,
@@ -1050,20 +1004,6 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                       children: [
                         Row(
                           children: [
-                            if (isMonarch) ...[
-                              GameIcon.monarch(
-                                size: LayoutTokens.gr3,
-                                color: politicsIconTone(context),
-                              ),
-                              SizedBox(width: LayoutTokens.gr0),
-                            ],
-                            if (hasInit) ...[
-                              GameIcon.initiative(
-                                size: LayoutTokens.gr3,
-                                color: politicsIconTone(context),
-                              ),
-                              SizedBox(width: LayoutTokens.gr0),
-                            ],
                             Expanded(
                               child: Text.rich(
                                 TextSpan(
@@ -1095,6 +1035,13 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
+                            if (isMonarch || hasInit) ...[
+                              SizedBox(width: LayoutTokens.gr1),
+                              _PlayerPoliticsBadges(
+                                isMonarch: isMonarch,
+                                hasInitiative: hasInit,
+                              ),
+                            ],
                           ],
                         ),
                         OverviewPlayerMarkerBadges(
@@ -1123,24 +1070,26 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      if (!p.isEliminated) ...[
-                        _GameOverviewStatusChip(
-                          label: statusLabel,
-                          isActive: isActive,
-                          accent: borderColor,
-                        ),
-                        SizedBox(width: LayoutTokens.gr1),
-                      ],
                       if (p.commanderCastCount > 0) ...[
                         _GameOverviewCommanderTaxChip(tax: p.commanderTax),
                         SizedBox(width: LayoutTokens.gr1),
                       ],
-                      _GameOverviewLifeBadge(
-                        life: p.life,
-                        eliminated: p.isEliminated,
-                        isActive: isActive,
-                        accent: borderColor,
-                      ),
+                      if (p.isEliminated)
+                        _GameOverviewLifeBadge(
+                          life: p.life,
+                          eliminated: true,
+                          isActive: false,
+                          accent: borderColor,
+                        )
+                      else
+                        _GameOverviewLifeStepper(
+                          life: p.life,
+                          isActive: isActive,
+                          accent: borderColor,
+                          enabled: canEditLife,
+                          onDelta: (delta) =>
+                              notifier.adjustLife(p.playerId, delta),
+                        ),
                       if (showMenu) ...[
                         SizedBox(width: LayoutTokens.gr0),
                         PopupMenuButton<String>(

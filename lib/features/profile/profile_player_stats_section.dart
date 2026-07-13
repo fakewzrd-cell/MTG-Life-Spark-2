@@ -8,7 +8,6 @@ import '../../core/models/commander_stats.dart';
 import '../../core/models/player_deck.dart';
 import '../../core/models/player_profile.dart';
 import '../../core/persistence/providers.dart';
-import 'profile_optional_stat_ids.dart';
 import '../../shared/utils/commander_image_resolver.dart';
 import '../../shared/widgets/profile_default_banner.dart';
 import '../../ui/theme/app_color_tokens.dart';
@@ -17,7 +16,6 @@ import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/motion_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import '../../ui/tokens/typography_tokens.dart';
-import '../game/widgets/game_modal_chrome.dart';
 import 'profile_carousel_sections.dart';
 
 const String _kProfileUntilFirstGameMessage =
@@ -116,37 +114,24 @@ class _AnimatedXpInLevelLabelState extends State<_AnimatedXpInLevelLabel>
   }
 }
 
-/// Highest-volume commander from hive stats with deck art when possible.
 /// Fixed-size carousel card for the player stats horizontal shelf.
 class _PlayerStatsCarouselTile extends StatelessWidget {
   const _PlayerStatsCarouselTile({
     required this.width,
     required this.height,
     required this.child,
-    this.onLongPress,
-    this.semanticsHint,
   });
 
   final double width;
   final double height;
   final Widget child;
-  final VoidCallback? onLongPress;
-  final String? semanticsHint;
 
   @override
   Widget build(BuildContext context) {
-    Widget card = SizedBox(
+    return SizedBox(
       width: width,
       height: height,
       child: ProfileCarouselCard(child: child),
-    );
-    if (onLongPress == null) return card;
-    return Semantics(
-      hint: semanticsHint,
-      child: GestureDetector(
-        onLongPress: onLongPress,
-        child: card,
-      ),
     );
   }
 }
@@ -236,18 +221,6 @@ class ProfilePlayerStatsSection extends ConsumerWidget {
 
     final worst = hasPlayedGames ? _pickWorstDeck(repoDecks) : null;
 
-    final seenExtra = <String>{};
-    final extraStatIds = <String>[];
-    for (final id in profile.profileExtraStatIds) {
-      if (ProfileOptionalStatIds.isKnown(id) && seenExtra.add(id)) {
-        extraStatIds.add(id);
-      }
-    }
-    final addableStatIds =
-        ProfileOptionalStatIds.catalog
-            .where((id) => !seenExtra.contains(id))
-            .toList();
-
     final titleStyle = TypographyTokens.sectionTitle(colors.textPrimary);
 
     return LayoutBuilder(
@@ -280,49 +253,34 @@ class ProfilePlayerStatsSection extends ConsumerWidget {
               fillHeight: true,
             ),
           ),
-          for (final statId in extraStatIds)
-            _PlayerStatsCarouselTile(
-              width: cardWidth,
-              height: cardHeight,
-              semanticsHint: 'Long press to remove',
-              onLongPress: () => _confirmRemoveOptionalStat(
-                context,
-                ref,
-                profile,
-                statId,
-              ),
-              child: _optionalStatTile(
-                statId: statId,
-                hasPlayedGames: hasPlayedGames,
-                profile: profile,
-                colors: colors,
-                top: top,
-                worst: worst,
-              ),
+          _PlayerStatsCarouselTile(
+            width: cardWidth,
+            height: cardHeight,
+            child: _mostPlayedTile(
+              hasPlayedGames: hasPlayedGames,
+              profile: profile,
+              colors: colors,
+              top: top,
             ),
-          if (addableStatIds.isNotEmpty)
-            SizedBox(
-              width: cardWidth,
-              height: cardHeight,
-              child: ProfileCarouselCard(
-                padding: EdgeInsets.zero,
-                affordance: true,
-                child: ProfileCarouselAddCard(
-                  colors: colors,
-                  semanticsLabel: 'Add stat card',
-                  onTap:
-                      () => _showAddStatPicker(
-                        context,
-                        ref,
-                        profile,
-                        addableStatIds,
-                      ),
-                ),
-              ),
-            ),
+          ),
+          _PlayerStatsCarouselTile(
+            width: cardWidth,
+            height: cardHeight,
+            child: hasPlayedGames && worst != null
+                ? _WorstDeckCard(
+                    profile: profile,
+                    colors: colors,
+                    deck: worst,
+                  )
+                : _PlayerStatsEmptyCard(
+                    title: 'Tough record',
+                    colors: colors,
+                    message: hasPlayedGames
+                        ? 'No deck stats yet.'
+                        : _kProfileUntilFirstGameMessage,
+                  ),
+          ),
         ];
-
-        final statCount = 2 + extraStatIds.length;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -331,7 +289,7 @@ class ProfilePlayerStatsSection extends ConsumerWidget {
               title: 'Player stats',
               titleStyle: titleStyle,
               colors: colors,
-              count: statCount,
+              count: tiles.length,
               singularUnit: 'stat',
               pluralUnit: 'stats',
             ),
@@ -355,137 +313,6 @@ class ProfilePlayerStatsSection extends ConsumerWidget {
       },
     );
   }
-}
-
-Widget _optionalStatTile({
-  required String statId,
-  required bool hasPlayedGames,
-  required PlayerProfile profile,
-  required AppColorTokens colors,
-  required CommanderStats? top,
-  required PlayerDeck? worst,
-}) {
-  switch (statId) {
-    case ProfileOptionalStatIds.mostPlayed:
-      return _mostPlayedTile(
-        hasPlayedGames: hasPlayedGames,
-        profile: profile,
-        colors: colors,
-        top: top,
-      );
-    case ProfileOptionalStatIds.toughRecord:
-      return hasPlayedGames && worst != null
-          ? _WorstDeckCard(
-            profile: profile,
-            colors: colors,
-            deck: worst,
-          )
-          : _PlayerStatsEmptyCard(
-            title: 'Tough record',
-            colors: colors,
-            message:
-                hasPlayedGames
-                    ? 'No deck stats yet.'
-                    : _kProfileUntilFirstGameMessage,
-          );
-    default:
-      return const SizedBox.shrink();
-  }
-}
-
-Future<void> _confirmRemoveOptionalStat(
-  BuildContext context,
-  WidgetRef ref,
-  PlayerProfile profile,
-  String statId,
-) async {
-  final title = ProfileOptionalStatIds.title(statId);
-  final remove = await showGameChoiceDialog(
-    context: context,
-    title: 'Remove $title?',
-    content: Text(
-      'You can add this card again later from the + tile.',
-      style: GameModalChrome.dialogBodyStyle(context),
-    ),
-    primaryLabel: 'Remove',
-    secondaryLabel: 'Cancel',
-    primaryDestructive: true,
-  );
-  if (remove != true) return;
-  profile.profileExtraStatIds = [
-    for (final id in profile.profileExtraStatIds)
-      if (id != statId) id,
-  ];
-  await ref.read(profileRepositoryProvider).saveProfile(profile);
-  bumpProfileRevision(ref);
-}
-
-Future<void> _showAddStatPicker(
-  BuildContext context,
-  WidgetRef ref,
-  PlayerProfile profile,
-  List<String> availableIds,
-) {
-  final colors = AppColorTokens.of(context);
-  return showGameBottomSheet<void>(
-    context: context,
-    builder: (ctx) {
-      return GameSheetBody(
-        scrollable: true,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const GameSheetHeader(title: 'Add stat card'),
-            SizedBox(height: LayoutTokens.gr1),
-            Text(
-              'Choose a card to show in your player stats row.',
-              style: GameModalChrome.dialogBodyStyle(ctx),
-            ),
-            SizedBox(height: LayoutTokens.gr2),
-            for (final id in availableIds) ...[
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(
-                  borderRadius: RadiusTokens.radiusMd,
-                ),
-                title: Text(
-                  ProfileOptionalStatIds.title(id),
-                  style: TextStyle(
-                    color: colors.textPrimary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                subtitle: Text(
-                  ProfileOptionalStatIds.description(id),
-                  style: TextStyle(
-                    color: colors.textSecondary,
-                    height: 1.3,
-                  ),
-                ),
-                trailing: Icon(
-                  Icons.add_circle_outline,
-                  color: colors.primaryAccent,
-                ),
-                onTap: () async {
-                  Navigator.pop(ctx);
-                  profile.profileExtraStatIds = [
-                    ...profile.profileExtraStatIds,
-                    id,
-                  ];
-                  await ref
-                      .read(profileRepositoryProvider)
-                      .saveProfile(profile);
-                  bumpProfileRevision(ref);
-                },
-              ),
-              SizedBox(height: LayoutTokens.gr1),
-            ],
-          ],
-        ),
-      );
-    },
-  );
 }
 
 /// Stats carousel card before match history exists (or no commander/deck data yet).

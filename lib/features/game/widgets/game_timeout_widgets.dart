@@ -16,6 +16,12 @@ class _GameTimeoutPickerSheet extends StatelessWidget {
   final GameStateNotifier notifier;
   const _GameTimeoutPickerSheet({required this.notifier});
 
+  static const _options = <(String, int)>[
+    ('15 seconds', 15),
+    ('30 seconds', 30),
+    ('1 minute', 60),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return GameSheetBody(
@@ -25,32 +31,17 @@ class _GameTimeoutPickerSheet extends StatelessWidget {
         children: [
           const GameSheetHeader(title: 'Start Timeout'),
           SizedBox(height: LayoutTokens.gr3),
-          _GameTimeoutOption(
-            label: '2 minutes',
-            icon: Icons.timer,
-            onTap: () {
-              Navigator.pop(context);
-              notifier.startTimeout(durationSeconds: 120);
-            },
-          ),
-          const SizedBox(height: 8),
-          _GameTimeoutOption(
-            label: '5 minutes',
-            icon: Icons.timer,
-            onTap: () {
-              Navigator.pop(context);
-              notifier.startTimeout(durationSeconds: 300);
-            },
-          ),
-          const SizedBox(height: 8),
-          _GameTimeoutOption(
-            label: 'No timer (manual)',
-            icon: Icons.timer_off,
-            onTap: () {
-              Navigator.pop(context);
-              notifier.startTimeout();
-            },
-          ),
+          for (var i = 0; i < _options.length; i++) ...[
+            if (i > 0) SizedBox(height: LayoutTokens.gr1),
+            _GameTimeoutOption(
+              label: _options[i].$1,
+              icon: Icons.timer,
+              onTap: () {
+                Navigator.pop(context);
+                notifier.startTimeout(durationSeconds: _options[i].$2);
+              },
+            ),
+          ],
         ],
       ),
     );
@@ -83,13 +74,18 @@ class _GameTimeoutOption extends StatelessWidget {
 
 // ── Banners ────────────────────────────────────────────────────────────────
 
-/// Full-screen overlay when timeout is active. Blocks all interaction so
-/// players cannot change life or counters. X button minimizes to small timer.
+/// Full-screen overlay when timeout is active. Blocks life/counter changes.
+/// [onEndTimeout] ends the pause immediately (toggle off).
 class GameTimeoutOverlay extends StatefulWidget {
   final DateTime? startTime;
   final int? durationSeconds;
+  final VoidCallback onEndTimeout;
 
-  const GameTimeoutOverlay({this.startTime, this.durationSeconds});
+  const GameTimeoutOverlay({
+    this.startTime,
+    this.durationSeconds,
+    required this.onEndTimeout,
+  });
 
   @override
   State<GameTimeoutOverlay> createState() => _GameTimeoutOverlayState();
@@ -153,50 +149,77 @@ class _GameTimeoutOverlayState extends State<GameTimeoutOverlay> {
               child: Padding(
                 padding: EdgeInsets.symmetric(
                   horizontal: LayoutTokens.gr3,
-                  vertical: LayoutTokens.gr1,
+                  vertical: LayoutTokens.gr2,
                 ),
                 child: Center(
                   child: Material(
                     color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () => setState(() => _minimized = false),
-                      borderRadius: RadiusTokens.radiusLg,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: LayoutTokens.gr3,
-                          vertical: LayoutTokens.gr1,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: LayoutTokens.gr2,
+                        vertical: LayoutTokens.gr1,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colors.backgroundSecondary.withValues(alpha: 0.95),
+                        borderRadius: RadiusTokens.radiusLg,
+                        border: Border.all(
+                          color: colors.emphasis.withValues(alpha: 0.6),
                         ),
-                        decoration: BoxDecoration(
-                          color: colors.backgroundSecondary.withValues(alpha: 0.95),
-                          borderRadius: RadiusTokens.radiusLg,
-                          border: Border.all(
-                            color: colors.emphasis.withValues(alpha: 0.6),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.timer,
-                              size: 18,
-                              color: colors.emphasis,
-                            ),
-                            SizedBox(width: LayoutTokens.gr1),
-                            Text(
-                              widget.durationSeconds != null
-                                  ? '$_timeStr left — tap to expand'
-                                  : '$_timeStr elapsed — tap to expand',
-                              style: TextStyle(
-                                color: colors.emphasis,
-                                fontSize: FontTokens.body,
-                                fontWeight: FontWeight.w600,
-                                fontFeatures: const [
-                                  FontFeature.tabularFigures(),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          InkWell(
+                            onTap: () => setState(() => _minimized = false),
+                            borderRadius: RadiusTokens.radiusMd,
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: LayoutTokens.gr1,
+                                vertical: LayoutTokens.gr1,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.timer,
+                                    size: 18,
+                                    color: colors.emphasis,
+                                  ),
+                                  SizedBox(width: LayoutTokens.gr1),
+                                  Text(
+                                    widget.durationSeconds != null
+                                        ? '$_timeStr left'
+                                        : _timeStr,
+                                    style: TextStyle(
+                                      color: colors.emphasis,
+                                      fontSize: FontTokens.body,
+                                      fontWeight: FontWeight.w700,
+                                      fontFeatures: const [
+                                        FontFeature.tabularFigures(),
+                                      ],
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                          SizedBox(width: LayoutTokens.gr1),
+                          FilledButton(
+                            onPressed: widget.onEndTimeout,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: colors.emphasis,
+                              foregroundColor: colors.backgroundPrimary,
+                              minimumSize: const Size(
+                                0,
+                                LayoutTokens.minTapTarget,
+                              ),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: LayoutTokens.gr2,
+                              ),
+                            ),
+                            child: const Text('End'),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -278,12 +301,31 @@ class _GameTimeoutOverlayState extends State<GameTimeoutOverlay> {
                           fontFeatures: [FontFeature.tabularFigures()],
                         ),
                       ),
-                      SizedBox(height: LayoutTokens.gr3),
+                      SizedBox(height: LayoutTokens.gr2),
                       Text(
                         'Game paused — no life changes',
                         style: TextStyle(
                           color: colors.textSecondary,
                           fontSize: FontTokens.body,
+                        ),
+                      ),
+                      SizedBox(height: LayoutTokens.gr4),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          onPressed: widget.onEndTimeout,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: colors.emphasis,
+                            foregroundColor: colors.backgroundPrimary,
+                            minimumSize: const Size(
+                              0,
+                              LayoutTokens.minTapTarget,
+                            ),
+                            padding: EdgeInsets.symmetric(
+                              vertical: LayoutTokens.gr2,
+                            ),
+                          ),
+                          child: const Text('End timeout'),
                         ),
                       ),
                     ],
