@@ -7,6 +7,7 @@ import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import '../game/widgets/game_modal_chrome.dart';
+import 'deck_picker_sheet_scaffold.dart';
 
 /// Searchable list of [DeckStyle] values for create/edit deck flows.
 Future<DeckStyle?> showDeckStylePickerSheet(
@@ -57,104 +58,84 @@ class _DeckStylePickerSheetState extends State<_DeckStylePickerSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
-    final maxH = MediaQuery.sizeOf(context).height * 0.72;
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: maxH),
-      child: GameSheetBody(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const GameSheetHeader(title: 'Deck style'),
-            SizedBox(height: LayoutTokens.gr2),
-            TextField(
-              controller: _searchCtrl,
-              scrollPadding: const EdgeInsets.only(bottom: 120),
-              decoration: InputDecoration(
-                hintText: 'Search styles…',
-                prefixIcon: const Icon(Icons.search_rounded),
-                hintStyle: TextStyle(color: colors.textSecondary),
+    return DeckPickerSheetScaffold(
+      title: 'Deck style',
+      searchField: TextField(
+        controller: _searchCtrl,
+        scrollPadding: const EdgeInsets.only(bottom: 120),
+        decoration: InputDecoration(
+          hintText: 'Search styles…',
+          prefixIcon: const Icon(Icons.search_rounded),
+          hintStyle: TextStyle(color: colors.textSecondary),
+        ),
+        style: TextStyle(color: colors.textPrimary),
+        onChanged: (v) => setState(() => _query = v),
+      ),
+      itemCount: _filtered.length,
+      itemBuilder: (context, i) {
+        final style = _filtered[i];
+        final isSelected = widget.initial == style;
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => _pick(style),
+            borderRadius: RadiusTokens.radiusSm,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? colors.primaryAccent.withValues(alpha: 0.12)
+                    : colors.surface,
+                borderRadius: RadiusTokens.radiusSm,
+                border: Border.all(
+                  color: isSelected
+                      ? colors.primaryAccent.withValues(alpha: 0.5)
+                      : colors.borderSubtle.withValues(alpha: 0.35),
+                ),
               ),
-              style: TextStyle(color: colors.textPrimary),
-              onChanged: (v) => setState(() => _query = v),
-            ),
-            SizedBox(height: LayoutTokens.gr2),
-            Flexible(
-              child: ListView.separated(
-                shrinkWrap: true,
-                padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
-                itemCount: _filtered.length,
-                separatorBuilder: (_, _) =>
-                    SizedBox(height: LayoutTokens.gr1),
-                itemBuilder: (context, i) {
-                  final style = _filtered[i];
-                  final isSelected = widget.initial == style;
-                  return Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () => _pick(style),
-                      borderRadius: RadiusTokens.radiusSm,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? colors.primaryAccent.withValues(alpha: 0.12)
-                              : colors.surface,
-                          borderRadius: RadiusTokens.radiusSm,
-                          border: Border.all(
-                            color: isSelected
-                                ? colors.primaryAccent.withValues(alpha: 0.5)
-                                : colors.borderSubtle.withValues(alpha: 0.35),
+              child: Padding(
+                padding: EdgeInsets.all(LayoutTokens.gr2),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            style.displayName,
+                            style: TextStyle(
+                              color: colors.textPrimary,
+                              fontWeight: FontWeight.w700,
+                              fontSize: FontTokens.body,
+                            ),
                           ),
                         ),
-                        child: Padding(
-                          padding: EdgeInsets.all(LayoutTokens.gr2),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      style.displayName,
-                                      style: TextStyle(
-                                        color: colors.textPrimary,
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: FontTokens.body,
-                                      ),
-                                    ),
-                                  ),
-                                  if (isSelected)
-                                    Icon(
-                                      Icons.check_circle_rounded,
-                                      color: colors.primaryAccent,
-                                      size: 20,
-                                    ),
-                                ],
-                              ),
-                              SizedBox(height: LayoutTokens.gr0),
-                              Text(
-                                style.description,
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: colors.textSecondary,
-                                  fontSize: FontTokens.sm,
-                                  height: 1.35,
-                                ),
-                              ),
-                            ],
+                        if (isSelected)
+                          Icon(
+                            Icons.check_circle_rounded,
+                            color: colors.primaryAccent,
+                            size: 20,
                           ),
-                        ),
+                      ],
+                    ),
+                    SizedBox(height: LayoutTokens.gr0),
+                    Text(
+                      style.description,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: colors.textSecondary,
+                        fontSize: FontTokens.sm,
+                        height: 1.35,
                       ),
                     ),
-                  );
-                },
+                  ],
+                ),
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

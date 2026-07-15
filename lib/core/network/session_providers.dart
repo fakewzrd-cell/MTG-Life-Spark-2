@@ -70,12 +70,15 @@ Future<void> startClientSession(WidgetRef ref) async {
 
 /// Tears down the network session and clears in-memory game/lobby state.
 Future<void> endSession(WidgetRef ref) async {
+  // Clear game/lobby first so disconnect events from socket teardown do not
+  // eliminate peers or force end-game on the device that is leaving.
+  ref.read(gameProvider.notifier).reset();
+  ref.read(lobbyProvider.notifier).reset();
+
   final service = ref.read(sessionServiceProvider);
   await service?.dispose();
   ref.read(sessionServiceProvider.notifier).state = null;
   ref.read(sessionRoleProvider.notifier).state = SessionRole.none;
-  ref.read(gameProvider.notifier).reset();
-  ref.read(lobbyProvider.notifier).reset();
 }
 
 /// Alias for leaving an active game or lobby (same as [endSession]).

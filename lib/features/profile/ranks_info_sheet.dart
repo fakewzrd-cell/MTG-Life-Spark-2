@@ -16,7 +16,6 @@ Future<void> showRanksInfoSheet(
   HapticFeedback.selectionClick();
   return showGameBottomSheet<void>(
     context: context,
-    isScrollControlled: true,
     builder: (ctx) => _RanksInfoSheet(currentLevel: currentLevel),
   );
 }
@@ -26,16 +25,22 @@ class _RanksInfoSheet extends StatelessWidget {
 
   final int? currentLevel;
 
+  static const double _maxSheetFraction = 0.78;
+  static const double _chromeReserve = 140;
+
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
-    final maxH = MediaQuery.sizeOf(context).height * 0.78;
+    final maxSheetH = MediaQuery.sizeOf(context).height * _maxSheetFraction;
+    final maxListH =
+        (maxSheetH - _chromeReserve).clamp(160.0, maxSheetH * 0.85);
     final level = currentLevel?.clamp(1, 100);
 
-    return SizedBox(
-      height: maxH,
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxSheetH),
       child: GameSheetBody(
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const GameSheetHeader(
@@ -45,8 +50,10 @@ class _RanksInfoSheet extends StatelessWidget {
                   'current level band. Metal tiers group those ranks.',
             ),
             SizedBox(height: LayoutTokens.gr2),
-            Expanded(
+            LimitedBox(
+              maxHeight: maxListH,
               child: ListView(
+                shrinkWrap: true,
                 children: [
                   for (final tierBand in kWizardTierBands) ...[
                     _TierSectionHeader(

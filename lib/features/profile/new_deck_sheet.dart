@@ -72,12 +72,13 @@ class _NewDeckSheetState extends State<_NewDeckSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
-    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
 
+    // Hug content under Next. Keyboard inset lifts the sheet; do not use a
+    // full-height SingleChildScrollView (that left empty space under Next).
     return Padding(
-      padding: EdgeInsets.only(bottom: bottomInset),
+      padding: EdgeInsets.only(bottom: keyboardInset),
       child: GameSheetBody(
-        scrollable: true,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
@@ -99,7 +100,7 @@ class _NewDeckSheetState extends State<_NewDeckSheet> {
             SizedBox(height: LayoutTokens.gr3),
             TextField(
               controller: _nameCtrl,
-              scrollPadding: const EdgeInsets.only(bottom: 120),
+              scrollPadding: const EdgeInsets.only(bottom: 80),
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
                 labelText: 'Deck name',

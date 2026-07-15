@@ -45,6 +45,14 @@ class _CardLookupSheetState extends ConsumerState<_CardLookupSheet> {
   bool _loadingDetail = false;
   String? _error;
 
+  /// Cap for the whole sheet — never force this height when content is short.
+  static const double _maxSheetFraction = 0.88;
+
+  /// Approx chrome above the results list (handle, title, field, hint, gaps).
+  static const double _searchChromeReserve = 220;
+
+  bool get _showingDetail => _selected != null;
+
   @override
   void initState() {
     super.initState();
@@ -134,109 +142,115 @@ class _CardLookupSheetState extends ConsumerState<_CardLookupSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
-    final maxH = MediaQuery.sizeOf(context).height * 0.88;
+    final screenH = MediaQuery.sizeOf(context).height;
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
+    final maxSheetH = screenH * _maxSheetFraction;
 
-    return SizedBox(
-      height: maxH,
-      child: GameSheetBody(
-        scrollable: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (_selected != null)
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  onPressed: _backToSearch,
-                  icon: const Icon(Icons.arrow_back_rounded, size: 18),
-                  label: const Text('Search'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: colors.primaryAccent,
-                    padding: EdgeInsets.zero,
-                    minimumSize: const Size(0, LayoutTokens.minTapTarget),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                ),
-              ),
-            GameSheetHeader(
-              title: _selected == null ? 'Card lookup' : _selected!.name,
-              showHandle: _selected == null,
-            ),
-            if (_selected == null) ...[
-              SizedBox(height: LayoutTokens.gr2),
-              TextField(
-                controller: _searchController,
-                focusNode: _searchFocus,
-                onChanged: _onQueryChanged,
-                textInputAction: TextInputAction.search,
-                style: TextStyle(color: colors.textPrimary),
-                decoration: InputDecoration(
-                  hintText: 'Search any MTG card…',
-                  prefixIcon: Icon(
-                    Icons.search_rounded,
-                    color: colors.textSecondary,
-                  ),
-                  suffixIcon: _searching
-                      ? const Padding(
-                          padding: EdgeInsets.all(12),
-                          child: SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        )
-                      : (_searchController.text.isNotEmpty
-                          ? IconButton(
-                              tooltip: 'Clear',
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() {});
-                                _onQueryChanged('');
-                              },
-                              icon: Icon(
-                                Icons.clear_rounded,
-                                color: colors.textSecondary,
-                              ),
-                            )
-                          : null),
-                ),
-              ),
-              SizedBox(height: LayoutTokens.gr1),
-              Text(
-                'Oracle text and official rulings from Scryfall.',
-                style: GameModalChrome.dialogBodyStyle(context),
-              ),
-              SizedBox(height: LayoutTokens.gr2),
-              Expanded(child: _buildSearchBody(colors)),
-            ] else
-              Expanded(child: _buildDetailBody(colors)),
-          ],
+    // System/phone back: detail → search list; search → dismiss sheet only.
+    // Without this, back pops the whole modal (or the game route under it).
+    return PopScope(
+      canPop: !_showingDetail,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _showingDetail) {
+          _backToSearch();
+        }
+      },
+      child: Padding(
+        padding: EdgeInsets.only(bottom: keyboard),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxSheetH),
+          child: GameSheetBody(
+            child: !_showingDetail
+                ? _buildSearchLayout(colors, maxSheetH)
+                : _buildDetailLayout(colors, maxSheetH),
+          ),
         ),
       ),
     );
   }
 
+  Widget _buildSearchLayout(AppColorTokens colors, double maxSheetH) {
+    final maxListH =
+        (maxSheetH - _searchChromeReserve).clamp(120.0, maxSheetH * 0.62);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const GameSheetHeader(title: 'Card lookup'),
+        SizedBox(height: LayoutTokens.gr2),
+        TextField(
+          controller: _searchController,
+          focusNode: _searchFocus,
+          onChanged: _onQueryChanged,
+          textInputAction: TextInputAction.search,
+          style: TextStyle(color: colors.textPrimary),
+          decoration: InputDecoration(
+            hintText: 'Search any MTG card…',
+            prefixIcon: Icon(
+              Icons.search_rounded,
+              color: colors.textSecondary,
+            ),
+            suffixIcon: _searching
+                ? const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : (_searchController.text.isNotEmpty
+                    ? IconButton(
+                        tooltip: 'Clear',
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {});
+                          _onQueryChanged('');
+                        },
+                        icon: Icon(
+                          Icons.clear_rounded,
+                          color: colors.textSecondary,
+                        ),
+                      )
+                    : null),
+          ),
+        ),
+        SizedBox(height: LayoutTokens.gr1),
+        Text(
+          'Oracle text and official rulings from Scryfall.',
+          style: GameModalChrome.dialogBodyStyle(context),
+        ),
+        SizedBox(height: LayoutTokens.gr2),
+        LimitedBox(
+          maxHeight: maxListH,
+          child: _buildSearchBody(colors),
+        ),
+      ],
+    );
+  }
+
   Widget _buildSearchBody(AppColorTokens colors) {
     if (_error != null && _results.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: EdgeInsets.all(LayoutTokens.gr3),
-          child: Text(
-            _error!,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: colors.textSecondary,
-              fontSize: FontTokens.hudSm,
-              height: 1.4,
-            ),
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: LayoutTokens.gr3),
+        child: Text(
+          _error!,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: colors.textSecondary,
+            fontSize: FontTokens.hudSm,
+            height: 1.4,
           ),
         ),
       );
     }
     if (_results.isEmpty && !_searching) {
-      return Center(
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: LayoutTokens.gr3),
         child: Text(
           'Type a card name to look up rules.',
+          textAlign: TextAlign.center,
           style: TextStyle(
             color: colors.textSecondary,
             fontSize: FontTokens.hudSm,
@@ -245,6 +259,8 @@ class _CardLookupSheetState extends ConsumerState<_CardLookupSheet> {
       );
     }
     return ListView.separated(
+      shrinkWrap: true,
+      primary: true,
       itemCount: _results.length,
       separatorBuilder: (_, __) => Divider(
         height: 1,
@@ -290,127 +306,168 @@ class _CardLookupSheetState extends ConsumerState<_CardLookupSheet> {
     );
   }
 
-  Widget _buildDetailBody(AppColorTokens colors) {
+  Widget _buildDetailLayout(AppColorTokens colors, double maxSheetH) {
     final card = _selected!;
     final oracle = card.oracleText?.trim();
+    // Sticky handle/back/title stay outside the list so the sheet can still
+    // be dragged shut while reading oracle text / rulings.
+    const chromeReserve = 120.0;
+    final maxBodyH =
+        (maxSheetH - chromeReserve).clamp(120.0, maxSheetH * 0.75);
 
-    return ListView(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (card.imageUrl != null && card.imageUrl!.isNotEmpty) ...[
-          ClipRRect(
-            borderRadius: RadiusTokens.radiusMd,
-            child: AspectRatio(
-              aspectRatio: 63 / 44,
-              child: CachedNetworkImage(
-                imageUrl: card.imageUrl!,
-                fit: BoxFit.cover,
-                placeholder: (_, __) => ColoredBox(
-                  color: colors.backgroundSecondary,
-                ),
-                errorWidget: (_, __, ___) => ColoredBox(
-                  color: colors.backgroundSecondary,
-                  child: Icon(
-                    Icons.broken_image_outlined,
-                    color: colors.textSecondary,
+        const GameSheetHandle(),
+        SizedBox(height: LayoutTokens.gr2),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: _backToSearch,
+            icon: const Icon(Icons.arrow_back_rounded, size: 18),
+            label: const Text('Search'),
+            style: TextButton.styleFrom(
+              foregroundColor: colors.primaryAccent,
+              padding: EdgeInsets.zero,
+              minimumSize: const Size(0, LayoutTokens.minTapTarget),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+          ),
+        ),
+        GameSheetHeader(
+          title: card.name,
+          showHandle: false,
+        ),
+        SizedBox(height: LayoutTokens.gr2),
+        LimitedBox(
+          maxHeight: maxBodyH,
+          child: ListView(
+            shrinkWrap: true,
+            // Lets pull-down at the top dismiss the modal sheet.
+            primary: true,
+            children: [
+              if (card.imageUrl != null && card.imageUrl!.isNotEmpty) ...[
+                ClipRRect(
+                  borderRadius: RadiusTokens.radiusMd,
+                  child: AspectRatio(
+                    aspectRatio: 63 / 44,
+                    child: CachedNetworkImage(
+                      imageUrl: card.imageUrl!,
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) => ColoredBox(
+                        color: colors.backgroundSecondary,
+                      ),
+                      errorWidget: (_, __, ___) => ColoredBox(
+                        color: colors.backgroundSecondary,
+                        child: Icon(
+                          Icons.broken_image_outlined,
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-          ),
-          SizedBox(height: LayoutTokens.gr2),
-        ],
-        if (card.typeLine != null && card.typeLine!.isNotEmpty)
-          Text(
-            card.typeLine!,
-            style: TextStyle(
-              color: colors.textSecondary,
-              fontWeight: FontWeight.w600,
-              fontSize: FontTokens.hudSm,
-            ),
-          ),
-        if (card.manaCost != null && card.manaCost!.trim().isNotEmpty) ...[
-          SizedBox(height: LayoutTokens.gr1),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: ManaCostPips(manaCost: card.manaCost),
-          ),
-        ],
-        SizedBox(height: LayoutTokens.gr3),
-        Text(
-          'Oracle text',
-          style: TextStyle(
-            color: colors.textPrimary,
-            fontWeight: FontWeight.w800,
-            fontSize: FontTokens.hudSm,
-          ),
-        ),
-        SizedBox(height: LayoutTokens.gr1),
-        if (oracle == null || oracle.isEmpty)
-          Text(
-            'No oracle text available for this card.',
-            style: TextStyle(
-              color: colors.textSecondary,
-              fontSize: FontTokens.hudSm,
-              height: 1.4,
-            ),
-          )
-        else
-          Text(
-            oracle,
-            style: TextStyle(
-              color: colors.textPrimary.withValues(alpha: 0.92),
-              fontSize: FontTokens.hudSm,
-              height: 1.45,
-            ),
-          ),
-        SizedBox(height: LayoutTokens.gr3),
-        Text(
-          'Rulings',
-          style: TextStyle(
-            color: colors.textPrimary,
-            fontWeight: FontWeight.w800,
-            fontSize: FontTokens.hudSm,
-          ),
-        ),
-        SizedBox(height: LayoutTokens.gr1),
-        if (_loadingDetail)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16),
-            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-          )
-        else if (_rulings.isEmpty)
-          Text(
-            'No official rulings listed for this card.',
-            style: TextStyle(
-              color: colors.textSecondary,
-              fontSize: FontTokens.hudSm,
-              height: 1.4,
-            ),
-          )
-        else
-          for (var i = 0; i < _rulings.length; i++) ...[
-            if (i > 0) SizedBox(height: LayoutTokens.gr2),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: colors.backgroundSecondary.withValues(
-                  alpha: OpacityTokens.soft,
-                ),
-                borderRadius: RadiusTokens.radiusMd,
-              ),
-              child: Padding(
-                padding: EdgeInsets.all(LayoutTokens.gr2),
-                child: Text(
-                  _rulings[i].comment,
+                SizedBox(height: LayoutTokens.gr2),
+              ],
+              if (card.typeLine != null && card.typeLine!.isNotEmpty)
+                Text(
+                  card.typeLine!,
                   style: TextStyle(
-                    color: colors.textPrimary.withValues(alpha: 0.9),
+                    color: colors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: FontTokens.hudSm,
+                  ),
+                ),
+              if (card.manaCost != null &&
+                  card.manaCost!.trim().isNotEmpty) ...[
+                SizedBox(height: LayoutTokens.gr1),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: ManaCostPips(manaCost: card.manaCost),
+                ),
+              ],
+              SizedBox(height: LayoutTokens.gr3),
+              Text(
+                'Oracle text',
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontWeight: FontWeight.w800,
+                  fontSize: FontTokens.hudSm,
+                ),
+              ),
+              SizedBox(height: LayoutTokens.gr1),
+              if (oracle == null || oracle.isEmpty)
+                Text(
+                  'No oracle text available for this card.',
+                  style: TextStyle(
+                    color: colors.textSecondary,
+                    fontSize: FontTokens.hudSm,
+                    height: 1.4,
+                  ),
+                )
+              else
+                Text(
+                  oracle,
+                  style: TextStyle(
+                    color: colors.textPrimary.withValues(alpha: 0.92),
                     fontSize: FontTokens.hudSm,
                     height: 1.45,
                   ),
                 ),
+              SizedBox(height: LayoutTokens.gr3),
+              Text(
+                'Rulings',
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontWeight: FontWeight.w800,
+                  fontSize: FontTokens.hudSm,
+                ),
               ),
-            ),
-          ],
-        SizedBox(height: LayoutTokens.gr3),
+              SizedBox(height: LayoutTokens.gr1),
+              if (_loadingDetail)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              else if (_rulings.isEmpty)
+                Text(
+                  'No official rulings listed for this card.',
+                  style: TextStyle(
+                    color: colors.textSecondary,
+                    fontSize: FontTokens.hudSm,
+                    height: 1.4,
+                  ),
+                )
+              else
+                for (var i = 0; i < _rulings.length; i++) ...[
+                  if (i > 0) SizedBox(height: LayoutTokens.gr2),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: colors.backgroundSecondary.withValues(
+                        alpha: OpacityTokens.soft,
+                      ),
+                      borderRadius: RadiusTokens.radiusMd,
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.all(LayoutTokens.gr2),
+                      child: Text(
+                        _rulings[i].comment,
+                        style: TextStyle(
+                          color: colors.textPrimary.withValues(alpha: 0.9),
+                          fontSize: FontTokens.hudSm,
+                          height: 1.45,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              SizedBox(height: LayoutTokens.gr2),
+            ],
+          ),
+        ),
       ],
     );
   }

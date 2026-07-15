@@ -828,14 +828,18 @@ class _StackItemCard extends ConsumerWidget {
     final borderColor = isResolvesNext
         ? colors.primaryAccent
         : colors.textSecondary.withValues(alpha: 0.14);
-    final showActions = showFizzleToggle || (item.isActive && canStatus);
+    // Anyone may log a response on an active item; Resolve stays owner/host.
+    final showRespond = item.isActive;
+    final showResolve = item.isActive && canStatus;
+    final showActions = showFizzleToggle || showRespond || showResolve;
 
     final actions = showActions
         ? _StackItemActions(
             notifier: notifier,
             itemId: item.id,
             isFizzled: isFizzled,
-            showResolveRespond: item.isActive && canStatus,
+            showResolve: showResolve,
+            showRespond: showRespond,
             showFizzleToggle: showFizzleToggle,
             onRespond: () => openStackAddDialog(
               context,
@@ -1065,11 +1069,14 @@ class _StackItemCard extends ConsumerWidget {
     if (text == null || text.isEmpty) return;
     showGameBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       builder: (ctx) => GameSheetBody(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
             children: [
+              const GameSheetHandle(),
+              SizedBox(height: LayoutTokens.gr2),
               Text(
                 item.name,
                 style: TextStyle(
@@ -1418,7 +1425,8 @@ class _StackItemActions extends StatelessWidget {
   final GameStateNotifier notifier;
   final String itemId;
   final bool isFizzled;
-  final bool showResolveRespond;
+  final bool showResolve;
+  final bool showRespond;
   final bool showFizzleToggle;
   final VoidCallback onRespond;
 
@@ -1426,7 +1434,8 @@ class _StackItemActions extends StatelessWidget {
     required this.notifier,
     required this.itemId,
     required this.isFizzled,
-    required this.showResolveRespond,
+    required this.showResolve,
+    required this.showRespond,
     required this.showFizzleToggle,
     required this.onRespond,
   });
@@ -1442,7 +1451,7 @@ class _StackItemActions extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.gameColors;
     final slots = <Widget>[
-      if (showResolveRespond) ...[
+      if (showResolve)
         Expanded(
           child: _StackPillButton(
             label: 'Resolve',
@@ -1454,7 +1463,9 @@ class _StackItemActions extends StatelessWidget {
             background: colors.success,
           ),
         ),
+      if (showResolve && showRespond)
         SizedBox(width: _StackPillMetrics.gap),
+      if (showRespond)
         Expanded(
           child: _StackPillButton(
             label: 'Respond',
@@ -1464,9 +1475,9 @@ class _StackItemActions extends StatelessWidget {
             border: colors.primaryAccent.withValues(alpha: 0.55),
           ),
         ),
-      ],
       if (showFizzleToggle) ...[
-        if (showResolveRespond) SizedBox(width: _StackPillMetrics.gap),
+        if (showResolve || showRespond)
+          SizedBox(width: _StackPillMetrics.gap),
         Expanded(
           child: _StackPillButton(
             label: isFizzled ? 'Fizzled' : 'Fizzle',

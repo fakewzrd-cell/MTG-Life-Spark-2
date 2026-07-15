@@ -417,51 +417,51 @@ class _VariantTile extends StatelessWidget {
 
   void _showCardDetail(BuildContext context) {
     final colors = context.gameColors;
+    final maxH = MediaQuery.sizeOf(context).height * 0.88;
     showGameBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.3,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (_, scrollController) => SingleChildScrollView(
-          controller: scrollController,
-          padding: GameModalChrome.sheetPadding(context),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const GameSheetHandle(),
-              SizedBox(height: LayoutTokens.gr2),
-              GameSheetHeader(
-                title: card.name,
-                showHandle: false,
-              ),
-              SizedBox(height: LayoutTokens.gr3),
-              if (card.imageUrl != null)
-                Center(
-                  child: ClipRRect(
-                    borderRadius: RadiusTokens.radiusSm,
-                    child: CachedNetworkImage(
-                      imageUrl: card.imageUrl!,
-                      width: (MediaQuery.sizeOf(context).width - 40)
-                          .clamp(200.0, 280.0),
-                      fit: BoxFit.contain,
+      builder: (ctx) => ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxH),
+        child: GameSheetBody(
+          child: LimitedBox(
+            maxHeight: (maxH - 48).clamp(160.0, maxH),
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                const GameSheetHandle(),
+                SizedBox(height: LayoutTokens.gr2),
+                GameSheetHeader(
+                  title: card.name,
+                  showHandle: false,
+                ),
+                SizedBox(height: LayoutTokens.gr3),
+                if (card.imageUrl != null)
+                  Center(
+                    child: ClipRRect(
+                      borderRadius: RadiusTokens.radiusSm,
+                      child: CachedNetworkImage(
+                        imageUrl: card.imageUrl!,
+                        width: (MediaQuery.sizeOf(context).width - 40)
+                            .clamp(200.0, 280.0),
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
-                ),
-              if (card.oracleText != null && card.oracleText!.isNotEmpty) ...[
-                SizedBox(height: LayoutTokens.gr3),
-                Text(
-                  card.oracleText!,
-                  style: TextStyle(
-                    color: colors.textSecondary,
-                    fontSize: FontTokens.body,
-                    height: 1.4,
+                if (card.oracleText != null && card.oracleText!.isNotEmpty) ...[
+                  SizedBox(height: LayoutTokens.gr3),
+                  Text(
+                    card.oracleText!,
+                    style: TextStyle(
+                      color: colors.textSecondary,
+                      fontSize: FontTokens.body,
+                      height: 1.4,
+                    ),
                   ),
-                ),
+                ],
+                SizedBox(height: LayoutTokens.gr2),
               ],
-            ],
+            ),
           ),
         ),
       ),

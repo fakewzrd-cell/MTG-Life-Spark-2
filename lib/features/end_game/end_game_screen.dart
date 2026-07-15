@@ -112,7 +112,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
       );
 
       if (submittedFromForfeit && result.matchId.isNotEmpty) {
-        await service.saveFeedback(GameFeedback(
+        final feedback = GameFeedback(
           matchId: result.matchId,
           voterPlayerId: game.localPlayerId,
           likePlayerIds: pending!.likePlayerIds,
@@ -120,7 +120,9 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
           mvpPlayerId: pending.mvpPlayerId,
           teamPlayerId: pending.teamPlayerId,
           underdogPlayerId: pending.underdogPlayerId,
-        ));
+        );
+        await service.saveFeedback(feedback);
+        ref.read(gameProvider.notifier).broadcastMatchFeedback(feedback);
         ref.read(pendingFeedbackProvider.notifier).state = null;
       }
 
@@ -371,6 +373,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
       underdogPlayerId: _underdogPlayerId,
     );
     await ref.read(progressionServiceProvider).saveFeedback(feedback);
+    ref.read(gameProvider.notifier).broadcastMatchFeedback(feedback);
     bumpProfileRevision(ref);
     if (mounted) setState(() => _feedbackSubmitted = true);
   }
@@ -930,6 +933,8 @@ class _FinalPlayerRow extends StatelessWidget {
         return 'Commander dmg';
       case 'concede':
         return 'Conceded';
+      case 'disconnect':
+        return 'Left game';
       default:
         return 'Eliminated';
     }

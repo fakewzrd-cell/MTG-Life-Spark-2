@@ -100,107 +100,99 @@ Future<void> showProposeAllianceSheet({
           padding: EdgeInsets.only(
             bottom: MediaQuery.viewInsetsOf(context).bottom,
           ),
-          child: GameSheetBody(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.sizeOf(context).height * 0.85,
-              ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(context).height * 0.85,
+            ),
+            child: GameSheetBody(
+              scrollable: true,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Flexible(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          GameSheetHeader(
-                            title: 'Secret alliance',
-                            subtitle:
-                                'Invite ${target.username} — only they will know.',
-                          ),
-                          SizedBox(height: LayoutTokens.gr2),
-                          Text(
-                            'Duration',
-                            style: TextStyle(
-                              color: ColorTokens.textSecondary,
-                              fontSize: FontTokens.label,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          SizedBox(height: LayoutTokens.gr1),
-                          ...AllianceDuration.values.map((d) {
-                            final selected = duration == d;
-                            return Padding(
-                              padding: EdgeInsets.only(bottom: LayoutTokens.gr1),
-                              child: ListTile(
-                                tileColor: selected
-                                    ? ColorTokens.emphasis.withValues(alpha: 0.12)
-                                    : ColorTokens.backgroundSecondary,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: RadiusTokens.radiusControlSm,
-                                ),
-                                title: Text(allianceDurationLabel(d)),
-                                trailing: selected
-                                    ? Icon(
-                                        Icons.check_circle,
-                                        color: ColorTokens.emphasis,
-                                      )
-                                    : null,
-                                onTap: () => setState(() => duration = d),
-                              ),
-                            );
-                          }),
-                          SizedBox(height: LayoutTokens.gr2),
-                          Text(
-                            'When to deliver',
-                            style: TextStyle(
-                              color: ColorTokens.textSecondary,
-                              fontSize: FontTokens.label,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          SizedBox(height: LayoutTokens.gr1),
-                          Wrap(
-                            spacing: LayoutTokens.gr1,
-                            runSpacing: LayoutTokens.gr1,
-                            children: AllianceDeliveryTiming.values.map((t) {
-                              final selected = timing == t;
-                              return ChoiceChip(
-                                label: Text(
-                                  allianceDeliveryLabel(
-                                    t,
-                                    seconds: delaySeconds,
-                                  ),
-                                ),
-                                selected: selected,
-                                onSelected: (_) => setState(() => timing = t),
-                              );
-                            }).toList(),
-                          ),
-                          if (timing == AllianceDeliveryTiming.delaySeconds) ...[
-                            SizedBox(height: LayoutTokens.gr2),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Slider(
-                                    value: delaySeconds.toDouble(),
-                                    min: 10,
-                                    max: 120,
-                                    divisions: 11,
-                                    label: '${delaySeconds}s',
-                                    onChanged: (v) =>
-                                        setState(() => delaySeconds = v.round()),
-                                  ),
-                                ),
-                                Text('${delaySeconds}s'),
-                              ],
-                            ),
-                          ],
-                        ],
-                      ),
+                  GameSheetHeader(
+                    title: 'Secret alliance',
+                    subtitle:
+                        'Invite ${target.username} — only they will know.',
+                  ),
+                  SizedBox(height: LayoutTokens.gr2),
+                  Text(
+                    'Duration',
+                    style: TextStyle(
+                      color: ColorTokens.textSecondary,
+                      fontSize: FontTokens.label,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
+                  SizedBox(height: LayoutTokens.gr1),
+                  ...AllianceDuration.values.map((d) {
+                    final selected = duration == d;
+                    return Padding(
+                      padding: EdgeInsets.only(bottom: LayoutTokens.gr1),
+                      child: ListTile(
+                        tileColor: selected
+                            ? ColorTokens.emphasis.withValues(alpha: 0.12)
+                            : ColorTokens.backgroundSecondary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: RadiusTokens.radiusControlSm,
+                        ),
+                        title: Text(allianceDurationLabel(d)),
+                        trailing: selected
+                            ? Icon(
+                                Icons.check_circle,
+                                color: ColorTokens.emphasis,
+                              )
+                            : null,
+                        onTap: () => setState(() => duration = d),
+                      ),
+                    );
+                  }),
+                  SizedBox(height: LayoutTokens.gr2),
+                  Text(
+                    'When to deliver',
+                    style: TextStyle(
+                      color: ColorTokens.textSecondary,
+                      fontSize: FontTokens.label,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(height: LayoutTokens.gr1),
+                  Wrap(
+                    spacing: LayoutTokens.gr1,
+                    runSpacing: LayoutTokens.gr1,
+                    children: AllianceDeliveryTiming.values.map((t) {
+                      final selected = timing == t;
+                      return ChoiceChip(
+                        label: Text(
+                          allianceDeliveryLabel(
+                            t,
+                            seconds: delaySeconds,
+                          ),
+                        ),
+                        selected: selected,
+                        onSelected: (_) => setState(() => timing = t),
+                      );
+                    }).toList(),
+                  ),
+                  if (timing == AllianceDeliveryTiming.delaySeconds) ...[
+                    SizedBox(height: LayoutTokens.gr2),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Slider(
+                            value: delaySeconds.toDouble(),
+                            min: 10,
+                            max: 120,
+                            divisions: 11,
+                            label: '${delaySeconds}s',
+                            onChanged: (v) =>
+                                setState(() => delaySeconds = v.round()),
+                          ),
+                        ),
+                        Text('${delaySeconds}s'),
+                      ],
+                    ),
+                  ],
                   SizedBox(height: LayoutTokens.gr2),
                   FilledButton(
                     style: GameUiTokens.sheetPrimaryButton(

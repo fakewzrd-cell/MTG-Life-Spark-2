@@ -66,4 +66,7 @@ enum BleMessageType {
 
   // Stack tracker
   stackUpdate,
+
+  /// End-game likes / MVP / Team / Underdog ballot (LAN sync).
+  matchFeedback,
 }

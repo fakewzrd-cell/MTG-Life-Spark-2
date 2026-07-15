@@ -227,6 +227,9 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
     for (final format in GameFormatDetails.lobbyPickerOrder) {
       final decks = grouped[format];
       if (decks == null || decks.isEmpty) continue;
+      if (sectionChildren.isNotEmpty) {
+        sectionChildren.add(SizedBox(height: LayoutTokens.shellSectionGap));
+      }
       sectionChildren.add(
         _DecksFormatSection(
           format: format,
@@ -235,7 +238,6 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
           onDeckTap: (deck) => _onDeckTap(deck, repo),
         ),
       );
-      sectionChildren.add(SizedBox(height: LayoutTokens.shellSectionGap));
     }
 
     Widget scrollBody;

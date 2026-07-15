@@ -43,5 +43,8 @@ class TestProgressionService extends ProgressionService {
   }
 
   @override
-  Future<void> saveFeedback(GameFeedback feedback) async {}
+  Future<void> saveFeedback(
+    GameFeedback feedback, {
+    bool awardGiverXp = true,
+  }) async {}
 }

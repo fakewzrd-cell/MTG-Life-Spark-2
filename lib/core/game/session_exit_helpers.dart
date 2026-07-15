@@ -48,7 +48,7 @@ Future<void> recordLocalConcedeBeforeExit(WidgetRef ref) async {
 
   final pending = ref.read(pendingFeedbackProvider);
   if (pending?.hasContent ?? false) {
-    await service.saveFeedback(GameFeedback(
+    final feedback = GameFeedback(
       matchId: matchId,
       voterPlayerId: game.localPlayerId,
       likePlayerIds: pending!.likePlayerIds,
@@ -56,7 +56,9 @@ Future<void> recordLocalConcedeBeforeExit(WidgetRef ref) async {
       mvpPlayerId: pending.mvpPlayerId,
       teamPlayerId: pending.teamPlayerId,
       underdogPlayerId: pending.underdogPlayerId,
-    ));
+    );
+    await service.saveFeedback(feedback);
+    ref.read(gameProvider.notifier).broadcastMatchFeedback(feedback);
     ref.read(pendingFeedbackProvider.notifier).state = null;
   }
 

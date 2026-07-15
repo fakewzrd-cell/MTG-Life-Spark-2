@@ -6,7 +6,9 @@ import 'package:uuid/uuid.dart';
 
 import '../bluetooth/ble_message.dart';
 import '../bluetooth/ble_protocol.dart';
+import '../bluetooth/ble_service.dart';
 import '../network/session_providers.dart';
+import '../models/game_feedback.dart';
 import '../models/player_profile.dart';
 import '../persistence/providers.dart';
 import '../../shared/utils/commander_image_resolver.dart';
@@ -21,12 +23,14 @@ import 'game_state.dart';
 import 'gameplay_dial_ids.dart';
 import 'lobby_state.dart';
 import 'player_game_state.dart';
+import 'progression_service.dart';
 import 'stack_item.dart';
 import 'undo_action.dart';
 
 class GameStateNotifier extends StateNotifier<GameState> {
   final Ref _ref;
   StreamSubscription<BleMessage>? _messageSub;
+  StreamSubscription<BleConnectionEvent>? _connectionSub;
   Timer? _timeoutTimer;
   Timer? _turnLimitTimer;
   Timer? _allianceDeliveryTimer;
@@ -1461,6 +1465,16 @@ class GameStateNotifier extends StateNotifier<GameState> {
     ));
   }
 
+  /// Broadcast a post-game ballot so other seats can update received honors.
+  void broadcastMatchFeedback(GameFeedback feedback) {
+    if (state.localPlayerId.isEmpty) return;
+    if (_ref.read(sessionServiceProvider) == null) return;
+    _send(BleMessage.matchFeedback(
+      seqNum: _nextSeq(),
+      feedbackJson: feedback.toJson(),
+    ));
+  }
+
   // ── Concede ───────────────────────────────────────────────────────────────
 
   void concede(String playerId) {
@@ -1831,6 +1845,68 @@ class GameStateNotifier extends StateNotifier<GameState> {
     if (service == null) return;
     _messageSub?.cancel();
     _messageSub = service.messageStream.listen(_onSessionMessage);
+    _connectionSub?.cancel();
+    _connectionSub = service.connectionStream.listen(_onConnectionEvent);
+  }
+
+  void _onConnectionEvent(BleConnectionEvent event) {
+    if (state.players.isEmpty || state.gameOver) return;
+    if (event.status != BleConnectionStatus.disconnected &&
+        event.status != BleConnectionStatus.error) {
+      return;
+    }
+
+    if (state.isHost) {
+      // Peer socket dropped — eliminate them and notify remaining players.
+      _handleRemotePlayerLeft(event.playerId);
+      return;
+    }
+
+    // Client lost the host / session — table cannot continue.
+    _handleHostSessionLost();
+  }
+
+  void _handleRemotePlayerLeft(String playerId) {
+    if (playerId.isEmpty || playerId == state.localPlayerId) return;
+    final player = _playerById(playerId);
+    if (player == null || player.isEliminated) return;
+
+    _eliminatePlayer(playerId, 'disconnect', null, broadcast: false);
+    _appendGameLog('${player.username} left the game');
+    _ref.read(playerLeftUiEventProvider.notifier).state = PlayerLeftUiEvent(
+      username: player.username,
+      gameEnded: state.gameOver,
+    );
+  }
+
+  void _handleHostSessionLost() {
+    final leavers = state.players
+        .where(
+          (p) => !p.isEliminated && p.playerId != state.localPlayerId,
+        )
+        .toList();
+    for (final p in leavers) {
+      _eliminatePlayer(p.playerId, 'disconnect', null, broadcast: false);
+    }
+    if (!state.gameOver) {
+      final localAlive = state.localPlayer?.isEliminated != true;
+      state = state.copyWith(
+        gameOver: true,
+        winnerPlayerId: localAlive ? state.localPlayerId : null,
+      );
+    }
+    final label = leavers.length == 1
+        ? leavers.first.username
+        : (leavers.isEmpty ? 'The host' : 'A player');
+    _appendGameLog('$label left the game');
+    _ref.read(playerLeftUiEventProvider.notifier).state = PlayerLeftUiEvent(
+      username: label,
+      gameEnded: true,
+    );
+  }
+
+  void clearPlayerLeftUiEvent() {
+    _ref.read(playerLeftUiEventProvider.notifier).state = null;
   }
 
   void _onSessionMessage(BleMessage msg) {
@@ -1959,6 +2035,8 @@ class GameStateNotifier extends StateNotifier<GameState> {
         _eliminatePlayer(pid, 'concede', null, broadcast: false);
       case BleMessageType.playerEliminated:
         _applyElimination(msg.payload);
+      case BleMessageType.playerDisconnected:
+        _handleRemotePlayerLeft(msg.payload['pid'] as String? ?? '');
       case BleMessageType.stateSnapshot:
         applySnapshot(msg.payload);
       case BleMessageType.teamAssign:
@@ -1980,6 +2058,9 @@ class GameStateNotifier extends StateNotifier<GameState> {
         _applyStackUpdate(msg.payload);
       case BleMessageType.rematchPropose:
         _ref.read(rematchProposedProvider.notifier).state++;
+        break;
+      case BleMessageType.matchFeedback:
+        _ingestRemoteMatchFeedback(msg);
         break;
       case BleMessageType.firstPlayerRollSubmit:
         if (state.isHost) {
@@ -2010,7 +2091,8 @@ class GameStateNotifier extends StateNotifier<GameState> {
     // Host re-broadcasts client actions (respect targeted messages).
     if (state.isHost &&
         msg.type != BleMessageType.firstPlayerRollSubmit &&
-        msg.type != BleMessageType.allianceDeclined) {
+        msg.type != BleMessageType.allianceDeclined &&
+        msg.type != BleMessageType.playerDisconnected) {
       _ref.read(sessionServiceProvider)?.send(
             msg,
             targetPlayerId: msg.targetPlayerId,
@@ -2308,6 +2390,32 @@ class GameStateNotifier extends StateNotifier<GameState> {
         );
   }
 
+  void _ingestRemoteMatchFeedback(BleMessage msg) {
+    try {
+      final feedback = GameFeedback.fromJson(msg.payload);
+      final origin = msg.originPlayerId;
+      if (origin != null &&
+          origin.isNotEmpty &&
+          feedback.voterPlayerId != origin) {
+        return;
+      }
+      if (feedback.voterPlayerId.isEmpty) return;
+      // Local voter already saved their ballot before broadcasting.
+      if (feedback.voterPlayerId == state.localPlayerId) return;
+
+      // Fire-and-forget; host rebroadcast still proceeds synchronously.
+      Future<void>(() async {
+        await _ref.read(progressionServiceProvider).saveFeedback(
+              feedback,
+              awardGiverXp: false,
+            );
+        bumpProfileRevisionRef(_ref);
+      });
+    } catch (_) {
+      // Ignore malformed ballots from older clients.
+    }
+  }
+
   int _nextSeq() => _seqNum++;
 
   PlayerGameState? _playerById(String id) => state.playerById(id);
@@ -2315,21 +2423,25 @@ class GameStateNotifier extends StateNotifier<GameState> {
   /// Clears game state when leaving a session.
   void reset() {
     _messageSub?.cancel();
+    _connectionSub?.cancel();
     _timeoutTimer?.cancel();
     _turnLimitTimer?.cancel();
     _allianceDeliveryTimer?.cancel();
     _messageSub = null;
+    _connectionSub = null;
     _timeoutTimer = null;
     _turnLimitTimer = null;
     _allianceDeliveryTimer = null;
     _seqNum = 0;
     _ref.read(rematchProposedProvider.notifier).state = 0;
+    _ref.read(playerLeftUiEventProvider.notifier).state = null;
     state = GameState.empty();
   }
 
   @override
   void dispose() {
     _messageSub?.cancel();
+    _connectionSub?.cancel();
     _timeoutTimer?.cancel();
     _turnLimitTimer?.cancel();
     _allianceDeliveryTimer?.cancel();

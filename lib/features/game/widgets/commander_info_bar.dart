@@ -127,6 +127,21 @@ class CommanderInfoBar extends StatelessWidget {
                     ),
                   ),
                 ],
+                // Keep ally status in the text column — never beside the
+                // commander-damage control (that reads as locking damage).
+                if (player.allyPlayerId != null) ...[
+                  SizedBox(height: LayoutTokens.gr0),
+                  Text(
+                    'Ally · ${allyUsername ?? 'secret'}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: colors.emphasis,
+                      fontSize: FontTokens.hudXs,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -134,23 +149,6 @@ class CommanderInfoBar extends StatelessWidget {
           if (statusTrailing != null) ...[
             SizedBox(width: isVeryNarrow ? LayoutTokens.gr0 : LayoutTokens.gr1),
             statusTrailing!,
-          ],
-
-          if (player.allyPlayerId != null) ...[
-            const SizedBox(width: LayoutTokens.gr1),
-            Tooltip(
-              message:
-                  'Allied with ${allyUsername ?? player.allyPlayerId}',
-              child: Container(
-                padding: const EdgeInsets.all(LayoutTokens.gr1),
-                decoration: BoxDecoration(
-                  color: colors.emphasis.withValues(alpha: 0.12),
-                  borderRadius: RadiusTokens.radiusControlMd,
-                ),
-                child: Icon(Icons.handshake,
-                    size: LayoutTokens.gr3, color: colors.emphasis),
-              ),
-            ),
           ],
         ],
       ),

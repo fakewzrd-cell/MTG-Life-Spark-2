@@ -154,4 +154,15 @@ class BleMessage {
         },
         seqNum: seqNum,
       );
+
+  /// Post-game social ballot so recipients can update honors locally.
+  static BleMessage matchFeedback({
+    required int seqNum,
+    required Map<String, dynamic> feedbackJson,
+  }) =>
+      BleMessage(
+        type: BleMessageType.matchFeedback,
+        payload: feedbackJson,
+        seqNum: seqNum,
+      );
 }

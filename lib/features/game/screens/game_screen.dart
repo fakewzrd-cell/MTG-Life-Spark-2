@@ -11,6 +11,7 @@ import '../../../core/game/alliance_ui_events.dart';
 import '../../../core/game/commander_identity_colors.dart';
 import '../../../core/game/game_format.dart';
 import '../../../core/game/game_providers.dart';
+import '../../../core/game/game_session_events.dart';
 import '../../../core/game/lobby_state.dart';
 import '../../../core/persistence/providers.dart';
 import '../../../core/services/haptic_service.dart';
@@ -27,6 +28,7 @@ import '../widgets/game_colors.dart';
 import '../widgets/game_first_player_roll_overlay.dart';
 import '../widgets/game_history_tab.dart';
 import '../widgets/game_hud_header.dart';
+import '../widgets/game_modal_chrome.dart';
 import '../widgets/game_overview_view.dart';
 import '../widgets/game_performance_widgets.dart';
 import '../widgets/game_timeout_widgets.dart';
@@ -101,6 +103,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   void _listenForGameOver() {
     _gameOverSub = ref.read(gameProvider.notifier).stream.listen((state) {
       if (state.gameOver && mounted) {
+        // Disconnect leave flow shows its own dialog then navigates.
+        final leave = ref.read(playerLeftUiEventProvider);
+        if (leave != null && leave.gameEnded) return;
         context.go(AppRoutes.endGame);
       }
     });
@@ -225,47 +230,76 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         });
       }
     });
+    ref.listen<PlayerLeftUiEvent?>(playerLeftUiEventProvider, (prev, next) {
+      if (next == null) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!context.mounted) return;
+        final event = next;
+        ref.read(gameProvider.notifier).clearPlayerLeftUiEvent();
+        await showGameConfirmDialog(
+          context: context,
+          title: 'Player left',
+          message: event.gameEnded
+              ? '${event.username} left the game. Heading to match feedback.'
+              : '${event.username} left the game.',
+          confirmLabel: event.gameEnded ? 'Continue' : 'OK',
+        );
+        if (!context.mounted) return;
+        if (event.gameEnded && ref.read(gameProvider).gameOver) {
+          context.go(AppRoutes.endGame);
+        }
+      });
+    });
 
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: gradientColors,
+    return PopScope(
+      // Never pop the /game route with the phone back button — that was
+      // sending players back to the host lobby mid-match. Nested sheets
+      // (card lookup, etc.) still receive back first while they are open.
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (_showOverview) {
+          setState(() => _showOverview = false);
+        }
+        // Otherwise absorb phone back — stay in the match. Leave via the
+        // game menu / forfeit flow, not the system back arrow.
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: gradientColors,
+          ),
         ),
-      ),
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Stack(
-          children: [
-            if (_showOverview)
-              PopScope(
-                canPop: false,
-                onPopInvokedWithResult: (didPop, result) {
-                  if (!didPop) setState(() => _showOverview = false);
-                },
-                child: Consumer(
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Stack(
+            children: [
+              if (_showOverview)
+                Consumer(
                   builder: (context, ref, _) => GameOverviewView(
                     game: ref.watch(gameProvider),
                     onClose: () => setState(() => _showOverview = false),
                   ),
+                )
+              else
+                SafeArea(
+                  child: _PersonalView(
+                    localPlayerId: localPlayerId,
+                    onToggleOverview: () =>
+                        setState(() => _showOverview = true),
+                  ),
                 ),
-              )
-            else
-              SafeArea(
-                child: _PersonalView(
-                  localPlayerId: localPlayerId,
-                  onToggleOverview: () => setState(() => _showOverview = true),
+              if (timeoutActive)
+                GameTimeoutOverlay(
+                  startTime: timeoutStartTime,
+                  durationSeconds: timeoutDurationSeconds,
+                  onEndTimeout: () =>
+                      ref.read(gameProvider.notifier).endTimeout(),
                 ),
-              ),
-            if (timeoutActive)
-              GameTimeoutOverlay(
-                startTime: timeoutStartTime,
-                durationSeconds: timeoutDurationSeconds,
-                onEndTimeout: () =>
-                    ref.read(gameProvider.notifier).endTimeout(),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

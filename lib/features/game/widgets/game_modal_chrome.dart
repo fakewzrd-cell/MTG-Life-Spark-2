@@ -42,8 +42,9 @@ abstract final class GameModalChrome {
 
   static EdgeInsets sheetPadding(BuildContext context) {
     final h = horizontalInset(context);
-    final bottom = MediaQuery.paddingOf(context).bottom;
-    return EdgeInsets.fromLTRB(h, LayoutTokens.gr2, h, bottom + LayoutTokens.gr3);
+    // Bottom system inset is applied by [GameSheetBody]'s SafeArea — do not
+    // add MediaQuery.padding.bottom here or sheets get a double dead band.
+    return EdgeInsets.fromLTRB(h, LayoutTokens.gr2, h, LayoutTokens.gr3);
   }
 }
 
@@ -163,6 +164,11 @@ class GameSheetHeader extends StatelessWidget {
 }
 
 /// Wraps sheet body with standard padding and optional scroll.
+///
+/// When [scrollable] is true, content **shrink-wraps** to its children and only
+/// scrolls if taller than the modal’s max height. A plain
+/// [SingleChildScrollView] would expand to the full screen under
+/// `isScrollControlled` and leave a dead empty band.
 class GameSheetBody extends StatelessWidget {
   const GameSheetBody({
     super.key,
@@ -176,17 +182,43 @@ class GameSheetBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final pad = GameModalChrome.sheetPadding(context);
-    final content = scrollable
-        ? SingleChildScrollView(padding: pad, child: child)
-        : Padding(padding: pad, child: child);
-    return SafeArea(top: false, child: content);
+    if (!scrollable) {
+      return SafeArea(
+        top: false,
+        child: Padding(padding: pad, child: child),
+      );
+    }
+
+    return SafeArea(
+      top: false,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final maxH = constraints.maxHeight.isFinite
+              ? constraints.maxHeight
+              : MediaQuery.sizeOf(context).height * 0.9;
+          return ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxH),
+            child: ListView(
+              shrinkWrap: true,
+              padding: pad,
+              children: [child],
+            ),
+          );
+        },
+      ),
+    );
   }
 }
 
+/// Game bottom sheets default to content-sized (`isScrollControlled: true`) so
+/// short menus do not open at the Material half-screen empty band. Tall bodies
+/// should use [GameSheetBody] (`scrollable: true`) or a
+/// `ConstrainedBox(maxHeight: …)` + shrink-wrap list — never a fixed
+/// `SizedBox(height: screen * …)`.
 Future<T?> showGameBottomSheet<T>({
   required BuildContext context,
   required WidgetBuilder builder,
-  bool isScrollControlled = false,
+  bool isScrollControlled = true,
   bool showDragHandle = false,
   bool enableDrag = true,
   Color? backgroundColor,

@@ -215,12 +215,19 @@ class ProgressionService {
   }
 
   /// Saves feedback for a match. Call after recordMatch.
-  Future<void> saveFeedback(GameFeedback feedback) async {
+  ///
+  /// [awardGiverXp] is true for the local voter; remote ballots only update
+  /// received likes/honors via recompute.
+  Future<void> saveFeedback(
+    GameFeedback feedback, {
+    bool awardGiverXp = true,
+  }) async {
     await _feedbackRepo.saveFeedback(feedback);
-    // Award small XP for giving likes
-    final likesCount = feedback.likePlayerIds.length;
-    if (likesCount > 0) {
-      await _profileRepo.addXp(likesCount * kXpPerLike);
+    if (awardGiverXp) {
+      final likesCount = feedback.likePlayerIds.length;
+      if (likesCount > 0) {
+        await _profileRepo.addXp(likesCount * kXpPerLike);
+      }
     }
     final profile = _profileRepo.getProfile();
     if (profile != null) {

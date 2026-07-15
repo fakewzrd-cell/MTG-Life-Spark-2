@@ -109,59 +109,60 @@ Future<void> showCommanderDamageSheet(
 ) {
   return showGameBottomSheet<void>(
     context: context,
-    isScrollControlled: true,
-    builder: (ctx) => DraggableScrollableSheet(
-      initialChildSize: 0.92,
-      minChildSize: 0.35,
-      maxChildSize: 0.92,
-      expand: false,
-      builder: (_, scrollController) => Consumer(
-        builder: (context, ref, _) {
-          final game = ref.watch(gameProvider);
-          final local = game.localPlayer;
-          if (local == null) return const SizedBox.shrink();
+    builder: (ctx) {
+      final maxH = MediaQuery.sizeOf(ctx).height * 0.92;
+      return ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxH),
+        child: GameSheetBody(
+          child: Consumer(
+            builder: (context, ref, _) {
+              final game = ref.watch(gameProvider);
+              final local = game.localPlayer;
+              if (local == null) return const SizedBox.shrink();
 
-          final opponents =
-              game.players.where((p) => p.playerId != local.playerId).toList();
-          final notifier = ref.read(gameProvider.notifier);
+              final opponents = game.players
+                  .where((p) => p.playerId != local.playerId)
+                  .toList();
+              final notifier = ref.read(gameProvider.notifier);
 
-          return SingleChildScrollView(
-            controller: scrollController,
-            padding: GameModalChrome.sheetPadding(context),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const GameSheetHandle(),
-                SizedBox(height: LayoutTokens.gr2),
-                const GameSheetHeader(
-                  title: 'Commander damage',
-                  subtitle:
-                      'Per opponent: damage to you and damage you dealt.',
-                  showHandle: false,
+              return LimitedBox(
+                maxHeight: (maxH - 48).clamp(200.0, maxH),
+                child: ListView(
+                  shrinkWrap: true,
+                  children: [
+                    const GameSheetHandle(),
+                    SizedBox(height: LayoutTokens.gr2),
+                    const GameSheetHeader(
+                      title: 'Commander damage',
+                      subtitle:
+                          'Per opponent: damage to you and damage you dealt.',
+                      showHandle: false,
+                    ),
+                    SizedBox(height: LayoutTokens.gr2),
+                    CommanderDamagePanel(
+                      localPlayer: local,
+                      opponents: opponents,
+                      onDamageChange: ({
+                        required String fromPlayerId,
+                        required int partnerIndex,
+                        required String toPlayerId,
+                        required int delta,
+                      }) =>
+                          notifier.applyCommanderDamage(
+                        fromPlayerId: fromPlayerId,
+                        partnerIndex: partnerIndex,
+                        toPlayerId: toPlayerId,
+                        delta: delta,
+                      ),
+                    ),
+                  ],
                 ),
-                SizedBox(height: LayoutTokens.gr2),
-                CommanderDamagePanel(
-                  localPlayer: local,
-                  opponents: opponents,
-                  onDamageChange: ({
-                    required String fromPlayerId,
-                    required int partnerIndex,
-                    required String toPlayerId,
-                    required int delta,
-                  }) =>
-                      notifier.applyCommanderDamage(
-                    fromPlayerId: fromPlayerId,
-                    partnerIndex: partnerIndex,
-                    toPlayerId: toPlayerId,
-                    delta: delta,
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    ),
+              );
+            },
+          ),
+        ),
+      );
+    },
   );
 }
 

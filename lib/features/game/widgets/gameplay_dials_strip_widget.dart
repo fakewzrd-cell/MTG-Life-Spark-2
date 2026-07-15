@@ -344,10 +344,6 @@ class GameplayDialsStripWidget extends StatelessWidget {
 
     await showGameBottomSheet<void>(
       context: context,
-      isScrollControlled: true,
-      showDragHandle: false,
-      enableDrag: false,
-      backgroundColor: Colors.transparent,
       builder: (sheetCtx) {
         void pick(String field) {
           final added = onAddDialToStrip(field);
@@ -534,8 +530,8 @@ class GameplayDialsStripWidget extends StatelessWidget {
   }
 }
 
-/// Draggable add-counter sheet — drag the handle or pull down to dismiss.
-class _AddCounterSheetScaffold extends StatefulWidget {
+/// Content-sized add-counter sheet (caps tall lists; no forced empty band).
+class _AddCounterSheetScaffold extends StatelessWidget {
   const _AddCounterSheetScaffold({
     required this.player,
     required this.visible,
@@ -551,60 +547,17 @@ class _AddCounterSheetScaffold extends StatefulWidget {
   final Future<void> Function()? onCustomDial;
 
   @override
-  State<_AddCounterSheetScaffold> createState() => _AddCounterSheetScaffoldState();
-}
-
-class _AddCounterSheetScaffoldState extends State<_AddCounterSheetScaffold> {
-  /// Pop once the user drags the sheet below this fraction of the viewport.
-  static const _dismissExtent = 0.22;
-
-  final DraggableScrollableController _sheetController =
-      DraggableScrollableController();
-  bool _dismissing = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _sheetController.addListener(_onSheetSizeChanged);
-  }
-
-  @override
-  void dispose() {
-    _sheetController.removeListener(_onSheetSizeChanged);
-    _sheetController.dispose();
-    super.dispose();
-  }
-
-  void _onSheetSizeChanged() {
-    if (_dismissing || !_sheetController.isAttached) return;
-    if (_sheetController.size <= _dismissExtent) {
-      _dismissing = true;
-      Navigator.of(context).pop();
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final colors = context.gameColors;
-    return DraggableScrollableSheet(
-      controller: _sheetController,
-      initialChildSize: 0.62,
-      minChildSize: 0,
-      maxChildSize: 0.92,
-      expand: false,
-      builder: (_, scrollController) => Material(
-        color: colors.surface,
-        borderRadius: RadiusTokens.radiusSheetTop,
-        clipBehavior: Clip.antiAlias,
-        child: _AddCounterChooserSheet(
-          scrollController: scrollController,
-          sheetExtentListenable: _sheetController,
-          player: widget.player,
-          visible: widget.visible,
-          coreOrdered: widget.coreOrdered,
-          onPick: widget.onPick,
-          onCustomDial: widget.onCustomDial,
-        ),
+    final maxH = MediaQuery.sizeOf(context).height * 0.92;
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxH),
+      child: _AddCounterChooserSheet(
+        player: player,
+        visible: visible,
+        coreOrdered: coreOrdered,
+        onPick: onPick,
+        onCustomDial: onCustomDial,
+        maxHeight: maxH,
       ),
     );
   }
@@ -613,28 +566,27 @@ class _AddCounterSheetScaffoldState extends State<_AddCounterSheetScaffold> {
 /// Scrollable add-counter list with scrollbar and bottom fade when more items exist.
 class _AddCounterChooserSheet extends StatefulWidget {
   const _AddCounterChooserSheet({
-    required this.scrollController,
-    required this.sheetExtentListenable,
     required this.player,
     required this.visible,
     required this.coreOrdered,
     required this.onPick,
+    required this.maxHeight,
     this.onCustomDial,
   });
 
-  final ScrollController scrollController;
-  final Listenable sheetExtentListenable;
   final PlayerGameState player;
   final Set<String> visible;
   final List<String> coreOrdered;
   final void Function(String field) onPick;
   final Future<void> Function()? onCustomDial;
+  final double maxHeight;
 
   @override
   State<_AddCounterChooserSheet> createState() => _AddCounterChooserSheetState();
 }
 
 class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
+  final _scrollController = ScrollController();
   double _bottomFadeOpacity = 0;
 
   ScrollPhysics get _listPhysics {
@@ -648,21 +600,20 @@ class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
   @override
   void initState() {
     super.initState();
-    widget.scrollController.addListener(_syncScrollAffordance);
-    widget.sheetExtentListenable.addListener(_syncScrollAffordance);
+    _scrollController.addListener(_syncScrollAffordance);
     WidgetsBinding.instance.addPostFrameCallback((_) => _syncScrollAffordance());
   }
 
   @override
   void dispose() {
-    widget.scrollController.removeListener(_syncScrollAffordance);
-    widget.sheetExtentListenable.removeListener(_syncScrollAffordance);
+    _scrollController.removeListener(_syncScrollAffordance);
+    _scrollController.dispose();
     super.dispose();
   }
 
   void _syncScrollAffordance() {
-    if (!widget.scrollController.hasClients) return;
-    final pos = widget.scrollController.position;
+    if (!_scrollController.hasClients) return;
+    final pos = _scrollController.position;
     final canScrollList = pos.maxScrollExtent > 12;
     final notAtBottom = pos.pixels < pos.maxScrollExtent - 12;
     final opacity = canScrollList && notAtBottom ? 1.0 : 0.0;
@@ -735,22 +686,23 @@ class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
         ].where((id) => !widget.visible.contains(id)).length;
     final fadePad = _bottomFadeOpacity > 0.02 ? 28.0 : 0.0;
 
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Scrollbar(
-          controller: widget.scrollController,
-          thumbVisibility: true,
-          interactive: true,
-          radius: const Radius.circular(8),
-          child: SingleChildScrollView(
-            controller: widget.scrollController,
-            physics: _listPhysics,
-            padding: EdgeInsets.only(
-              bottom: bottomPad + LayoutTokens.gr2 + fadePad,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+    return LimitedBox(
+      maxHeight: widget.maxHeight,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Scrollbar(
+            controller: _scrollController,
+            thumbVisibility: true,
+            interactive: true,
+            radius: const Radius.circular(8),
+            child: ListView(
+              controller: _scrollController,
+              shrinkWrap: true,
+              physics: _listPhysics,
+              padding: EdgeInsets.only(
+                bottom: bottomPad + LayoutTokens.gr2 + fadePad,
+              ),
               children: [
                 Padding(
                   padding: EdgeInsets.fromLTRB(
@@ -852,54 +804,54 @@ class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
               ],
             ),
           ),
-        ),
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: bottomPad,
-          height: 52,
-          child: IgnorePointer(
-            child: AnimatedOpacity(
-              opacity: _bottomFadeOpacity,
-              duration: MotionTokens.standard,
-              curve: MotionTokens.easeOut,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      colors.surface.withValues(alpha: 0),
-                      colors.surface.withValues(alpha: 0.92),
-                      colors.surface,
-                    ],
-                    stops: const [0.0, 0.55, 1.0],
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: bottomPad,
+            height: 52,
+            child: IgnorePointer(
+              child: AnimatedOpacity(
+                opacity: _bottomFadeOpacity,
+                duration: MotionTokens.standard,
+                curve: MotionTokens.easeOut,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        colors.surface.withValues(alpha: 0),
+                        colors.surface.withValues(alpha: 0.92),
+                        colors.surface,
+                      ],
+                      stops: const [0.0, 0.55, 1.0],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: bottomPad + 6,
-          child: IgnorePointer(
-            child: AnimatedOpacity(
-              opacity: _bottomFadeOpacity,
-              duration: MotionTokens.standard,
-              curve: MotionTokens.easeOut,
-              child: Center(
-                child: Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  size: 22,
-                  color: colors.textSecondary.withValues(alpha: 0.55),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: bottomPad + 6,
+            child: IgnorePointer(
+              child: AnimatedOpacity(
+                opacity: _bottomFadeOpacity,
+                duration: MotionTokens.standard,
+                curve: MotionTokens.easeOut,
+                child: Center(
+                  child: Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 22,
+                    color: colors.textSecondary.withValues(alpha: 0.55),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
