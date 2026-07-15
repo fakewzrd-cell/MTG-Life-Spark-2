@@ -37,6 +37,7 @@ class _NewDeckSheetState extends State<_NewDeckSheet> {
   final _nameCtrl = TextEditingController();
   GameFormat _format = GameFormat.commander;
   DeckStyle? _style;
+  var _attemptedSubmit = false;
 
   @override
   void dispose() {
@@ -46,8 +47,16 @@ class _NewDeckSheetState extends State<_NewDeckSheet> {
 
   bool get _canNext => _nameCtrl.text.trim().isNotEmpty && _style != null;
 
+  String? get _styleError {
+    if (!_attemptedSubmit || _style != null) return null;
+    return 'Choose a deck style to continue';
+  }
+
   void _submit() {
-    if (!_canNext) return;
+    if (!_canNext) {
+      setState(() => _attemptedSubmit = true);
+      return;
+    }
     final style = _style;
     if (style == null) return;
     Navigator.pop(
@@ -73,10 +82,13 @@ class _NewDeckSheetState extends State<_NewDeckSheet> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            const GameSheetHeader(title: 'New deck'),
+            const GameSheetHeader(
+              title: 'New deck',
+              subtitle: 'Step 1 of 2 — details',
+            ),
             SizedBox(height: LayoutTokens.gr2),
             Text(
-              'Name your deck, pick a format and playstyle, then choose '
+              'Name your deck, pick a format and playstyle. Next you’ll choose '
               'your commander or cover card.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: colors.textSecondary,
@@ -111,22 +123,25 @@ class _NewDeckSheetState extends State<_NewDeckSheet> {
             SizedBox(height: LayoutTokens.gr3),
             DeckStylePickerField(
               selected: _style,
-              errorText: _style == null ? 'Required' : null,
+              errorText: _styleError,
               onPick: () async {
                 final picked = await showDeckStylePickerSheet(
                   context,
                   selected: _style,
                 );
                 if (picked == null || !mounted) return;
-                setState(() => _style = picked);
+                setState(() {
+                  _style = picked;
+                  _attemptedSubmit = false;
+                });
               },
             ),
             SizedBox(height: LayoutTokens.gr3),
             UiButton(
               label: 'Next',
               icon: const Icon(Icons.arrow_forward_rounded, size: 22),
-              enabled: _canNext,
-              onPressed: _canNext ? _submit : null,
+              enabled: _nameCtrl.text.trim().isNotEmpty,
+              onPressed: _nameCtrl.text.trim().isNotEmpty ? _submit : null,
             ),
           ],
         ),

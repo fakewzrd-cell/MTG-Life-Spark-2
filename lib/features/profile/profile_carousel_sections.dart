@@ -25,7 +25,7 @@ import '../../ui/tokens/opacity_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import '../../ui/tokens/typography_tokens.dart';
 
-const String _kProfileUntilFirstGameMessage =
+const String kProfileUntilFirstGameMessage =
     'Play your first game to unlock stats and history.';
 
 const String _kProfileAddDeckMessage =
@@ -446,12 +446,7 @@ double profileDeckCardArtHeight(
 }
 
 /// Fixed 2:3 height for every carousel card (240×360 at default width).
-///
-/// [listMaxHeight] is ignored — all profile/My Decks carousels share one size.
-double profileCarouselCardHeight(
-  BuildContext context, {
-  double? listMaxHeight,
-}) {
+double profileCarouselCardHeight(BuildContext context) {
   return LayoutTokens.profileCarouselCardCanonicalHeight;
 }
 
@@ -567,12 +562,10 @@ Widget _recentMatchDetailRow(
 class ProfileRecentGamesModule extends StatefulWidget {
   final List<MatchRecord> matches;
   final AppColorTokens colors;
-  final double listMaxHeight;
 
   const ProfileRecentGamesModule({
     required this.matches,
     required this.colors,
-    required this.listMaxHeight,
   });
 
   @override
@@ -601,7 +594,6 @@ class _ProfileRecentGamesModuleState extends State<ProfileRecentGamesModule> {
   @override
   Widget build(BuildContext context) {
     final c = widget.colors;
-    final lh = widget.listMaxHeight;
     final filtered = _filterMatchesForRecentGames(widget.matches, _filter);
     final showFilterMenu = widget.matches.isNotEmpty;
 
@@ -642,7 +634,7 @@ class _ProfileRecentGamesModuleState extends State<ProfileRecentGamesModule> {
       );
     }
 
-    final cardHeight = profileCarouselCardHeight(context, listMaxHeight: lh);
+    final cardHeight = profileCarouselCardHeight(context);
 
     if (widget.matches.isEmpty) {
       return Column(
@@ -660,7 +652,7 @@ class _ProfileRecentGamesModuleState extends State<ProfileRecentGamesModule> {
               physics: kProfileHorizontalCarouselPhysics,
               children: [
                 ProfileCarouselAddPromptCard(
-                  message: _kProfileUntilFirstGameMessage,
+                  message: kProfileUntilFirstGameMessage,
                   colors: c,
                   width: kProfileCarouselCardWidth,
                   height: cardHeight,
@@ -795,28 +787,20 @@ MatchParticipantSnapshot? _winnerParticipantForRecentCard(
     if (p.isWinner) return p;
   }
 
-  MatchParticipantSnapshot? localSnap;
-  final un = profile?.username.trim().toLowerCase();
-  for (final p in snaps) {
-    final pn = p.username.trim().toLowerCase();
-    if (un != null && un.isNotEmpty && pn == un) {
-      localSnap = p;
-      break;
-    }
-    if (p.playerId == 'local') {
-      localSnap = p;
-      break;
-    }
+  final byPlacement = _participantsByPlacement(snaps);
+  if (byPlacement.isNotEmpty && byPlacement.first.placementRank == 1) {
+    return byPlacement.first;
   }
-  localSnap ??= snaps.first;
 
+  // Local win with incomplete snapshots — treat local as winner.
   if (m.result == 'win') {
-    return localSnap;
+    for (final p in snaps) {
+      if (_participantSnapshotIsLocal(p, profile)) return p;
+    }
   }
-  for (final p in snaps) {
-    if (p.playerId != localSnap.playerId) return p;
-  }
-  return snaps.length > 1 ? snaps[1] : localSnap;
+
+  // Unknown winner — don't invent an opponent (misleading in multiplayer).
+  return null;
 }
 
 bool _participantSnapshotIsLocal(
@@ -1224,12 +1208,11 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
             ),
             SizedBox(height: LayoutTokens.gr2),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  ...bodyChildren,
-                  const Spacer(),
-                ],
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: bodyChildren,
+                ),
               ),
             ),
           ],
@@ -1319,13 +1302,10 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
 
 class ProfileDeckPerformanceSection extends ConsumerStatefulWidget {
   final AppColorTokens colors;
-  /// When null, list uses remaining flex height (one-screen layout).
-  final double? listMaxHeight;
   final bool hasPlayedGames;
 
   const ProfileDeckPerformanceSection({
     required this.colors,
-    this.listMaxHeight,
     this.hasPlayedGames = false,
   });
 
@@ -1357,7 +1337,6 @@ class _ProfileDeckPerformanceSectionState
           ..sort((a, b) => b.gamesPlayed.compareTo(a.gamesPlayed));
 
     final colors = widget.colors;
-    final lh = widget.listMaxHeight;
 
     final deckTitleStyle = TypographyTokens.sectionTitle(colors.textPrimary);
     final showPlaceholder =
@@ -1366,7 +1345,7 @@ class _ProfileDeckPerformanceSectionState
     final placeholderMessage =
         needsAddPrompt
             ? _kProfileAddDeckMessage
-            : _kProfileUntilFirstGameMessage;
+            : kProfileUntilFirstGameMessage;
 
     void openDecks() => context.go(AppRoutes.decks);
 
@@ -1453,7 +1432,7 @@ class _ProfileDeckPerformanceSectionState
     return LayoutBuilder(
       builder: (context, c) {
         final double cardHeight =
-            profileCarouselCardHeight(context, listMaxHeight: lh);
+            profileCarouselCardHeight(context);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,

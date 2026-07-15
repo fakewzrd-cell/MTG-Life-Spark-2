@@ -1,10 +1,11 @@
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter/material.dart';
-
-import '../../core/debug/app_log.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/debug/app_log.dart';
 import '../../core/game/game_format.dart';
 import '../../core/models/app_settings.dart';
 import '../../core/persistence/providers.dart';
@@ -17,6 +18,7 @@ import '../../ui/components/ui_surface.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/app_color_palettes.dart';
 import '../../ui/tokens/color_tokens.dart';
+import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import '../../ui/tokens/typography_tokens.dart';
@@ -178,6 +180,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               height: 28,
             ),
           ),
+          SizedBox(height: LayoutTokens.gr3),
+          const _AppCredits(),
           SizedBox(height: LayoutTokens.gr4),
         ],
       ),
@@ -311,85 +315,72 @@ class _ColorSchemePicker extends StatelessWidget {
       child: UiSurface(
         padding: EdgeInsets.all(LayoutTokens.gr3),
         borderRadius: RadiusTokens.radiusMd,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Text(
-              'Color scheme',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            SizedBox(height: LayoutTokens.gr1),
-            Text(
-              'Choose the accent palette used across the app shell and game chrome.',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            SizedBox(height: LayoutTokens.gr3),
-            ...AppColorPalettes.all.map((palette) {
-              final isSelected = palette.id == selected;
-              return Padding(
-                padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
-                child: InkWell(
-                  borderRadius: RadiusTokens.radiusMd,
-                  onTap: () => onSelected(palette.id),
-                  child: Container(
-                    padding: EdgeInsets.all(LayoutTokens.gr3),
-                    decoration: BoxDecoration(
-                      borderRadius: RadiusTokens.radiusMd,
-                      color: isSelected
-                          ? palette.previewAccent.withValues(alpha: 0.14)
-                          : palette.previewBackground.withValues(alpha: 0.28),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: palette.previewBackground,
-                            borderRadius: RadiusTokens.radiusSm,
-                          ),
-                          child: Center(
-                            child: Container(
-                              width: 14,
-                              height: 14,
-                              decoration: BoxDecoration(
-                                color: palette.previewAccent,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: LayoutTokens.gr3),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                palette.label,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyLarge
-                                    ?.copyWith(fontWeight: FontWeight.w600),
-                              ),
-                              Text(
-                                palette.description,
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (isSelected)
-                          Icon(
-                            Icons.check_circle,
-                            color: palette.previewAccent,
-                          ),
-                      ],
-                    ),
+            for (var i = 0; i < AppColorPalettes.all.length; i++) ...[
+              if (i > 0) SizedBox(width: LayoutTokens.gr2),
+              Expanded(
+                child: _ColorSwatchButton(
+                  palette: AppColorPalettes.all[i],
+                  selected: AppColorPalettes.all[i].id == selected,
+                  onTap: () => onSelected(AppColorPalettes.all[i].id),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ColorSwatchButton extends StatelessWidget {
+  const _ColorSwatchButton({
+    required this.palette,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final AppColorPalette palette;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: palette.label,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: RadiusTokens.radiusSm,
+          child: AspectRatio(
+            aspectRatio: 1,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: palette.previewBackground,
+                borderRadius: RadiusTokens.radiusSm,
+                border: Border.all(
+                  color: selected
+                      ? palette.previewAccent
+                      : Colors.transparent,
+                  width: 2.5,
+                ),
+              ),
+              child: Center(
+                child: Container(
+                  width: 16,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: palette.previewAccent,
+                    shape: BoxShape.circle,
                   ),
                 ),
-              );
-            }),
-          ],
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -479,6 +470,96 @@ class _SettingTile extends StatelessWidget {
         horizontal: LayoutTokens.gr1,
         vertical: LayoutTokens.gr0,
       ),
+    );
+  }
+}
+
+/// Quiet app credits — version, maker, and Scryfall attribution.
+class _AppCredits extends StatefulWidget {
+  const _AppCredits();
+
+  @override
+  State<_AppCredits> createState() => _AppCreditsState();
+}
+
+class _AppCreditsState extends State<_AppCredits> {
+  static final Uri _scryfallUri = Uri.parse('https://scryfall.com');
+
+  String? _version;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVersion();
+  }
+
+  Future<void> _loadVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      if (!mounted) return;
+      setState(() => _version = info.version);
+    } catch (e, st) {
+      appLog('Failed to read app version', error: e, stackTrace: st);
+    }
+  }
+
+  Future<void> _openScryfall() async {
+    try {
+      await launchUrl(_scryfallUri, mode: LaunchMode.externalApplication);
+    } catch (e, st) {
+      appLog('Failed to open Scryfall', error: e, stackTrace: st);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColorTokens.of(context);
+    final baseStyle = TextStyle(
+      color: colors.textMuted,
+      fontSize: FontTokens.caption,
+      height: 1.4,
+    );
+    final versionLabel = _version == null ? '…' : _version!;
+    return Column(
+      children: [
+        Text(
+          'Life Spark v$versionLabel by Federick Vidot',
+          textAlign: TextAlign.center,
+          style: baseStyle.copyWith(
+            color: colors.textSecondary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        SizedBox(height: LayoutTokens.gr1),
+        InkWell(
+          onTap: _openScryfall,
+          borderRadius: RadiusTokens.radiusSm,
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: LayoutTokens.gr2,
+              vertical: LayoutTokens.gr0,
+            ),
+            child: Text.rich(
+              TextSpan(
+                style: baseStyle,
+                children: [
+                  const TextSpan(text: 'Card data powered by '),
+                  TextSpan(
+                    text: 'Scryfall',
+                    style: baseStyle.copyWith(
+                      color: colors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                      decoration: TextDecoration.underline,
+                      decorationColor: colors.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

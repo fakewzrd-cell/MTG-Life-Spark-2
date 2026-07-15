@@ -1,18 +1,14 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
-import '../../ui/tokens/color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
-import '../../ui/tokens/motion_tokens.dart';
 import '../constants/app_icons.dart';
 import 'brand_logo.dart';
 
-/// Launch splash: mark rotates → pauses in a loop, then full logo fades in.
+/// Launch splash: fade in the full logo once bootstrap is ready.
 ///
-/// Spin always runs for at least one full cycle even if bootstrap finishes
-/// early — otherwise a warm start skips straight to the reveal.
+/// No spin loop on warm/fast starts. If init is still running after
+/// [slowLoadThreshold], a quiet mark + "Loading…" cue appears.
 class BrandedSplash extends StatefulWidget {
   const BrandedSplash({
     super.key,
@@ -23,43 +19,45 @@ class BrandedSplash extends StatefulWidget {
 
   final String message;
 
-  /// When true (and the minimum spin has elapsed), stop the spin loop and
-  /// fade in the full vertical logo.
+  /// When true, fade in the full vertical logo then invoke [onRevealComplete].
   final bool ready;
 
-  /// Called after the post-load brand reveal finishes (if [ready] was set).
+  /// Called after the brand reveal finishes (if [ready] was set).
   final VoidCallback? onRevealComplete;
 
-  /// One rotate-then-pause cycle; also the minimum spin time before reveal.
-  static const spinCycle = Duration(milliseconds: 2000);
+  /// How long init may take before we show a loading cue.
+  static const slowLoadThreshold = Duration(milliseconds: 1000);
+
+  /// Logo fade-in duration.
+  static const revealDuration = Duration(milliseconds: 750);
+
+  /// Hold after the logo is fully visible before entering the app.
+  static const revealHold = Duration(milliseconds: 700);
 
   @override
   State<BrandedSplash> createState() => _BrandedSplashState();
 }
 
 class _BrandedSplashState extends State<BrandedSplash>
-    with TickerProviderStateMixin {
-  late final AnimationController _spinController;
+    with SingleTickerProviderStateMixin {
   late final AnimationController _revealController;
-  late final DateTime _startedAt;
+  var _showLoadingCue = false;
   var _revealing = false;
-  var _revealScheduled = false;
 
   @override
   void initState() {
     super.initState();
-    _startedAt = DateTime.now();
-    // One cycle = rotate once, then pause, then repeat.
-    _spinController = AnimationController(
-      vsync: this,
-      duration: BrandedSplash.spinCycle,
-    )..repeat();
     _revealController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: BrandedSplash.revealDuration,
     );
     if (widget.ready) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _scheduleReveal());
+      WidgetsBinding.instance.addPostFrameCallback((_) => _startReveal());
+    } else {
+      Future<void>.delayed(BrandedSplash.slowLoadThreshold, () {
+        if (!mounted || widget.ready || _revealing) return;
+        setState(() => _showLoadingCue = true);
+      });
     }
   }
 
@@ -67,84 +65,49 @@ class _BrandedSplashState extends State<BrandedSplash>
   void didUpdateWidget(covariant BrandedSplash oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.ready && !oldWidget.ready) {
-      _scheduleReveal();
-    }
-  }
-
-  /// Wait out the remainder of [BrandedSplash.spinCycle] so the rotate loop
-  /// is always visible, then start the logo fade-in.
-  void _scheduleReveal() {
-    if (_revealScheduled || _revealing) return;
-    _revealScheduled = true;
-    final elapsed = DateTime.now().difference(_startedAt);
-    final remaining = BrandedSplash.spinCycle - elapsed;
-    if (remaining <= Duration.zero) {
       _startReveal();
-      return;
     }
-    Future<void>.delayed(remaining, () {
-      if (!mounted || !widget.ready) return;
-      _startReveal();
-    });
   }
 
   Future<void> _startReveal() async {
     if (_revealing) return;
     _revealing = true;
-    _spinController.stop();
+    if (_showLoadingCue && mounted) {
+      setState(() => _showLoadingCue = false);
+    }
     await _revealController.forward();
     if (!mounted) return;
-    await Future<void>.delayed(const Duration(milliseconds: 850));
+    await Future<void>.delayed(BrandedSplash.revealHold);
     if (!mounted) return;
     widget.onRevealComplete?.call();
   }
 
   @override
   void dispose() {
-    _spinController.dispose();
     _revealController.dispose();
     super.dispose();
   }
 
-  /// Maps 0→1 cycle to angle: spin for first 55%, hold for the rest.
-  static double _spinAngle(double t) {
-    const spinEnd = 0.55;
-    if (t <= spinEnd) {
-      final u = Curves.easeInOutCubic.transform(t / spinEnd);
-      return u * 2 * math.pi;
-    }
-    return 2 * math.pi;
-  }
-
   @override
   Widget build(BuildContext context) {
+    // Pure black so the white brand mark/wordmark reads cleanly on launch.
+    const splashBlack = Color(0xFF000000);
     return Scaffold(
-      backgroundColor: ColorTokens.backgroundPrimary,
-      body: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              ColorTokens.backgroundPrimary,
-              Color.lerp(
-                    ColorTokens.backgroundPrimary,
-                    ColorTokens.primaryAccent,
-                    0.18,
-                  ) ??
-                  ColorTokens.backgroundPrimary,
-            ],
-          ),
-        ),
+      backgroundColor: splashBlack,
+      body: ColoredBox(
+        color: splashBlack,
         child: Center(
           child: AnimatedBuilder(
-            animation: Listenable.merge([_spinController, _revealController]),
+            animation: _revealController,
             builder: (context, _) {
               final reveal = Curves.easeOutCubic.transform(
                 _revealController.value,
               );
-              final markOpacity = (1.0 - reveal).clamp(0.0, 1.0);
               final logoOpacity = reveal.clamp(0.0, 1.0);
+              // Quiet waiting mark only when bootstrap is actually slow.
+              final cueOpacity =
+                  (_showLoadingCue && !_revealing ? 1.0 : 0.0) *
+                  (1.0 - reveal).clamp(0.0, 1.0);
 
               return Column(
                 mainAxisSize: MainAxisSize.min,
@@ -154,23 +117,21 @@ class _BrandedSplashState extends State<BrandedSplash>
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
-                        Opacity(
-                          opacity: markOpacity,
-                          child: Transform.rotate(
-                            angle: _spinAngle(_spinController.value),
-                            child: Image.asset(
-                              AppIcons.splashLogo,
-                              width: 112,
-                              height: 112,
-                              fit: BoxFit.contain,
-                              filterQuality: FilterQuality.high,
-                            ),
+                        AnimatedOpacity(
+                          opacity: cueOpacity,
+                          duration: const Duration(milliseconds: 280),
+                          child: Image.asset(
+                            AppIcons.splashLogo,
+                            width: 96,
+                            height: 96,
+                            fit: BoxFit.contain,
+                            filterQuality: FilterQuality.high,
                           ),
                         ),
                         Opacity(
                           opacity: logoOpacity,
                           child: Transform.scale(
-                            scale: 0.94 + 0.06 * reveal,
+                            scale: 0.96 + 0.04 * reveal,
                             child: const BrandLogo(
                               layout: BrandLogoLayout.vertical,
                               height: 168,
@@ -181,19 +142,18 @@ class _BrandedSplashState extends State<BrandedSplash>
                     ),
                   ),
                   SizedBox(height: LayoutTokens.gr4),
-                  AnimatedOpacity(
-                    opacity: reveal < 0.35 ? 1 : 0,
-                    duration: MotionTokens.standard,
-                    child: Text(
+                  if (cueOpacity > 0.01)
+                    Text(
                       widget.message,
                       style: TextStyle(
-                        color: ColorTokens.textPrimary.withValues(alpha: 0.75),
+                        color: Colors.white.withValues(alpha: 0.75),
                         fontSize: FontTokens.sm,
                         fontWeight: FontWeight.w500,
                         letterSpacing: 0.2,
                       ),
-                    ),
-                  ),
+                    )
+                  else
+                    const SizedBox(height: 20),
                 ],
               );
             },

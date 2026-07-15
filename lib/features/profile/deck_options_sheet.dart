@@ -1,29 +1,36 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/game/game_format.dart';
 import '../../core/models/player_deck.dart';
+import '../../shared/widgets/deck_tile_visual.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
+import '../../ui/tokens/radius_tokens.dart';
 import '../game/widgets/game_modal_chrome.dart';
 
-/// Actions available from the deck options bottom sheet.
+/// Actions available from the deck detail / options sheet.
 enum DeckSheetAction {
+  togglePin,
+  changeFormat,
   changeStyle,
   editCover,
   rename,
+  duplicate,
   delete,
 }
 
-/// Bottom sheet shown when tapping a deck in [DecksManageScreen].
-Future<DeckSheetAction?> showDeckOptionsSheet(
+/// Detail + actions sheet when tapping a deck in [DecksManageScreen].
+Future<DeckSheetAction?> showDeckDetailSheet(
   BuildContext context,
   PlayerDeck deck,
 ) {
   return showGameBottomSheet<DeckSheetAction>(
     context: context,
-    builder: (ctx) => _DeckOptionsSheet(deck: deck),
+    isScrollControlled: true,
+    builder: (ctx) => _DeckDetailSheet(deck: deck),
   );
 }
 
@@ -55,7 +62,14 @@ Future<bool> showDeleteDeckConfirm(
   return ok == true;
 }
 
-String _deckOptionsSubtitle(PlayerDeck deck) {
+@Deprecated('Use showDeckDetailSheet')
+Future<DeckSheetAction?> showDeckOptionsSheet(
+  BuildContext context,
+  PlayerDeck deck,
+) =>
+    showDeckDetailSheet(context, deck);
+
+String _deckDetailSubtitle(PlayerDeck deck) {
   final parts = <String>[
     deck.gameFormat.displayName,
     deck.hasDeckStyle ? deck.deckStyleDisplayName : 'Style not set',
@@ -70,8 +84,8 @@ String _deckOptionsSubtitle(PlayerDeck deck) {
   return parts.join(' · ');
 }
 
-class _DeckOptionsSheet extends StatelessWidget {
-  const _DeckOptionsSheet({required this.deck});
+class _DeckDetailSheet extends StatelessWidget {
+  const _DeckDetailSheet({required this.deck});
 
   final PlayerDeck deck;
 
@@ -85,25 +99,84 @@ class _DeckOptionsSheet extends StatelessWidget {
     final colors = AppColorTokens.of(context);
     final coverLabel =
         deck.isCommanderDeck ? 'Edit commanders' : 'Edit cover card';
-    final styleTitle = deck.hasDeckStyle
-        ? 'Deck style: ${deck.deckStyleDisplayName}'
-        : 'Set deck style (required)';
+    final wr = deck.gamesPlayed == 0
+        ? null
+        : (deck.winRate * 100).round();
 
     return GameSheetBody(
+      scrollable: true,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           GameSheetHeader(
             title: deck.displayName,
-            subtitle: _deckOptionsSubtitle(deck),
+            subtitle: _deckDetailSubtitle(deck),
           ),
-          SizedBox(height: LayoutTokens.gr2),
+          SizedBox(height: LayoutTokens.gr3),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _DeckDetailCoverThumb(deck: deck, colors: colors),
+              SizedBox(width: LayoutTokens.gr3),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      wr == null
+                          ? 'No games yet'
+                          : '$wr% win rate',
+                      style: TextStyle(
+                        color: colors.textPrimary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: FontTokens.body,
+                      ),
+                    ),
+                    SizedBox(height: LayoutTokens.gr0),
+                    Text(
+                      '${deck.wins}W–${deck.losses}L · ${deck.gamesPlayed} games',
+                      style: TextStyle(
+                        color: colors.textSecondary,
+                        fontSize: FontTokens.sm,
+                      ),
+                    ),
+                    SizedBox(height: LayoutTokens.gr2),
+                    DeckWinLossRatioBar(
+                      deck: deck,
+                      colors: colors,
+                      height: 8,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: LayoutTokens.gr3),
+          _DeckOptionTile(
+            colors: colors,
+            icon: deck.isPinned
+                ? Icons.push_pin_rounded
+                : Icons.push_pin_outlined,
+            title: deck.isPinned ? 'Unpin from top' : 'Pin to top',
+            onTap: () => _pick(context, DeckSheetAction.togglePin),
+          ),
+          _DeckOptionTile(
+            colors: colors,
+            icon: Icons.category_outlined,
+            title: 'Change format',
+            subtitle: deck.gameFormat.displayName,
+            onTap: () => _pick(context, DeckSheetAction.changeFormat),
+          ),
           _DeckOptionTile(
             colors: colors,
             icon: Icons.palette_outlined,
-            title: styleTitle,
-            titleColor: deck.hasDeckStyle ? colors.textPrimary : colors.warning,
+            title: 'Change style',
+            subtitle: deck.hasDeckStyle
+                ? deck.deckStyleDisplayName
+                : 'Required — not set',
+            titleColor:
+                deck.hasDeckStyle ? colors.textPrimary : colors.warning,
             onTap: () => _pick(context, DeckSheetAction.changeStyle),
           ),
           _DeckOptionTile(
@@ -120,6 +193,12 @@ class _DeckOptionsSheet extends StatelessWidget {
             title: 'Rename',
             iconColor: colors.textPrimary,
             onTap: () => _pick(context, DeckSheetAction.rename),
+          ),
+          _DeckOptionTile(
+            colors: colors,
+            icon: Icons.copy_outlined,
+            title: 'Duplicate',
+            onTap: () => _pick(context, DeckSheetAction.duplicate),
           ),
           Divider(
             height: LayoutTokens.gr2,
@@ -139,12 +218,54 @@ class _DeckOptionsSheet extends StatelessWidget {
   }
 }
 
+class _DeckDetailCoverThumb extends StatelessWidget {
+  const _DeckDetailCoverThumb({
+    required this.deck,
+    required this.colors,
+  });
+
+  final PlayerDeck deck;
+  final AppColorTokens colors;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = deck.commanderImageUrl;
+    return ClipRRect(
+      borderRadius: RadiusTokens.radiusSm,
+      child: SizedBox(
+        width: 56,
+        height: 78,
+        child: url != null && url.isNotEmpty
+            ? CachedNetworkImage(
+                imageUrl: url,
+                fit: BoxFit.cover,
+                errorWidget: (_, _, _) => ColoredBox(
+                  color: colors.surface,
+                  child: Icon(
+                    Icons.style_outlined,
+                    color: colors.textSecondary,
+                  ),
+                ),
+              )
+            : ColoredBox(
+                color: colors.surface,
+                child: Icon(
+                  Icons.style_outlined,
+                  color: colors.textSecondary,
+                ),
+              ),
+      ),
+    );
+  }
+}
+
 class _DeckOptionTile extends StatelessWidget {
   const _DeckOptionTile({
     required this.colors,
     required this.icon,
     required this.title,
     required this.onTap,
+    this.subtitle,
     this.iconColor,
     this.titleColor,
   });
@@ -152,6 +273,7 @@ class _DeckOptionTile extends StatelessWidget {
   final AppColorTokens colors;
   final IconData icon;
   final String title;
+  final String? subtitle;
   final VoidCallback onTap;
   final Color? iconColor;
   final Color? titleColor;
@@ -170,6 +292,15 @@ class _DeckOptionTile extends StatelessWidget {
           fontSize: FontTokens.body,
         ),
       ),
+      subtitle: subtitle == null
+          ? null
+          : Text(
+              subtitle!,
+              style: TextStyle(
+                color: colors.textSecondary,
+                fontSize: FontTokens.sm,
+              ),
+            ),
       onTap: onTap,
     );
   }

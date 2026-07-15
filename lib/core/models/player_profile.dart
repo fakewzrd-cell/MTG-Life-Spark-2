@@ -53,7 +53,7 @@ class PlayerProfile extends HiveObject {
   int totalGamesPlayed;
 
   @HiveField(16)
-  /// Legacy; profile UI no longer exposes avatar selection (bundled MTG mark instead).
+  /// Circular profile picture URL (Scryfall card art), chosen in the avatar picker.
   String? profileAvatarImageUrl;
 
   /// Community: likes received from other players' feedback (aggregated).
@@ -72,11 +72,11 @@ class PlayerProfile extends HiveObject {
   @HiveField(21)
   int honorsUnderdogReceived;
 
-  /// Wide art URL for profile header banner (e.g. Scryfall card art).
+  /// Optional wide art URL for the profile hero (falls back to bundled banner).
   @HiveField(22)
   String? profileBannerImageUrl;
 
-  /// Legacy optional-stat IDs (unused — all player-stat cards are always shown).
+  /// Legacy Hive field retained for storage compatibility; unused by the UI.
   @HiveField(23, defaultValue: <String>[])
   List<String> profileExtraStatIds;
 

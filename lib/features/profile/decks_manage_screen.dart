@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -16,6 +17,7 @@ import '../../ui/tokens/radius_tokens.dart';
 import '../../ui/tokens/typography_tokens.dart';
 import 'deck_options_sheet.dart';
 import 'deck_style_picker_sheet.dart';
+import 'game_format_picker_sheet.dart';
 import 'new_deck_sheet.dart';
 import 'profile_carousel_sections.dart';
 
@@ -32,16 +34,28 @@ Map<GameFormat, List<PlayerDeck>> _groupDecksByFormat(List<PlayerDeck> decks) {
     grouped.putIfAbsent(deck.gameFormat, () => []).add(deck);
   }
   for (final list in grouped.values) {
-    list.sort(
-      (a, b) =>
-          a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()),
-    );
+    list.sort((a, b) {
+      if (a.isPinned != b.isPinned) return a.isPinned ? -1 : 1;
+      return a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase());
+    });
   }
   return grouped;
 }
 
+bool _deckMatchesQuery(PlayerDeck deck, String query) {
+  if (query.isEmpty) return true;
+  final q = query.toLowerCase();
+  return deck.displayName.toLowerCase().contains(q) ||
+      deck.commanderName.toLowerCase().contains(q) ||
+      (deck.partnerCommanderName?.toLowerCase().contains(q) ?? false) ||
+      deck.deckStyleDisplayName.toLowerCase().contains(q) ||
+      deck.gameFormat.displayName.toLowerCase().contains(q);
+}
+
 class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
   List<PlayerDeck> _decks = [];
+  final _searchCtrl = TextEditingController();
+  String _query = '';
 
   @override
   void initState() {
@@ -49,6 +63,12 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _reload();
     });
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
   }
 
   void _reload() {
@@ -98,6 +118,24 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
     _reload();
   }
 
+  Future<void> _changeFormat(DeckRepository repo, PlayerDeck deck) async {
+    final picked = await showGameFormatPickerSheet(
+      context,
+      selected: deck.gameFormat,
+    );
+    if (picked == null || picked == deck.gameFormat || !mounted) return;
+    final wasCommander = deck.isCommanderDeck;
+    deck.format = picked.name;
+    if (wasCommander && !picked.isCommanderStyle) {
+      deck.partnerCommanderName = null;
+      deck.partnerCommanderImageUrl = null;
+      deck.partnerManaCost = null;
+    }
+    await repo.save(deck);
+    bumpDeckListRevision(ref);
+    _reload();
+  }
+
   Future<void> _editCommanders(PlayerDeck deck, DeckRepository repo) async {
     if (!await _ensureDeckStyle(deck, repo)) return;
     if (!mounted) return;
@@ -128,6 +166,19 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
     _reload();
   }
 
+  Future<void> _togglePin(DeckRepository repo, PlayerDeck deck) async {
+    deck.isPinned = !deck.isPinned;
+    await repo.save(deck);
+    bumpDeckListRevision(ref);
+    _reload();
+  }
+
+  Future<void> _duplicateDeck(DeckRepository repo, PlayerDeck deck) async {
+    await repo.duplicate(deck);
+    bumpDeckListRevision(ref);
+    _reload();
+  }
+
   Future<void> _confirmDelete(DeckRepository repo, PlayerDeck deck) async {
     final ok = await showDeleteDeckConfirm(context, deck);
     if (!ok || !mounted) return;
@@ -137,16 +188,22 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
   }
 
   Future<void> _onDeckTap(PlayerDeck deck, DeckRepository repo) async {
-    final action = await showDeckOptionsSheet(context, deck);
+    final action = await showDeckDetailSheet(context, deck);
     if (action == null || !mounted) return;
 
     switch (action) {
+      case DeckSheetAction.togglePin:
+        await _togglePin(repo, deck);
+      case DeckSheetAction.changeFormat:
+        await _changeFormat(repo, deck);
       case DeckSheetAction.changeStyle:
         await _changeDeckStyle(repo, deck);
       case DeckSheetAction.editCover:
         await _editCommanders(deck, repo);
       case DeckSheetAction.rename:
         await _renameDeck(repo, deck);
+      case DeckSheetAction.duplicate:
+        await _duplicateDeck(repo, deck);
       case DeckSheetAction.delete:
         await _confirmDelete(repo, deck);
     }
@@ -154,27 +211,26 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(deckListRevisionProvider, (_, __) => _reload());
+    ref.listen(deckListRevisionProvider, (_, _) => _reload());
     final colors = AppColorTokens.of(context);
     final repo = ref.read(deckRepositoryProvider);
     final bottomBarPad = LayoutTokens.shellBottomInset(context);
-    final grouped = _groupDecksByFormat(_decks);
-    final cardHeight = profileCarouselCardHeight(context);
+
+    final filtered =
+        _decks.where((d) => _deckMatchesQuery(d, _query)).toList();
+    final grouped = _groupDecksByFormat(filtered);
 
     final isEmpty = _decks.isEmpty;
-    const fabSize = 40.0;
-    final fabBottom = MediaQuery.paddingOf(context).bottom + LayoutTokens.gr1;
-    final fabStackClearance = fabBottom + fabSize + LayoutTokens.gr2;
+    final noMatches = !isEmpty && filtered.isEmpty;
 
     final sectionChildren = <Widget>[];
     for (final format in GameFormatDetails.lobbyPickerOrder) {
       final decks = grouped[format];
       if (decks == null || decks.isEmpty) continue;
       sectionChildren.add(
-        _DecksFormatRow(
+        _DecksFormatSection(
           format: format,
           decks: decks,
-          cardHeight: cardHeight,
           colors: colors,
           onDeckTap: (deck) => _onDeckTap(deck, repo),
         ),
@@ -233,52 +289,88 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
       scrollBody = ListView(
         padding: LayoutTokens.shellListPadding(
           context,
-          top: LayoutTokens.gr4,
-        ).copyWith(
-          bottom: fabStackClearance,
+          top: LayoutTokens.gr2,
         ),
-        children: sectionChildren,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(bottom: LayoutTokens.gr3),
+            child: TextField(
+              controller: _searchCtrl,
+              onChanged: (v) => setState(() => _query = v),
+              decoration: InputDecoration(
+                hintText: 'Search decks…',
+                prefixIcon: const Icon(Icons.search_rounded),
+                hintStyle: TextStyle(color: colors.textSecondary),
+                suffixIcon: _query.isEmpty
+                    ? null
+                    : IconButton(
+                        tooltip: 'Clear',
+                        onPressed: () {
+                          _searchCtrl.clear();
+                          setState(() => _query = '');
+                        },
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+              ),
+              style: TextStyle(color: colors.textPrimary),
+            ),
+          ),
+          if (noMatches)
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: LayoutTokens.gr6),
+              child: Text(
+                'No decks match “$_query”.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colors.textSecondary,
+                ),
+              ),
+            )
+          else
+            ...sectionChildren,
+        ],
       );
     }
 
-    final addFab = FloatingActionButton.small(
-      onPressed: _promptNewDeckName,
-      tooltip: 'Add deck',
-      child: const Icon(Icons.add_rounded),
-    );
-
     return Scaffold(
-      appBar: const UiAppBar(title: 'Decks'),
-      backgroundColor: colors.backgroundPrimary,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          Positioned.fill(child: scrollBody),
+      appBar: UiAppBar(
+        title: 'Decks',
+        actions: [
           if (!isEmpty)
-            Positioned(
-              right: LayoutTokens.shellPageInset,
-              bottom: fabBottom,
-              child: addFab,
+            TextButton.icon(
+              onPressed: _promptNewDeckName,
+              icon: Icon(
+                Icons.add_rounded,
+                size: 20,
+                color: colors.primaryAccent,
+              ),
+              label: Text(
+                'Add',
+                style: TextStyle(
+                  color: colors.primaryAccent,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
         ],
       ),
+      backgroundColor: colors.backgroundPrimary,
+      body: scrollBody,
     );
   }
 }
 
-/// One format section: title + horizontal row of profile-style deck cards.
-class _DecksFormatRow extends StatelessWidget {
-  const _DecksFormatRow({
+/// Format section: header + vertical list of compact deck rows.
+class _DecksFormatSection extends StatelessWidget {
+  const _DecksFormatSection({
     required this.format,
     required this.decks,
-    required this.cardHeight,
     required this.colors,
     required this.onDeckTap,
   });
 
   final GameFormat format;
   final List<PlayerDeck> decks;
-  final double cardHeight;
   final AppColorTokens colors;
   final ValueChanged<PlayerDeck> onDeckTap;
 
@@ -297,39 +389,182 @@ class _DecksFormatRow extends StatelessWidget {
           pluralUnit: 'decks',
         ),
         SizedBox(height: LayoutTokens.gr2),
-        SizedBox(
-          height: cardHeight,
-          child: ListView.separated(
-            primary: false,
-            scrollDirection: Axis.horizontal,
-            clipBehavior: Clip.none,
-            physics: kProfileHorizontalCarouselPhysics,
-            padding: EdgeInsets.only(right: LayoutTokens.gr1),
-            itemCount: decks.length,
-            separatorBuilder: (_, __) => SizedBox(width: LayoutTokens.gr2),
-            itemBuilder: (context, i) {
-              final deck = decks[i];
-              return Semantics(
-                button: true,
-                label: '${deck.displayName}, ${format.displayName}',
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () => onDeckTap(deck),
-                    borderRadius: RadiusTokens.radiusCarouselCard,
-                    child: ProfileDeckCard(
-                      deck: deck,
-                      colors: colors,
-                      width: kProfileCarouselCardWidth,
-                      height: cardHeight,
-                    ),
+        ...[
+          for (var i = 0; i < decks.length; i++) ...[
+            if (i > 0) SizedBox(height: LayoutTokens.gr2),
+            _DeckLibraryTile(
+              deck: decks[i],
+              colors: colors,
+              onTap: () => onDeckTap(decks[i]),
+            ),
+          ],
+        ],
+      ],
+    );
+  }
+}
+
+/// Compact scannable row for the decks library (not a carousel card).
+class _DeckLibraryTile extends StatelessWidget {
+  const _DeckLibraryTile({
+    required this.deck,
+    required this.colors,
+    required this.onTap,
+  });
+
+  final PlayerDeck deck;
+  final AppColorTokens colors;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final commanderLine = deck.isCommanderDeck && deck.hasPartner
+        ? '${deck.commanderName} // ${deck.partnerCommanderName}'
+        : deck.commanderName;
+    final styleLine = deck.hasDeckStyle
+        ? deck.deckStyleDisplayName
+        : 'Style not set';
+    final wr = deck.gamesPlayed == 0
+        ? null
+        : (deck.winRate * 100).round();
+
+    return Semantics(
+      button: true,
+      label: '${deck.displayName}, ${deck.gameFormat.displayName}',
+      child: Material(
+        color: colors.surface,
+        borderRadius: RadiusTokens.radiusMd,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: RadiusTokens.radiusMd,
+          child: Padding(
+            padding: EdgeInsets.all(LayoutTokens.gr2),
+            child: Row(
+              children: [
+                _DeckCoverThumb(deck: deck, colors: colors),
+                SizedBox(width: LayoutTokens.gr3),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          if (deck.isPinned) ...[
+                            Icon(
+                              Icons.push_pin_rounded,
+                              size: 14,
+                              color: colors.primaryAccent,
+                            ),
+                            SizedBox(width: LayoutTokens.gr0),
+                          ],
+                          Expanded(
+                            child: Text(
+                              deck.displayName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: colors.textPrimary,
+                                fontWeight: FontWeight.w700,
+                                fontSize: FontTokens.body,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: LayoutTokens.gr0),
+                      Text(
+                        commanderLine.isEmpty ? 'No cover card' : commanderLine,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: colors.textSecondary,
+                          fontSize: FontTokens.sm,
+                        ),
+                      ),
+                      SizedBox(height: LayoutTokens.gr0),
+                      Text(
+                        styleLine,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: deck.hasDeckStyle
+                              ? colors.textSecondary
+                              : colors.warning,
+                          fontSize: FontTokens.sm,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              );
-            },
+                SizedBox(width: LayoutTokens.gr2),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      wr == null ? '—' : '$wr%',
+                      style: TextStyle(
+                        color: colors.primaryAccent,
+                        fontWeight: FontWeight.w700,
+                        fontSize: FontTokens.body,
+                      ),
+                    ),
+                    Text(
+                      '${deck.wins}W–${deck.losses}L',
+                      style: TextStyle(
+                        color: colors.textSecondary,
+                        fontSize: FontTokens.xs,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
-      ],
+      ),
+    );
+  }
+}
+
+class _DeckCoverThumb extends StatelessWidget {
+  const _DeckCoverThumb({
+    required this.deck,
+    required this.colors,
+  });
+
+  final PlayerDeck deck;
+  final AppColorTokens colors;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = deck.commanderImageUrl;
+    return ClipRRect(
+      borderRadius: RadiusTokens.radiusSm,
+      child: SizedBox(
+        width: 48,
+        height: 68,
+        child: url != null && url.isNotEmpty
+            ? CachedNetworkImage(
+                imageUrl: url,
+                fit: BoxFit.cover,
+                errorWidget: (_, _, _) => ColoredBox(
+                  color: colors.backgroundPrimary,
+                  child: Icon(
+                    Icons.style_outlined,
+                    color: colors.textSecondary,
+                  ),
+                ),
+              )
+            : ColoredBox(
+                color: colors.backgroundPrimary,
+                child: Icon(
+                  Icons.style_outlined,
+                  color: colors.textSecondary,
+                ),
+              ),
+      ),
     );
   }
 }

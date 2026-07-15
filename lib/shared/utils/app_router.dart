@@ -9,7 +9,7 @@ import '../../features/game_lobby/game_lobby_screen.dart';
 import '../../features/profile/profile_setup_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/profile/profile_screen.dart';
-import '../../features/profile/profile_banner_picker_screen.dart';
+import '../../features/profile/profile_picture_picker_screen.dart';
 import '../../features/profile/pods_manage_screen.dart';
 import '../../features/profile/decks_manage_screen.dart';
 import '../../features/settings/settings_screen.dart';

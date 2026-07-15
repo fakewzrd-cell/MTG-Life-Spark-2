@@ -59,10 +59,11 @@ class _DeckStylePickerSheetState extends State<_DeckStylePickerSheet> {
     final colors = AppColorTokens.of(context);
     final maxH = MediaQuery.sizeOf(context).height * 0.72;
 
-    return SizedBox(
-      height: maxH,
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxH),
       child: GameSheetBody(
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const GameSheetHeader(title: 'Deck style'),
@@ -79,8 +80,9 @@ class _DeckStylePickerSheetState extends State<_DeckStylePickerSheet> {
               onChanged: (v) => setState(() => _query = v),
             ),
             SizedBox(height: LayoutTokens.gr2),
-            Expanded(
+            Flexible(
               child: ListView.separated(
+                shrinkWrap: true,
                 padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
                 itemCount: _filtered.length,
                 separatorBuilder: (_, _) =>

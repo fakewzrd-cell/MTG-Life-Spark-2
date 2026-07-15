@@ -27,10 +27,7 @@ class ProfileHeroLayoutMetrics {
   final double overlayBottomPadding;
   final double overlayTopReserve;
 
-  factory ProfileHeroLayoutMetrics.resolve(
-    BuildContext context, {
-    required bool isNarrow,
-  }) {
+  factory ProfileHeroLayoutMetrics.resolve(BuildContext context) {
     final textScaler = MediaQuery.textScalerOf(context);
     final textScale = _clampedUnitScale(textScaler.scale(1));
     final padding = MediaQuery.paddingOf(context);
@@ -54,9 +51,8 @@ class ProfileHeroLayoutMetrics {
         identityRowHeight + LayoutTokens.gr4 + statsPillHeight;
 
     final topInset = padding.top;
-    // No overlay controls sit above the avatar anymore (banner is a fixed
-    // default graphic), so this only needs to clear the status bar/notch.
-    final overlayTopReserve = topInset + LayoutTokens.gr2;
+    // Clears status bar plus room for the top-trailing Edit/Done pill.
+    final overlayTopReserve = topInset + LayoutTokens.gr2 + LayoutTokens.minTapTarget;
     const overlayBottomPadding = LayoutTokens.gr3;
     final minCardHeight =
         overlayTopReserve +

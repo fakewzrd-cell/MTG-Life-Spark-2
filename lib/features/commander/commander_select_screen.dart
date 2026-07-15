@@ -294,8 +294,8 @@ class _CommanderSelectScreenState
         return _isCommanderPick ? 'Edit commanders' : 'Edit cover card';
       }
       return _isCommanderPick
-          ? 'New deck — pick commander'
-          : 'New deck — pick cover card';
+          ? 'Step 2 of 2 — commander'
+          : 'Step 2 of 2 — cover card';
     }
     return _pickingPartner ? 'Select Partner' : 'Select Commander';
   }

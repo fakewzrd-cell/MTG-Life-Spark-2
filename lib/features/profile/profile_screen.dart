@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' show NumberFormat;
@@ -16,18 +17,49 @@ import '../../ui/tokens/color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
+import '../game/widgets/game_modal_chrome.dart';
 import 'profile_carousel_sections.dart';
 import 'profile_hero_layout.dart';
 import 'profile_player_stats_section.dart';
+import 'ranks_info_sheet.dart';
 
 /// Camera badge diameter — centered on the avatar ring at bottom-right.
 const double _kProfileCameraBadgeSize = 32;
 
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  var _editing = false;
+
+  void _enterEditMode() {
+    HapticFeedback.selectionClick();
+    setState(() => _editing = true);
+  }
+
+  void _exitEditMode() {
+    HapticFeedback.selectionClick();
+    setState(() => _editing = false);
+  }
+
+  Future<void> _editUsername(PlayerProfile profile) async {
+    final next = await showDialog<String>(
+      context: context,
+      builder: (ctx) => _EditUsernameDialog(initialName: profile.username),
+    );
+    if (next == null || !mounted) return;
+    if (next == profile.username) return;
+    profile.username = next;
+    await ref.read(profileRepositoryProvider).saveProfile(profile);
+    bumpProfileRevision(ref);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final profileWatch = ref.watch(profileProvider);
     final profile = profileWatch.profile;
     final matchRepo = ref.watch(matchRepositoryProvider);
@@ -58,75 +90,80 @@ class ProfileScreen extends ConsumerWidget {
       );
     }
 
-    final allMatches =
-        matchRepo
-            .getAllMatches()
-            .where((m) => !m.matchId.startsWith('__preview_placeholder'))
-            .toList();
+    final allMatches = matchRepo
+        .getAllMatches()
+        .where((m) => !m.matchId.startsWith('__preview_placeholder'))
+        .toList();
 
     final colors = AppColorTokens.of(context);
+    final heroMetrics = ProfileHeroLayoutMetrics.resolve(context);
+    final hPad = heroMetrics.overlayHPadding;
+    final scrollBottomPad = LayoutTokens.shellBottomInset(context);
+    final hasPlayedGames =
+        profile.totalGamesPlayed > 0 || allMatches.isNotEmpty;
+
     return Scaffold(
       backgroundColor: colors.backgroundPrimary,
       body: SafeArea(
         top: false,
         bottom: false,
-        child: Builder(
-          builder: (context) {
-            final bodyW = MediaQuery.sizeOf(context).width;
-            final isNarrow = bodyW < GameLayoutBreakpoints.compact;
-            final heroMetrics = ProfileHeroLayoutMetrics.resolve(
-              context,
-              isNarrow: isNarrow,
-            );
-            final hPad = heroMetrics.overlayHPadding;
-            final scrollBottomPad = LayoutTokens.shellBottomInset(context);
-            final layoutTs = profileSectionTextScale(context);
-            final sectionCardListMaxHeight =
-                (MediaQuery.sizeOf(context).height *
-                        0.42 *
-                        (0.94 + 0.06 * (layoutTs - 1.0)))
-                    .clamp(280.0, 560.0);
-
-            return CustomScrollView(
-              key: ValueKey(profileWatch.revision),
-              slivers: [
-                SliverToBoxAdapter(
-                  child: _ProfileHeroCard(
+        child: CustomScrollView(
+          key: ValueKey('${profileWatch.revision}-$_editing'),
+          slivers: [
+            SliverToBoxAdapter(
+              child: _ProfileHeroCard(
+                profile: profile,
+                colors: colors,
+                metrics: heroMetrics,
+                editing: _editing,
+                onEnterEdit: _enterEditMode,
+                onExitEdit: _exitEditMode,
+                onEditName: () => _editUsername(profile),
+                onEditAvatar: () => context.push(AppRoutes.profileAvatar),
+              ),
+            ),
+            if (_editing)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    hPad,
+                    LayoutTokens.gr3,
+                    hPad,
+                    0,
+                  ),
+                  child: Text(
+                    'Tap the camera on your picture or the pencil by your name.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colors.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            SliverToBoxAdapter(child: SizedBox(height: LayoutTokens.gr4)),
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(hPad, 0, hPad, scrollBottomPad),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  ProfilePlayerStatsSection(
                     profile: profile,
                     colors: colors,
-                    metrics: heroMetrics,
+                    hasPlayedGames: hasPlayedGames,
+                  ),                  SizedBox(height: LayoutTokens.shellSectionGap),
+                  ProfileDeckPerformanceSection(
+                    colors: colors,
+                    hasPlayedGames: hasPlayedGames,
                   ),
-                ),
-                SliverToBoxAdapter(child: SizedBox(height: LayoutTokens.gr4)),
-                SliverPadding(
-                  padding: EdgeInsets.fromLTRB(hPad, 0, hPad, scrollBottomPad),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      ProfilePlayerStatsSection(
-                        profile: profile,
-                        colors: colors,
-                        listMaxHeight: sectionCardListMaxHeight,
-                        hasPlayedGames: allMatches.isNotEmpty,
-                      ),
-                      SizedBox(height: LayoutTokens.shellSectionGap),
-                      ProfileDeckPerformanceSection(
-                        colors: colors,
-                        listMaxHeight: sectionCardListMaxHeight,
-                        hasPlayedGames: allMatches.isNotEmpty,
-                      ),
-                      SizedBox(height: LayoutTokens.shellSectionGap),
-                      ProfileRecentGamesModule(
-                        matches: allMatches,
-                        colors: colors,
-                        listMaxHeight: sectionCardListMaxHeight,
-                      ),
-                      SizedBox(height: LayoutTokens.gr4),
-                    ]),
+                  SizedBox(height: LayoutTokens.shellSectionGap),
+                  ProfileRecentGamesModule(
+                    matches: allMatches,
+                    colors: colors,
                   ),
-                ),
-              ],
-            );
-          },
+                  SizedBox(height: LayoutTokens.gr4),
+                ]),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -135,17 +172,27 @@ class ProfileScreen extends ConsumerWidget {
 
 String _formatProfileStat(int n) => NumberFormat.decimalPattern().format(n);
 
-/// Full-bleed hero header: edge-to-edge color banner, rounded bottom only.
+/// Full-bleed hero header: brand gradient, rounded bottom only.
 class _ProfileHeroCard extends StatelessWidget {
   const _ProfileHeroCard({
     required this.profile,
     required this.colors,
     required this.metrics,
+    required this.editing,
+    required this.onEnterEdit,
+    required this.onExitEdit,
+    required this.onEditName,
+    required this.onEditAvatar,
   });
 
   final PlayerProfile profile;
   final AppColorTokens colors;
   final ProfileHeroLayoutMetrics metrics;
+  final bool editing;
+  final VoidCallback onEnterEdit;
+  final VoidCallback onExitEdit;
+  final VoidCallback onEditName;
+  final VoidCallback onEditAvatar;
 
   static final BorderRadius _heroRadius = BorderRadius.vertical(
     bottom: Radius.circular(RadiusTokens.bento),
@@ -153,19 +200,22 @@ class _ProfileHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardHeight = metrics.cardHeight;
-    void onAvatar() => context.push(AppRoutes.profileAvatar);
-
     return ClipRRect(
       borderRadius: _heroRadius,
       child: SizedBox(
-        height: cardHeight,
+        height: metrics.cardHeight,
         width: double.infinity,
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Positioned.fill(
-              child: defaultBannerFill(context),
+            Positioned.fill(child: defaultBannerFill(context)),
+            Positioned(
+              top: metrics.topInset + LayoutTokens.gr2,
+              right: metrics.overlayHPadding,
+              child: _ProfileEditModePill(
+                editing: editing,
+                onPressed: editing ? onExitEdit : onEnterEdit,
+              ),
             ),
             Positioned.fill(
               child: Padding(
@@ -181,7 +231,9 @@ class _ProfileHeroCard extends StatelessWidget {
                     profile: profile,
                     colors: colors,
                     avatarSize: ProfileHeroLayoutMetrics.avatarDiameter,
-                    onAvatarTap: onAvatar,
+                    editing: editing,
+                    onEditName: onEditName,
+                    onEditAvatar: onEditAvatar,
                   ),
                 ),
               ),
@@ -193,98 +245,85 @@ class _ProfileHeroCard extends StatelessWidget {
   }
 }
 
-/// Avatar, name, tier badge, and stats pill (inside hero gradient).
-class _ProfileHeroIdentityAndStats extends ConsumerWidget {
+/// Top-trailing Edit ↔ Done mode toggle.
+class _ProfileEditModePill extends StatelessWidget {
+  const _ProfileEditModePill({
+    required this.editing,
+    required this.onPressed,
+  });
+
+  final bool editing;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: ColorTokens.onAccent.withValues(alpha: 0.18),
+      borderRadius: RadiusTokens.radiusPill,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: RadiusTokens.radiusPill,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minWidth: LayoutTokens.minTapTarget,
+            minHeight: LayoutTokens.minTapTarget,
+          ),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: editing ? LayoutTokens.gr3 : LayoutTokens.gr2,
+              vertical: LayoutTokens.gr1,
+            ),
+            child: Center(
+              child: editing
+                  ? Text(
+                      'Done',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: ColorTokens.onAccent,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.2,
+                      ),
+                    )
+                  : Icon(
+                      Icons.edit_square,
+                      size: 22,
+                      color: ColorTokens.onAccent.withValues(alpha: 0.95),
+                      semanticLabel: 'Edit profile',
+                    ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Avatar, name, tier badge, and stats pill.
+class _ProfileHeroIdentityAndStats extends StatelessWidget {
   const _ProfileHeroIdentityAndStats({
     required this.profile,
     required this.colors,
     required this.avatarSize,
-    required this.onAvatarTap,
+    required this.editing,
+    required this.onEditName,
+    required this.onEditAvatar,
   });
 
   final PlayerProfile profile;
   final AppColorTokens colors;
   final double avatarSize;
-  final VoidCallback onAvatarTap;
-
-  Future<void> _editUsername(BuildContext context, WidgetRef ref) async {
-    final controller = TextEditingController(text: profile.username);
-    final formKey = GlobalKey<FormState>();
-    final saved = await showDialog<bool>(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          backgroundColor: colors.surface,
-          title: Text(
-            'Edit name',
-            style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
-              color: colors.textPrimary,
-            ),
-          ),
-          content: Form(
-            key: formKey,
-            child: TextFormField(
-              controller: controller,
-              autofocus: true,
-              maxLength: 20,
-              textCapitalization: TextCapitalization.words,
-              style: TextStyle(color: colors.textPrimary),
-              decoration: const InputDecoration(
-                labelText: 'Username',
-                hintText: 'e.g. The Archduke',
-              ),
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) {
-                  return 'Enter a username';
-                }
-                if (v.trim().length < 2) {
-                  return 'Must be at least 2 characters';
-                }
-                return null;
-              },
-              onFieldSubmitted: (_) {
-                if (formKey.currentState?.validate() ?? false) {
-                  Navigator.pop(ctx, true);
-                }
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(
-                'Cancel',
-                style: TextStyle(color: colors.textSecondary),
-              ),
-            ),
-            FilledButton(
-              onPressed: () {
-                if (formKey.currentState?.validate() ?? false) {
-                  Navigator.pop(ctx, true);
-                }
-              },
-              style: FilledButton.styleFrom(
-                backgroundColor: colors.primaryAccent,
-              ),
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
-
-    final next = controller.text.trim();
-    controller.dispose();
-    if (saved != true || !context.mounted) return;
-    if (next == profile.username) return;
-
-    profile.username = next;
-    await ref.read(profileRepositoryProvider).saveProfile(profile);
-    bumpProfileRevision(ref);
-  }
+  final bool editing;
+  final VoidCallback onEditName;
+  final VoidCallback onEditAvatar;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    final nameStyle = Theme.of(context).textTheme.titleLarge?.copyWith(
+      color: ColorTokens.onAccent,
+      fontWeight: FontWeight.w700,
+      letterSpacing: -0.3,
+    );
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -296,7 +335,8 @@ class _ProfileHeroIdentityAndStats extends ConsumerWidget {
               profile: profile,
               colors: colors,
               size: avatarSize,
-              onTap: onAvatarTap,
+              showCameraBadge: editing,
+              onTap: editing ? onEditAvatar : null,
             ),
             SizedBox(width: LayoutTokens.gr3),
             Expanded(
@@ -306,37 +346,46 @@ class _ProfileHeroIdentityAndStats extends ConsumerWidget {
                 children: [
                   Row(
                     children: [
-                      Expanded(
+                      Flexible(
                         child: Text(
                           profile.username,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: ColorTokens.onAccent,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.3,
+                          style: nameStyle,
+                        ),
+                      ),
+                      if (editing) ...[
+                        SizedBox(width: LayoutTokens.gr1),
+                        IconButton(
+                          onPressed: onEditName,
+                          tooltip: 'Edit name',
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: LayoutTokens.minTapTarget,
+                            minHeight: LayoutTokens.minTapTarget,
+                          ),
+                          icon: Icon(
+                            Icons.edit_rounded,
+                            size: 20,
+                            color: ColorTokens.onAccent.withValues(alpha: 0.92),
                           ),
                         ),
-                      ),
-                      IconButton(
-                        onPressed: () => _editUsername(context, ref),
-                        tooltip: 'Edit name',
-                        visualDensity: VisualDensity.compact,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(
-                          minWidth: LayoutTokens.minTapTarget,
-                          minHeight: LayoutTokens.minTapTarget,
-                        ),
-                        icon: Icon(
-                          Icons.edit_rounded,
-                          size: 20,
-                          color: ColorTokens.onAccent.withValues(alpha: 0.92),
-                        ),
-                      ),
+                      ],
                     ],
                   ),
                   SizedBox(height: LayoutTokens.gr0),
-                  TierBadge(tier: profile.tier, level: profile.level),
+                  TierBadge(
+                    tier: profile.tier,
+                    level: profile.level,
+                    showInfoIcon: !editing,
+                    onTap: editing
+                        ? null
+                        : () => showRanksInfoSheet(
+                            context,
+                            currentLevel: profile.level,
+                          ),
+                  ),
                 ],
               ),
             ),
@@ -349,6 +398,83 @@ class _ProfileHeroIdentityAndStats extends ConsumerWidget {
   }
 }
 
+class _EditUsernameDialog extends StatefulWidget {
+  const _EditUsernameDialog({required this.initialName});
+
+  final String initialName;
+
+  @override
+  State<_EditUsernameDialog> createState() => _EditUsernameDialogState();
+}
+
+class _EditUsernameDialogState extends State<_EditUsernameDialog> {
+  late final TextEditingController _controller;
+  final _formKey = GlobalKey<FormState>();
+  var _canSave = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialName);
+    _canSave = _isValid(widget.initialName);
+    _controller.addListener(_syncCanSave);
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_syncCanSave);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  bool _isValid(String raw) => raw.trim().length >= 2;
+
+  void _syncCanSave() {
+    final next = _isValid(_controller.text);
+    if (next != _canSave) setState(() => _canSave = next);
+  }
+
+  void _submit() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    Navigator.pop(context, _controller.text.trim());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColorTokens.of(context);
+    return GameFormDialog(
+      title: 'Edit name',
+      submitLabel: 'Save',
+      enabled: _canSave,
+      onSubmit: _canSave ? _submit : null,
+      content: Form(
+        key: _formKey,
+        child: TextFormField(
+          controller: _controller,
+          autofocus: true,
+          maxLength: 20,
+          textCapitalization: TextCapitalization.words,
+          textInputAction: TextInputAction.done,
+          onFieldSubmitted: (_) {
+            if (_canSave) _submit();
+          },
+          style: TextStyle(color: colors.textPrimary),
+          decoration: InputDecoration(
+            labelText: 'Username',
+            hintText: 'e.g. The Archduke',
+            hintStyle: TextStyle(color: colors.textSecondary),
+          ),
+          validator: (v) {
+            if (v == null || v.trim().isEmpty) return 'Enter a username';
+            if (v.trim().length < 2) return 'Must be at least 2 characters';
+            return null;
+          },
+        ),
+      ),
+    );
+  }
+}
+
 String? _profileAvatarImageUrl(PlayerProfile profile) {
   final avatar = profile.profileAvatarImageUrl;
   if (avatar != null && avatar.isNotEmpty) return avatar;
@@ -357,19 +483,21 @@ String? _profileAvatarImageUrl(PlayerProfile profile) {
   return null;
 }
 
-/// Tappable circular profile picture beside the username.
+/// Circular profile picture beside the username.
 class _ProfileHeroAvatar extends StatelessWidget {
   const _ProfileHeroAvatar({
     required this.profile,
     required this.colors,
     required this.size,
-    required this.onTap,
+    required this.showCameraBadge,
+    this.onTap,
   });
 
   final PlayerProfile profile;
   final AppColorTokens colors;
   final double size;
-  final VoidCallback onTap;
+  final bool showCameraBadge;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -383,8 +511,7 @@ class _ProfileHeroAvatar extends StatelessWidget {
           width: size,
           height: size,
           fit: BoxFit.cover,
-          placeholder: (context, url) =>
-              DefaultProfileAvatarFill(size: size),
+          placeholder: (context, url) => DefaultProfileAvatarFill(size: size),
           errorWidget: (context, url, error) =>
               DefaultProfileAvatarFill(size: size),
         ),
@@ -394,10 +521,56 @@ class _ProfileHeroAvatar extends StatelessWidget {
     }
 
     const ringWidth = 3.0;
-    // Place badge center on the circle at ~315° (bottom-right on the ring).
     final ringRadius = size / 2 - ringWidth / 2;
     final edgeInset = ringRadius * (1 - 0.7071067811865476);
     final badgeOffset = edgeInset - _kProfileCameraBadgeSize / 2;
+
+    final face = SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white.withValues(alpha: showCameraBadge ? 1 : 0.9),
+                width: showCameraBadge ? 3.5 : ringWidth,
+              ),
+            ),
+            child: ClipOval(child: avatarChild),
+          ),
+          if (showCameraBadge)
+            Positioned(
+              right: badgeOffset,
+              bottom: badgeOffset,
+              child: Container(
+                width: _kProfileCameraBadgeSize,
+                height: _kProfileCameraBadgeSize,
+                decoration: BoxDecoration(
+                  color: colors.primaryAccent,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    width: 2,
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: const Icon(
+                  Icons.camera_alt_rounded,
+                  size: 16,
+                  color: ColorTokens.onAccent,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+
+    if (onTap == null) return face;
 
     return Semantics(
       button: true,
@@ -407,54 +580,11 @@ class _ProfileHeroAvatar extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           customBorder: const CircleBorder(),
-          child: SizedBox(
-            width: size,
-            height: size,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  width: size,
-                  height: size,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      width: ringWidth,
-                    ),
-                  ),
-                  child: ClipOval(child: avatarChild),
-                ),
-                Positioned(
-                  right: badgeOffset,
-                  bottom: badgeOffset,
-                  child: Container(
-                    width: _kProfileCameraBadgeSize,
-                    height: _kProfileCameraBadgeSize,
-                    decoration: BoxDecoration(
-                      color: colors.primaryAccent,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        width: 2,
-                      ),
-                    ),
-                    alignment: Alignment.center,
-                    child: const Icon(
-                      Icons.camera_alt_rounded,
-                      size: 16,
-                      color: ColorTokens.onAccent,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          child: face,
         ),
       ),
     );
   }
-
 }
 
 /// Dark pill: Wins as the primary career stat, honors as a quieter cluster.
@@ -472,38 +602,45 @@ class _ProfileFloatingStatsPill extends StatelessWidget {
       (_formatProfileStat(profile.honorsUnderdogReceived), 'Underdog'),
     ];
 
-    return Material(
-      color: colors.surface.withValues(alpha: 0.88),
-      borderRadius: RadiusTokens.radiusPill,
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
-        child: Row(
-          children: [
-            Expanded(
-              flex: 5,
-              child: _StatColumn(
-                value: _formatProfileStat(profile.totalWins),
-                shortLabel: 'Wins',
-                emphasized: true,
-                accentColor: colors.primaryAccent,
-              ),
-            ),
-            Container(
-              width: 1,
-              height: 28,
-              margin: const EdgeInsets.symmetric(horizontal: 2),
-              color: colors.borderSubtle.withValues(alpha: 0.55),
-            ),
-            for (final item in honors)
+    return Semantics(
+      label:
+          '${profile.totalWins} wins, '
+          '${profile.honorsMvpReceived} MVP, '
+          '${profile.honorsTeamPlayerReceived} team player, '
+          '${profile.honorsUnderdogReceived} underdog honors',
+      child: Material(
+        color: colors.surface.withValues(alpha: 0.88),
+        borderRadius: RadiusTokens.radiusPill,
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+          child: Row(
+            children: [
               Expanded(
-                flex: 4,
+                flex: 5,
                 child: _StatColumn(
-                  value: item.$1,
-                  shortLabel: item.$2,
+                  value: _formatProfileStat(profile.totalWins),
+                  shortLabel: 'Wins',
+                  emphasized: true,
+                  accentColor: colors.primaryAccent,
                 ),
               ),
-          ],
+              Container(
+                width: 1,
+                height: 28,
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                color: colors.borderSubtle.withValues(alpha: 0.55),
+              ),
+              for (final item in honors)
+                Expanded(
+                  flex: 4,
+                  child: _StatColumn(
+                    value: item.$1,
+                    shortLabel: item.$2,
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -529,9 +666,8 @@ class _StatColumn extends StatelessWidget {
     final valueColor = emphasized
         ? (accentColor ?? colors.textPrimary)
         : colors.textPrimary.withValues(alpha: 0.88);
-    final labelColor = emphasized
-        ? colors.textSecondary
-        : colors.textMuted;
+    final labelColor =
+        emphasized ? colors.textSecondary : colors.textMuted;
 
     return Column(
       mainAxisSize: MainAxisSize.min,

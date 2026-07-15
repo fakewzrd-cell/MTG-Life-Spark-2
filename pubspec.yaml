@@ -106,14 +106,14 @@ flutter_launcher_icons:
   adaptive_icon_background: "#12121A"
   adaptive_icon_foreground: "assets/images/app_icon_fg.png"
 
-# Branded launch screen (Android/iOS) — matches [BrandedSplash].
+# Branded launch screen (Android/iOS) — matches [BrandedSplash] black.
 # Regenerate after updating assets/images/splash_logo.png:
 #   dart run flutter_native_splash:create
 flutter_native_splash:
-  color: "#12121A"
+  color: "#000000"
   image: assets/images/splash_logo.png
   android_12:
-    color: "#12121A"
+    color: "#000000"
     image: assets/images/splash_logo.png
   ios: true
   web: false

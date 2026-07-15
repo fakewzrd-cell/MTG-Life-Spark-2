@@ -1,6 +1,7 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/player_profile.dart';
 import '../models/commander_stats.dart';
+import '../../shared/utils/wizard_rank_titles.dart';
 import 'feedback_repository.dart';
 
 class ProfileRepository {
@@ -42,12 +43,14 @@ class ProfileRepository {
 
     if (won) {
       profile.totalWins += 1;
+      profile.currentWinStreak += 1;
     } else {
       profile.totalLosses += 1;
+      profile.currentWinStreak = 0;
     }
 
     profile.level = _calculateLevel(profile.xp);
-    profile.tier = _calculateTier(profile.level);
+    profile.tier = tierForLevel(profile.level);
 
     await profile.save();
 
@@ -75,7 +78,7 @@ class ProfileRepository {
     if (profile == null) return;
     profile.xp += amount;
     profile.level = _calculateLevel(profile.xp);
-    profile.tier = _calculateTier(profile.level);
+    profile.tier = tierForLevel(profile.level);
     await profile.save();
   }
 
@@ -191,13 +194,5 @@ class ProfileRepository {
     }
 
     return level.clamp(1, 100);
-  }
-
-  String _calculateTier(int level) {
-    if (level <= 10) return 'Bronze';
-    if (level <= 25) return 'Silver';
-    if (level <= 50) return 'Gold';
-    if (level <= 75) return 'Platinum';
-    return 'Diamond';
   }
 }

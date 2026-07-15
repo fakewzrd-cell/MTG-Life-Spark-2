@@ -55,6 +55,10 @@ class PlayerDeck extends HiveObject {
   @HiveField(13, defaultValue: '')
   String deckStyleId;
 
+  /// Pinned decks sort to the top of their format group.
+  @HiveField(14, defaultValue: false)
+  bool isPinned;
+
   PlayerDeck({
     required this.id,
     required this.displayName,
@@ -70,6 +74,7 @@ class PlayerDeck extends HiveObject {
     this.commanderColorIdentity = const [],
     this.format = 'commander',
     this.deckStyleId = '',
+    this.isPinned = false,
   });
 
   bool get hasDeckStyle => DeckStyle.isValidId(deckStyleId);

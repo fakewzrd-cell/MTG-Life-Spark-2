@@ -16,9 +16,8 @@ import '../../ui/tokens/radius_tokens.dart';
 
 /// Pick MTG card art for the circular profile picture.
 ///
-/// The hero banner itself is a fixed default graphic (not user-selectable)
-/// so it never duplicates the same card art shown here — see
-/// `_defaultProfileBannerArt` in `profile_screen.dart`.
+/// The hero banner uses [profileBannerImageUrl] when set, otherwise the bundled
+/// default banner art with a dark scrim for readable overlay text.
 class ProfilePicturePickerScreen extends ConsumerStatefulWidget {
   const ProfilePicturePickerScreen({super.key});
 

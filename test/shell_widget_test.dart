@@ -43,14 +43,19 @@ void main() {
   testWidgets('deck options sheet lists actions', (tester) async {
     final deck = _testDeck();
     await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.dark(),
-        home: Builder(
-          builder: (context) => Scaffold(
-            body: Center(
-              child: ElevatedButton(
-                onPressed: () => showDeckOptionsSheet(context, deck),
-                child: const Text('Open options'),
+      ProviderScope(
+        overrides: [
+          deckRepositoryProvider.overrideWithValue(TestDeckRepository()),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.dark(),
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: ElevatedButton(
+                  onPressed: () => showDeckOptionsSheet(context, deck),
+                  child: const Text('Open options'),
+                ),
               ),
             ),
           ),
@@ -60,10 +65,13 @@ void main() {
     await tester.tap(find.text('Open options'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Deck style: Control'), findsOneWidget);
+    expect(find.text('Change style'), findsOneWidget);
     expect(find.text('Edit commanders'), findsOneWidget);
     expect(find.text('Rename'), findsOneWidget);
+    expect(find.text('Duplicate'), findsOneWidget);
     expect(find.text('Delete deck'), findsOneWidget);
+    expect(find.text('Pin to top'), findsOneWidget);
+    expect(find.text('Change format'), findsOneWidget);
   });
 
   testWidgets('settings default format opens picker dialog', (tester) async {

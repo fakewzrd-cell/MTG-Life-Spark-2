@@ -31,13 +31,14 @@ class PlayerDeckAdapter extends TypeAdapter<PlayerDeck> {
       commanderColorIdentity: (fields[11] as List).cast<String>(),
       format: fields[12] == null ? 'commander' : fields[12] as String,
       deckStyleId: fields[13] == null ? '' : fields[13] as String,
+      isPinned: fields[14] == null ? false : fields[14] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, PlayerDeck obj) {
     writer
-      ..writeByte(14)
+      ..writeByte(15)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -65,7 +66,9 @@ class PlayerDeckAdapter extends TypeAdapter<PlayerDeck> {
       ..writeByte(12)
       ..write(obj.format)
       ..writeByte(13)
-      ..write(obj.deckStyleId);
+      ..write(obj.deckStyleId)
+      ..writeByte(14)
+      ..write(obj.isPinned);
   }
 
   @override
