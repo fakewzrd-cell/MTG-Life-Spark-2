@@ -153,7 +153,18 @@ class _BrandedSplashState extends State<BrandedSplash>
                       ),
                     )
                   else
-                    const SizedBox(height: 20),
+                    Opacity(
+                      opacity: logoOpacity,
+                      child: Text(
+                        'Beta',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.55),
+                          fontSize: FontTokens.caption,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 2.4,
+                        ),
+                      ),
+                    ),
                 ],
               );
             },

@@ -181,6 +181,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               height: 28,
             ),
           ),
+          SizedBox(height: LayoutTokens.gr1),
+          Center(
+            child: Text(
+              'Beta',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: colors.textMuted,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 2.0,
+              ),
+            ),
+          ),
           SizedBox(height: LayoutTokens.gr3),
           const _AppCredits(),
           SizedBox(height: LayoutTokens.gr4),
@@ -475,7 +486,7 @@ class _SettingTile extends StatelessWidget {
   }
 }
 
-/// Quiet app credits — version, maker, and Scryfall attribution.
+/// Quiet app credits — version, maker, Scryfall, and Wizards Fan Content notice.
 class _AppCredits extends StatefulWidget {
   const _AppCredits();
 
@@ -524,12 +535,18 @@ class _AppCreditsState extends State<_AppCredits> {
     return Column(
       children: [
         Text(
-          'Life Spark v$versionLabel by Federick Vidot',
+          'Life Spark v$versionLabel · Beta',
           textAlign: TextAlign.center,
           style: baseStyle.copyWith(
             color: colors.textSecondary,
             fontWeight: FontWeight.w600,
           ),
+        ),
+        SizedBox(height: LayoutTokens.gr0),
+        Text(
+          'by Federick Vidot',
+          textAlign: TextAlign.center,
+          style: baseStyle,
         ),
         SizedBox(height: LayoutTokens.gr1),
         InkWell(
@@ -559,6 +576,15 @@ class _AppCreditsState extends State<_AppCredits> {
               textAlign: TextAlign.center,
             ),
           ),
+        ),
+        SizedBox(height: LayoutTokens.gr3),
+        Text(
+          'Life Spark is unofficial Fan Content permitted under the Fan '
+          'Content Policy. Not approved/endorsed by Wizards. Portions of the '
+          'materials used are property of Wizards of the Coast. '
+          '©Wizards of the Coast LLC.',
+          textAlign: TextAlign.center,
+          style: baseStyle.copyWith(height: 1.45),
         ),
       ],
     );
