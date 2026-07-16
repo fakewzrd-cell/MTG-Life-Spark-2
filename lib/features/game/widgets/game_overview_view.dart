@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -712,6 +714,12 @@ class _GameOverviewLifeStepper extends StatelessWidget {
                     onDelta(-1);
                   }
                 : null,
+            onHoldStep: enabled
+                ? () {
+                    context.gameHapticLight();
+                    onDelta(-5);
+                  }
+                : null,
           ),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr0),
@@ -747,6 +755,12 @@ class _GameOverviewLifeStepper extends StatelessWidget {
                     onDelta(1);
                   }
                 : null,
+            onHoldStep: enabled
+                ? () {
+                    context.gameHapticLight();
+                    onDelta(5);
+                  }
+                : null,
           ),
         ],
       ),
@@ -754,41 +768,85 @@ class _GameOverviewLifeStepper extends StatelessWidget {
   }
 }
 
-class _LifeStepButton extends StatelessWidget {
+class _LifeStepButton extends StatefulWidget {
   const _LifeStepButton({
     required this.icon,
     required this.enabled,
     required this.semanticLabel,
     required this.onTap,
+    required this.onHoldStep,
   });
 
   final IconData icon;
   final bool enabled;
   final String semanticLabel;
   final VoidCallback? onTap;
+  /// Fired after hold threshold, then repeatedly — typically ±5.
+  final VoidCallback? onHoldStep;
+
+  @override
+  State<_LifeStepButton> createState() => _LifeStepButtonState();
+}
+
+class _LifeStepButtonState extends State<_LifeStepButton> {
+  Timer? _holdTimer;
+  bool _holding = false;
+
+  @override
+  void dispose() {
+    _stopHold();
+    super.dispose();
+  }
+
+  void _startHold() {
+    if (!widget.enabled || widget.onHoldStep == null) return;
+    _holding = true;
+    _holdTimer = Timer(MotionTokens.hero, () {
+      if (!_holding || !mounted) return;
+      widget.onHoldStep!();
+      _holdTimer = Timer.periodic(MotionTokens.fast, (_) {
+        if (!_holding || !mounted) {
+          _holdTimer?.cancel();
+          return;
+        }
+        widget.onHoldStep!();
+      });
+    });
+  }
+
+  void _stopHold() {
+    _holding = false;
+    _holdTimer?.cancel();
+    _holdTimer = null;
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
     return Semantics(
       button: true,
-      enabled: enabled,
-      label: semanticLabel,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: RadiusTokens.radiusControlSm,
-          child: SizedBox(
-            width: LayoutTokens.minTapTarget,
-            height: LayoutTokens.minTapTarget,
-            child: Icon(
-              icon,
-              size: 20,
-              color: enabled
-                  ? colors.textPrimary
-                  : colors.textSecondary.withValues(alpha: 0.4),
-            ),
+      enabled: widget.enabled,
+      label: widget.semanticLabel,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onTap,
+        onLongPressStart: widget.enabled && widget.onHoldStep != null
+            ? (_) => _startHold()
+            : null,
+        onLongPressEnd: widget.enabled && widget.onHoldStep != null
+            ? (_) => _stopHold()
+            : null,
+        onLongPressCancel:
+            widget.enabled && widget.onHoldStep != null ? _stopHold : null,
+        child: SizedBox(
+          width: LayoutTokens.minTapTarget,
+          height: LayoutTokens.minTapTarget,
+          child: Icon(
+            widget.icon,
+            size: 20,
+            color: widget.enabled
+                ? colors.textPrimary
+                : colors.textSecondary.withValues(alpha: 0.4),
           ),
         ),
       ),

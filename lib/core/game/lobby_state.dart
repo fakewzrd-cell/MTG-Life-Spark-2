@@ -220,13 +220,28 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
       isReady: false,
     );
 
+    // Seed format/life from Settings on a fresh lobby only so Retry / mid-session
+    // re-init keeps any host edits already made this session.
+    final config =
+        state.players.isEmpty ? _configFromAppSettings() : state.config;
+
     state = LobbyState(
       isHost: true,
       players: [hostSlot],
-      config: state.config,
+      config: config,
     );
 
     _listenToSession();
+  }
+
+  /// Builds lobby config from Settings defaults (format + starting life).
+  LobbyConfig _configFromAppSettings() {
+    final settings = _ref.read(settingsRepositoryProvider).settings;
+    final format =
+        GameFormatDetails.fromDisplayName(settings.defaultFormat) ??
+        GameFormat.commander;
+    final life = settings.defaultStartingLife.clamp(1, 999);
+    return state.config.copyWith(format: format, startingLife: life);
   }
 
   /// Call when a client joins an existing session.

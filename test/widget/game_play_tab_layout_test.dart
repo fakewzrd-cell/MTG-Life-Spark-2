@@ -14,6 +14,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mgt_life_spark/features/game/widgets/game_performance_widgets.dart';
 import 'package:mgt_life_spark/features/game/widgets/game_timeout_widgets.dart';
 import 'package:mgt_life_spark/features/game/widgets/gameplay_dials_strip_widget.dart';
+import 'package:mgt_life_spark/features/game/widgets/life_gesture_hint_banner.dart';
 import 'package:mgt_life_spark/features/game/widgets/phase_nav_cluster.dart';
 import 'package:mgt_life_spark/features/game/widgets/variant_card_panel.dart';
 
@@ -113,6 +114,7 @@ Widget _playTabHarness({required bool hasExtraRows}) {
               playGapMd,
               ...extraRows,
               Expanded(child: lifeCounter),
+              const LifeGestureHintBanner(),
               playGapSm,
               dialStrip,
             ],
@@ -131,6 +133,7 @@ Widget _playTabHarness({required bool hasExtraRows}) {
                 playGapMd,
                 ...extraRows,
                 SizedBox(height: lifeMinFloor, child: lifeCounter),
+                const LifeGestureHintBanner(),
                 playGapSm,
                 dialStrip,
               ],

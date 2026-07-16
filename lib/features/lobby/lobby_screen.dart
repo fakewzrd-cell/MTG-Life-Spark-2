@@ -41,6 +41,8 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
   String? _qrData;
   _QrHostLoadState _qrLoadState = _QrHostLoadState.loading;
   String? _qrErrorMessage;
+  /// True after we successfully became host — used to detect external leave.
+  var _hadHostSession = false;
 
   @override
   void initState() {
@@ -92,6 +94,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
       return;
     }
 
+    _hadHostSession = true;
     ref.read(lobbyProvider.notifier).initAsHost();
 
     const maxAttempts = 12;
@@ -150,6 +153,15 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // If the session was torn down while this screen stayed mounted (shell
+    // tab switch), bounce back to the Host/Join hub instead of a dead lobby.
+    ref.listen<SessionRole>(sessionRoleProvider, (previous, next) {
+      if (!_hadHostSession) return;
+      if (next != SessionRole.none) return;
+      if (!context.mounted) return;
+      context.go(AppRoutes.lobby);
+    });
+
     final lobby = ref.watch(lobbyProvider);
     final colors = AppColorTokens.of(context);
 
@@ -250,14 +262,19 @@ class _PodSection extends ConsumerWidget {
             style: TextStyle(color: colors.textSecondary, fontSize: FontTokens.caption),
           ),
           SizedBox(height: LayoutTokens.gr2),
-          DropdownButton<String?>(
+          DropdownButtonFormField<String?>(
+            key: ValueKey<String?>(effectiveId),
             isExpanded: true,
-            value: effectiveId,
-            hint: Text(
-              'None',
-              style: TextStyle(color: colors.textSecondary),
+            initialValue: effectiveId,
+            decoration: _lobbyDropdownDecoration(context).copyWith(
+              hintText: 'None',
+              hintStyle: TextStyle(color: colors.textSecondary),
             ),
             dropdownColor: colors.surface,
+            style: TextStyle(
+              color: colors.textPrimary,
+              fontSize: FontTokens.body,
+            ),
             items: [
               DropdownMenuItem<String?>(
                 value: null,

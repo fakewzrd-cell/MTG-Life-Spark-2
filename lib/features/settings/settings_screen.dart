@@ -65,7 +65,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SectionHeader('Gameplay'),
           _SettingTile(
             title: 'Default Format',
-            subtitle: _settings.defaultFormat,
+            subtitle: '${_settings.defaultFormat} · used when you host',
             onTap: () async {
               final picked = await _pickFormat(context);
               if (picked != null && mounted) {
@@ -80,7 +80,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           _SettingTile(
             title: 'Default Starting Life',
-            subtitle: '${_settings.defaultStartingLife} life',
+            subtitle:
+                '${_settings.defaultStartingLife} life · used when you host',
             onTap: () async {
               final picked = await _pickStartingLife(context);
               if (picked != null && mounted) {
@@ -161,7 +162,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SettingTile(
             title: 'Feedback',
             subtitle: 'Send us your thoughts and suggestions',
-            onTap: () => context.push('feedback'),
+            onTap: () => context.push(AppRoutes.feedback),
           ),
           _SettingTile(
             title: 'View Tutorial Again',
@@ -243,7 +244,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             children: [
               const GameSheetHeader(title: 'Default starting life'),
               SizedBox(height: LayoutTokens.gr2),
-              ...[20, 30, 40, 50].map((l) {
+              ...[20, 25, 30, 40, 60].map((l) {
                 final selected = l == _settings.defaultStartingLife;
                 return ListTile(
                   contentPadding: EdgeInsets.zero,

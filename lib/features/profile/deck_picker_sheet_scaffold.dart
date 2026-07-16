@@ -5,10 +5,10 @@ import '../game/widgets/game_modal_chrome.dart';
 
 /// Shared layout for Format / Deck style searchable pickers.
 ///
-/// - Sheet hugs short lists (no forced 72% empty band)
-/// - Caps tall lists and scrolls inside [LimitedBox]
-/// - Avoids `Column(mainAxisSize: min)` + `Flexible`, which collapses the
-///   list viewport and clips bottom rows
+/// - Sheet hugs short lists (no forced empty band under the last row)
+/// - Caps tall lists with a real [ConstrainedBox] so they scroll inside
+/// - Uses [ConstrainedBox], not [LimitedBox] — LimitedBox is a no-op when the
+///   parent already passes a finite max height (as bottom sheets do)
 class DeckPickerSheetScaffold extends StatelessWidget {
   const DeckPickerSheetScaffold({
     super.key,
@@ -33,34 +33,39 @@ class DeckPickerSheetScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenH = MediaQuery.sizeOf(context).height;
-    final maxSheetH = screenH * maxSheetFraction;
+    final media = MediaQuery.of(context);
+    final maxSheetH = media.size.height * maxSheetFraction;
     final maxListH =
         (maxSheetH - _chromeReserve).clamp(140.0, maxSheetH * 0.68);
+    final keyboardInset = media.viewInsets.bottom;
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: maxSheetH),
-      child: GameSheetBody(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            GameSheetHeader(title: title),
-            SizedBox(height: LayoutTokens.gr2),
-            searchField,
-            SizedBox(height: LayoutTokens.gr2),
-            LimitedBox(
-              maxHeight: maxListH,
-              child: ListView.separated(
-                shrinkWrap: true,
-                padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
-                itemCount: itemCount,
-                separatorBuilder: (_, _) =>
-                    SizedBox(height: separatorHeight),
-                itemBuilder: itemBuilder,
+    return Padding(
+      padding: EdgeInsets.only(bottom: keyboardInset),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxSheetH),
+        child: GameSheetBody(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              GameSheetHeader(title: title),
+              SizedBox(height: LayoutTokens.gr2),
+              searchField,
+              SizedBox(height: LayoutTokens.gr2),
+              ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: maxListH),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  physics: const ClampingScrollPhysics(),
+                  padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
+                  itemCount: itemCount,
+                  separatorBuilder: (_, _) =>
+                      SizedBox(height: separatorHeight),
+                  itemBuilder: itemBuilder,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

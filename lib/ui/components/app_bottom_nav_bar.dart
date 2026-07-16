@@ -49,8 +49,8 @@ class AppBottomNavBar extends StatelessWidget {
 
   static const shellDestinations = [
     AppNavDestination(
-      icon: Icons.home_outlined,
-      selectedIcon: Icons.home_rounded,
+      icon: Icons.person_outline_rounded,
+      selectedIcon: Icons.person_rounded,
       label: 'Profile',
     ),
     AppNavDestination(

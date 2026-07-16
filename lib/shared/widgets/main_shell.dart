@@ -29,6 +29,13 @@ class MainShell extends ConsumerWidget {
     if (role != SessionRole.none && index != _lobbyBranchIndex) {
       final left = await leaveActiveSessionIfConfirmed(context, ref);
       if (!left || !context.mounted) return;
+      // Host/Join sit on nested lobby routes. Ending the session must also
+      // reset that branch — otherwise returning to Lobby restores a dead
+      // Host screen with no active seat/QR session.
+      navigationShell.goBranch(
+        _lobbyBranchIndex,
+        initialLocation: true,
+      );
     }
 
     navigationShell.goBranch(index);

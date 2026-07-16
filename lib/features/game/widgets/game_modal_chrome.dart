@@ -226,6 +226,9 @@ Future<T?> showGameBottomSheet<T>({
   final sheetColor = backgroundColor ?? context.gameColors.surface;
   return showModalBottomSheet<T>(
     context: context,
+    // Root navigator so the floating [MainShell] bottom nav cannot paint over
+    // the last rows of Format / Style / New deck (and other) sheets.
+    useRootNavigator: true,
     backgroundColor: sheetColor,
     isScrollControlled: isScrollControlled,
     showDragHandle: showDragHandle,
@@ -239,7 +242,15 @@ Future<T?> showGameBottomSheet<T>({
     shape: const RoundedRectangleBorder(
       borderRadius: RadiusTokens.radiusSheetTop,
     ),
-    builder: builder,
+    // Wrap so content-sized sheets don't stretch to the full route height
+    // under isScrollControlled (that empty band under short menus).
+    builder: (ctx) {
+      return Align(
+        alignment: Alignment.bottomCenter,
+        heightFactor: 1,
+        child: builder(ctx),
+      );
+    },
   );
 }
 

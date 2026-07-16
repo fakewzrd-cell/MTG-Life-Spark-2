@@ -122,24 +122,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 onEditAvatar: () => context.push(AppRoutes.profileAvatar),
               ),
             ),
-            if (_editing)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    hPad,
-                    LayoutTokens.gr3,
-                    hPad,
-                    0,
-                  ),
-                  child: Text(
-                    'Tap the camera on your picture or the pencil by your name.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colors.textSecondary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
             SliverToBoxAdapter(child: SizedBox(height: LayoutTokens.gr4)),
             SliverPadding(
               padding: EdgeInsets.fromLTRB(hPad, 0, hPad, scrollBottomPad),
@@ -245,7 +227,7 @@ class _ProfileHeroCard extends StatelessWidget {
   }
 }
 
-/// Top-trailing Edit ↔ Done mode toggle.
+/// Top-trailing Edit ↔ Done mode toggle — quiet so it doesn't compete with the hero.
 class _ProfileEditModePill extends StatelessWidget {
   const _ProfileEditModePill({
     required this.editing,
@@ -258,39 +240,24 @@ class _ProfileEditModePill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: ColorTokens.onAccent.withValues(alpha: 0.18),
-      borderRadius: RadiusTokens.radiusPill,
+      color: ColorTokens.onAccent.withValues(alpha: 0.08),
+      shape: CircleBorder(
+        side: BorderSide(
+          color: ColorTokens.onAccent.withValues(alpha: 0.22),
+        ),
+      ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onPressed,
-        borderRadius: RadiusTokens.radiusPill,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            minWidth: LayoutTokens.minTapTarget,
-            minHeight: LayoutTokens.minTapTarget,
-          ),
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: editing ? LayoutTokens.gr3 : LayoutTokens.gr2,
-              vertical: LayoutTokens.gr1,
-            ),
-            child: Center(
-              child: editing
-                  ? Text(
-                      'Done',
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: ColorTokens.onAccent,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.2,
-                      ),
-                    )
-                  : Icon(
-                      Icons.edit_square,
-                      size: 22,
-                      color: ColorTokens.onAccent.withValues(alpha: 0.95),
-                      semanticLabel: 'Edit profile',
-                    ),
-            ),
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: LayoutTokens.minTapTarget,
+          height: LayoutTokens.minTapTarget,
+          child: Icon(
+            editing ? Icons.check_rounded : Icons.edit_outlined,
+            size: 18,
+            color: ColorTokens.onAccent.withValues(alpha: 0.72),
+            semanticLabel: editing ? 'Done editing' : 'Edit profile',
           ),
         ),
       ),

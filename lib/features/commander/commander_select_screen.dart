@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../ui/components/ui_app_bar.dart';
+import '../../ui/components/ui_button.dart';
 import '../../ui/tokens/motion_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -307,19 +308,6 @@ class _CommanderSelectScreenState
       backgroundColor: colors.backgroundPrimary,
       appBar: UiAppBar(
         title: _pickingPartner ? 'Select Partner' : _title,
-        actions: [
-          if (_canConfirm)
-            TextButton(
-              onPressed: _confirm,
-              child: Text(
-                'Confirm',
-                style: TextStyle(
-                  color: colors.primaryAccent,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-        ],
       ),
       body: Column(
         children: [
@@ -392,6 +380,22 @@ class _CommanderSelectScreenState
 
           // Results
           Expanded(child: _buildResults()),
+          if (_canConfirm)
+            SafeArea(
+              top: false,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  LayoutTokens.gr3,
+                  LayoutTokens.gr2,
+                  LayoutTokens.gr3,
+                  LayoutTokens.gr3,
+                ),
+                child: UiButton(
+                  label: 'Confirm',
+                  onPressed: _confirm,
+                ),
+              ),
+            ),
         ],
       ),
     );

@@ -50,14 +50,18 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: LayoutTokens.ctaHorizontal),
-                child: Form(
-                  key: _formKey,
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: LayoutTokens.ctaHorizontal,
+                  ),
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -108,26 +112,38 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                           return null;
                         },
                       ),
-                      const Spacer(),
-                      UiButton(
-                        label: 'Enter the Battlefield',
-                        loading: _saving,
-                        onPressed: _saving ? null : _save,
-                      ),
-                      SizedBox(height: LayoutTokens.gr2),
-                      UiButton(
-                        label: 'Skip',
-                        variant: UiButtonVariant.secondary,
-                        enabled: !_saving,
-                        onPressed: _saving ? null : _skip,
-                      ),
-                      SizedBox(height: LayoutTokens.gr5),
+                      SizedBox(height: LayoutTokens.gr4),
                     ],
                   ),
                 ),
               ),
-            ),
-          ],
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  LayoutTokens.ctaHorizontal,
+                  LayoutTokens.gr2,
+                  LayoutTokens.ctaHorizontal,
+                  LayoutTokens.gr5,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    UiButton(
+                      label: 'Enter the Battlefield',
+                      loading: _saving,
+                      onPressed: _saving ? null : _save,
+                    ),
+                    SizedBox(height: LayoutTokens.gr2),
+                    UiButton(
+                      label: 'Skip',
+                      variant: UiButtonVariant.secondary,
+                      enabled: !_saving,
+                      onPressed: _saving ? null : _skip,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -33,6 +33,7 @@ import '../widgets/game_overview_view.dart';
 import '../widgets/game_performance_widgets.dart';
 import '../widgets/game_timeout_widgets.dart';
 import '../widgets/gameplay_dials_strip_widget.dart';
+import '../widgets/life_gesture_hint_banner.dart';
 import '../widgets/opponent_glance_strip.dart';
 import '../widgets/phase_nav_cluster.dart';
 import '../widgets/stack_tracker_tab.dart';
@@ -590,6 +591,7 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
                         SizedBox(height: playGapMd),
                         ...extraRows,
                         Expanded(child: lifeCounter),
+                        const LifeGestureHintBanner(),
                         SizedBox(height: playGapSm),
                         dialStrip,
                       ],
@@ -614,6 +616,7 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
                           SizedBox(height: playGapMd),
                           ...extraRows,
                           SizedBox(height: lifeMinFloor, child: lifeCounter),
+                          const LifeGestureHintBanner(),
                           SizedBox(height: playGapSm),
                           dialStrip,
                         ],

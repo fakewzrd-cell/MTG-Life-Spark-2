@@ -39,6 +39,10 @@ class AppSettings extends HiveObject {
   @HiveField(10, defaultValue: 'violet')
   String colorSchemeId;
 
+  /// User dismissed the in-match life gesture tip.
+  @HiveField(11, defaultValue: false)
+  bool lifeGestureHintDismissed;
+
   AppSettings({
     this.hapticEnabled = true,
     this.soundEnabled = true,
@@ -51,5 +55,6 @@ class AppSettings extends HiveObject {
     this.hideSystemBars = false,
     this.useDarkTheme = true,
     this.colorSchemeId = 'violet',
+    this.lifeGestureHintDismissed = false,
   });
 }

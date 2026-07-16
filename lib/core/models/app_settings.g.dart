@@ -28,13 +28,15 @@ class AppSettingsAdapter extends TypeAdapter<AppSettings> {
       hideSystemBars: fields[8] as bool,
       useDarkTheme: fields[9] == null ? true : fields[9] as bool,
       colorSchemeId: fields[10] == null ? 'violet' : fields[10] as String,
+      lifeGestureHintDismissed:
+          fields[11] == null ? false : fields[11] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, AppSettings obj) {
     writer
-      ..writeByte(11)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.hapticEnabled)
       ..writeByte(1)
@@ -56,7 +58,9 @@ class AppSettingsAdapter extends TypeAdapter<AppSettings> {
       ..writeByte(9)
       ..write(obj.useDarkTheme)
       ..writeByte(10)
-      ..write(obj.colorSchemeId);
+      ..write(obj.colorSchemeId)
+      ..writeByte(11)
+      ..write(obj.lifeGestureHintDismissed);
   }
 
   @override

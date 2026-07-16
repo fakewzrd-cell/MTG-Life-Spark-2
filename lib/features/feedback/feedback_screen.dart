@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../ui/components/ui_app_bar.dart';
@@ -7,6 +8,8 @@ import '../../ui/components/ui_snack_bar.dart';
 import '../../ui/components/ui_text_field.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
+
+const _kFeedbackEmail = 'federickvidot@gmail.com';
 
 class FeedbackScreen extends StatefulWidget {
   const FeedbackScreen({super.key});
@@ -25,6 +28,17 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     super.dispose();
   }
 
+  Future<void> _copyFeedbackFallback(String msg) async {
+    final text =
+        'To: $_kFeedbackEmail\nSubject: Life Spark Feedback\n\n$msg';
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) return;
+    showUiSnackBar(
+      context,
+      'No mail app — message copied. Paste into an email to $_kFeedbackEmail',
+    );
+  }
+
   Future<void> _sendFeedback() async {
     final msg = _messageController.text.trim();
     if (msg.isEmpty) return;
@@ -34,21 +48,26 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     final subject = Uri.encodeComponent('Life Spark Feedback');
     final body = Uri.encodeComponent(msg);
     final uri = Uri.parse(
-      'mailto:feedback@mgtlifespark.app?subject=$subject&body=$body',
+      'mailto:$_kFeedbackEmail?subject=$subject&body=$body',
     );
 
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-      if (mounted) {
-        showUiSnackBar(context, 'Opening your mail app…');
+    try {
+      if (await canLaunchUrl(uri)) {
+        final launched = await launchUrl(uri);
+        if (!mounted) return;
+        if (launched) {
+          showUiSnackBar(context, 'Opening your mail app…');
+        } else {
+          await _copyFeedbackFallback(msg);
+        }
+      } else {
+        await _copyFeedbackFallback(msg);
       }
-    } else {
-      if (mounted) {
-        showUiSnackBar(context, 'Could not open mail app.', isError: true);
-      }
+    } catch (_) {
+      await _copyFeedbackFallback(msg);
     }
 
-    setState(() => _sending = false);
+    if (mounted) setState(() => _sending = false);
   }
 
   Future<void> _openPlayStore() async {

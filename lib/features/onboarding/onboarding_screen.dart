@@ -44,7 +44,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       icon: Icons.favorite,
       title: 'Track Your Life',
       body:
-          'Tap +/- to change life. Hold for +5/-5 jumps. Swipe left/right for quick changes. Long-press to enter an exact number. Tap the undo button to fix mistakes.',
+          'Tap +/- to change life by 1. Hold +/- for ±5. Drag left or right to adjust quickly. Double-tap the life total to set an exact number. Undo is on the bottom bar (or shake, if enabled).',
       color: ColorTokens.primaryAccent,
     ),
     _OnboardingSlide(

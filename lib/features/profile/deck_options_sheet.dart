@@ -30,6 +30,7 @@ Future<DeckSheetAction?> showDeckDetailSheet(
   return showGameBottomSheet<DeckSheetAction>(
     context: context,
     isScrollControlled: true,
+    showDragHandle: true,
     builder: (ctx) => _DeckDetailSheet(deck: deck),
   );
 }
@@ -104,7 +105,8 @@ class _DeckDetailSheet extends StatelessWidget {
         : (deck.winRate * 100).round();
 
     return GameSheetBody(
-      scrollable: true,
+      // Non-scrolling so vertical drag dismisses the sheet (a ListView was
+      // capturing the swipe). Content is a short action list and fits phones.
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -112,6 +114,7 @@ class _DeckDetailSheet extends StatelessWidget {
           GameSheetHeader(
             title: deck.displayName,
             subtitle: _deckDetailSubtitle(deck),
+            showHandle: false,
           ),
           SizedBox(height: LayoutTokens.gr3),
           Row(
