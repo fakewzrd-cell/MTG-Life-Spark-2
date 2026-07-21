@@ -4,6 +4,7 @@
 android/keystore.properties
 android/*.jks
 android/*.keystore
+android/*.p12
 
 # Miscellaneous
 .attach_*.txt
