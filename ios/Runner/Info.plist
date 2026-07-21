@@ -11,7 +11,7 @@
 		<string>Life Spark uses your local network so other players on the same Wi‑Fi can join your hosted game.</string>
 		<key>NSBonjourServices</key>
 		<array>
-			<string>_mgtlifespark._tcp</string>
+			<string>_lifespark._tcp</string>
 		</array>
 		<key>NSCameraUsageDescription</key>
 		<string>Life Spark uses the camera to scan the host QR code when joining a game.</string>
@@ -22,7 +22,7 @@
 		<key>CFBundleInfoDictionaryVersion</key>
 		<string>6.0</string>
 		<key>CFBundleName</key>
-		<string>mgt_life_spark</string>
+		<string>Life Spark</string>
 		<key>CFBundlePackageType</key>
 		<string>APPL</string>
 		<key>CFBundleShortVersionString</key>

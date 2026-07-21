@@ -1,6 +1,6 @@
 {
-    "name": "mgt_life_spark",
-    "short_name": "mgt_life_spark",
+    "name": "Life Spark",
+    "short_name": "Life Spark",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#12121A",

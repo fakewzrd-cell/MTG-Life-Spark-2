@@ -5,12 +5,16 @@ import 'dart:math';
 /// Transport is cleartext `ws://` on the local network by design (same Wi‑Fi
 /// pod). Do not reuse join tokens outside a trusted LAN.
 ///
-/// Format: `mgtlifespark://<host>:<port>?token=<secret>`
+/// Format: `lifespark://<host>:<port>?token=<secret>`
+/// Legacy `mgtlifespark://` QRs are still accepted when scanning.
 /// Legacy QRs without `token` are rejected by current hosts.
 class SessionJoinUri {
   SessionJoinUri._();
 
-  static const scheme = 'mgtlifespark';
+  static const scheme = 'lifespark';
+
+  /// Pre-rebrand QR scheme — accepted on parse only.
+  static const legacyScheme = 'mgtlifespark';
 
   /// URL-safe token for a single host session (regenerated each [startHostSession]).
   static String generateToken() {
@@ -31,11 +35,16 @@ class SessionJoinUri {
 
   /// Parses a scanned QR into WebSocket URI and optional join token.
   static ({String wsUri, String? token}) parse(String raw) {
-    if (!raw.startsWith('$scheme://')) {
+    final usedScheme = raw.startsWith('$scheme://')
+        ? scheme
+        : raw.startsWith('$legacyScheme://')
+            ? legacyScheme
+            : null;
+    if (usedScheme == null) {
       throw FormatException('Not a valid Life Spark QR code.');
     }
 
-    final withoutScheme = raw.substring('$scheme://'.length);
+    final withoutScheme = raw.substring('$usedScheme://'.length);
     final queryIndex = withoutScheme.indexOf('?');
     final authority =
         queryIndex == -1 ? withoutScheme : withoutScheme.substring(0, queryIndex);

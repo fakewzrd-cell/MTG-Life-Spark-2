@@ -468,7 +468,7 @@ class _QrHeader extends StatelessWidget {
             Padding(
               padding: EdgeInsets.only(top: LayoutTokens.gr1),
               child: Text(
-                qrData!.replaceFirst('mgtlifespark://', ''),
+                qrData!.replaceFirst('lifespark://', ''),
                 style: TextStyle(
                   color: colors.textSecondary,
                   fontSize: compact ? 9 : 10,

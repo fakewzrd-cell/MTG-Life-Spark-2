@@ -9,19 +9,27 @@ void main() {
         port: 27315,
         token: 'abc123',
       );
-      expect(raw, 'mgtlifespark://192.168.1.10:27315?token=abc123');
+      expect(raw, 'lifespark://192.168.1.10:27315?token=abc123');
     });
 
     test('parse extracts ws URI and token', () {
       final parsed = SessionJoinUri.parse(
-        'mgtlifespark://192.168.1.10:27315?token=secret%20token',
+        'lifespark://192.168.1.10:27315?token=secret%20token',
       );
       expect(parsed.wsUri, 'ws://192.168.1.10:27315');
       expect(parsed.token, 'secret token');
     });
 
+    test('parse accepts legacy mgtlifespark scheme', () {
+      final parsed = SessionJoinUri.parse(
+        'mgtlifespark://192.168.1.10:27315?token=legacy',
+      );
+      expect(parsed.wsUri, 'ws://192.168.1.10:27315');
+      expect(parsed.token, 'legacy');
+    });
+
     test('parse without token returns null token', () {
-      final parsed = SessionJoinUri.parse('mgtlifespark://10.0.0.5:8080');
+      final parsed = SessionJoinUri.parse('lifespark://10.0.0.5:8080');
       expect(parsed.wsUri, 'ws://10.0.0.5:8080');
       expect(parsed.token, isNull);
     });

@@ -1,4 +1,4 @@
-package com.mgtlifespark.mgt_life_spark
+package com.lifespark.app
 
 import io.flutter.embedding.android.FlutterActivity
 
