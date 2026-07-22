@@ -65,3 +65,9 @@ ios/.bundle/
 ios/vendor/
 macos/.bundle/
 macos/vendor/
+
+# Play / signing secrets (never commit)
+**/Life-Spark-Play-Signing-BACKUP.txt
+**/*-Play-Signing-BACKUP*
+store/play/*.aab
+store/play/*.apk
