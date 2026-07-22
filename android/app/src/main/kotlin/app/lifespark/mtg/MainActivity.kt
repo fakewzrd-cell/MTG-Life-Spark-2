@@ -1,4 +1,4 @@
-package com.lifespark.app
+package app.lifespark.mtg
 
 import io.flutter.embedding.android.FlutterActivity
 

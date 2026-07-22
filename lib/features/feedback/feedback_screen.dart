@@ -72,7 +72,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
 
   Future<void> _openPlayStore() async {
     final uri = Uri.parse(
-      'https://play.google.com/store/apps/details?id=com.lifespark.app',
+      'https://play.google.com/store/apps/details?id=app.lifespark.mtg',
     );
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);

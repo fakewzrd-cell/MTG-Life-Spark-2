@@ -15,7 +15,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.lifespark.app"
+    namespace = "app.lifespark.mtg"
     compileSdk = 36
     ndkVersion = "28.2.13676358"
 
@@ -40,7 +40,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.lifespark.app"
+        applicationId = "app.lifespark.mtg"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

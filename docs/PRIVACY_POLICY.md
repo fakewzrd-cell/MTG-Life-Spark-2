@@ -4,7 +4,7 @@
 **Developer:** Federick Vidot  
 **Contact:** Use the in-app Feedback screen, or the support email listed on the Google Play listing.
 
-Life Spark (“the App”) is an unofficial Commander tabletop companion for tracking life, counters, and local multiplayer games. On Android the package id is `com.lifespark.app`.
+Life Spark (“the App”) is an unofficial Commander tabletop companion for tracking life, counters, and local multiplayer games. On Android the package id is `app.lifespark.mtg`.
 
 ## Summary
 
