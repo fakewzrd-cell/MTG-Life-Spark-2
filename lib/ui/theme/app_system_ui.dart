@@ -8,6 +8,9 @@ import 'app_color_tokens.dart';
 abstract final class AppSystemUi {
   static Future<void> bootstrap() async {
     if (kIsWeb) return;
+    await SystemChrome.setPreferredOrientations(const [
+      DeviceOrientation.portraitUp,
+    ]);
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
 
