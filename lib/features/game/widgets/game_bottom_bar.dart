@@ -121,19 +121,6 @@ class GameBottomBar extends ConsumerWidget {
                   ),
                 ),
               ),
-              Expanded(
-                child: Center(
-                  child: _GameBarButton(
-                    icon: Icons.flag_outlined,
-                    label: 'Forfeit',
-                    iconSize: iconSize,
-                    compact: compact,
-                    enabled: !local.isEliminated && !game.gameOver,
-                    onTap:
-                        () => _showConcedeDialog(context, ref, local.playerId),
-                  ),
-                ),
-              ),
             ],
           ),
         ),
@@ -144,29 +131,31 @@ class GameBottomBar extends ConsumerWidget {
   void _showTimeoutPicker(BuildContext context, GameStateNotifier notifier) {
     showGameTimeoutPicker(context, notifier);
   }
+}
 
-  void _showConcedeDialog(
-    BuildContext context,
-    WidgetRef ref,
-    String playerId,
-  ) {
-    final game = ref.read(gameProvider);
-    showDialog<void>(
-      context: context,
-      builder:
-          (dialogContext) => _GameConcedeDialog(
-            game: game,
-            playerId: playerId,
-            onConcede: () {
-              ref.read(gameProvider.notifier).concede(playerId);
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (!context.mounted) return;
-                _showPostForfeitFollowUp(context, ref);
-              });
-            },
-          ),
-    );
-  }
+/// Opens the forfeit confirm dialog (optional mid-match feedback), then
+/// concede + post-forfeit stay/leave. Used from Table overview.
+Future<void> showGameForfeitFlow(
+  BuildContext context,
+  WidgetRef ref,
+  String playerId,
+) async {
+  final game = ref.read(gameProvider);
+  await showDialog<void>(
+    context: context,
+    builder:
+        (dialogContext) => _GameConcedeDialog(
+          game: game,
+          playerId: playerId,
+          onConcede: () {
+            ref.read(gameProvider.notifier).concede(playerId);
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!context.mounted) return;
+              _showPostForfeitFollowUp(context, ref);
+            });
+          },
+        ),
+  );
 }
 
 /// After a forfeit in a continuing multiplayer pod: stay to spectate or leave.

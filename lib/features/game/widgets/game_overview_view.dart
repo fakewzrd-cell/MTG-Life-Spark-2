@@ -17,12 +17,14 @@ import '../../../ui/tokens/opacity_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
 import 'alliance_overview_ui.dart';
 import 'end_turn_bar.dart';
+import 'game_bottom_bar.dart';
 import 'game_colors.dart';
 import 'game_history_tab.dart';
 import 'game_modal_chrome.dart';
 import 'game_timeout_widgets.dart';
 import 'overview_commander_art_backdrop.dart';
 import 'political_row_widget.dart';
+import 'table_tools_sheet.dart';
 import 'team_colors.dart';
 import '../../../shared/utils/game_haptics.dart';
 import '../../../shared/widgets/game_icon.dart';
@@ -177,6 +179,27 @@ class GameOverviewView extends ConsumerWidget {
                     ),
                   ),
                   actions: [
+                    Align(
+                      alignment: Alignment.center,
+                      child: Semantics(
+                        button: true,
+                        label: 'Tools',
+                        child: IconButton(
+                          tooltip: 'Tools',
+                          onPressed: () => showTableToolsSheet(context),
+                          icon: Icon(
+                            Icons.casino_outlined,
+                            color: colors.textSecondary.withValues(
+                              alpha: 0.9,
+                            ),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: LayoutTokens.minTapTarget,
+                            minHeight: LayoutTokens.minTapTarget,
+                          ),
+                        ),
+                      ),
+                    ),
                     Padding(
                       padding: EdgeInsets.only(right: pageInset),
                       child: Align(
@@ -327,11 +350,43 @@ class GameOverviewView extends ConsumerWidget {
                   pageInset,
                   LayoutTokens.gr2,
                 ),
-                child: EndTurnBar(
-                  accentColor: chromeAccent,
-                  enabled: endTurnEnabled,
-                  onEndTurn: () => notifier.endTurn(),
-                  waitingForName: waitingForName,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    EndTurnBar(
+                      accentColor: chromeAccent,
+                      enabled: endTurnEnabled,
+                      onEndTurn: () => notifier.endTurn(),
+                      waitingForName: waitingForName,
+                    ),
+                    if (game.localPlayer != null &&
+                        !game.localPlayer!.isEliminated &&
+                        !game.gameOver) ...[
+                      SizedBox(height: LayoutTokens.gr1),
+                      TextButton(
+                        onPressed: () => showGameForfeitFlow(
+                          context,
+                          ref,
+                          game.localPlayerId,
+                        ),
+                        style: TextButton.styleFrom(
+                          foregroundColor: colors.error,
+                          minimumSize: const Size(
+                            0,
+                            LayoutTokens.minTapTarget,
+                          ),
+                        ),
+                        child: Text(
+                          'Forfeit',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: FontTokens.body,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ),
