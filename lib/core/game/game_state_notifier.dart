@@ -7,7 +7,9 @@ import 'package:uuid/uuid.dart';
 import '../bluetooth/ble_message.dart';
 import '../bluetooth/ble_protocol.dart';
 import '../bluetooth/ble_service.dart';
+import '../network/session_link_status.dart';
 import '../network/session_providers.dart';
+import '../network/ws_client_service.dart';
 import '../models/game_feedback.dart';
 import '../models/player_profile.dart';
 import '../persistence/providers.dart';
@@ -34,6 +36,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
   Timer? _timeoutTimer;
   Timer? _turnLimitTimer;
   Timer? _allianceDeliveryTimer;
+  Timer? _hostLinkGraceTimer;
   int _seqNum = 0;
   static const _uuid = Uuid();
 
@@ -223,6 +226,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
       turnTimeLimitSeconds: lobby.config.turnTimeLimitSeconds,
       trackTurnDuration: lobby.config.trackTurnDuration,
       turnStartTime: DateTime.now(),
+      phasesEnabled: lobby.config.phasesEnabled,
       planechaseEnabled: lobby.config.planechaseEnabled,
       archenemyEnabled: lobby.config.archenemyEnabled,
       bountyEnabled: lobby.config.bountyEnabled,
@@ -1851,19 +1855,62 @@ class GameStateNotifier extends StateNotifier<GameState> {
 
   void _onConnectionEvent(BleConnectionEvent event) {
     if (state.players.isEmpty || state.gameOver) return;
+
+    if (event.status == BleConnectionStatus.connected) {
+      _hostLinkGraceTimer?.cancel();
+      _hostLinkGraceTimer = null;
+      _ref.read(sessionLinkStatusProvider.notifier).state =
+          SessionLinkStatus.connected;
+      return;
+    }
+
     if (event.status != BleConnectionStatus.disconnected &&
         event.status != BleConnectionStatus.error) {
       return;
     }
 
     if (state.isHost) {
-      // Peer socket dropped — eliminate them and notify remaining players.
+      // Host service already applied reconnect grace before emitting this.
       _handleRemotePlayerLeft(event.playerId);
       return;
     }
 
-    // Client lost the host / session — table cannot continue.
-    _handleHostSessionLost();
+    // Client: OS often drops the socket when switching to Texts — reconnect,
+    // do not end the match immediately.
+    _beginClientHostLinkRecovery();
+  }
+
+  void _beginClientHostLinkRecovery() {
+    if (state.gameOver) return;
+    _ref.read(sessionLinkStatusProvider.notifier).state =
+        SessionLinkStatus.reconnecting;
+
+    final service = _ref.read(sessionServiceProvider);
+    if (service is WsClientService) {
+      unawaited(service.reconnectIfDisconnected().then((ok) {
+        if (state.players.isEmpty || state.gameOver) return;
+        if (ok) {
+          _hostLinkGraceTimer?.cancel();
+          _hostLinkGraceTimer = null;
+          _ref.read(sessionLinkStatusProvider.notifier).state =
+              SessionLinkStatus.connected;
+        }
+      }));
+    }
+
+    _hostLinkGraceTimer?.cancel();
+    _hostLinkGraceTimer = Timer(kSessionReconnectGrace, () {
+      if (state.players.isEmpty || state.gameOver) return;
+      final service = _ref.read(sessionServiceProvider);
+      if (service is WsClientService && service.isReady) {
+        _ref.read(sessionLinkStatusProvider.notifier).state =
+            SessionLinkStatus.connected;
+        return;
+      }
+      _ref.read(sessionLinkStatusProvider.notifier).state =
+          SessionLinkStatus.lost;
+      _handleHostSessionLost();
+    });
   }
 
   void _handleRemotePlayerLeft(String playerId) {
@@ -2440,6 +2487,10 @@ class GameStateNotifier extends StateNotifier<GameState> {
 
   @override
   void dispose() {
+    _hostLinkGraceTimer?.cancel();
+    _hostLinkGraceTimer = null;
+    _ref.read(sessionLinkStatusProvider.notifier).state =
+        SessionLinkStatus.connected;
     _messageSub?.cancel();
     _connectionSub?.cancel();
     _timeoutTimer?.cancel();

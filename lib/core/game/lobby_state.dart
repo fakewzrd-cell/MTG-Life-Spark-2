@@ -40,6 +40,9 @@ class LobbyConfig {
   final int? turnTimeLimitSeconds; // null = no limit
   final bool trackTurnDuration;
 
+  /// When true, Play tab shows phase Back/Next. Off = large End turn for casual.
+  final bool phasesEnabled;
+
   const LobbyConfig({
     this.format = GameFormat.commander,
     this.startingLife = 40,
@@ -54,6 +57,7 @@ class LobbyConfig {
     this.commanderDamageReducesLife = true,
     this.turnTimeLimitSeconds,
     this.trackTurnDuration = false,
+    this.phasesEnabled = false,
   });
 
   static const _sentinel = Object();
@@ -72,6 +76,7 @@ class LobbyConfig {
     bool? commanderDamageReducesLife,
     Object? turnTimeLimitSeconds = _sentinel,
     bool? trackTurnDuration,
+    bool? phasesEnabled,
   }) =>
       LobbyConfig(
         format: format ?? this.format,
@@ -91,6 +96,7 @@ class LobbyConfig {
             ? this.turnTimeLimitSeconds
             : turnTimeLimitSeconds as int?,
         trackTurnDuration: trackTurnDuration ?? this.trackTurnDuration,
+        phasesEnabled: phasesEnabled ?? this.phasesEnabled,
       );
 
   Map<String, dynamic> toJson() => {
@@ -107,6 +113,7 @@ class LobbyConfig {
         'commanderDamageReducesLife': commanderDamageReducesLife,
         'turnTimeLimitSeconds': turnTimeLimitSeconds,
         'trackTurnDuration': trackTurnDuration,
+        'phasesEnabled': phasesEnabled,
       };
 
   factory LobbyConfig.fromJson(Map<String, dynamic> json) => LobbyConfig(
@@ -130,6 +137,7 @@ class LobbyConfig {
         turnTimeLimitSeconds:
             (json['turnTimeLimitSeconds'] as num?)?.toInt(),
         trackTurnDuration: json['trackTurnDuration'] as bool? ?? false,
+        phasesEnabled: json['phasesEnabled'] as bool? ?? false,
       );
 
   /// Keeps lobby size within [GameConstants.maxLobbyPlayers].
@@ -569,10 +577,17 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
   }
 
   void _onConnectionEvent(BleConnectionEvent event) {
-    if (event.status == BleConnectionStatus.disconnected && state.isHost) {
+    if (!state.isHost) return;
+    if (event.status == BleConnectionStatus.connected) {
+      // Soft-drop grace cancelled in host socket layer; nothing else needed.
+      return;
+    }
+    if (event.status == BleConnectionStatus.disconnected) {
+      // Emitted only after host reconnect grace expires.
       final players =
           state.players.where((p) => p.playerId != event.playerId).toList();
       state = state.copyWith(players: players);
+      if (state.isHost) _broadcastLobbyUpdate();
     }
   }
 

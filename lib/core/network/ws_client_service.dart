@@ -30,6 +30,10 @@ class WsClientService implements BleService {
   Timer? _keepAliveTimer;
   bool _reconnecting = false;
 
+  /// True after the first successful handshake this session (resume uses
+  /// [BleMessageType.reconnectRequest] instead of lobby join).
+  bool _sessionEstablished = false;
+
   /// Last successful host URI (for resume-after-background reconnect).
   String? get lastHostUri => _hostUri;
 
@@ -64,6 +68,7 @@ class WsClientService implements BleService {
   @override
   Future<void> dispose() async {
     _intentionalDisconnect = true;
+    _sessionEstablished = false;
     _stopKeepAlive();
     await _sub?.cancel();
     await _channel?.sink.close();
@@ -118,7 +123,10 @@ class WsClientService implements BleService {
 
   /// Closes any open socket without tearing down stream controllers.
   Future<void> disconnect({bool intentional = false}) async {
-    if (intentional) _intentionalDisconnect = true;
+    if (intentional) {
+      _intentionalDisconnect = true;
+      _sessionEstablished = false;
+    }
     _stopKeepAlive();
     await _sub?.cancel();
     _sub = null;
@@ -132,19 +140,21 @@ class WsClientService implements BleService {
   }
 
   /// Re-opens the last host connection after the OS drops the socket in background.
-  Future<void> reconnectIfDisconnected() async {
-    if (_intentionalDisconnect || _reconnecting) return;
+  Future<bool> reconnectIfDisconnected() async {
+    if (_intentionalDisconnect || _reconnecting) return false;
     final uri = _hostUri;
     final token = _joinToken;
-    if (uri == null || token == null) return;
-    if (_ready && _channel != null) return;
+    if (uri == null || token == null) return false;
+    if (_ready && _channel != null) return true;
 
     _reconnecting = true;
     try {
       await disconnect();
       await connectToHost(uri, joinToken: token);
+      return _ready;
     } catch (e, st) {
       appLog('WsClientService reconnect failed', error: e, stackTrace: st);
+      return false;
     } finally {
       _reconnecting = false;
     }
@@ -203,21 +213,30 @@ class WsClientService implements BleService {
     if (message.type == BleMessageType.sessionPing) return;
 
     if (message.type == BleMessageType.hello) {
-      // Host acknowledged → mark ready, notify UI, then announce lobby join.
+      // Host acknowledged → mark ready, notify UI, then join or resume.
       _ready = true;
       _startKeepAlive();
       _connectionController.add(BleConnectionEvent(
         playerId: _hostUri ?? '',
         status: BleConnectionStatus.connected,
       ));
-      _sendRaw(BleMessage(
-        type: BleMessageType.lobbyPlayerJoined,
-        payload: {
-          'pid': localPlayerId,
-          'username': localUsername,
-        },
-        seqNum: _nextSeq(),
-      ));
+      if (_sessionEstablished) {
+        _sendRaw(BleMessage.reconnectRequest(
+          _nextSeq(),
+          playerId: localPlayerId,
+          username: localUsername,
+        ));
+      } else {
+        _sessionEstablished = true;
+        _sendRaw(BleMessage(
+          type: BleMessageType.lobbyPlayerJoined,
+          payload: {
+            'pid': localPlayerId,
+            'username': localUsername,
+          },
+          seqNum: _nextSeq(),
+        ));
+      }
       return;
     }
 
@@ -226,6 +245,8 @@ class WsClientService implements BleService {
 
   void _onDone() {
     _ready = false;
+    // Ignore closes while we are tearing down to reconnect.
+    if (_intentionalDisconnect || _reconnecting) return;
     _connectionController.add(BleConnectionEvent(
       playerId: _hostUri ?? '',
       status: BleConnectionStatus.disconnected,
@@ -234,6 +255,7 @@ class WsClientService implements BleService {
 
   void _onError(Object error) {
     _ready = false;
+    if (_intentionalDisconnect || _reconnecting) return;
     _connectionController.add(BleConnectionEvent(
       playerId: _hostUri ?? '',
       status: BleConnectionStatus.error,

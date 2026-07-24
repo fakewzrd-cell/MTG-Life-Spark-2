@@ -135,7 +135,7 @@ Future<void> showCommanderDamageSheet(
                     const GameSheetHeader(
                       title: 'Commander damage',
                       subtitle:
-                          'Per opponent: damage to you and damage you dealt.',
+                          'Threats to you first. Open Dealt to log damage you dealt.',
                       showHandle: false,
                     ),
                     SizedBox(height: LayoutTokens.gr2),
@@ -238,6 +238,17 @@ class CommanderDamageBarButton extends StatelessWidget {
                     height: 1,
                   ),
                 ),
+                Text(
+                  'left',
+                  style: TextStyle(
+                    color: enabled
+                        ? accent.withValues(alpha: 0.9)
+                        : colors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 10,
+                    height: 1.1,
+                  ),
+                ),
               ],
             ),
           ),
@@ -270,27 +281,30 @@ class CommanderDamagePanel extends StatefulWidget {
 }
 
 class _CommanderDamagePanelState extends State<CommanderDamagePanel> {
-  String? _selectedOpponentId;
+  String? _dealtExpandedId;
 
   List<PlayerGameState> get _trackableOpponents {
-    return widget.opponents.where((o) {
+    final list = widget.opponents.where((o) {
       if (!o.isEliminated) return true;
-      return _receivedTotal(o) > 0 || _dealtTotal(o) > 0;
+      return _maxIncomingTrack(o) > 0 || _dealtTotal(o) > 0;
     }).toList();
+    list.sort((a, b) => _maxIncomingTrack(b).compareTo(_maxIncomingTrack(a)));
+    return list;
   }
 
-  int _receivedTotal(PlayerGameState opponent) {
-    var total = widget.localPlayer.commanderDamageFrom(
+  int _maxIncomingTrack(PlayerGameState opponent) {
+    var max = widget.localPlayer.commanderDamageFrom(
       opponent.playerId,
       partnerIndex: 0,
     );
     if (opponent.hasPartner) {
-      total += widget.localPlayer.commanderDamageFrom(
+      final p = widget.localPlayer.commanderDamageFrom(
         opponent.playerId,
         partnerIndex: 1,
       );
+      if (p > max) max = p;
     }
-    return total;
+    return max;
   }
 
   int _dealtTotal(PlayerGameState opponent) {
@@ -307,61 +321,30 @@ class _CommanderDamagePanelState extends State<CommanderDamagePanel> {
     return total;
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _syncSelection();
-  }
-
-  @override
-  void didUpdateWidget(covariant CommanderDamagePanel oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _syncSelection();
-  }
-
-  void _syncSelection() {
-    final opponents = _trackableOpponents;
-    if (opponents.isEmpty) {
-      _selectedOpponentId = null;
-      return;
-    }
-    if (_selectedOpponentId != null &&
-        opponents.any((o) => o.playerId == _selectedOpponentId)) {
-      return;
-    }
-    _selectedOpponentId = opponents.first.playerId;
-  }
-
-  PlayerGameState? get _selectedOpponent {
-    final id = _selectedOpponentId;
-    if (id == null) return null;
-    for (final opp in _trackableOpponents) {
-      if (opp.playerId == id) return opp;
-    }
-    return null;
+  String _shortName(String name) {
+    if (name.length <= 14) return name;
+    return '${name.substring(0, 13)}…';
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
     final opponents = _trackableOpponents;
-    final selected = _selectedOpponent;
-    final taken = selected != null ? _receivedTotal(selected) : 0;
-    final dealt = selected != null ? _dealtTotal(selected) : 0;
+    final ko = GameConstants.commanderDamageKo;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _CommanderDamageSummary(
-          taken: taken,
-          dealt: dealt,
-          opponentName: selected?.username,
-          commanderImageUrl: selected?.commanderImageUrl,
-          playerColor:
-              selected?.playerColor ?? widget.localPlayer.playerColor,
+        Text(
+          'Damage each commander has dealt you — $ko eliminates.',
+          style: TextStyle(
+            fontSize: FontTokens.caption,
+            color: colors.textSecondary,
+            height: 1.35,
+          ),
         ),
-        SizedBox(height: LayoutTokens.gr2),
+        SizedBox(height: LayoutTokens.gr3),
         if (opponents.isEmpty)
           Padding(
             padding: EdgeInsets.only(bottom: LayoutTokens.gr1),
@@ -375,308 +358,44 @@ class _CommanderDamagePanelState extends State<CommanderDamagePanel> {
               ),
             ),
           )
-        else ...[
-          Text(
-            'Opponent',
-            style: TextStyle(
-              color: colors.textPrimary,
-              fontWeight: FontWeight.w700,
-              fontSize: FontTokens.hudSm,
-            ),
-          ),
-          SizedBox(height: LayoutTokens.gr1),
-          _OpponentPickerStrip(
-            opponents: opponents,
-            selectedOpponentId: _selectedOpponentId,
-            onSelected: (id) => setState(() => _selectedOpponentId = id),
-          ),
-          if (selected != null) ...[
-            SizedBox(height: LayoutTokens.gr2),
-            _SelectedOpponentDamageCard(
-              opponent: selected,
+        else
+          for (final opp in opponents) ...[
+            _ThreatOpponentRow(
+              opponent: opp,
               localPlayer: widget.localPlayer,
+              shortName: _shortName(opp.username),
+              dealtTotal: _dealtTotal(opp),
+              dealtExpanded: _dealtExpandedId == opp.playerId,
+              onToggleDealt: () => setState(() {
+                _dealtExpandedId =
+                    _dealtExpandedId == opp.playerId ? null : opp.playerId;
+              }),
               onDamageChange: widget.onDamageChange,
             ),
+            SizedBox(height: LayoutTokens.gr2),
           ],
-        ],
       ],
     );
   }
 }
 
-class _CommanderDamageSummary extends StatelessWidget {
-  final int taken;
-  final int dealt;
-  final String? opponentName;
-  final String? commanderImageUrl;
-  final Color playerColor;
-
-  const _CommanderDamageSummary({
-    required this.taken,
-    required this.dealt,
-    required this.opponentName,
-    required this.commanderImageUrl,
-    required this.playerColor,
+class _ThreatOpponentRow extends StatelessWidget {
+  const _ThreatOpponentRow({
+    required this.opponent,
+    required this.localPlayer,
+    required this.shortName,
+    required this.dealtTotal,
+    required this.dealtExpanded,
+    required this.onToggleDealt,
+    required this.onDamageChange,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.gameColors;
-    final accent = commanderDamageColor(colors, taken);
-    final hasArt =
-        commanderImageUrl != null && commanderImageUrl!.trim().isNotEmpty;
-
-    return ClipRRect(
-      borderRadius: RadiusTokens.radiusMd,
-      child: SizedBox(
-        height: 112,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            if (hasArt)
-              CachedNetworkImage(
-                key: ValueKey(commanderImageUrl),
-                imageUrl: commanderImageUrl!,
-                fit: BoxFit.cover,
-                alignment: Alignment.center,
-                errorWidget: (_, __, ___) =>
-                    _summaryFallbackArt(playerColor, colors),
-              )
-            else
-              _summaryFallbackArt(playerColor, colors),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.42),
-                    Colors.black.withValues(alpha: 0.78),
-                  ],
-                ),
-              ),
-            ),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment.center,
-                  radius: 1.1,
-                  colors: [
-                    accent.withValues(alpha: 0.08),
-                    Colors.black.withValues(alpha: 0.55),
-                  ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.all(LayoutTokens.gr2),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (opponentName != null)
-                    Text(
-                      'vs $opponentName',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.72),
-                        fontWeight: FontWeight.w600,
-                        fontSize: FontTokens.caption,
-                      ),
-                    ),
-                  const Spacer(),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Expanded(
-                        child: _SummaryStat(
-                          label: 'Taken',
-                          value: taken,
-                          primary: true,
-                          accent: accent,
-                        ),
-                      ),
-                      SizedBox(width: LayoutTokens.gr3),
-                      Expanded(
-                        child: _SummaryStat(
-                          label: 'Dealt',
-                          value: dealt,
-                          primary: false,
-                          accent: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Positioned.fill(
-              child: IgnorePointer(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: RadiusTokens.radiusMd,
-                    border: Border.all(
-                      color: accent.withValues(alpha: 0.45),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _summaryFallbackArt(Color color, AppColorTokens themeColors) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            color.withValues(alpha: 0.35),
-            themeColors.backgroundPrimary.withValues(alpha: 0.92),
-          ],
-        ),
-      ),
-      child: Center(
-        child: Icon(
-          Icons.style,
-          size: 48,
-          color: color.withValues(alpha: 0.55),
-        ),
-      ),
-    );
-  }
-}
-
-class _SummaryStat extends StatelessWidget {
-  const _SummaryStat({
-    required this.label,
-    required this.value,
-    required this.primary,
-    required this.accent,
-  });
-
-  final String label;
-  final int value;
-  final bool primary;
-  final Color accent;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: primary ? 0.82 : 0.62),
-            fontWeight: FontWeight.w700,
-            fontSize: FontTokens.hudSm,
-            letterSpacing: 0.3,
-          ),
-        ),
-        SizedBox(height: LayoutTokens.gr0),
-        Text(
-          '$value',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w700,
-            fontSize: primary ? FontTokens.displayCommander : 28,
-            height: 1,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _OpponentPickerStrip extends StatelessWidget {
-  final List<PlayerGameState> opponents;
-  final String? selectedOpponentId;
-  final ValueChanged<String> onSelected;
-
-  const _OpponentPickerStrip({
-    required this.opponents,
-    required this.selectedOpponentId,
-    required this.onSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.gameColors;
-    return SizedBox(
-      height: 76,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: opponents.length,
-        separatorBuilder: (_, __) => SizedBox(width: LayoutTokens.gr1),
-        itemBuilder: (context, index) {
-          final opp = opponents[index];
-          final selected = opp.playerId == selectedOpponentId;
-
-          return Semantics(
-            button: true,
-            selected: selected,
-            label: '${opp.username}${selected ? ', selected' : ''}',
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => onSelected(opp.playerId),
-                borderRadius: RadiusTokens.radiusMd,
-                child: AnimatedContainer(
-                  duration: MotionTokens.standard,
-                  width: 84,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: LayoutTokens.gr1,
-                    vertical: LayoutTokens.gr1,
-                  ),
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? colors.primaryAccent.withValues(alpha: 0.12)
-                        : colors.backgroundSecondary.withValues(alpha: 0.55),
-                    borderRadius: RadiusTokens.radiusMd,
-                    border: Border.all(
-                      color: selected
-                          ? colors.primaryAccent.withValues(alpha: 0.85)
-                          : colors.textSecondary.withValues(alpha: 0.18),
-                      width: selected ? 2 : 1,
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _OpponentAvatar(opponent: opp, size: 40),
-                      SizedBox(height: LayoutTokens.gr0),
-                      Text(
-                        opp.username,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: colors.textPrimary,
-                          fontWeight:
-                              selected ? FontWeight.w700 : FontWeight.w600,
-                          fontSize: FontTokens.hudXs,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _SelectedOpponentDamageCard extends StatelessWidget {
   final PlayerGameState opponent;
   final PlayerGameState localPlayer;
+  final String shortName;
+  final int dealtTotal;
+  final bool dealtExpanded;
+  final VoidCallback onToggleDealt;
   final void Function({
     required String fromPlayerId,
     required int partnerIndex,
@@ -684,38 +403,124 @@ class _SelectedOpponentDamageCard extends StatelessWidget {
     required int delta,
   }) onDamageChange;
 
-  const _SelectedOpponentDamageCard({
-    required this.opponent,
-    required this.localPlayer,
-    required this.onDamageChange,
-  });
-
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     final canEditReceived = !localPlayer.isEliminated;
     final canEditDealt = !opponent.isEliminated;
+    final primaryDmg = localPlayer.commanderDamageFrom(
+      opponent.playerId,
+      partnerIndex: 0,
+    );
+    final partnerDmg = opponent.hasPartner
+        ? localPlayer.commanderDamageFrom(
+            opponent.playerId,
+            partnerIndex: 1,
+          )
+        : 0;
+    final accent = commanderDamageColor(colors, primaryDmg > partnerDmg
+        ? primaryDmg
+        : partnerDmg);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _DirectionSection(
-          title: 'From them',
-          subtitle: 'Damage to you',
-          sourcePlayer: opponent,
-          targetPlayer: localPlayer,
-          canEdit: canEditReceived,
-          onDamageChange: onDamageChange,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.backgroundSecondary.withValues(alpha: 0.45),
+        borderRadius: RadiusTokens.radiusMd,
+        border: Border.all(color: accent.withValues(alpha: 0.35)),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(LayoutTokens.gr2),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                _OpponentAvatar(opponent: opponent, size: 36),
+                SizedBox(width: LayoutTokens.gr2),
+                Expanded(
+                  child: Text(
+                    '$shortName → You',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: FontTokens.hudSm,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: onToggleDealt,
+                  child: Text(
+                    dealtExpanded ? 'Hide dealt' : 'Dealt $dealtTotal',
+                    style: TextStyle(
+                      fontSize: FontTokens.hudXs,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: LayoutTokens.gr2),
+            _DamageTrack(
+              label: opponent.commanderName ?? 'Commander',
+              damage: primaryDmg,
+              showTakenOfKo: true,
+              onAdd: canEditReceived
+                  ? () => onDamageChange(
+                        fromPlayerId: opponent.playerId,
+                        partnerIndex: 0,
+                        toPlayerId: localPlayer.playerId,
+                        delta: 1,
+                      )
+                  : null,
+              onRemove: primaryDmg > 0 && canEditReceived
+                  ? () => onDamageChange(
+                        fromPlayerId: opponent.playerId,
+                        partnerIndex: 0,
+                        toPlayerId: localPlayer.playerId,
+                        delta: -1,
+                      )
+                  : null,
+            ),
+            if (opponent.hasPartner) ...[
+              SizedBox(height: LayoutTokens.gr2),
+              _DamageTrack(
+                label: opponent.partnerCommanderName ?? 'Partner',
+                damage: partnerDmg,
+                showTakenOfKo: true,
+                onAdd: canEditReceived
+                    ? () => onDamageChange(
+                          fromPlayerId: opponent.playerId,
+                          partnerIndex: 1,
+                          toPlayerId: localPlayer.playerId,
+                          delta: 1,
+                        )
+                    : null,
+                onRemove: partnerDmg > 0 && canEditReceived
+                    ? () => onDamageChange(
+                          fromPlayerId: opponent.playerId,
+                          partnerIndex: 1,
+                          toPlayerId: localPlayer.playerId,
+                          delta: -1,
+                        )
+                    : null,
+              ),
+            ],
+            if (dealtExpanded) ...[
+              SizedBox(height: LayoutTokens.gr3),
+              _DirectionSection(
+                title: 'You → $shortName',
+                subtitle: 'Damage you dealt',
+                sourcePlayer: localPlayer,
+                targetPlayer: opponent,
+                canEdit: canEditDealt,
+                onDamageChange: onDamageChange,
+              ),
+            ],
+          ],
         ),
-        SizedBox(height: LayoutTokens.gr3),
-        _DirectionSection(
-          title: 'From you',
-          subtitle: 'Damage you dealt',
-          sourcePlayer: localPlayer,
-          targetPlayer: opponent,
-          canEdit: canEditDealt,
-          onDamageChange: onDamageChange,
-        ),
-      ],
+      ),
     );
   }
 }
@@ -882,19 +687,23 @@ class _DamageTrack extends StatelessWidget {
   final int damage;
   final VoidCallback? onAdd;
   final VoidCallback? onRemove;
+  final bool showTakenOfKo;
 
   const _DamageTrack({
     required this.label,
     required this.damage,
     this.onAdd,
     this.onRemove,
+    this.showTakenOfKo = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final ko = GameConstants.commanderDamageKo;
     final color = commanderDamageColor(colors, damage);
-    final progress = (damage / 21).clamp(0.0, 1.0);
+    final progress = (damage / ko).clamp(0.0, 1.0);
+    final title = showTakenOfKo ? '$label · $damage / $ko' : label;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -903,7 +712,7 @@ class _DamageTrack extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                label,
+                title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
@@ -913,7 +722,7 @@ class _DamageTrack extends StatelessWidget {
                 ),
               ),
             ),
-            if (damage >= 21)
+            if (damage >= ko)
               Tooltip(
                 message: 'Lethal commander damage!',
                 child: Icon(

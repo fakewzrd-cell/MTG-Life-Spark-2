@@ -13,12 +13,14 @@ import '../../../core/game/game_format.dart';
 import '../../../core/game/game_providers.dart';
 import '../../../core/game/game_session_events.dart';
 import '../../../core/game/lobby_state.dart';
+import '../../../core/network/session_link_status.dart';
 import '../../../core/persistence/providers.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../core/services/shake_detector.dart';
 import '../../../shared/utils/app_router.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
+import '../../../ui/tokens/opacity_tokens.dart';
 import '../widgets/active_turn_banner.dart';
 import '../widgets/alliance_overview_ui.dart';
 import '../widgets/commander_damage_panel.dart';
@@ -35,6 +37,7 @@ import '../widgets/game_timeout_widgets.dart';
 import '../widgets/gameplay_dials_strip_widget.dart';
 import '../widgets/life_gesture_hint_banner.dart';
 import '../widgets/opponent_glance_strip.dart';
+import '../widgets/end_turn_bar.dart';
 import '../widgets/phase_nav_cluster.dart';
 import '../widgets/stack_tracker_tab.dart';
 import '../widgets/variant_card_panel.dart';
@@ -292,6 +295,39 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                         setState(() => _showOverview = true),
                   ),
                 ),
+              Consumer(
+                builder: (context, ref, _) {
+                  final link = ref.watch(sessionLinkStatusProvider);
+                  if (link != SessionLinkStatus.reconnecting) {
+                    return const SizedBox.shrink();
+                  }
+                  return SafeArea(
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: Material(
+                        color: colors.warning.withValues(
+                          alpha: OpacityTokens.soft,
+                        ),
+                        borderRadius: BorderRadius.circular(LayoutTokens.gr2),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: LayoutTokens.gr4,
+                            vertical: LayoutTokens.gr2,
+                          ),
+                          child: Text(
+                            'Reconnecting to table…',
+                            style: TextStyle(
+                              color: colors.textPrimary,
+                              fontSize: FontTokens.body,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
               if (timeoutActive)
                 GameTimeoutOverlay(
                   startTime: timeoutStartTime,
@@ -483,25 +519,39 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
                           playConstraints.maxHeight <
                               GameLayoutBreakpoints.shortViewport);
 
+                  final endTurnEnabled = !game.timeoutActive &&
+                      (game.isLocalPlayersTurn || game.isHost);
+                  final activeName = game.players
+                      .where((p) => p.playerId == game.activePlayerId)
+                      .map((p) => p.username)
+                      .firstOrNull;
                   final phaseBar = Center(
                     child: ConstrainedBox(
                       constraints: BoxConstraints(maxWidth: lifeBandMaxW),
-                      child: PhaseNavCluster(
-                        game: game,
-                        accentColor: chromeAccent,
-                        onBack: !game.timeoutActive
-                            ? notifier.previousPhase
-                            : null,
-                        onNext: !game.timeoutActive
-                            ? notifier.advancePhase
-                            : null,
-                        onPickPhase: game.timeoutActive
-                            ? null
-                            : notifier.setPhase,
-                        onEndTurn: notifier.endTurn,
-                        endTurnEnabled: !game.timeoutActive &&
-                            (game.isLocalPlayersTurn || game.isHost),
-                      ),
+                      child: game.phasesEnabled
+                          ? PhaseNavCluster(
+                              game: game,
+                              accentColor: chromeAccent,
+                              onBack: !game.timeoutActive
+                                  ? notifier.previousPhase
+                                  : null,
+                              onNext: !game.timeoutActive
+                                  ? notifier.advancePhase
+                                  : null,
+                              onPickPhase: game.timeoutActive
+                                  ? null
+                                  : notifier.setPhase,
+                              onEndTurn: notifier.endTurn,
+                              endTurnEnabled: endTurnEnabled,
+                            )
+                          : EndTurnBar(
+                              accentColor: chromeAccent,
+                              enabled: endTurnEnabled,
+                              onEndTurn: notifier.endTurn,
+                              waitingForName: endTurnEnabled
+                                  ? null
+                                  : activeName,
+                            ),
                     ),
                   );
                   final lifeCounter = Center(
@@ -570,7 +620,10 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
                     context,
                     compactVertical: dialCompact,
                   );
-                  final comfortableMin = PhaseNavCluster.barHeight +
+                  final turnChromeH = game.phasesEnabled
+                      ? PhaseNavCluster.barHeight
+                      : EndTurnBar.barHeight;
+                  final comfortableMin = turnChromeH +
                       playGapMd +
                       extraRowEstimate + // Card lookup always present
                       (variantsEnabled ? extraRowEstimate : 0.0) +

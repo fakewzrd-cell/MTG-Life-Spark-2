@@ -1062,6 +1062,14 @@ class _GameplayToggles extends StatelessWidget {
               config.copyWith(commanderDamageReducesLife: v)),
         ),
         _GameplaySwitchTile(
+          title: 'Phase tracker',
+          subtitle:
+              'Show phases and step through the turn. Off keeps a large End turn for casual pods.',
+          value: config.phasesEnabled,
+          onChanged: (v) =>
+              notifier.updateConfig(config.copyWith(phasesEnabled: v)),
+        ),
+        _GameplaySwitchTile(
           title: 'Turn timer',
           subtitle: 'Show elapsed time each turn',
           value: config.trackTurnDuration,

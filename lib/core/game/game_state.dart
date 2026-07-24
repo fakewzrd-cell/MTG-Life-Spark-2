@@ -63,6 +63,7 @@ class GameState {
   final int? turnTimeLimitSeconds;
   final bool trackTurnDuration;
   final DateTime? turnStartTime; // when current turn started
+  final bool phasesEnabled;
 
   // Variant modes (Planechase, Archenemy, Bounty) – decks fetched from Scryfall
   final bool planechaseEnabled;
@@ -118,6 +119,7 @@ class GameState {
     this.turnTimeLimitSeconds,
     this.trackTurnDuration = false,
     this.turnStartTime,
+    this.phasesEnabled = false,
     this.planechaseEnabled = false,
     this.archenemyEnabled = false,
     this.bountyEnabled = false,
@@ -168,6 +170,7 @@ class GameState {
     Object? turnTimeLimitSeconds = _sentinel,
     bool? trackTurnDuration,
     Object? turnStartTime = _sentinel,
+    bool? phasesEnabled,
     bool? planechaseEnabled,
     bool? archenemyEnabled,
     bool? bountyEnabled,
@@ -235,6 +238,7 @@ class GameState {
       turnStartTime: identical(turnStartTime, _sentinel)
           ? this.turnStartTime
           : turnStartTime as DateTime?,
+      phasesEnabled: phasesEnabled ?? this.phasesEnabled,
       planechaseEnabled: planechaseEnabled ?? this.planechaseEnabled,
       archenemyEnabled: archenemyEnabled ?? this.archenemyEnabled,
       bountyEnabled: bountyEnabled ?? this.bountyEnabled,
@@ -343,6 +347,7 @@ class GameState {
         'turnTimeLimitSeconds': turnTimeLimitSeconds,
         'trackTurnDuration': trackTurnDuration,
         'turnStartTime': turnStartTime?.toIso8601String(),
+        'phasesEnabled': phasesEnabled,
         'planechaseEnabled': planechaseEnabled,
         'archenemyEnabled': archenemyEnabled,
         'bountyEnabled': bountyEnabled,
@@ -418,6 +423,7 @@ class GameState {
       turnStartTime: json['turnStartTime'] != null
           ? DateTime.tryParse(json['turnStartTime'] as String)
           : null,
+      phasesEnabled: json['phasesEnabled'] as bool? ?? false,
       planechaseEnabled: json['planechaseEnabled'] as bool? ?? false,
       archenemyEnabled: json['archenemyEnabled'] as bool? ?? false,
       bountyEnabled: json['bountyEnabled'] as bool? ?? false,

@@ -163,9 +163,8 @@ class GameOverviewView extends ConsumerWidget {
                 ),
               ),
               actions: [
-                if (game.isHost &&
-                    game.isLocalPlayersTurn &&
-                    !game.timeoutActive)
+                if (!game.timeoutActive &&
+                    (game.isLocalPlayersTurn || game.isHost))
                   Padding(
                     padding: EdgeInsets.only(right: pageInset),
                     child: Align(

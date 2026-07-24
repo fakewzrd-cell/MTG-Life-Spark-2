@@ -51,14 +51,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       icon: Icons.timer_outlined,
       title: 'Phase Bar & Turns',
       body:
-          'The phase bar shows every step of the turn — from Untap to Cleanup. Hold Priority to pause progression. Hit Timeout to pause the whole game.',
+          'When Phase tracker is on in the lobby, the phase bar steps Untap → Draw → Main → Combat → Main. Casual pods can leave it off for a large End turn button. Timeout pauses the whole game.',
       color: ColorTokens.primaryAccent,
     ),
     _OnboardingSlide(
       icon: Icons.shield_outlined,
       title: 'Commander & Counters',
       body:
-          'Track commander damage per opponent — 21 kills. Track poison (10 kills), energy, experience, and rad counters. Use Proliferate to add 1 to all at once.',
+          'Commander damage opens as a threat list — how much each opponent has dealt you toward 21. Track poison (10), energy, experience, and rad. Use Proliferate to add 1 to all at once.',
       color: ColorTokens.primaryAccent,
     ),
     _OnboardingSlide(

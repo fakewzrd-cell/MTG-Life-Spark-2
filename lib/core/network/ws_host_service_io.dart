@@ -6,6 +6,7 @@ import '../debug/app_log.dart';
 import '../bluetooth/ble_message.dart';
 import '../bluetooth/ble_protocol.dart';
 import '../bluetooth/ble_service.dart';
+import 'session_link_status.dart';
 
 /// WebSocket-based host service.
 ///
@@ -23,6 +24,9 @@ class WsHostService implements BleService {
 
   /// clientKey → open WebSocket
   final Map<String, WebSocket> _sockets = {};
+
+  /// playerId → grace timer before announcing a real disconnect.
+  final Map<String, Timer> _reconnectGrace = {};
 
   HttpServer? _server;
   int _seqNum = 0;
@@ -79,6 +83,10 @@ class WsHostService implements BleService {
 
   @override
   Future<void> dispose() async {
+    for (final t in _reconnectGrace.values) {
+      t.cancel();
+    }
+    _reconnectGrace.clear();
     await _server?.close(force: true);
     _server = null;
     final openSockets = List<WebSocket>.from(_sockets.values);
@@ -161,12 +169,16 @@ class WsHostService implements BleService {
     if (message.type == BleMessageType.lobbyPlayerJoined) {
       final playerId =
           message.payload['pid'] as String? ?? clientKey;
-      _verified[clientKey] = playerId;
-      _connectionController.add(BleConnectionEvent(
-        playerId: playerId,
-        status: BleConnectionStatus.connected,
-      ));
+      _bindVerifiedClient(clientKey, playerId);
       _messageController.add(message);
+      return;
+    }
+
+    if (message.type == BleMessageType.reconnectRequest) {
+      final playerId = message.payload['pid'] as String? ?? '';
+      if (playerId.isEmpty) return;
+      _bindVerifiedClient(clientKey, playerId);
+      // Do not forward as lobby join — game/lobby layers just need the socket.
       return;
     }
 
@@ -217,10 +229,43 @@ class WsHostService implements BleService {
     return false;
   }
 
+  void _bindVerifiedClient(String clientKey, String playerId) {
+    // Drop any older socket still mapped to this player (stale after resume).
+    final staleKeys = _verified.entries
+        .where((e) => e.value == playerId && e.key != clientKey)
+        .map((e) => e.key)
+        .toList();
+    for (final key in staleKeys) {
+      _verified.remove(key);
+      final stale = _sockets.remove(key);
+      try {
+        stale?.close();
+      } catch (e) {
+        appLog('WsHostService stale socket close failed', error: e);
+      }
+    }
+
+    _reconnectGrace.remove(playerId)?.cancel();
+    _verified[clientKey] = playerId;
+    _connectionController.add(BleConnectionEvent(
+      playerId: playerId,
+      status: BleConnectionStatus.connected,
+    ));
+  }
+
   void _onDisconnect(String clientKey) {
     _sockets.remove(clientKey);
     final playerId = _verified.remove(clientKey);
-    if (playerId != null) {
+    if (playerId == null) return;
+
+    // Already waiting on this player — keep the existing grace window.
+    if (_reconnectGrace.containsKey(playerId)) return;
+
+    // Soft drop: wait for Texts/app-switch resume before announcing leave.
+    _reconnectGrace[playerId] = Timer(kSessionReconnectGrace, () {
+      _reconnectGrace.remove(playerId);
+      // Player already re-bound on another socket.
+      if (_verified.containsValue(playerId)) return;
       _connectionController.add(BleConnectionEvent(
         playerId: playerId,
         status: BleConnectionStatus.disconnected,
@@ -233,7 +278,7 @@ class WsHostService implements BleService {
         ),
         excludeKey: clientKey,
       );
-    }
+    });
   }
 
   // ── Sending ───────────────────────────────────────────────────────────────

@@ -73,6 +73,21 @@ class BleMessage {
         seqNum: seqNum,
       );
 
+  /// Mid-match / mid-lobby resume after the OS dropped the socket.
+  static BleMessage reconnectRequest(
+    int seqNum, {
+    required String playerId,
+    required String username,
+  }) =>
+      BleMessage(
+        type: BleMessageType.reconnectRequest,
+        payload: {
+          'pid': playerId,
+          'username': username,
+        },
+        seqNum: seqNum,
+      );
+
   static BleMessage stateDelta({
     required int seqNum,
     required String playerId,

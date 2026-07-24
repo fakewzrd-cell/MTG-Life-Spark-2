@@ -1,7 +1,7 @@
 # Life Spark — Google Play listing assets
 
 Package id: `app.lifespark.mtg`  
-Version packaged for first upload: **1.0.11+11**
+Version packaged for Play upload: **1.0.12+12**
 
 ## Included here
 

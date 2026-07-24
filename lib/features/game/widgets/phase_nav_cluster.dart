@@ -78,8 +78,8 @@ class PhaseNavClusterStrip extends StatelessWidget {
   final VoidCallback? onEndTurn;
   final bool endTurnEnabled;
 
-  static const double _sideMinWidth = 72;
-  static const double _endTurnMinWidth = 88;
+  static const double _sideMinWidth = 64;
+  static const double _endTurnMinWidth = 104;
 
   @override
   Widget build(BuildContext context) {
@@ -181,9 +181,9 @@ class _PhaseNavEndTurnButton extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: FontTokens.hudXs,
+                fontSize: FontTokens.body,
                 fontWeight: FontWeight.w700,
-                letterSpacing: 0.05,
+                letterSpacing: 0.02,
                 color: fg,
                 height: 1.1,
               ),
