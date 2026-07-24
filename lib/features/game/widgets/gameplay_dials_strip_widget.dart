@@ -79,11 +79,11 @@ class _DialMetrics {
     double r4(double x) => (x / 4).round() * 4.0;
     return _DialMetrics(
       pillHeaderHeight: r4(lerp(40, 44)),
-      stepTapHeight: LayoutTokens.minTapTarget,
+      stepTapHeight: LayoutTokens.thumbTapTarget,
       wheelHeight: r4(lerp(48, 64)),
       itemExtent: r4(lerp(20, 24)),
       leadingSize: r4(lerp(16, 20)),
-      stepIconSize: r4(lerp(20, 24)),
+      stepIconSize: r4(lerp(22, 28)),
       wheelFontSize: r4(lerp(14, 16)),
       addIconSize: r4(lerp(22, 26)),
     );
@@ -589,12 +589,13 @@ class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
   final _scrollController = ScrollController();
   double _bottomFadeOpacity = 0;
 
+  /// Platform scroll feel only — never [AlwaysScrollableScrollPhysics], or the
+  /// list steals swipe-down and the sheet cannot dismiss when content fits.
   ScrollPhysics get _listPhysics {
-    final parent = switch (Theme.of(context).platform) {
+    return switch (Theme.of(context).platform) {
       TargetPlatform.iOS || TargetPlatform.macOS => const BouncingScrollPhysics(),
       _ => const ClampingScrollPhysics(),
     };
-    return AlwaysScrollableScrollPhysics(parent: parent);
   }
 
   @override
@@ -685,169 +686,191 @@ class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
           ...GameplayDialIds.presets,
         ].where((id) => !widget.visible.contains(id)).length;
     final fadePad = _bottomFadeOpacity > 0.02 ? 28.0 : 0.0;
+    // Handle + title + subtitle stay outside the ListView so swipe-down
+    // dismisses like card lookup.
+    const chromeReserve = 148.0;
+    final maxListH =
+        (widget.maxHeight - chromeReserve).clamp(120.0, widget.maxHeight);
 
     return LimitedBox(
       maxHeight: widget.maxHeight,
-      child: Stack(
-        clipBehavior: Clip.none,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Scrollbar(
-            controller: _scrollController,
-            thumbVisibility: true,
-            interactive: true,
-            radius: const Radius.circular(8),
-            child: ListView(
-              controller: _scrollController,
-              shrinkWrap: true,
-              physics: _listPhysics,
-              padding: EdgeInsets.only(
-                bottom: bottomPad + LayoutTokens.gr2 + fadePad,
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              LayoutTokens.gr3,
+              LayoutTokens.gr2,
+              LayoutTokens.gr3,
+              LayoutTokens.gr1,
+            ),
+            child: const Center(child: GameSheetHandle()),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              LayoutTokens.gr3,
+              LayoutTokens.gr1,
+              LayoutTokens.gr3,
+              LayoutTokens.gr1,
+            ),
+            child: Text(
+              'Add counter',
+              style: GameModalChrome.sheetTitleStyle(context),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr3),
+            child: Text(
+              'Pick trackers for your strip (max ${GameplayDialIds.maxStripDials}). '
+              'Tap the X on a counter to remove it from the strip.',
+              style: TextStyle(
+                fontSize: FontTokens.hudSm,
+                height: 1.35,
+                color: colors.textSecondary.withValues(alpha: 0.88),
               ),
+            ),
+          ),
+          SizedBox(height: LayoutTokens.gr2),
+          LimitedBox(
+            maxHeight: maxListH,
+            child: Stack(
+              clipBehavior: Clip.none,
               children: [
-                Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    LayoutTokens.gr3,
-                    LayoutTokens.gr2,
-                    LayoutTokens.gr3,
-                    LayoutTokens.gr1,
-                  ),
-                  child: const Center(child: GameSheetHandle()),
-                ),
-                Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    LayoutTokens.gr3,
-                    LayoutTokens.gr1,
-                    LayoutTokens.gr3,
-                    LayoutTokens.gr1,
-                  ),
-                  child: Text(
-                    'Add counter',
-                    style: GameModalChrome.sheetTitleStyle(context),
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr3),
-                  child: Text(
-                    'Pick trackers for your strip (max ${GameplayDialIds.maxStripDials}). '
-                    'Tap the X on a counter to remove it from the strip.',
-                    style: TextStyle(
-                      fontSize: FontTokens.hudSm,
-                      height: 1.35,
-                      color: colors.textSecondary.withValues(alpha: 0.88),
+                Scrollbar(
+                  controller: _scrollController,
+                  thumbVisibility: true,
+                  interactive: true,
+                  radius: const Radius.circular(8),
+                  child: ListView(
+                    controller: _scrollController,
+                    shrinkWrap: true,
+                    physics: _listPhysics,
+                    padding: EdgeInsets.only(
+                      bottom: bottomPad + LayoutTokens.gr2 + fadePad,
                     ),
-                  ),
-                ),
-                SizedBox(height: LayoutTokens.gr2),
-                _section(colors, 'Common', widget.coreOrdered),
-                _section(colors, 'Tokens & zones', [...GameplayDialIds.presets]),
-                Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    LayoutTokens.gr3,
-                    LayoutTokens.gr2,
-                    LayoutTokens.gr3,
-                    0,
-                  ),
-                  child: OutlinedButton.icon(
-                    onPressed: widget.onCustomDial,
-                    icon: Icon(
-                      Icons.edit_note_rounded,
-                      color:
-                          canAddCustom
-                              ? colors.primaryAccent
-                              : colors.textSecondary,
-                    ),
-                    label: Text(
-                      canAddCustom
-                          ? 'Custom dial…'
-                          : 'Custom dial (max ${GameplayDialIds.maxCustomDials})',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color:
+                    children: [
+                      _section(colors, 'Common', widget.coreOrdered),
+                      _section(
+                        colors,
+                        'Tokens & zones',
+                        [...GameplayDialIds.presets],
+                      ),
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          LayoutTokens.gr3,
+                          LayoutTokens.gr2,
+                          LayoutTokens.gr3,
+                          0,
+                        ),
+                        child: OutlinedButton.icon(
+                          onPressed: widget.onCustomDial,
+                          icon: Icon(
+                            Icons.edit_note_rounded,
+                            color:
+                                canAddCustom
+                                    ? colors.primaryAccent
+                                    : colors.textSecondary,
+                          ),
+                          label: Text(
                             canAddCustom
-                                ? colors.primaryAccent
-                                : colors.textSecondary,
+                                ? 'Custom dial…'
+                                : 'Custom dial (max ${GameplayDialIds.maxCustomDials})',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color:
+                                  canAddCustom
+                                      ? colors.primaryAccent
+                                      : colors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (!canAddCustom)
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            LayoutTokens.gr3,
+                            LayoutTokens.gr1,
+                            LayoutTokens.gr3,
+                            0,
+                          ),
+                          child: Text(
+                            'You already have ${GameplayDialIds.maxCustomDials} custom counters '
+                            'or your strip is full (${GameplayDialIds.maxStripDials} max). '
+                            'Remove one from your strip before adding another.',
+                            style: TextStyle(
+                              fontSize: FontTokens.hudSm,
+                              height: 1.35,
+                              color: colors.textSecondary.withValues(
+                                alpha: 0.88,
+                              ),
+                            ),
+                          ),
+                        ),
+                      if (addableBuiltIn == 0)
+                        Padding(
+                          padding: EdgeInsets.all(LayoutTokens.gr3),
+                          child: Text(
+                            'Every built-in counter is already on your strip. '
+                            'Use Custom dial for anything else.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: colors.textSecondary.withValues(
+                                alpha: 0.75,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: bottomPad,
+                  height: 52,
+                  child: IgnorePointer(
+                    child: AnimatedOpacity(
+                      opacity: _bottomFadeOpacity,
+                      duration: MotionTokens.standard,
+                      curve: MotionTokens.easeOut,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              colors.surface.withValues(alpha: 0),
+                              colors.surface.withValues(alpha: 0.92),
+                              colors.surface,
+                            ],
+                            stops: const [0.0, 0.55, 1.0],
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
-                if (!canAddCustom)
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      LayoutTokens.gr3,
-                      LayoutTokens.gr1,
-                      LayoutTokens.gr3,
-                      0,
-                    ),
-                    child: Text(
-                      'You already have ${GameplayDialIds.maxCustomDials} custom counters '
-                      'or your strip is full (${GameplayDialIds.maxStripDials} max). '
-                      'Remove one from your strip before adding another.',
-                      style: TextStyle(
-                        fontSize: FontTokens.hudSm,
-                        height: 1.35,
-                        color: colors.textSecondary.withValues(alpha: 0.88),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: bottomPad + 6,
+                  child: IgnorePointer(
+                    child: AnimatedOpacity(
+                      opacity: _bottomFadeOpacity,
+                      duration: MotionTokens.standard,
+                      curve: MotionTokens.easeOut,
+                      child: Center(
+                        child: Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          size: 22,
+                          color: colors.textSecondary.withValues(alpha: 0.55),
+                        ),
                       ),
                     ),
                   ),
-                if (addableBuiltIn == 0)
-                  Padding(
-                    padding: EdgeInsets.all(LayoutTokens.gr3),
-                    child: Text(
-                      'Every built-in counter is already on your strip. '
-                      'Use Custom dial for anything else.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: colors.textSecondary.withValues(alpha: 0.75),
-                      ),
-                    ),
-                  ),
+                ),
               ],
-            ),
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: bottomPad,
-            height: 52,
-            child: IgnorePointer(
-              child: AnimatedOpacity(
-                opacity: _bottomFadeOpacity,
-                duration: MotionTokens.standard,
-                curve: MotionTokens.easeOut,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        colors.surface.withValues(alpha: 0),
-                        colors.surface.withValues(alpha: 0.92),
-                        colors.surface,
-                      ],
-                      stops: const [0.0, 0.55, 1.0],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: bottomPad + 6,
-            child: IgnorePointer(
-              child: AnimatedOpacity(
-                opacity: _bottomFadeOpacity,
-                duration: MotionTokens.standard,
-                curve: MotionTokens.easeOut,
-                child: Center(
-                  child: Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    size: 22,
-                    color: colors.textSecondary.withValues(alpha: 0.55),
-                  ),
-                ),
-              ),
             ),
           ),
         ],

@@ -16,6 +16,7 @@ import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/motion_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
+import '../../../shared/widgets/game_icon.dart';
 import 'game_modal_chrome.dart';
 
 /// Highest commander damage on any single track (primary or partner).
@@ -103,6 +104,9 @@ bool isCommanderGameSession({
 }
 
 /// Opens commander damage tracking in a bottom sheet (does not shift Play UI).
+///
+/// Handle + title sit outside the scroll list so swipe-down dismisses the sheet
+/// (same pattern as card lookup). Only the threat list scrolls when tall.
 Future<void> showCommanderDamageSheet(
   BuildContext context,
   WidgetRef ref,
@@ -111,6 +115,9 @@ Future<void> showCommanderDamageSheet(
     context: context,
     builder: (ctx) {
       final maxH = MediaQuery.sizeOf(ctx).height * 0.92;
+      // Handle, title, subtitle, gaps — keep out of the ListView.
+      const chromeReserve = 140.0;
+      final maxListH = (maxH - chromeReserve).clamp(160.0, maxH);
       return ConstrainedBox(
         constraints: BoxConstraints(maxHeight: maxH),
         child: GameSheetBody(
@@ -125,38 +132,44 @@ Future<void> showCommanderDamageSheet(
                   .toList();
               final notifier = ref.read(gameProvider.notifier);
 
-              return LimitedBox(
-                maxHeight: (maxH - 48).clamp(200.0, maxH),
-                child: ListView(
-                  shrinkWrap: true,
-                  children: [
-                    const GameSheetHandle(),
-                    SizedBox(height: LayoutTokens.gr2),
-                    const GameSheetHeader(
-                      title: 'Commander damage',
-                      subtitle:
-                          'Threats to you first. Open Dealt to log damage you dealt.',
-                      showHandle: false,
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const GameSheetHandle(),
+                  SizedBox(height: LayoutTokens.gr2),
+                  const GameSheetHeader(
+                    title: 'Commander damage',
+                    subtitle:
+                        'Threats to you first. Open Dealt to log damage you dealt.',
+                    showHandle: false,
+                  ),
+                  SizedBox(height: LayoutTokens.gr2),
+                  LimitedBox(
+                    maxHeight: maxListH,
+                    child: ListView(
+                      shrinkWrap: true,
+                      children: [
+                        CommanderDamagePanel(
+                          localPlayer: local,
+                          opponents: opponents,
+                          onDamageChange: ({
+                            required String fromPlayerId,
+                            required int partnerIndex,
+                            required String toPlayerId,
+                            required int delta,
+                          }) =>
+                              notifier.applyCommanderDamage(
+                            fromPlayerId: fromPlayerId,
+                            partnerIndex: partnerIndex,
+                            toPlayerId: toPlayerId,
+                            delta: delta,
+                          ),
+                        ),
+                      ],
                     ),
-                    SizedBox(height: LayoutTokens.gr2),
-                    CommanderDamagePanel(
-                      localPlayer: local,
-                      opponents: opponents,
-                      onDamageChange: ({
-                        required String fromPlayerId,
-                        required int partnerIndex,
-                        required String toPlayerId,
-                        required int delta,
-                      }) =>
-                          notifier.applyCommanderDamage(
-                        fromPlayerId: fromPlayerId,
-                        partnerIndex: partnerIndex,
-                        toPlayerId: toPlayerId,
-                        delta: delta,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               );
             },
           ),
@@ -221,13 +234,17 @@ class CommanderDamageBarButton extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  lethal
-                      ? Icons.warning_amber_rounded
-                      : Icons.shield_outlined,
-                  size: LayoutTokens.gr3 + 2,
-                  color: enabled ? accent : colors.textSecondary,
-                ),
+                if (lethal)
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    size: LayoutTokens.gr3 + 2,
+                    color: enabled ? accent : colors.textSecondary,
+                  )
+                else
+                  GameIcon.commanderDamage(
+                    size: LayoutTokens.gr3 + 2,
+                    color: enabled ? accent : colors.textSecondary,
+                  ),
                 SizedBox(height: LayoutTokens.gr0),
                 Text(
                   '$remaining',
@@ -815,13 +832,13 @@ class _DmgStepButton extends StatelessWidget {
           borderRadius: RadiusTokens.radiusPill,
           child: AnimatedContainer(
             duration: MotionTokens.standard,
-            width: LayoutTokens.minTapTarget,
-            height: LayoutTokens.minTapTarget,
+            width: LayoutTokens.thumbTapTarget,
+            height: LayoutTokens.thumbTapTarget,
             decoration: BoxDecoration(
               color: fill,
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, size: 22, color: iconColor),
+            child: Icon(icon, size: 26, color: iconColor),
           ),
         ),
       ),

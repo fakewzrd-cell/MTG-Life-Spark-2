@@ -29,6 +29,9 @@ class LayoutTokens {
   /// Minimum **48×48 dp** tap target (Material 3); `12 × 4dp` on the grid.
   static const double minTapTarget = gr6;
 
+  /// Comfortable thumb target for in-game ± steppers (table play).
+  static const double thumbTapTarget = 56;
+
   // ── Named layout constants ────────────────────────────────────────────────
 
   /// Width of profile/My Decks horizontal carousel cards.

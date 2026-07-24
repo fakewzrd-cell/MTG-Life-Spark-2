@@ -237,27 +237,36 @@ class _ProfileEditModePill extends StatelessWidget {
   final bool editing;
   final VoidCallback onPressed;
 
+  static const double _visualSize = 36;
+  static const double _iconSize = 16;
+
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: ColorTokens.onAccent.withValues(alpha: 0.08),
-      shape: CircleBorder(
-        side: BorderSide(
-          color: ColorTokens.onAccent.withValues(alpha: 0.22),
-        ),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onPressed,
-        customBorder: const CircleBorder(),
-        child: SizedBox(
-          width: LayoutTokens.minTapTarget,
-          height: LayoutTokens.minTapTarget,
-          child: Icon(
-            editing ? Icons.check_rounded : Icons.edit_outlined,
-            size: 18,
-            color: ColorTokens.onAccent.withValues(alpha: 0.72),
-            semanticLabel: editing ? 'Done editing' : 'Edit profile',
+    return SizedBox(
+      width: LayoutTokens.minTapTarget,
+      height: LayoutTokens.minTapTarget,
+      child: Center(
+        child: Material(
+          color: ColorTokens.onAccent.withValues(alpha: 0.08),
+          shape: CircleBorder(
+            side: BorderSide(
+              color: ColorTokens.onAccent.withValues(alpha: 0.22),
+            ),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onPressed,
+            customBorder: const CircleBorder(),
+            child: SizedBox(
+              width: _visualSize,
+              height: _visualSize,
+              child: Icon(
+                editing ? Icons.check_rounded : Icons.edit_outlined,
+                size: _iconSize,
+                color: ColorTokens.onAccent.withValues(alpha: 0.72),
+                semanticLabel: editing ? 'Done editing' : 'Edit profile',
+              ),
+            ),
           ),
         ),
       ),

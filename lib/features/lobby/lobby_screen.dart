@@ -330,19 +330,12 @@ class _PodSection extends ConsumerWidget {
               }).toList(),
             ),
           ],
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: () => context.push(AppRoutes.profilePods),
-              icon: Icon(Icons.edit_note, color: colors.primaryAccent, size: 20),
-              label: Text(
-                'Manage pods',
-                style: TextStyle(
-                  color: colors.primaryAccent,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
+          SizedBox(height: LayoutTokens.gr2),
+          UiButton(
+            label: 'Manage pods',
+            variant: UiButtonVariant.secondary,
+            icon: Icon(Icons.groups_outlined, color: colors.textPrimary),
+            onPressed: () => context.push(AppRoutes.profilePods),
           ),
         ],
       ),
@@ -1063,8 +1056,7 @@ class _GameplayToggles extends StatelessWidget {
         ),
         _GameplaySwitchTile(
           title: 'Phase tracker',
-          subtitle:
-              'Show phases and step through the turn. Off keeps a large End turn for casual pods.',
+          subtitle: 'Show turn phases with Back and Next',
           value: config.phasesEnabled,
           onChanged: (v) =>
               notifier.updateConfig(config.copyWith(phasesEnabled: v)),

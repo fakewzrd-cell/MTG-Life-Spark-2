@@ -41,6 +41,8 @@ import '../widgets/end_turn_bar.dart';
 import '../widgets/phase_nav_cluster.dart';
 import '../widgets/stack_tracker_tab.dart';
 import '../widgets/variant_card_panel.dart';
+import '../widgets/your_turn_prompt_overlay.dart';
+import '../../../shared/utils/game_haptics.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
   const GameScreen({super.key});
@@ -51,6 +53,7 @@ class GameScreen extends ConsumerStatefulWidget {
 
 class _GameScreenState extends ConsumerState<GameScreen> {
   bool _showOverview = false;
+  bool _showYourTurnPrompt = false;
   StreamSubscription<Object?>? _gameOverSub;
   ShakeDetector? _shakeDetector;
   final DateTime _localInitStarted = DateTime.now();
@@ -255,6 +258,31 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       });
     });
 
+    ref.listen<bool>(
+      gameProvider.select((g) => g.isLocalPlayersTurn),
+      (prev, next) {
+        if (prev == true && next == false) {
+          if (_showYourTurnPrompt) {
+            setState(() => _showYourTurnPrompt = false);
+          }
+          return;
+        }
+        if (prev != false || next != true) return;
+        final g = ref.read(gameProvider);
+        if (g.gameOver ||
+            g.awaitingFirstPlayerRoll ||
+            g.showTurnOrderReveal ||
+            g.timeoutActive) {
+          return;
+        }
+        setState(() => _showYourTurnPrompt = true);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          context.gameHapticMedium();
+        });
+      },
+    );
+
     return PopScope(
       // Never pop the /game route with the phone back button — that was
       // sending players back to the host lobby mid-match. Nested sheets
@@ -334,6 +362,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   durationSeconds: timeoutDurationSeconds,
                   onEndTimeout: () =>
                       ref.read(gameProvider.notifier).endTimeout(),
+                ),
+              if (_showYourTurnPrompt)
+                YourTurnPromptOverlay(
+                  onDismiss: () => setState(() => _showYourTurnPrompt = false),
                 ),
             ],
           ),

@@ -8,6 +8,7 @@ import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/color_tokens.dart';
 import '../../shared/utils/app_router.dart';
 import '../../shared/widgets/brand_logo.dart';
+import '../../shared/widgets/game_icon.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/components/ui_button.dart';
 import '../../ui/tokens/radius_tokens.dart';
@@ -51,15 +52,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       icon: Icons.timer_outlined,
       title: 'Phase Bar & Turns',
       body:
-          'When Phase tracker is on in the lobby, the phase bar steps Untap → Draw → Main → Combat → Main. Casual pods can leave it off for a large End turn button. Timeout pauses the whole game.',
+          'Use the phase bar to step through the turn, or leave Phase tracker off in the lobby. Timeout pauses the whole game.',
       color: ColorTokens.primaryAccent,
     ),
     _OnboardingSlide(
-      icon: Icons.shield_outlined,
+      icon: Icons.auto_awesome,
       title: 'Commander & Counters',
       body:
           'Commander damage opens as a threat list — how much each opponent has dealt you toward 21. Track poison (10), energy, experience, and rad. Use Proliferate to add 1 to all at once.',
       color: ColorTokens.primaryAccent,
+      useCommanderDamageIcon: true,
     ),
     _OnboardingSlide(
       icon: Icons.handshake_outlined,
@@ -160,6 +162,7 @@ class _OnboardingSlide {
   final String body;
   final Color color;
   final bool showBrandLogo;
+  final bool useCommanderDamageIcon;
 
   const _OnboardingSlide({
     required this.icon,
@@ -167,6 +170,7 @@ class _OnboardingSlide {
     required this.body,
     required this.color,
     this.showBrandLogo = false,
+    this.useCommanderDamageIcon = false,
   });
 }
 
@@ -209,7 +213,9 @@ class _SlideView extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Icon(slide.icon, size: 52, color: slide.color),
+              child: slide.useCommanderDamageIcon
+                  ? GameIcon.commanderDamage(size: 52, color: slide.color)
+                  : Icon(slide.icon, size: 52, color: slide.color),
             ),
           SizedBox(height: LayoutTokens.gr5),
           Text(

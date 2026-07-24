@@ -60,8 +60,8 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
   /// Stride (px) of horizontal drag before committing ±1 life.
   static const double _kDragStride = 36;
 
-  /// Width of − / + edge strips — wider than [LayoutTokens.minTapTarget] for thumbs.
-  static const double _kStepStripWidth = 56;
+  /// Width of − / + edge strips — [LayoutTokens.thumbTapTarget]+ for big thumbs.
+  static const double _kStepStripWidth = 64;
 
   double _wheelDragAccum = 0;
 
@@ -372,7 +372,7 @@ class _LifeEdgeStepStrip extends StatelessWidget {
             child: Center(
               child: Icon(
                 icon,
-                size: 26,
+                size: 28,
                 color: colors.textSecondary,
               ),
             ),

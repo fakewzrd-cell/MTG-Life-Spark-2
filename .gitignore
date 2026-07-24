@@ -71,3 +71,6 @@ macos/vendor/
 **/*-Play-Signing-BACKUP*
 store/play/*.aab
 store/play/*.apk
+
+# Local LAN APK host (sideload); never commit binaries
+.local-apk-serve/
