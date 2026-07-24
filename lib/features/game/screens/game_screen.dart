@@ -28,7 +28,6 @@ import '../widgets/commander_info_bar.dart';
 import '../widgets/game_bottom_bar.dart';
 import '../widgets/game_colors.dart';
 import '../widgets/game_first_player_roll_overlay.dart';
-import '../widgets/game_history_tab.dart';
 import '../widgets/game_hud_header.dart';
 import '../widgets/game_modal_chrome.dart';
 import '../widgets/game_overview_view.dart';
@@ -389,7 +388,7 @@ class _PersonalView extends ConsumerStatefulWidget {
 }
 
 class _PersonalViewState extends ConsumerState<_PersonalView> {
-  /// 0 = Play, 1 = Stack, 2 = History
+  /// 0 = Play, 1 = Stack (History is on Table overview)
   int _mainTabIndex = 0;
 
   @override
@@ -398,10 +397,8 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
     ref.watch(gameProvider.select(gameHudHeaderRebuildFingerprint));
     if (_mainTabIndex == 0) {
       ref.watch(gameProvider.select(playTabRebuildFingerprint));
-    } else if (_mainTabIndex == 1) {
-      ref.watch(gameProvider.select(stackTabRebuildFingerprint));
     } else {
-      ref.watch(gameProvider.select((g) => g.sessionActionLog));
+      ref.watch(gameProvider.select(stackTabRebuildFingerprint));
     }
 
     final game = ref.read(gameProvider);
@@ -526,12 +523,6 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
         Expanded(
           child: switch (_mainTabIndex) {
             1 => StackTrackerTab(game: ref.read(gameProvider)),
-            2 => GameHistoryTab(
-              entries: ref.watch(
-                gameProvider.select((g) => g.sessionActionLog),
-              ),
-              localPlayerId: widget.localPlayerId,
-            ),
             _ => Padding(
               padding: EdgeInsets.symmetric(horizontal: horizontalInset),
               child: LayoutBuilder(

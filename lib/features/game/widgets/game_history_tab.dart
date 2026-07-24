@@ -1,17 +1,67 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/game/game_log_entry.dart';
+import '../../../core/game/game_providers.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
 import 'game_colors.dart';
+import 'game_modal_chrome.dart';
 
-class GameHistoryTab extends StatelessWidget {
+/// Opens the session action log from Table overview (sheet, not a hub tab).
+Future<void> showGameHistorySheet(BuildContext context) {
+  return showGameBottomSheet<void>(
+    context: context,
+    builder: (ctx) {
+      final maxH = MediaQuery.sizeOf(ctx).height * 0.88;
+      const chromeReserve = 96.0;
+      final maxListH = (maxH - chromeReserve).clamp(160.0, maxH);
+      return ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxH),
+        child: GameSheetBody(
+          child: Consumer(
+            builder: (context, ref, _) {
+              final entries = ref.watch(
+                gameProvider.select((g) => g.sessionActionLog),
+              );
+              final localId = ref.watch(
+                gameProvider.select((g) => g.localPlayerId),
+              );
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const GameSheetHeader(
+                    title: 'History',
+                    subtitle: 'Life, counters, and other table actions.',
+                  ),
+                  SizedBox(height: LayoutTokens.gr2),
+                  LimitedBox(
+                    maxHeight: maxListH,
+                    child: GameHistoryList(
+                      entries: entries,
+                      localPlayerId: localId,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      );
+    },
+  );
+}
+
+/// Turn-grouped session action log body (used by the overview History sheet).
+class GameHistoryList extends StatelessWidget {
   final List<GameLogEntry> entries;
   final String localPlayerId;
 
-  const GameHistoryTab({
+  const GameHistoryList({
+    super.key,
     required this.entries,
     required this.localPlayerId,
   });
@@ -20,41 +70,39 @@ class GameHistoryTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.gameColors;
     if (entries.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: EdgeInsets.all(LayoutTokens.gr4),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.history_rounded,
-                size: 48,
-                color: colors.textSecondary.withValues(alpha: 0.5),
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: LayoutTokens.gr4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.history_rounded,
+              size: 40,
+              color: colors.textSecondary.withValues(alpha: 0.5),
+            ),
+            SizedBox(height: LayoutTokens.gr2),
+            Text(
+              'No actions yet',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontWeight: FontWeight.w600,
+                fontSize: FontTokens.body,
               ),
-              SizedBox(height: LayoutTokens.gr3),
-              Text(
-                'No actions yet',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: colors.textPrimary,
-                  fontWeight: FontWeight.w600,
-                  fontSize: FontTokens.body,
-                ),
+            ),
+            SizedBox(height: LayoutTokens.gr1),
+            Text(
+              'Life changes, counters, and other table actions '
+              'will show up here as the game goes on.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: colors.textSecondary
+                    .withValues(alpha: OpacityTokens.nearOpaque),
+                fontSize: FontTokens.hudSm,
+                height: 1.4,
               ),
-              SizedBox(height: LayoutTokens.gr2),
-              Text(
-                'Life changes, counters, and other table actions '
-                'will show up here as the game goes on.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: colors.textSecondary
-                      .withValues(alpha: OpacityTokens.nearOpaque),
-                  fontSize: FontTokens.hudSm,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       );
     }
@@ -65,15 +113,9 @@ class GameHistoryTab extends StatelessWidget {
     }
     final turns = grouped.keys.toList()..sort();
 
-    final bottomSafe = MediaQuery.paddingOf(context).bottom;
-
     return ListView.builder(
-      padding: EdgeInsets.fromLTRB(
-        LayoutTokens.gr3,
-        LayoutTokens.gr2,
-        LayoutTokens.gr3,
-        LayoutTokens.gr4 + bottomSafe,
-      ),
+      shrinkWrap: true,
+      padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
       itemCount: turns.length,
       itemBuilder: (context, ti) {
         final turn = turns[ti];
@@ -117,49 +159,49 @@ class GameHistoryTab extends StatelessWidget {
                       padding: affectsYou
                           ? EdgeInsets.all(LayoutTokens.gr1)
                           : EdgeInsets.zero,
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (affectsYou) ...[
-                              Icon(
-                                Icons.person_pin,
-                                size: 16,
-                                color: colors.emphasis,
-                              ),
-                              SizedBox(width: LayoutTokens.gr1),
-                            ],
-                            Text(
-                              _formatTime(e.time),
-                              style: TextStyle(
-                                fontSize: FontTokens.hudXs,
-                                color: colors.textSecondary.withValues(
-                                  alpha: 0.85,
-                                ),
-                                fontFeatures: const [
-                                  FontFeature.tabularFigures(),
-                                ],
-                              ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (affectsYou) ...[
+                            Icon(
+                              Icons.person_pin,
+                              size: 16,
+                              color: colors.emphasis,
                             ),
-                            SizedBox(width: LayoutTokens.gr2),
-                            Expanded(
-                              child: Text(
-                                e.message,
-                                style: TextStyle(
-                                  color: affectsYou
-                                      ? colors.emphasis
-                                      : colors.textPrimary,
-                                  fontSize: FontTokens.hudSm,
-                                  fontWeight: affectsYou
-                                      ? FontWeight.w700
-                                      : FontWeight.w500,
-                                  height: 1.25,
-                                ),
-                              ),
-                            ),
+                            SizedBox(width: LayoutTokens.gr1),
                           ],
-                        ),
+                          Text(
+                            _formatTime(e.time),
+                            style: TextStyle(
+                              fontSize: FontTokens.hudXs,
+                              color: colors.textSecondary.withValues(
+                                alpha: 0.85,
+                              ),
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
+                            ),
+                          ),
+                          SizedBox(width: LayoutTokens.gr2),
+                          Expanded(
+                            child: Text(
+                              e.message,
+                              style: TextStyle(
+                                color: affectsYou
+                                    ? colors.emphasis
+                                    : colors.textPrimary,
+                                fontSize: FontTokens.hudSm,
+                                fontWeight: affectsYou
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                                height: 1.25,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    );
+                    ),
+                  );
                 },
               ),
             ],

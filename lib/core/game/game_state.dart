@@ -73,7 +73,7 @@ class GameState {
   final int currentSchemeIndex;
   final int currentBountyIndex;
 
-  /// Monotonic counter for History tab grouping (increments on each turn pass).
+  /// Monotonic counter for History sheet grouping (increments on each turn pass).
   final int sessionTurnCounter;
 
   /// Session action log (life, counters, commander damage, …).

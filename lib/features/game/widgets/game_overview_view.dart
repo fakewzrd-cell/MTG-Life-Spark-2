@@ -17,6 +17,7 @@ import '../../../ui/tokens/opacity_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
 import 'alliance_overview_ui.dart';
 import 'game_colors.dart';
+import 'game_history_tab.dart';
 import 'game_modal_chrome.dart';
 import 'game_timeout_widgets.dart';
 import 'overview_commander_art_backdrop.dart';
@@ -163,6 +164,33 @@ class GameOverviewView extends ConsumerWidget {
                 ),
               ),
               actions: [
+                Padding(
+                  padding: EdgeInsets.only(
+                    right: (!game.timeoutActive &&
+                            (game.isLocalPlayersTurn || game.isHost))
+                        ? LayoutTokens.gr1
+                        : pageInset,
+                  ),
+                  child: Align(
+                    alignment: Alignment.center,
+                    child: Semantics(
+                      button: true,
+                      label: 'History',
+                      child: IconButton(
+                        tooltip: 'History',
+                        onPressed: () => showGameHistorySheet(context),
+                        icon: Icon(
+                          Icons.history_rounded,
+                          color: colors.textSecondary.withValues(alpha: 0.9),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: LayoutTokens.minTapTarget,
+                          minHeight: LayoutTokens.minTapTarget,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
                 if (!game.timeoutActive &&
                     (game.isLocalPlayersTurn || game.isHost))
                   Padding(
@@ -198,11 +226,6 @@ class GameOverviewView extends ConsumerWidget {
                         ),
                       ),
                     ),
-                  )
-                else
-                  SizedBox(
-                    width: pageInset + LayoutTokens.minTapTarget,
-                    height: LayoutTokens.minTapTarget,
                   ),
               ],
             ),

@@ -10,10 +10,11 @@ import 'game_colors.dart';
 /// Asset for the Play tab (fanned cards) — replaces generic controller icon.
 const String kGamePlayTabIconAsset = AppIcons.playTabCards;
 
-/// Play · Stack · Lookup · History row — use inside [GameHudHeader].
+/// Play · Stack · Lookup row — use inside [GameHudHeader].
 ///
 /// Icon-only for space; [Semantics] keeps accessible names.
 /// Lookup is a utility action (opens a sheet), not a peer tab.
+/// History lives on Table overview (sheet), not in this strip.
 class GameMainTabBarStrip extends StatelessWidget {
   const GameMainTabBarStrip({
     super.key,
@@ -29,7 +30,6 @@ class GameMainTabBarStrip extends StatelessWidget {
   static const _segments = <_GameMainTabSpec>[
     _GameMainTabSpec(index: 0, label: 'Play', iconAsset: kGamePlayTabIconAsset),
     _GameMainTabSpec(index: 1, label: 'Stack', icon: Icons.layers_rounded),
-    _GameMainTabSpec(index: 2, label: 'History', icon: Icons.history_rounded),
   ];
 
   static const double iconSize = 22;
@@ -64,8 +64,6 @@ class GameMainTabBarStrip extends StatelessWidget {
           tab(_segments[1]), // Stack
           divider(),
           const Expanded(child: _CardLookupTabAction()),
-          divider(),
-          tab(_segments[2]), // History
         ],
       ),
     );
