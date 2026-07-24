@@ -16,6 +16,7 @@ import '../../../ui/tokens/motion_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
 import 'alliance_overview_ui.dart';
+import 'end_turn_bar.dart';
 import 'game_colors.dart';
 import 'game_history_tab.dart';
 import 'game_modal_chrome.dart';
@@ -94,10 +95,18 @@ class GameOverviewView extends ConsumerWidget {
             : '${overviewShortPlayerName(activePlayer.username, maxChars: 16)}\'s turn';
 
     const pageInset = LayoutTokens.shellPageInset;
-    final gradientColors = CommanderIdentityColors.gameplayGradient(
-      game.localPlayer?.commanderColorIdentity ?? const [],
-    );
+    final identity = game.localPlayer?.commanderColorIdentity ?? const [];
+    final gradientColors = CommanderIdentityColors.gameplayGradient(identity);
+    final chromeAccent = CommanderIdentityColors.gameChromeAccent(identity);
+    final endTurnEnabled =
+        !game.timeoutActive && (game.isLocalPlayersTurn || game.isHost);
+    final waitingForName = endTurnEnabled
+        ? null
+        : (activePlayer?.username);
 
+    // No top SafeArea around the scroll — [SliverAppBar] (primary) must paint
+    // its chrome behind the status bar. A SafeArea wrapper was clipping that
+    // darker header into a floating “box” under Round.
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -106,234 +115,228 @@ class GameOverviewView extends ConsumerWidget {
           colors: gradientColors,
         ),
       ),
-      child: SafeArea(
-        bottom: false,
-        child: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              pinned: true,
-              backgroundColor: colors.backgroundPrimary.withValues(alpha: 0.82),
-              surfaceTintColor: Colors.transparent,
-              elevation: 0,
-              scrolledUnderElevation: 0,
-              toolbarHeight: turnSubtitle == null
-                  ? LayoutTokens.minTapTarget
-                  : LayoutTokens.minTapTarget + LayoutTokens.gr2,
-              leadingWidth: pageInset + LayoutTokens.minTapTarget,
-              centerTitle: true,
-              title: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Round ${game.roundNumber}',
-                    style: TextStyle(
-                      color: colors.textPrimary,
-                      fontSize: FontTokens.title,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.2,
-                      height: 1,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  pinned: true,
+                  primary: true,
+                  backgroundColor:
+                      colors.backgroundPrimary.withValues(alpha: 0.92),
+                  surfaceTintColor: Colors.transparent,
+                  elevation: 0,
+                  scrolledUnderElevation: 0,
+                  toolbarHeight: turnSubtitle == null
+                      ? LayoutTokens.minTapTarget
+                      : LayoutTokens.minTapTarget + LayoutTokens.gr2,
+                  leadingWidth: pageInset + LayoutTokens.minTapTarget,
+                  centerTitle: true,
+                  title: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Round ${game.roundNumber}',
+                        style: TextStyle(
+                          color: colors.textPrimary,
+                          fontSize: FontTokens.title,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.2,
+                          height: 1,
+                        ),
+                      ),
+                      if (turnSubtitle != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          turnSubtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: colors.textSecondary,
+                            fontSize: FontTokens.hudXs,
+                            fontWeight: FontWeight.w600,
+                            height: 1,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  leading: SizedBox(
+                    width: pageInset + LayoutTokens.minTapTarget,
+                    child: Padding(
+                      padding: EdgeInsets.only(left: pageInset),
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: Tooltip(
+                          message: 'Close overview',
+                          child: GameDialogCloseButton(onPressed: onClose),
+                        ),
+                      ),
                     ),
                   ),
-                  if (turnSubtitle != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      turnSubtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: colors.textSecondary,
-                        fontSize: FontTokens.hudXs,
-                        fontWeight: FontWeight.w600,
-                        height: 1,
+                  actions: [
+                    Padding(
+                      padding: EdgeInsets.only(right: pageInset),
+                      child: Align(
+                        alignment: Alignment.center,
+                        child: Semantics(
+                          button: true,
+                          label: 'History',
+                          child: IconButton(
+                            tooltip: 'History',
+                            onPressed: () => showGameHistorySheet(context),
+                            icon: Icon(
+                              Icons.history_rounded,
+                              color: colors.textSecondary.withValues(
+                                alpha: 0.9,
+                              ),
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: LayoutTokens.minTapTarget,
+                              minHeight: LayoutTokens.minTapTarget,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ],
-                ],
-              ),
-              leading: SizedBox(
-                width: pageInset + LayoutTokens.minTapTarget,
-                child: Padding(
-                  padding: EdgeInsets.only(left: pageInset),
-                  child: Align(
-                    alignment: Alignment.center,
-                    child: Tooltip(
-                      message: 'Close overview',
-                      child: GameDialogCloseButton(onPressed: onClose),
+                ),
+
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      pageInset,
+                      LayoutTokens.gr2,
+                      pageInset,
+                      0,
                     ),
+                    child: TablePoliticsStatusLine(game: game),
                   ),
                 ),
-              ),
-              actions: [
-                Padding(
-                  padding: EdgeInsets.only(
-                    right: (!game.timeoutActive &&
-                            (game.isLocalPlayersTurn || game.isHost))
-                        ? LayoutTokens.gr1
-                        : pageInset,
-                  ),
-                  child: Align(
-                    alignment: Alignment.center,
-                    child: Semantics(
-                      button: true,
-                      label: 'History',
-                      child: IconButton(
-                        tooltip: 'History',
-                        onPressed: () => showGameHistorySheet(context),
-                        icon: Icon(
-                          Icons.history_rounded,
-                          color: colors.textSecondary.withValues(alpha: 0.9),
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: LayoutTokens.minTapTarget,
-                          minHeight: LayoutTokens.minTapTarget,
-                        ),
+
+                if (activePlayer != null)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        pageInset,
+                        LayoutTokens.gr2,
+                        pageInset,
+                        0,
+                      ),
+                      child: _ActivePlayerSpotlight(
+                        game: game,
+                        player: activePlayer,
                       ),
                     ),
                   ),
-                ),
-                if (!game.timeoutActive &&
-                    (game.isLocalPlayersTurn || game.isHost))
-                  Padding(
-                    padding: EdgeInsets.only(right: pageInset),
-                    child: Align(
-                      alignment: Alignment.center,
-                      child: FilledButton.tonal(
-                        onPressed: () => notifier.endTurn(),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: colors.primaryAccent.withValues(
-                            alpha: OpacityTokens.soft,
+
+                if (game.timeoutActive)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        pageInset,
+                        0,
+                        pageInset,
+                        LayoutTokens.gr2,
+                      ),
+                      child: GameTimeoutBanner(
+                        startTime: game.timeoutStartTime,
+                        durationSeconds: game.timeoutDurationSeconds,
+                      ),
+                    ),
+                  ),
+
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      pageInset,
+                      LayoutTokens.gr2,
+                      pageInset,
+                      LayoutTokens.gr1,
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          'Players',
+                          style: TextStyle(
+                            color: colors.textPrimary,
+                            fontSize: FontTokens.caption,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.4,
                           ),
-                          foregroundColor: colors.primaryAccent,
+                        ),
+                        SizedBox(width: LayoutTokens.gr1),
+                        Container(
                           padding: EdgeInsets.symmetric(
-                            horizontal: LayoutTokens.gr2,
+                            horizontal: LayoutTokens.gr1,
+                            vertical: LayoutTokens.gr0 - 1,
                           ),
-                          minimumSize: const Size(
-                            0,
-                            LayoutTokens.minTapTarget,
-                          ),
-                          tapTargetSize: MaterialTapTargetSize.padded,
-                          shape: RoundedRectangleBorder(
+                          decoration: BoxDecoration(
+                            color: colors.backgroundSecondary.withValues(
+                              alpha: OpacityTokens.soft,
+                            ),
                             borderRadius: RadiusTokens.radiusControlSm,
                           ),
-                        ),
-                        child: Text(
-                          'End turn',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: FontTokens.body,
-                            height: 1.1,
+                          child: Text(
+                            '$aliveCount',
+                            style: TextStyle(
+                              color: colors.textSecondary,
+                              fontSize: FontTokens.hudXs,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
+                ),
+
+                SliverPadding(
+                  padding: EdgeInsets.fromLTRB(
+                    pageInset,
+                    0,
+                    pageInset,
+                    LayoutTokens.gr3,
+                  ),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate(
+                      _buildPlayerListChildren(context, game),
+                    ),
+                  ),
+                ),
               ],
             ),
-
-            SliverToBoxAdapter(
+          ),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: colors.backgroundPrimary.withValues(alpha: 0.94),
+              border: Border(
+                top: BorderSide(
+                  color: colors.textSecondary.withValues(alpha: 0.12),
+                ),
+              ),
+            ),
+            child: SafeArea(
+              top: false,
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
                   pageInset,
                   LayoutTokens.gr2,
                   pageInset,
-                  0,
-                ),
-                child: TablePoliticsStatusLine(game: game),
-              ),
-            ),
-
-            if (activePlayer != null)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    pageInset,
-                    LayoutTokens.gr2,
-                    pageInset,
-                    0,
-                  ),
-                  child: _ActivePlayerSpotlight(
-                    game: game,
-                    player: activePlayer,
-                  ),
-                ),
-              ),
-
-            if (game.timeoutActive)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    pageInset,
-                    0,
-                    pageInset,
-                    LayoutTokens.gr2,
-                  ),
-                  child: GameTimeoutBanner(
-                    startTime: game.timeoutStartTime,
-                    durationSeconds: game.timeoutDurationSeconds,
-                  ),
-                ),
-              ),
-
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  pageInset,
                   LayoutTokens.gr2,
-                  pageInset,
-                  LayoutTokens.gr1,
                 ),
-                child: Row(
-                  children: [
-                    Text(
-                      'Players',
-                      style: TextStyle(
-                        color: colors.textPrimary,
-                        fontSize: FontTokens.caption,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.4,
-                      ),
-                    ),
-                    SizedBox(width: LayoutTokens.gr1),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: LayoutTokens.gr1,
-                        vertical: LayoutTokens.gr0 - 1,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colors.backgroundSecondary.withValues(
-                          alpha: OpacityTokens.soft,
-                        ),
-                        borderRadius: RadiusTokens.radiusControlSm,
-                      ),
-                      child: Text(
-                        '$aliveCount',
-                        style: TextStyle(
-                          color: colors.textSecondary,
-                          fontSize: FontTokens.hudXs,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
+                child: EndTurnBar(
+                  accentColor: chromeAccent,
+                  enabled: endTurnEnabled,
+                  onEndTurn: () => notifier.endTurn(),
+                  waitingForName: waitingForName,
                 ),
               ),
             ),
-
-            SliverPadding(
-              padding: EdgeInsets.fromLTRB(
-                pageInset,
-                0,
-                pageInset,
-                LayoutTokens.gr4,
-              ),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate(
-                  _buildPlayerListChildren(context, game),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
