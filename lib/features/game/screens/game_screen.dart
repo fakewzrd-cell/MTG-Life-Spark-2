@@ -34,6 +34,7 @@ import '../widgets/game_overview_view.dart';
 import '../widgets/game_performance_widgets.dart';
 import '../widgets/game_timeout_widgets.dart';
 import '../widgets/gameplay_dials_strip_widget.dart';
+import '../widgets/hub_guide_sheet.dart';
 import '../widgets/life_gesture_hint_banner.dart';
 import '../widgets/opponent_glance_strip.dart';
 import '../widgets/end_turn_bar.dart';
@@ -53,6 +54,9 @@ class GameScreen extends ConsumerStatefulWidget {
 class _GameScreenState extends ConsumerState<GameScreen> {
   bool _showOverview = false;
   bool _showYourTurnPrompt = false;
+  /// Prevents re-prompting after we decide to show (or skip) the hub guide.
+  bool _hubGuideHandled = false;
+  bool _hubGuideCheckScheduled = false;
   StreamSubscription<Object?>? _gameOverSub;
   ShakeDetector? _shakeDetector;
   final DateTime _localInitStarted = DateTime.now();
@@ -114,6 +118,38 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         if (leave != null && leave.gameEnded) return;
         context.go(AppRoutes.endGame);
       }
+    });
+  }
+
+  /// First active match: show hub guide once overlays (roll / reveal / timeout) clear.
+  void _tryShowHubGuide() {
+    if (!mounted || _hubGuideHandled) return;
+    final settings = ref.read(settingsRepositoryProvider).settings;
+    if (settings.hubGuideCompleted) {
+      _hubGuideHandled = true;
+      return;
+    }
+    final g = ref.read(gameProvider);
+    if (g.gameOver ||
+        g.awaitingFirstPlayerRoll ||
+        g.showTurnOrderReveal ||
+        g.timeoutActive) {
+      return;
+    }
+    _hubGuideHandled = true;
+    showHubGuideSheet(context);
+  }
+
+  void _scheduleHubGuideCheck() {
+    if (_hubGuideHandled || _hubGuideCheckScheduled) return;
+    if (ref.read(settingsRepositoryProvider).settings.hubGuideCompleted) {
+      _hubGuideHandled = true;
+      return;
+    }
+    _hubGuideCheckScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _hubGuideCheckScheduled = false;
+      _tryShowHubGuide();
     });
   }
 
@@ -228,6 +264,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final timeoutDurationSeconds = ref.watch(
       gameProvider.select((g) => g.timeoutDurationSeconds),
     );
+
+    if (!_hubGuideHandled &&
+        !ref.read(settingsRepositoryProvider).settings.hubGuideCompleted) {
+      _scheduleHubGuideCheck();
+    }
+
     ref.listen<AllianceUiEvent?>(allianceUiEventProvider, (prev, next) {
       if (next != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {

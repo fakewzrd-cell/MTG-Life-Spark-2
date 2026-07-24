@@ -23,6 +23,7 @@ import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import '../../ui/tokens/typography_tokens.dart';
 import '../game/widgets/game_modal_chrome.dart';
+import '../game/widgets/hub_guide_sheet.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -163,6 +164,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             title: 'Feedback',
             subtitle: 'Send us your thoughts and suggestions',
             onTap: () => context.push(AppRoutes.feedback),
+          ),
+          _SettingTile(
+            title: 'View hub guide',
+            subtitle: 'How Play, Stack, Lookup, and Table work in a match',
+            onTap: () => showHubGuideSheet(context),
           ),
           _SettingTile(
             title: 'View Tutorial Again',

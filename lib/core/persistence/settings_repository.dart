@@ -28,4 +28,10 @@ class SettingsRepository {
     s.onboardingCompleted = true;
     await s.save();
   }
+
+  Future<void> markHubGuideCompleted() async {
+    final s = settings;
+    s.hubGuideCompleted = true;
+    await s.save();
+  }
 }

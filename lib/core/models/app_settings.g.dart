@@ -30,13 +30,14 @@ class AppSettingsAdapter extends TypeAdapter<AppSettings> {
       colorSchemeId: fields[10] == null ? 'violet' : fields[10] as String,
       lifeGestureHintDismissed:
           fields[11] == null ? false : fields[11] as bool,
+      hubGuideCompleted: fields[12] == null ? false : fields[12] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, AppSettings obj) {
     writer
-      ..writeByte(12)
+      ..writeByte(13)
       ..writeByte(0)
       ..write(obj.hapticEnabled)
       ..writeByte(1)
@@ -60,7 +61,9 @@ class AppSettingsAdapter extends TypeAdapter<AppSettings> {
       ..writeByte(10)
       ..write(obj.colorSchemeId)
       ..writeByte(11)
-      ..write(obj.lifeGestureHintDismissed);
+      ..write(obj.lifeGestureHintDismissed)
+      ..writeByte(12)
+      ..write(obj.hubGuideCompleted);
   }
 
   @override

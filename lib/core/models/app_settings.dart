@@ -43,6 +43,10 @@ class AppSettings extends HiveObject {
   @HiveField(11, defaultValue: false)
   bool lifeGestureHintDismissed;
 
+  /// User finished or skipped the in-match hub guide slideshow.
+  @HiveField(12, defaultValue: false)
+  bool hubGuideCompleted;
+
   AppSettings({
     this.hapticEnabled = true,
     this.soundEnabled = true,
@@ -56,5 +60,6 @@ class AppSettings extends HiveObject {
     this.useDarkTheme = true,
     this.colorSchemeId = 'violet',
     this.lifeGestureHintDismissed = false,
+    this.hubGuideCompleted = false,
   });
 }
