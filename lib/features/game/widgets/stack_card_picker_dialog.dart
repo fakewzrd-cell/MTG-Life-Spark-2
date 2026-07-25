@@ -268,7 +268,7 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
 
     return ListView.separated(
       itemCount: _results.length,
-      separatorBuilder: (_, _) => Divider(height: 1),
+      separatorBuilder: (_, __) => Divider(height: 1),
       itemBuilder: (context, index) {
         final card = _results[index];
         final isSelected = _selected?.name == card.name;

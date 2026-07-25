@@ -211,7 +211,7 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(deckListRevisionProvider, (_, _) => _reload());
+    ref.listen(deckListRevisionProvider, (_, __) => _reload());
     final colors = AppColorTokens.of(context);
     final repo = ref.read(deckRepositoryProvider);
     final bottomBarPad = LayoutTokens.shellBottomInset(context);
@@ -551,7 +551,7 @@ class _DeckCoverThumb extends StatelessWidget {
             ? CachedNetworkImage(
                 imageUrl: url,
                 fit: BoxFit.cover,
-                errorWidget: (_, _, _) => ColoredBox(
+                errorWidget: (_, __, ___) => ColoredBox(
                   color: colors.backgroundPrimary,
                   child: Icon(
                     Icons.style_outlined,

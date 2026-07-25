@@ -81,7 +81,7 @@ class GameTimeoutOverlay extends StatefulWidget {
   final int? durationSeconds;
   final VoidCallback onEndTimeout;
 
-  const GameTimeoutOverlay({
+  const GameTimeoutOverlay({super.key, 
     this.startTime,
     this.durationSeconds,
     required this.onEndTimeout,
@@ -330,7 +330,7 @@ class GameTimeoutBanner extends StatefulWidget {
   final DateTime? startTime;
   final int? durationSeconds;
 
-  const GameTimeoutBanner({this.startTime, this.durationSeconds});
+  const GameTimeoutBanner({super.key, this.startTime, this.durationSeconds});
 
   @override
   State<GameTimeoutBanner> createState() => _GameTimeoutBannerState();
@@ -411,7 +411,7 @@ class GameTurnDurationBanner extends StatefulWidget {
   final bool isActiveTurn;
   final String activePlayerName;
 
-  const GameTurnDurationBanner({
+  const GameTurnDurationBanner({super.key, 
     required this.turnStartTime,
     this.limitSeconds,
     required this.isActiveTurn,

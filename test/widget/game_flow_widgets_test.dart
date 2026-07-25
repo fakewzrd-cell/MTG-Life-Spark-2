@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mgt_life_spark/core/game/game_providers.dart';
 import 'package:mgt_life_spark/core/models/game_feedback.dart';

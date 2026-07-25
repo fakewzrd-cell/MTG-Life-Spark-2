@@ -63,13 +63,6 @@ Future<bool> showDeleteDeckConfirm(
   return ok == true;
 }
 
-@Deprecated('Use showDeckDetailSheet')
-Future<DeckSheetAction?> showDeckOptionsSheet(
-  BuildContext context,
-  PlayerDeck deck,
-) =>
-    showDeckDetailSheet(context, deck);
-
 String _deckDetailSubtitle(PlayerDeck deck) {
   final parts = <String>[
     deck.gameFormat.displayName,
@@ -100,132 +93,130 @@ class _DeckDetailSheet extends StatelessWidget {
     final colors = AppColorTokens.of(context);
     final coverLabel =
         deck.isCommanderDeck ? 'Edit commanders' : 'Edit cover card';
-    final wr = deck.gamesPlayed == 0
-        ? null
-        : (deck.winRate * 100).round();
+    final wr = deck.gamesPlayed == 0 ? null : (deck.winRate * 100).round();
 
     return GameSheetBody(
-      // Non-scrolling so vertical drag dismisses the sheet (a ListView was
-      // capturing the swipe). Content is a short action list and fits phones.
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          GameSheetHeader(
-            title: deck.displayName,
-            subtitle: _deckDetailSubtitle(deck),
-            showHandle: false,
-          ),
-          SizedBox(height: LayoutTokens.gr3),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _DeckDetailCoverThumb(deck: deck, colors: colors),
-              SizedBox(width: LayoutTokens.gr3),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      wr == null
-                          ? 'No games yet'
-                          : '$wr% win rate',
-                      style: TextStyle(
-                        color: colors.textPrimary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: FontTokens.body,
+      // Scroll when the action list exceeds short viewports. Dismiss stays on
+      // the Material drag handle (showDragHandle: true above).
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            GameSheetHeader(
+              title: deck.displayName,
+              subtitle: _deckDetailSubtitle(deck),
+              showHandle: false,
+            ),
+            SizedBox(height: LayoutTokens.gr3),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _DeckDetailCoverThumb(deck: deck, colors: colors),
+                SizedBox(width: LayoutTokens.gr3),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        wr == null ? 'No games yet' : '$wr% win rate',
+                        style: TextStyle(
+                          color: colors.textPrimary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: FontTokens.body,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: LayoutTokens.gr0),
-                    Text(
-                      '${deck.wins}W–${deck.losses}L · ${deck.gamesPlayed} games',
-                      style: TextStyle(
-                        color: colors.textSecondary,
-                        fontSize: FontTokens.sm,
+                      SizedBox(height: LayoutTokens.gr0),
+                      Text(
+                        '${deck.wins}W–${deck.losses}L · ${deck.gamesPlayed} games',
+                        style: TextStyle(
+                          color: colors.textSecondary,
+                          fontSize: FontTokens.sm,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: LayoutTokens.gr2),
-                    DeckWinLossRatioBar(
-                      deck: deck,
-                      colors: colors,
-                      height: 8,
-                    ),
-                  ],
+                      SizedBox(height: LayoutTokens.gr2),
+                      DeckWinLossRatioBar(
+                        deck: deck,
+                        colors: colors,
+                        height: 8,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: LayoutTokens.gr3),
-          _DeckOptionTile(
-            colors: colors,
-            icon: deck.isPinned
-                ? Icons.push_pin_rounded
-                : Icons.push_pin_outlined,
-            title: deck.isPinned ? 'Unpin from top' : 'Pin to top',
-            onTap: () => _pick(context, DeckSheetAction.togglePin),
-          ),
-          _DeckOptionTile(
-            colors: colors,
-            icon: Icons.category_outlined,
-            title: 'Change format',
-            subtitle: deck.gameFormat.displayName,
-            onTap: () => _pick(context, DeckSheetAction.changeFormat),
-          ),
-          _DeckOptionTile(
-            colors: colors,
-            icon: Icons.palette_outlined,
-            title: 'Change style',
-            subtitle: deck.hasDeckStyle
-                ? deck.deckStyleDisplayName
-                : 'Required — not set',
-            titleColor:
-                deck.hasDeckStyle ? colors.textPrimary : colors.warning,
-            onTap: () => _pick(context, DeckSheetAction.changeStyle),
-          ),
-          _DeckOptionTile(
-            colors: colors,
-            icon: deck.isCommanderDeck
-                ? Icons.groups_2_outlined
-                : Icons.image_outlined,
-            title: coverLabel,
-            onTap: () => _pick(context, DeckSheetAction.editCover),
-          ),
-          _DeckOptionTile(
-            colors: colors,
-            icon: Icons.edit_outlined,
-            title: 'Rename',
-            iconColor: colors.textPrimary,
-            onTap: () => _pick(context, DeckSheetAction.rename),
-          ),
-          _DeckOptionTile(
-            colors: colors,
-            icon: Icons.copy_outlined,
-            title: 'Duplicate',
-            onTap: () => _pick(context, DeckSheetAction.duplicate),
-          ),
-          Divider(
-            height: LayoutTokens.gr2,
-            color: colors.borderSubtle.withValues(alpha: 0.45),
-          ),
-          _DeckOptionTile(
-            colors: colors,
-            icon: Icons.delete_outline,
-            title: 'Delete deck',
-            iconColor: colors.error,
-            titleColor: colors.error,
-            onTap: () => _pick(context, DeckSheetAction.delete),
-          ),
-        ],
+              ],
+            ),
+            SizedBox(height: LayoutTokens.gr3),
+            _DeckOptionTile(
+              colors: colors,
+              icon:
+                  deck.isPinned
+                      ? Icons.push_pin_rounded
+                      : Icons.push_pin_outlined,
+              title: deck.isPinned ? 'Unpin from top' : 'Pin to top',
+              onTap: () => _pick(context, DeckSheetAction.togglePin),
+            ),
+            _DeckOptionTile(
+              colors: colors,
+              icon: Icons.category_outlined,
+              title: 'Change format',
+              subtitle: deck.gameFormat.displayName,
+              onTap: () => _pick(context, DeckSheetAction.changeFormat),
+            ),
+            _DeckOptionTile(
+              colors: colors,
+              icon: Icons.palette_outlined,
+              title: 'Change style',
+              subtitle:
+                  deck.hasDeckStyle
+                      ? deck.deckStyleDisplayName
+                      : 'Required — not set',
+              titleColor:
+                  deck.hasDeckStyle ? colors.textPrimary : colors.warning,
+              onTap: () => _pick(context, DeckSheetAction.changeStyle),
+            ),
+            _DeckOptionTile(
+              colors: colors,
+              icon:
+                  deck.isCommanderDeck
+                      ? Icons.groups_2_outlined
+                      : Icons.image_outlined,
+              title: coverLabel,
+              onTap: () => _pick(context, DeckSheetAction.editCover),
+            ),
+            _DeckOptionTile(
+              colors: colors,
+              icon: Icons.edit_outlined,
+              title: 'Rename',
+              iconColor: colors.textPrimary,
+              onTap: () => _pick(context, DeckSheetAction.rename),
+            ),
+            _DeckOptionTile(
+              colors: colors,
+              icon: Icons.copy_outlined,
+              title: 'Duplicate',
+              onTap: () => _pick(context, DeckSheetAction.duplicate),
+            ),
+            Divider(
+              height: LayoutTokens.gr2,
+              color: colors.borderSubtle.withValues(alpha: 0.45),
+            ),
+            _DeckOptionTile(
+              colors: colors,
+              icon: Icons.delete_outline,
+              title: 'Delete deck',
+              iconColor: colors.error,
+              titleColor: colors.error,
+              onTap: () => _pick(context, DeckSheetAction.delete),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _DeckDetailCoverThumb extends StatelessWidget {
-  const _DeckDetailCoverThumb({
-    required this.deck,
-    required this.colors,
-  });
+  const _DeckDetailCoverThumb({required this.deck, required this.colors});
 
   final PlayerDeck deck;
   final AppColorTokens colors;
@@ -238,25 +229,27 @@ class _DeckDetailCoverThumb extends StatelessWidget {
       child: SizedBox(
         width: 56,
         height: 78,
-        child: url != null && url.isNotEmpty
-            ? CachedNetworkImage(
-                imageUrl: url,
-                fit: BoxFit.cover,
-                errorWidget: (_, _, _) => ColoredBox(
+        child:
+            url != null && url.isNotEmpty
+                ? CachedNetworkImage(
+                  imageUrl: url,
+                  fit: BoxFit.cover,
+                  errorWidget:
+                      (_, __, ___) => ColoredBox(
+                        color: colors.surface,
+                        child: Icon(
+                          Icons.style_outlined,
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                )
+                : ColoredBox(
                   color: colors.surface,
                   child: Icon(
                     Icons.style_outlined,
                     color: colors.textSecondary,
                   ),
                 ),
-              )
-            : ColoredBox(
-                color: colors.surface,
-                child: Icon(
-                  Icons.style_outlined,
-                  color: colors.textSecondary,
-                ),
-              ),
       ),
     );
   }
@@ -295,15 +288,16 @@ class _DeckOptionTile extends StatelessWidget {
           fontSize: FontTokens.body,
         ),
       ),
-      subtitle: subtitle == null
-          ? null
-          : Text(
-              subtitle!,
-              style: TextStyle(
-                color: colors.textSecondary,
-                fontSize: FontTokens.sm,
+      subtitle:
+          subtitle == null
+              ? null
+              : Text(
+                subtitle!,
+                style: TextStyle(
+                  color: colors.textSecondary,
+                  fontSize: FontTokens.sm,
+                ),
               ),
-            ),
       onTap: onTap,
     );
   }

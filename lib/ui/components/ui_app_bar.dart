@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../shared/widgets/brand_logo.dart';
-
 /// Material 3 [AppBar] — inherits [ThemeData.appBarTheme] and [TextTheme].
 class UiAppBar extends StatelessWidget implements PreferredSizeWidget {
   const UiAppBar({
@@ -16,24 +14,6 @@ class UiAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget? titleWidget;
   final Widget? leading;
   final List<Widget> actions;
-
-  /// Horizontal Life Spark wordmark as the title.
-  factory UiAppBar.brand({
-    Key? key,
-    Widget? leading,
-    List<Widget> actions = const [],
-    double logoHeight = 26,
-  }) {
-    return UiAppBar(
-      key: key,
-      leading: leading,
-      actions: actions,
-      titleWidget: BrandLogo(
-        layout: BrandLogoLayout.horizontal,
-        height: logoHeight,
-      ),
-    );
-  }
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);

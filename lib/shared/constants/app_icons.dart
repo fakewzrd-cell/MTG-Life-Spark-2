@@ -47,38 +47,4 @@ class AppIcons {
   /// Vertical wordmark (mark above LIFE SPARK) for splash reveal / setup.
   /// Placeholder until final art is dropped in.
   static const String logoVertical = 'assets/images/logo_vertical.png';
-
-  /// Full app icon (mark on brand gradient).
-  static const String appIcon = 'assets/images/app_icon.png';
-
-  /// Game lobby — host card background (dungeon party silhouettes).
-  static const String lobbyHostParty = 'assets/images/lobby_host_party.png';
-
-  /// Game lobby — join card background (arcane portal).
-  static const String lobbyJoinPortal = 'assets/images/lobby_join_portal.png';
-
-  // ── Mana symbols (WUBRG) ────────────────────────────────────────────────
-  static const String manaW = 'assets/icons/W.svg';
-  static const String manaU = 'assets/icons/U.svg';
-  static const String manaB = 'assets/icons/B.svg';
-  static const String manaR = 'assets/icons/R.svg';
-  static const String manaG = 'assets/icons/G.svg';
-
-  /// Returns mana icon path for a single character (W, U, B, R, G).
-  static String? manaFor(String symbol) {
-    switch (symbol.toUpperCase()) {
-      case 'W':
-        return manaW;
-      case 'U':
-        return manaU;
-      case 'B':
-        return manaB;
-      case 'R':
-        return manaR;
-      case 'G':
-        return manaG;
-      default:
-        return null;
-    }
-  }
 }

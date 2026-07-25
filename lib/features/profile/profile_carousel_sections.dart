@@ -78,7 +78,7 @@ Widget _recentMatchCardVignette({bool expanded = false}) {
 
 /// Full-height carousel card with centered guidance copy (empty profile sections).
 class ProfileCarouselPlaceholderCard extends StatelessWidget {
-  const ProfileCarouselPlaceholderCard({
+  const ProfileCarouselPlaceholderCard({super.key, 
     required this.message,
     required this.colors,
     required this.width,
@@ -118,7 +118,7 @@ class ProfileCarouselPlaceholderCard extends StatelessWidget {
 
 /// Empty-state CTA: message + add glyph in one tappable carousel card.
 class ProfileCarouselAddPromptCard extends StatelessWidget {
-  const ProfileCarouselAddPromptCard({
+  const ProfileCarouselAddPromptCard({super.key, 
     required this.message,
     required this.colors,
     required this.width,
@@ -182,7 +182,7 @@ class ProfileCarouselAddPromptCard extends StatelessWidget {
 
 /// Shared add affordance for carousel cards (decks shelf, optional stats).
 class ProfileCarouselAddGlyph extends StatelessWidget {
-  const ProfileCarouselAddGlyph({required this.colors});
+  const ProfileCarouselAddGlyph({super.key, required this.colors});
 
   final AppColorTokens colors;
 
@@ -210,7 +210,7 @@ class ProfileCarouselAddGlyph extends StatelessWidget {
 
 /// "+" carousel card — full-card tap target (matches player-stats add card).
 class ProfileCarouselAddCard extends StatelessWidget {
-  const ProfileCarouselAddCard({
+  const ProfileCarouselAddCard({super.key, 
     required this.colors,
     required this.onTap,
     required this.semanticsLabel,
@@ -286,7 +286,7 @@ const ScrollPhysics kProfileHorizontalCarouselPhysics = BouncingScrollPhysics(
 
 /// Section title + optional count pill + optional trailing control (e.g. filter).
 class ProfileSectionHeader extends StatelessWidget {
-  const ProfileSectionHeader({
+  const ProfileSectionHeader({super.key, 
     required this.title,
     required this.titleStyle,
     required this.colors,
@@ -337,7 +337,7 @@ class ProfileSectionHeader extends StatelessWidget {
 
 /// Accent count pill for profile section headers (My Decks, Deck performance, etc.).
 class ProfileSectionCountPill extends StatelessWidget {
-  const ProfileSectionCountPill({
+  const ProfileSectionCountPill({super.key, 
     required this.count,
     required this.colors,
     required this.singularUnit,
@@ -563,7 +563,7 @@ class ProfileRecentGamesModule extends StatefulWidget {
   final List<MatchRecord> matches;
   final AppColorTokens colors;
 
-  const ProfileRecentGamesModule({
+  const ProfileRecentGamesModule({super.key, 
     required this.matches,
     required this.colors,
   });
@@ -1304,7 +1304,7 @@ class ProfileDeckPerformanceSection extends ConsumerStatefulWidget {
   final AppColorTokens colors;
   final bool hasPlayedGames;
 
-  const ProfileDeckPerformanceSection({
+  const ProfileDeckPerformanceSection({super.key, 
     required this.colors,
     this.hasPlayedGames = false,
   });
@@ -1523,7 +1523,7 @@ class _ProfileDeckFormatStyleLine extends StatelessWidget {
 
 /// Portrait deck card for profile carousel + My Decks (2:3 ratio).
 class ProfileDeckCard extends StatelessWidget {
-  const ProfileDeckCard({
+  const ProfileDeckCard({super.key, 
     required this.deck,
     required this.colors,
     required this.width,

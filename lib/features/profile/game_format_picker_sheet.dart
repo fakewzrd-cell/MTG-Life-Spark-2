@@ -179,7 +179,7 @@ class _PickerTile extends StatelessWidget {
 
 /// Tappable row showing the chosen format (matches [DeckStylePickerField]).
 class GameFormatPickerField extends StatelessWidget {
-  const GameFormatPickerField({
+  const GameFormatPickerField({super.key, 
     required this.selected,
     required this.onPick,
   });

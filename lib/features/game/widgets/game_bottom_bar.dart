@@ -28,7 +28,7 @@ class GameBottomBar extends ConsumerWidget {
   final VoidCallback onToggleOverview;
   final bool compact;
 
-  const GameBottomBar({
+  const GameBottomBar({super.key, 
     required this.game,
     required this.local,
     required this.onToggleOverview,

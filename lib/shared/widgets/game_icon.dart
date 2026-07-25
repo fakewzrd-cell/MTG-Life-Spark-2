@@ -56,12 +56,6 @@ class GameIcon extends StatelessWidget {
   factory GameIcon.bounty({double size = 24, Color? color}) =>
       GameIcon(assetPath: AppIcons.bounty, size: size, color: color);
 
-  /// Mana symbol (W, U, B, R, G)
-  factory GameIcon.mana(String symbol, {double size = 24}) {
-    final path = AppIcons.manaFor(symbol);
-    return GameIcon(assetPath: path ?? AppIcons.manaW, size: size);
-  }
-
   bool get _isRaster =>
       assetPath.endsWith('.png') ||
       assetPath.endsWith('.jpg') ||

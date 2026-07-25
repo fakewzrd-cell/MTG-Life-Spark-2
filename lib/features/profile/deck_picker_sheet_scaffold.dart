@@ -59,7 +59,7 @@ class DeckPickerSheetScaffold extends StatelessWidget {
                   physics: const ClampingScrollPhysics(),
                   padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
                   itemCount: itemCount,
-                  separatorBuilder: (_, _) =>
+                  separatorBuilder: (_, __) =>
                       SizedBox(height: separatorHeight),
                   itemBuilder: itemBuilder,
                 ),

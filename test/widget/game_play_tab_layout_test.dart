@@ -70,9 +70,9 @@ Widget _playTabHarness({required bool hasExtraRows}) {
           child: ScopedGameplayDials(
             playerId: 'alice',
             compactVertical: dialCompact,
-            onAdjustCounter: (_, _) {},
-            onSetCounterAbsolute: (_, _) {},
-            onRegisterCustomDial: (_, _) => true,
+            onAdjustCounter: (_, __) {},
+            onSetCounterAbsolute: (_, __) {},
+            onRegisterCustomDial: (_, __) => true,
             onAddDialToStrip: (_) => true,
             onRemoveDialFromStrip: (_) {},
           ),

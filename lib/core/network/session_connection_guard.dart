@@ -31,8 +31,8 @@ class _SessionConnectionGuardState extends ConsumerState<SessionConnectionGuard>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    ref.listenManual(sessionRoleProvider, (_, _) => _syncWakeLock());
-    ref.listenManual(sessionServiceProvider, (_, _) => _syncWakeLock());
+    ref.listenManual(sessionRoleProvider, (_, __) => _syncWakeLock());
+    ref.listenManual(sessionServiceProvider, (_, __) => _syncWakeLock());
     WidgetsBinding.instance.addPostFrameCallback((_) => _syncWakeLock());
   }
 

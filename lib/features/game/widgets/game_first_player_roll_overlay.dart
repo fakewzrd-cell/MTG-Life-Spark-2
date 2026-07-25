@@ -18,7 +18,7 @@ class GameFirstPlayerRollOverlay extends StatefulWidget {
   final PlayerGameState local;
   final void Function(int roll) onRoll;
 
-  const GameFirstPlayerRollOverlay({
+  const GameFirstPlayerRollOverlay({super.key, 
     required this.game,
     required this.local,
     required this.onRoll,
@@ -353,7 +353,7 @@ class TurnOrderRevealOverlay extends StatelessWidget {
   final GameState game;
   final VoidCallback onContinue;
 
-  const TurnOrderRevealOverlay({
+  const TurnOrderRevealOverlay({super.key, 
     required this.game,
     required this.onContinue,
   });

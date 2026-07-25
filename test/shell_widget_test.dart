@@ -53,7 +53,7 @@ void main() {
             builder: (context) => Scaffold(
               body: Center(
                 child: ElevatedButton(
-                  onPressed: () => showDeckOptionsSheet(context, deck),
+                  onPressed: () => showDeckDetailSheet(context, deck),
                   child: const Text('Open options'),
                 ),
               ),

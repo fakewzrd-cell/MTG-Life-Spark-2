@@ -4,28 +4,12 @@ import '../debug/app_log.dart';
 import '../models/game_feedback.dart';
 import 'game_state.dart';
 import 'game_state_notifier.dart';
-import 'player_game_state.dart';
 import 'scryfall_service.dart';
 
 /// The single source of truth for the active game session.
 final gameProvider =
     StateNotifierProvider<GameStateNotifier, GameState>((ref) {
   return GameStateNotifier(ref);
-});
-
-/// Convenience: local player's game state (null when not in a game).
-final localPlayerProvider = Provider<PlayerGameState?>((ref) {
-  return ref.watch(gameProvider).localPlayer;
-});
-
-/// Convenience: the current active player's ID.
-final activePlayerIdProvider = Provider<String>((ref) {
-  return ref.watch(gameProvider).activePlayerId;
-});
-
-/// Convenience: true when the game is over.
-final gameOverProvider = Provider<bool>((ref) {
-  return ref.watch(gameProvider).gameOver;
 });
 
 /// Feedback given when conceding, saved when game ends.

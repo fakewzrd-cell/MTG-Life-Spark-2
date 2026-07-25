@@ -86,7 +86,6 @@ flutter:
     - assets/mana/
     - assets/mana/hybrid/
     - assets/mana/phy/
-    - assets/mana/MYB/
     - assets/mana/symbol/mana/
 
 # ── App icon config (flutter_launcher_icons) ──────────────────────────────

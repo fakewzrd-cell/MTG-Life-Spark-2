@@ -38,6 +38,6 @@ Widget defaultProfileBannerArt(
     width: double.infinity,
     height: height,
     alignment: const Alignment(0, -0.15),
-    errorBuilder: (ctx, _, __) => defaultBannerFill(ctx),
+    errorBuilder: (ctx, _, _) => defaultBannerFill(ctx),
   );
 }

@@ -91,7 +91,7 @@ class _PodsManageScreenState extends ConsumerState<PodsManageScreen> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(podPresetsRevisionProvider, (_, _) => _reload());
+    ref.listen(podPresetsRevisionProvider, (_, __) => _reload());
     final colors = AppColorTokens.of(context);
     final repo = ref.read(podRepositoryProvider);
     final bottomBarPad = LayoutTokens.shellBottomInset(context);

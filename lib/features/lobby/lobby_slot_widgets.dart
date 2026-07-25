@@ -108,7 +108,7 @@ class LobbySlotAvatar extends StatelessWidget {
           width: resolved,
           height: resolved,
           fit: BoxFit.cover,
-          errorWidget: (_, _, _) =>
+          errorWidget: (_, __, ___) =>
               _LobbyColorDot(color: slot.playerColor, size: resolved),
         ),
       );

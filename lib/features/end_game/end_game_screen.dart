@@ -70,7 +70,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
     final game = ref.read(gameProvider);
     final target = game.isHost ? AppRoutes.lobbyHost : AppRoutes.lobby;
     await quitActiveGame(ref);
-    if (!context.mounted) return;
+    if (!mounted) return;
     context.go(target);
   }
 

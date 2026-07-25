@@ -208,7 +208,7 @@ PlayerDeck? _pickWorstDeck(Iterable<PlayerDeck> decks) {
 }
 
 class ProfilePlayerStatsSection extends ConsumerWidget {
-  const ProfilePlayerStatsSection({
+  const ProfilePlayerStatsSection({super.key, 
     required this.profile,
     required this.colors,
     required this.hasPlayedGames,

@@ -1,8 +1,6 @@
 /// Maps Scryfall-style mana strings (e.g. `{2}{W}{U}`, `{R}`, `{G/U}`) to bundled PNG
 /// paths under `assets/mana/` (MTG mana symbol set bundled with the app).
-///
-/// Full table of each PNG vs mana tokens: [kManaPngToScryfall] in `mana_asset_catalog.dart`
-/// (matches `Magic The Gathering Mana` on Desktop when synced into `assets/mana/`).
+library;
 
 /// Must match `pubspec.yaml` asset prefixes.
 const String kManaAssetPrefix = 'assets/mana/';

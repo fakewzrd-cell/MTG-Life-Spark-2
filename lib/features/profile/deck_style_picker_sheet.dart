@@ -142,7 +142,7 @@ class _DeckStylePickerSheetState extends State<_DeckStylePickerSheet> {
 
 /// Tappable row showing the chosen style (or placeholder).
 class DeckStylePickerField extends StatelessWidget {
-  const DeckStylePickerField({
+  const DeckStylePickerField({super.key, 
     required this.selected,
     required this.onPick,
     this.errorText,
