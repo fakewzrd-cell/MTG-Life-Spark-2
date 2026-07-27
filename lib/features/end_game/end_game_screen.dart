@@ -163,7 +163,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
     final isWinner = winner?.playerId == game.localPlayerId;
 
     return Scaffold(
-      backgroundColor: colors.backgroundPrimary,
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: _saving
             ? Center(

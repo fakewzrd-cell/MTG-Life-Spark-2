@@ -12,17 +12,17 @@ flutter build web --release
 
 $webRoot = Join-Path (Get-Location) "build/web"
 if (-not (Test-Path $webRoot)) {
-  throw "Missing build/web — build failed."
+  throw "Missing build/web - build failed."
 }
 
 $ip = (
   Get-NetIPAddress -AddressFamily IPv4 |
-  Where-Object {
-    $_.IPAddress -notmatch '^127\.' -and
-    $_.InterfaceAlias -match 'Wi-?Fi|Ethernet' -and
-    $_.PrefixOrigin -ne 'WellKnown'
-  } |
-  Select-Object -First 1 -ExpandProperty IPAddress
+    Where-Object {
+      $_.IPAddress -notmatch '^127\.' -and
+      $_.InterfaceAlias -match 'Wi-?Fi|Ethernet' -and
+      $_.PrefixOrigin -ne 'WellKnown'
+    } |
+    Select-Object -First 1 -ExpandProperty IPAddress
 )
 
 Write-Host ""

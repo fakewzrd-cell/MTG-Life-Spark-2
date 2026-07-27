@@ -7,18 +7,20 @@ void main() {
       (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
-        home: BrandedSplash(ready: true),
+        home: BrandedSplash(ready: true, useVideoIntro: false),
       ),
     );
 
     await tester.pump();
     expect(find.text('Loading Life Spark…'), findsNothing);
+    await tester.pump(BrandedSplash.revealDuration);
+    await tester.pump(BrandedSplash.revealHold);
   });
 
   testWidgets('BrandedSplash shows loading cue only after slow threshold',
       (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(home: BrandedSplash()),
+      const MaterialApp(home: BrandedSplash(useVideoIntro: false)),
     );
 
     await tester.pump();
@@ -26,25 +28,25 @@ void main() {
 
     await tester.pump(BrandedSplash.slowLoadThreshold);
     expect(find.text('Loading Life Spark…'), findsOneWidget);
+    await tester.pump(BrandedSplash.revealDuration);
   });
 
-  testWidgets('BrandedSplash reveals vertical wordmark when ready',
+  testWidgets('BrandedSplash completes after black intro hold when ready',
       (tester) async {
     var completed = false;
     await tester.pumpWidget(
       MaterialApp(
         home: BrandedSplash(
           ready: true,
+          useVideoIntro: false,
           onRevealComplete: () => completed = true,
         ),
       ),
     );
 
-    // Post-frame schedules reveal; second pump starts the controller.
     await tester.pump();
-    await tester.pump();
-    await tester.pump(BrandedSplash.revealDuration + const Duration(milliseconds: 50));
-    await tester.pump(BrandedSplash.revealHold + const Duration(milliseconds: 50));
+    await tester.pump(BrandedSplash.revealDuration);
+    await tester.pump(BrandedSplash.revealHold);
     await tester.pump();
 
     expect(completed, isTrue);

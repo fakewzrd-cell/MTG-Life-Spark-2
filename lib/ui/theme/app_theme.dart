@@ -25,7 +25,8 @@ class AppTheme {
 
     return ThemeData(
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: ColorTokens.backgroundPrimary,
+      // Transparent so [AppBrandBackdrop] behind the navigator can show through.
+      scaffoldBackgroundColor: Colors.transparent,
 
       // ── Full M3 ColorScheme ────────────────────────────────────────────
       colorScheme: ColorScheme.dark(
@@ -408,7 +409,8 @@ class AppTheme {
 
     return ThemeData(
       brightness: Brightness.light,
-      scaffoldBackgroundColor: ColorTokens.lightBackgroundPrimary,
+      // Transparent so [AppBrandBackdrop] behind the navigator can show through.
+      scaffoldBackgroundColor: Colors.transparent,
 
       // ── Full M3 ColorScheme ────────────────────────────────────────────
       colorScheme: ColorScheme.light(

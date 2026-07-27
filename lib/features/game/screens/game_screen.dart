@@ -163,14 +163,14 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       final elapsed = DateTime.now().difference(_localInitStarted);
       if (elapsed < const Duration(seconds: 15)) {
         return Scaffold(
-          backgroundColor: colors.backgroundPrimary,
+          backgroundColor: Colors.transparent,
           body: Center(
             child: CircularProgressIndicator(color: colors.primaryAccent),
           ),
         );
       }
       return Scaffold(
-        backgroundColor: colors.backgroundPrimary,
+        backgroundColor: Colors.transparent,
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(LayoutTokens.gr6),
@@ -219,7 +219,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     if (showTurnOrderReveal) {
       final game = ref.watch(gameProvider);
       return Scaffold(
-        backgroundColor: colors.backgroundPrimary,
+        backgroundColor: Colors.transparent,
         body: SafeArea(
           child: TurnOrderRevealOverlay(
             game: game,
@@ -236,7 +236,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       final game = ref.watch(gameProvider);
       final local = game.localPlayer!;
       return Scaffold(
-        backgroundColor: colors.backgroundPrimary,
+        backgroundColor: Colors.transparent,
         body: SafeArea(
           child: GameFirstPlayerRollOverlay(
             game: game,

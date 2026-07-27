@@ -356,7 +356,7 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
             ),
         ],
       ),
-      backgroundColor: colors.backgroundPrimary,
+      backgroundColor: Colors.transparent,
       body: scrollBody,
     );
   }

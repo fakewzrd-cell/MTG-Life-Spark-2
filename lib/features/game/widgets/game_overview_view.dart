@@ -507,14 +507,15 @@ class _ActivePlayerSpotlight extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  Text(
-                    game.currentPhase.streamlinedShortLabel,
-                    style: TextStyle(
-                      color: colors.textSecondary,
-                      fontSize: FontTokens.hudSm,
-                      fontWeight: FontWeight.w600,
+                  if (game.phasesEnabled)
+                    Text(
+                      game.currentPhase.streamlinedShortLabel,
+                      style: TextStyle(
+                        color: colors.textSecondary,
+                        fontSize: FontTokens.hudSm,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),

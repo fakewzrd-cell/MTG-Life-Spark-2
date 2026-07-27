@@ -103,7 +103,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         profile.totalGamesPlayed > 0 || allMatches.isNotEmpty;
 
     return Scaffold(
-      backgroundColor: colors.backgroundPrimary,
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         top: false,
         bottom: false,

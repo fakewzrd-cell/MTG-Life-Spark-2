@@ -17,7 +17,7 @@ class GameLobbyScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
     return Scaffold(
-      backgroundColor: colors.backgroundPrimary,
+      backgroundColor: Colors.transparent,
       appBar: const UiAppBar(title: 'Lobby'),
       body: SafeArea(
         top: false,

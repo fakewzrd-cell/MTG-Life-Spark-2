@@ -18,8 +18,17 @@ import '../../ui/tokens/radius_tokens.dart';
 ///
 /// The hero banner uses [profileBannerImageUrl] when set, otherwise the bundled
 /// default banner art with a dark scrim for readable overlay text.
+///
+/// When [selectionMode] is true, choosing art (or Remove) pops a [String?]
+/// result instead of writing the profile — used by first-time profile setup.
 class ProfilePicturePickerScreen extends ConsumerStatefulWidget {
-  const ProfilePicturePickerScreen({super.key});
+  const ProfilePicturePickerScreen({
+    super.key,
+    this.selectionMode = false,
+  });
+
+  /// If true, return the chosen URL via [Navigator.pop] (empty string = clear).
+  final bool selectionMode;
 
   @override
   ConsumerState<ProfilePicturePickerScreen> createState() =>
@@ -78,6 +87,10 @@ class _ProfilePicturePickerScreenState
 
   void _returnToProfile() {
     if (!mounted) return;
+    if (widget.selectionMode) {
+      Navigator.of(context).pop();
+      return;
+    }
     if (context.canPop()) {
       context.pop();
     } else {
@@ -86,6 +99,12 @@ class _ProfilePicturePickerScreenState
   }
 
   Future<void> _applyAndReturn(String? imageUrl) async {
+    if (widget.selectionMode) {
+      if (!mounted) return;
+      // Empty string means "cleared"; null pop is cancel (back).
+      Navigator.of(context).pop(imageUrl ?? '');
+      return;
+    }
     final profile = ref.read(profileRepositoryProvider).getProfile();
     if (profile == null) return;
     profile.profileAvatarImageUrl = imageUrl;
@@ -127,7 +146,7 @@ class _ProfilePicturePickerScreenState
           onPressed: _returnToProfile,
         ),
         actions: [
-          if (canUseCommander)
+          if (canUseCommander && !widget.selectionMode)
             TextButton(
               onPressed: _useCommanderPortrait,
               child: Text(
@@ -141,7 +160,7 @@ class _ProfilePicturePickerScreenState
           TextButton(
             onPressed: _clearImage,
             child: Text(
-              'Remove',
+              widget.selectionMode ? 'Default' : 'Remove',
               style: TextStyle(
                 color: ColorTokens.danger,
                 fontWeight: FontWeight.w700,
@@ -150,7 +169,7 @@ class _ProfilePicturePickerScreenState
           ),
         ],
       ),
-      backgroundColor: colors.backgroundPrimary,
+      backgroundColor: Colors.transparent,
       body: Column(
         children: [
           Padding(

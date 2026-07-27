@@ -135,7 +135,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 children: [
                   UiButton(
                     label: _currentPage == _slides.length - 1
-                        ? 'Enter the Battlefield'
+                        ? 'Ready to play'
                         : 'Next',
                     onPressed: _next,
                   ),

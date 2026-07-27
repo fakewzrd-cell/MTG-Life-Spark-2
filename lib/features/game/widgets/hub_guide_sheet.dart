@@ -95,7 +95,7 @@ class _HubGuideDialogState extends ConsumerState<_HubGuideDialog> {
     final accent = ColorTokens.primaryAccent;
 
     return Dialog.fullscreen(
-      backgroundColor: colors.backgroundPrimary,
+      backgroundColor: Colors.transparent,
       child: SafeArea(
         child: Column(
           children: [

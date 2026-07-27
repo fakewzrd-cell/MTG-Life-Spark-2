@@ -166,7 +166,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     final colors = AppColorTokens.of(context);
 
     return Scaffold(
-      backgroundColor: colors.backgroundPrimary,
+      backgroundColor: Colors.transparent,
       appBar: UiAppBar(
         title: 'Host Lobby',
         leading: IconButton(

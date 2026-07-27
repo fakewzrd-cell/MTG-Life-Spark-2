@@ -17,10 +17,11 @@ import 'core/persistence/deck_repository.dart';
 import 'core/persistence/feedback_repository.dart';
 import 'core/persistence/match_repository.dart';
 import 'core/persistence/profile_repository.dart';
-import 'core/debug/dismiss_web_splash.dart';
+import 'core/debug/web_logo_splash.dart';
 import 'core/network/session_connection_guard.dart';
 import 'shared/theme/theme_provider.dart';
 import 'shared/utils/app_router.dart';
+import 'shared/widgets/app_brand_backdrop.dart';
 import 'shared/widgets/branded_splash.dart';
 import 'shared/utils/commander_image_resolver.dart';
 import 'ui/tokens/color_tokens.dart';
@@ -60,6 +61,28 @@ class _AppBootstrapState extends State<_AppBootstrap> {
   late final Future<void> _initFuture = _initHive();
   var _initDone = false;
   var _revealDone = false;
+  var _webEnterSignaled = false;
+
+  void _signalWebEnterAfterFirstPaint() {
+    if (_webEnterSignaled) return;
+    _webEnterSignaled = true;
+    // Wait until the real app has painted under the HTML layer, then dismiss —
+    // otherwise removing the overlay reveals a black Flutter canvas.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        signalWebAppEntered();
+      });
+    });
+  }
+
+  void _forceDismissWebSplash() {
+    if (_webEnterSignaled) return;
+    _webEnterSignaled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      signalWebAppEntered();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,6 +90,8 @@ class _AppBootstrapState extends State<_AppBootstrap> {
       future: _initFuture,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
+          // Uncover the error UI — don't leave the HTML logo layer stuck.
+          _forceDismissWebSplash();
           return _ErrorApp(
             message: snapshot.error.toString(),
             stack: snapshot.stackTrace.toString(),
@@ -74,13 +99,14 @@ class _AppBootstrapState extends State<_AppBootstrap> {
         }
         if (snapshot.connectionState == ConnectionState.done && !_initDone) {
           _initDone = true;
-          dismissWebSplash();
-          // Defer so we don't setState during build.
+          // Defer so we don't setState during build. Do NOT dismiss the HTML
+          // splash here — it owns the logo video on web and must finish once.
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) setState(() {});
           });
         }
         if (_initDone && _revealDone) {
+          _signalWebEnterAfterFirstPaint();
           return const MgtLifeSparkApp();
         }
         return MaterialApp(
@@ -295,7 +321,8 @@ class MgtLifeSparkApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    dismissWebSplash();
+    // Web HTML splash is dismissed by _AppBootstrap after first paint — do not
+    // tear it down here or the overlay vanishes before this frame is on screen.
     final router = ref.watch(routerProvider);
 
     final theme = ref.watch(effectiveThemeProvider);
@@ -307,7 +334,13 @@ class MgtLifeSparkApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       builder: (context, child) => SessionConnectionGuard(
         child: AppSystemUiScope(
-          child: child ?? const SizedBox.shrink(),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              const Positioned.fill(child: AppBrandBackdrop()),
+              child ?? const SizedBox.shrink(),
+            ],
+          ),
         ),
       ),
     );

@@ -313,7 +313,7 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
     return Scaffold(
-      backgroundColor: colors.backgroundPrimary,
+      backgroundColor: Colors.transparent,
       appBar: UiAppBar(
         title: 'Join a Game',
         leading: IconButton(

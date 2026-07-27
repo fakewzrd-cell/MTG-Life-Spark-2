@@ -59,7 +59,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final colors = AppColorTokens.of(context);
     return Scaffold(
       appBar: const UiAppBar(title: 'Settings'),
-      backgroundColor: colors.backgroundPrimary,
+      backgroundColor: Colors.transparent,
       body: ListView(
         padding: LayoutTokens.shellListPadding(context, top: LayoutTokens.gr4),
         children: [

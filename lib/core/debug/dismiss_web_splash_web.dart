@@ -1,5 +1,6 @@
-import 'package:web/web.dart' as web;
+import 'web_logo_splash_web.dart';
 
+/// Prefer [signalWebAppEntered] from bootstrap after first paint.
 void dismissWebSplash() {
-  web.document.getElementById('app-loading')?.remove();
+  signalWebAppEntered();
 }

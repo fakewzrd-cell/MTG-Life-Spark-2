@@ -1,174 +1,255 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 
+import '../../core/debug/web_logo_splash.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
-import '../constants/app_icons.dart';
-import 'brand_logo.dart';
 
-/// Launch splash: fade in the full logo once bootstrap is ready.
+/// Launch splash: play the Life Spark logo animation, then enter the app.
 ///
-/// No spin loop on warm/fast starts. If init is still running after
-/// [slowLoadThreshold], a quiet mark + "Loading…" cue appears.
+/// Completes only after the intro finishes **and** [ready] is true (bootstrap
+/// done). On web, the HTML shell plays the clip once — Flutter stays black so
+/// we never flash a second static logo or Beta label.
 class BrandedSplash extends StatefulWidget {
   const BrandedSplash({
     super.key,
     this.message = 'Loading Life Spark…',
     this.ready = false,
     this.onRevealComplete,
+    this.useVideoIntro,
   });
 
   final String message;
 
-  /// When true, fade in the full vertical logo then invoke [onRevealComplete].
+  /// When true (and intro finished), invoke [onRevealComplete] after a short hold.
   final bool ready;
 
-  /// Called after the brand reveal finishes (if [ready] was set).
   final VoidCallback? onRevealComplete;
 
-  /// How long init may take before we show a loading cue.
+  /// Defaults to true on IO, false on web (HTML owns the intro there).
+  /// Set false in widget tests (no video platform).
+  final bool? useVideoIntro;
+
+  /// Bundled logo open animation (512² H.264 for smooth decode).
+  static const logoAnimationAsset = 'assets/animations/logo_splash.mp4';
+
+  /// Source length of [logoAnimationAsset] (encoded ~3.0s).
+  static const logoAnimationSourceDuration = Duration(milliseconds: 3000);
+
+  /// On-screen intro length — slightly faster than the source clip.
+  static const logoAnimationDuration = Duration(milliseconds: 2500);
+
+  /// Playback speed so the ~3s asset finishes in [logoAnimationDuration].
+  static double get logoAnimationPlaybackRate =>
+      logoAnimationSourceDuration.inMilliseconds /
+      logoAnimationDuration.inMilliseconds;
+
+  /// Display size for the intro video.
+  static const double introSize = 240;
+
+  /// How long init may take before we show a loading cue under the intro.
   static const slowLoadThreshold = Duration(milliseconds: 1000);
 
-  /// Logo fade-in duration.
-  static const revealDuration = Duration(milliseconds: 750);
+  /// Brief black hold when video cannot play (tests / decode failure).
+  static const revealDuration = Duration(milliseconds: 300);
 
-  /// Hold after the logo is fully visible before entering the app.
-  static const revealHold = Duration(milliseconds: 700);
+  /// Hold after the intro before entering the app (IO only; web jumps straight in).
+  static const revealHold = Duration(milliseconds: 80);
+
+  static bool get defaultUseVideoIntro => !kIsWeb;
 
   @override
   State<BrandedSplash> createState() => _BrandedSplashState();
 }
 
-class _BrandedSplashState extends State<BrandedSplash>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _revealController;
+class _BrandedSplashState extends State<BrandedSplash> {
+  VideoPlayerController? _video;
+
   var _showLoadingCue = false;
-  var _revealing = false;
+  var _finishing = false;
+  var _introFinished = false;
+  var _videoReady = false;
+
+  bool get _playVideo =>
+      widget.useVideoIntro ?? BrandedSplash.defaultUseVideoIntro;
 
   @override
   void initState() {
     super.initState();
-    _revealController = AnimationController(
-      vsync: this,
-      duration: BrandedSplash.revealDuration,
-    );
-    if (widget.ready) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _startReveal());
+    if (_playVideo) {
+      _initVideo();
+    } else if (kIsWeb) {
+      // HTML owns the clip — finish as soon as it reports `ended` (no extra black wait).
+      listenForWebLogoSplashDone(() {
+        if (!mounted) return;
+        _markIntroFinished();
+      });
     } else {
+      Future<void>.delayed(BrandedSplash.revealDuration, () {
+        if (!mounted) return;
+        _markIntroFinished();
+      });
+    }
+
+    if (!widget.ready) {
       Future<void>.delayed(BrandedSplash.slowLoadThreshold, () {
-        if (!mounted || widget.ready || _revealing) return;
+        if (!mounted || widget.ready || _finishing) return;
         setState(() => _showLoadingCue = true);
       });
     }
+  }
+
+  Future<void> _initVideo() async {
+    final controller = VideoPlayerController.asset(
+      BrandedSplash.logoAnimationAsset,
+      videoPlayerOptions: VideoPlayerOptions(
+        mixWithOthers: true,
+        allowBackgroundPlayback: false,
+      ),
+    );
+    _video = controller;
+    try {
+      await controller.initialize();
+      if (!mounted) return;
+      await controller.setLooping(false);
+      await controller.setVolume(0);
+      await controller.setPlaybackSpeed(BrandedSplash.logoAnimationPlaybackRate);
+      await controller.seekTo(Duration.zero);
+      if (!mounted) return;
+      controller.addListener(_onVideoTick);
+      setState(() => _videoReady = true);
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted || _video != controller) return;
+        await controller.play();
+      });
+    } catch (_) {
+      if (!mounted) return;
+      await _disposeVideo();
+      Future<void>.delayed(BrandedSplash.revealDuration, () {
+        if (!mounted) return;
+        _markIntroFinished();
+      });
+    }
+  }
+
+  Future<void> _disposeVideo() async {
+    final c = _video;
+    _video = null;
+    if (c == null) return;
+    c.removeListener(_onVideoTick);
+    await c.dispose();
+  }
+
+  void _markIntroFinished() {
+    if (_introFinished) return;
+    _introFinished = true;
+    if (mounted) setState(() {});
+    _tryFinish();
+  }
+
+  void _onVideoTick() {
+    final c = _video;
+    if (c == null || !c.value.isInitialized || _introFinished) return;
+    final value = c.value;
+    final duration = value.duration;
+    if (duration <= Duration.zero) return;
+
+    final atEnd = value.isCompleted || value.position >= duration;
+    if (!atEnd) return;
+    if (value.isPlaying) {
+      c.pause();
+    }
+    _markIntroFinished();
   }
 
   @override
   void didUpdateWidget(covariant BrandedSplash oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.ready && !oldWidget.ready) {
-      _startReveal();
+      _tryFinish();
     }
   }
 
-  Future<void> _startReveal() async {
-    if (_revealing) return;
-    _revealing = true;
+  Future<void> _tryFinish() async {
+    if (_finishing || !widget.ready || !_introFinished) return;
+    _finishing = true;
     if (_showLoadingCue && mounted) {
       setState(() => _showLoadingCue = false);
     }
-    await _revealController.forward();
-    if (!mounted) return;
-    await Future<void>.delayed(BrandedSplash.revealHold);
-    if (!mounted) return;
+    // Web: jump straight into the app under the HTML layer (no black hold).
+    if (!kIsWeb) {
+      await Future<void>.delayed(BrandedSplash.revealHold);
+      if (!mounted) return;
+    }
     widget.onRevealComplete?.call();
   }
 
   @override
   void dispose() {
-    _revealController.dispose();
+    final c = _video;
+    if (c != null) {
+      c.removeListener(_onVideoTick);
+      c.dispose();
+    }
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Pure black so the white brand mark/wordmark reads cleanly on launch.
     const splashBlack = Color(0xFF000000);
+    final showLoading = _showLoadingCue && !_finishing;
+
     return Scaffold(
       backgroundColor: splashBlack,
       body: ColoredBox(
         color: splashBlack,
         child: Center(
-          child: AnimatedBuilder(
-            animation: _revealController,
-            builder: (context, _) {
-              final reveal = Curves.easeOutCubic.transform(
-                _revealController.value,
-              );
-              final logoOpacity = reveal.clamp(0.0, 1.0);
-              // Quiet waiting mark only when bootstrap is actually slow.
-              final cueOpacity =
-                  (_showLoadingCue && !_revealing ? 1.0 : 0.0) *
-                  (1.0 - reveal).clamp(0.0, 1.0);
-
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    height: 180,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        AnimatedOpacity(
-                          opacity: cueOpacity,
-                          duration: const Duration(milliseconds: 280),
-                          child: Image.asset(
-                            AppIcons.splashLogo,
-                            width: 96,
-                            height: 96,
-                            fit: BoxFit.contain,
-                            filterQuality: FilterQuality.high,
-                          ),
-                        ),
-                        Opacity(
-                          opacity: logoOpacity,
-                          child: Transform.scale(
-                            scale: 0.96 + 0.04 * reveal,
-                            child: const BrandLogo(
-                              layout: BrandLogoLayout.vertical,
-                              height: 168,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: BrandedSplash.introSize,
+                height: BrandedSplash.introSize,
+                child: _buildIntro(),
+              ),
+              if (showLoading) ...[
+                SizedBox(height: LayoutTokens.gr4),
+                Text(
+                  widget.message,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.75),
+                    fontSize: FontTokens.sm,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0.2,
                   ),
-                  SizedBox(height: LayoutTokens.gr4),
-                  if (cueOpacity > 0.01)
-                    Text(
-                      widget.message,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.75),
-                        fontSize: FontTokens.sm,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 0.2,
-                      ),
-                    )
-                  else
-                    Opacity(
-                      opacity: logoOpacity,
-                      child: Text(
-                        'Beta',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.55),
-                          fontSize: FontTokens.caption,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 2.4,
-                        ),
-                      ),
-                    ),
-                ],
-              );
-            },
+                ),
+              ],
+            ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIntro() {
+    // Web: HTML owns the animation — keep Flutter black (no static logo).
+    if (!_playVideo) {
+      return const SizedBox.shrink();
+    }
+
+    final video = _video;
+    if (!_videoReady || video == null || !video.value.isInitialized) {
+      return const SizedBox.shrink();
+    }
+
+    return ClipRect(
+      child: FittedBox(
+        fit: BoxFit.contain,
+        child: SizedBox(
+          width: video.value.size.width,
+          height: video.value.size.height,
+          child: VideoPlayer(video),
         ),
       ),
     );

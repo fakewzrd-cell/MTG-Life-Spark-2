@@ -17,7 +17,7 @@
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
-  <meta content="IE=Edge" http-equiv="X-Compatible">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="Life Spark — Commander 2.0 multiplayer battlefield companion.">
 
   <!-- iOS meta tags & icons -->
@@ -46,22 +46,15 @@
       height: 100%;
       gap: 28px;
       background: #000000;
+      z-index: 9999;
+      position: fixed;
+      inset: 0;
     }
-    #app-loading .splash-dice {
-      width: 112px;
-      height: 112px;
-    }
-    #app-loading .splash-dice-inner {
-      width: 100%;
-      height: 100%;
-    }
-    #app-loading .splash-dice-inner img {
-      width: 100%;
-      height: 100%;
-      display: block;
+    #app-loading .splash-video {
+      width: min(240px, 56vw);
+      height: min(240px, 56vw);
       object-fit: contain;
-      image-rendering: -webkit-optimize-contrast;
-      filter: drop-shadow(0 8px 18px rgba(155, 109, 255, 0.35));
+      background: #000000;
     }
     #app-loading p {
       margin: 0;
@@ -73,7 +66,6 @@
       letter-spacing: 0.02em;
       font-family: system-ui, -apple-system, sans-serif;
     }
-    /* Hide loading copy until bootstrap is actually slow (matches Flutter). */
     #app-loading-text {
       visibility: hidden;
     }
@@ -89,11 +81,16 @@
 </head>
 <body>
   <div id="app-loading" aria-live="polite">
-    <div class="splash-dice" aria-hidden="true">
-      <div class="splash-dice-inner">
-        <img src="icons/life_spark_logo.png" alt="" width="112" height="112"/>
-      </div>
-    </div>
+    <video
+      class="splash-video"
+      autoplay
+      muted
+      playsinline
+      preload="auto"
+      aria-hidden="true"
+    >
+      <source src="animations/logo_splash.mp4" type="video/mp4"/>
+    </video>
     <p id="app-loading-text">Loading Life Spark…</p>
     <p id="app-loading-hint" class="hint" hidden></p>
   </div>
@@ -102,6 +99,87 @@
     (function () {
       var hint = document.getElementById('app-loading-hint');
       var text = document.getElementById('app-loading-text');
+      var videoDone = false;
+      var appEntered = false;
+      var dismissed = false;
+
+      function dismissLoading() {
+        if (dismissed) return;
+        dismissed = true;
+        var el = document.getElementById('app-loading');
+        if (!el) return;
+        el.setAttribute('data-splash-done', '1');
+        // Instant remove — a fade would flash body/Flutter black underneath.
+        if (el.parentNode) el.parentNode.removeChild(el);
+      }
+
+      // Keep the HTML layer up through the full clip (frozen on its last frame
+      // if the app is still booting). Remove only once Flutter has painted the
+      // real app — that avoids a black page between animation and UI.
+      function maybeDismiss() {
+        if (videoDone && appEntered) dismissLoading();
+      }
+
+      function freezeLastFrame(video) {
+        try {
+          video.pause();
+          if (video.duration && isFinite(video.duration) && video.duration > 0) {
+            video.currentTime = Math.max(0, video.duration - 0.05);
+          }
+        } catch (e) {}
+      }
+
+      function showLoadingCue() {
+        if (dismissed || appEntered) return;
+        var el = document.getElementById('app-loading');
+        if (el) el.classList.add('slow');
+        if (text) text.style.visibility = 'visible';
+      }
+
+      function markVideoDone() {
+        if (videoDone) return;
+        videoDone = true;
+        var el = document.getElementById('app-loading');
+        if (el) el.setAttribute('data-video-ended', '1');
+        window.dispatchEvent(new Event('lifespark-splash-done'));
+        maybeDismiss();
+        // Only show "Loading…" if the clip finished and the app is still booting.
+        setTimeout(showLoadingCue, 350);
+      }
+
+      var TARGET_INTRO_SECONDS = 2.5; // matches BrandedSplash.logoAnimationDuration
+      var video = document.querySelector('#app-loading .splash-video');
+      if (video) {
+        function applyPlaybackRate() {
+          var sourceSeconds = video.duration;
+          if (sourceSeconds && isFinite(sourceSeconds) && sourceSeconds > 0) {
+            video.playbackRate = sourceSeconds / TARGET_INTRO_SECONDS;
+          } else {
+            video.playbackRate = 3 / TARGET_INTRO_SECONDS;
+          }
+        }
+        video.addEventListener('loadedmetadata', applyPlaybackRate);
+        applyPlaybackRate();
+        var playPromise = video.play();
+        if (playPromise && playPromise.catch) {
+          playPromise.catch(function () { markVideoDone(); });
+        }
+        video.addEventListener('ended', function () {
+          freezeLastFrame(video);
+          markVideoDone();
+        });
+        video.addEventListener('error', markVideoDone);
+        // Safety only — well after the sped-up clip, in case `ended` never fires.
+        setTimeout(function () {
+          if (!videoDone) {
+            freezeLastFrame(video);
+            markVideoDone();
+          }
+        }, 8000);
+      } else {
+        markVideoDone();
+      }
+
       window.__flutterLoadFailed = function () {
         if (text) text.textContent = 'Could not load the app.';
         if (hint) {
@@ -109,15 +187,16 @@
           hint.textContent =
             'Use the Mac dev server in release mode (flutter run -d web-server --release).';
         }
+        showLoadingCue();
+        markVideoDone();
       };
-      window.addEventListener('flutter-first-frame', function () {
-        var el = document.getElementById('app-loading');
-        if (el) el.remove();
+      window.addEventListener('lifespark-enter-app', function () {
+        appEntered = true;
+        maybeDismiss();
       });
-      setTimeout(function () {
-        var el = document.getElementById('app-loading');
-        if (el) el.classList.add('slow');
-      }, 1000);
+      window.addEventListener('flutter-first-frame', function () {
+        // First frame alone must NOT dismiss — wait for the full logo clip.
+      });
       setTimeout(function () {
         if (!document.getElementById('app-loading')) return;
         if (hint) {
@@ -137,6 +216,7 @@
           hint.textContent =
             'Clear browser site data for this address, then reload. Debug web builds often hang here.';
         }
+        showLoadingCue();
       }, 35000);
     })();
   </script>
