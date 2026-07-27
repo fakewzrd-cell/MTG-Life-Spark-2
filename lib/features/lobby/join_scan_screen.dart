@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../../ui/theme/app_color_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,10 +21,8 @@ import 'deck_picker_sheet.dart';
 import 'lobby_slot_widgets.dart';
 import '../../ui/components/ui_button.dart';
 import '../../ui/components/ui_snack_bar.dart';
-import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
-import '../../ui/tokens/color_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import '../../ui/components/ui_app_bar.dart';
 
@@ -313,7 +312,7 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: colors.backgroundPrimary,
       appBar: UiAppBar(
         title: 'Join a Game',
         leading: IconButton(
@@ -371,7 +370,7 @@ class _QrScanView extends StatelessWidget {
             'Point the camera at the host\'s QR code',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: ColorTokens.onAccent,
+              color: colors.onAccent,
               fontSize: FontTokens.body,
               fontWeight: FontWeight.w600,
               shadows: const [Shadow(blurRadius: 6, color: Colors.black)],

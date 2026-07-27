@@ -1,7 +1,9 @@
-import '../../../ui/tokens/color_tokens.dart';
+import '../../../ui/tokens/opacity_tokens.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
+import '../../../ui/theme/app_color_tokens.dart';
 
 import '../../../core/debug/app_log.dart';
 import '../../../ui/tokens/font_tokens.dart';
@@ -231,6 +233,7 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
   }
 
   Widget? _cardSubtitle(ScryfallCard card) {
+    final colors = AppColorTokens.of(context);
     final type = card.typeLine?.trim();
     final rules = card.oracleText?.trim();
     if ((type == null || type.isEmpty) && (rules == null || rules.isEmpty)) {
@@ -245,12 +248,13 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
       overflow: TextOverflow.ellipsis,
       style: TextStyle(
         fontSize: FontTokens.hudXs,
-        color: ColorTokens.textSecondary.withValues(alpha: 0.85),
+        color: colors.textSecondary.withValues(alpha: OpacityTokens.nearOpaque),
       ),
     );
   }
 
   Widget _buildResults() {
+    final colors = AppColorTokens.of(context);
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -259,7 +263,7 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
         child: Text(
           'Type to search cards',
           style: TextStyle(
-            color: ColorTokens.textSecondary.withValues(alpha: 0.8),
+            color: colors.textSecondary.withValues(alpha: OpacityTokens.strong),
             fontSize: FontTokens.hudSm,
           ),
         ),
@@ -278,7 +282,7 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
             card.name,
             style: TextStyle(
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              color: ColorTokens.textPrimary,
+              color: colors.textPrimary,
             ),
           ),
           subtitle: _cardSubtitle(card),
@@ -288,7 +292,7 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
                   style: TextStyle(
                     fontSize: FontTokens.caption,
                     fontWeight: FontWeight.w600,
-                    color: ColorTokens.textSecondary,
+                    color: colors.textSecondary,
                   ),
                 )
               : null,

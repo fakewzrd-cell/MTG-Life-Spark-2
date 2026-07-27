@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_color_tokens.dart';
-import '../tokens/color_tokens.dart';
+import '../../ui/theme/app_color_tokens.dart';
 
 /// Theme-aware snackbar helper (error uses danger; otherwise theme surface).
 void showUiSnackBar(
@@ -13,7 +12,7 @@ void showUiSnackBar(
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text(message),
-      backgroundColor: isError ? ColorTokens.danger : colors.surfaceElevated,
+      backgroundColor: isError ? colors.error : colors.surfaceElevated,
     ),
   );
 }

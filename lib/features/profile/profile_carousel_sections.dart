@@ -17,7 +17,6 @@ import '../../shared/utils/commander_image_resolver.dart';
 import '../../shared/widgets/deck_tile_visual.dart';
 import '../../shared/widgets/profile_default_banner.dart';
 import '../../ui/theme/app_color_tokens.dart';
-import '../../ui/tokens/color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/motion_tokens.dart';
@@ -503,9 +502,9 @@ List<MatchRecord> _filterMatchesForRecentGames(
 }
 
 Color _recentMatchResultColor(MatchRecord m, AppColorTokens colors) {
-  if (m.result == 'win') return ColorTokens.success;
-  if (m.result == 'concede') return ColorTokens.warning;
-  return ColorTokens.danger;
+  if (m.result == 'win') return colors.success;
+  if (m.result == 'concede') return colors.warning;
+  return colors.error;
 }
 
 String _recentMatchResultLabel(MatchRecord m) {

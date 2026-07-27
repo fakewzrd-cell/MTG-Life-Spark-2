@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
+import '../../ui/theme/app_color_tokens.dart';
 import '../../core/network/session_providers.dart';
 import '../../core/game/game_format.dart';
 import '../../core/game/lobby_state.dart';
@@ -18,8 +19,6 @@ import '../../shared/widgets/session_leave_dialog.dart';
 import 'deck_picker_sheet.dart';
 import 'lobby_slot_widgets.dart';
 import '../game/widgets/game_modal_chrome.dart';
-import '../../ui/theme/app_color_tokens.dart';
-import '../../ui/tokens/color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
@@ -166,7 +165,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     final colors = AppColorTokens.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: colors.backgroundPrimary,
       appBar: UiAppBar(
         title: 'Host Lobby',
         leading: IconButton(
@@ -444,7 +443,7 @@ class _QrHeader extends StatelessWidget {
           else if (loadState == _QrHostLoadState.ready && qrData != null)
             Container(
               decoration: BoxDecoration(
-                color: ColorTokens.onAccent,
+                color: colors.onAccent,
                 borderRadius: RadiusTokens.radiusSm,
               ),
               padding: EdgeInsets.all(compact ? 10 : 12),

@@ -9,7 +9,6 @@ import '../../../core/game/game_providers.dart';
 import '../../../core/game/game_state.dart';
 import '../../../core/game/player_game_state.dart';
 import '../../../ui/theme/app_color_tokens.dart';
-import '../../../ui/tokens/color_tokens.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/motion_tokens.dart';
@@ -441,7 +440,7 @@ class _ActivePlayerSpotlight extends StatelessWidget {
                     ? player.username[0].toUpperCase()
                     : '?',
                 style: TextStyle(
-                  color: ColorTokens.onAccent,
+                  color: colors.onAccent,
                   fontWeight: FontWeight.w700,
                   fontSize: FontTokens.body,
                 ),
@@ -690,15 +689,16 @@ class _GameOverviewLifeBadge extends StatelessWidget {
   final bool isActive;
   final Color accent;
 
-  Color get _textColor {
-    if (eliminated) return ColorTokens.textSecondary;
-    if (life <= 5) return ColorTokens.danger;
-    if (life <= 10) return ColorTokens.emphasis;
-    return ColorTokens.textPrimary;
+  Color _textColor(AppColorTokens colors) {
+    if (eliminated) return colors.textSecondary;
+    if (life <= 5) return colors.error;
+    if (life <= 10) return colors.emphasis;
+    return colors.textPrimary;
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColorTokens.of(context);
     return Container(
       constraints: const BoxConstraints(
         minWidth: 56,
@@ -711,7 +711,7 @@ class _GameOverviewLifeBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: isActive && !eliminated
             ? accent.withValues(alpha: OpacityTokens.subtle)
-            : ColorTokens.backgroundSecondary.withValues(alpha: OpacityTokens.half),
+            : colors.backgroundSecondary.withValues(alpha: OpacityTokens.half),
         borderRadius: RadiusTokens.radiusControlSm,
       ),
       alignment: Alignment.center,
@@ -719,7 +719,7 @@ class _GameOverviewLifeBadge extends StatelessWidget {
           ? Text(
             'OUT',
             style: TextStyle(
-              color: _textColor,
+              color: _textColor(colors),
               fontWeight: FontWeight.w700,
               fontSize: FontTokens.hudSm,
               height: 1,
@@ -731,13 +731,13 @@ class _GameOverviewLifeBadge extends StatelessWidget {
               Icon(
                 Icons.favorite_rounded,
                 size: 18,
-                color: _textColor.withValues(alpha: OpacityTokens.nearOpaque),
+                color: _textColor(colors).withValues(alpha: OpacityTokens.nearOpaque),
               ),
               SizedBox(width: LayoutTokens.gr0),
               Text(
                 '$life',
                 style: TextStyle(
-                  color: _textColor,
+                  color: _textColor(colors),
                   fontWeight: FontWeight.w700,
                   fontSize: FontTokens.body,
                   height: 1,
@@ -766,10 +766,10 @@ class _GameOverviewLifeStepper extends StatelessWidget {
   final bool enabled;
   final void Function(int delta) onDelta;
 
-  Color get _textColor {
-    if (life <= 5) return ColorTokens.danger;
-    if (life <= 10) return ColorTokens.emphasis;
-    return ColorTokens.textPrimary;
+  Color _textColor(AppColorTokens colors) {
+    if (life <= 5) return colors.error;
+    if (life <= 10) return colors.emphasis;
+    return colors.textPrimary;
   }
 
   @override
@@ -810,13 +810,13 @@ class _GameOverviewLifeStepper extends StatelessWidget {
                 Icon(
                   Icons.favorite_rounded,
                   size: 16,
-                  color: _textColor.withValues(alpha: OpacityTokens.nearOpaque),
+                  color: _textColor(colors).withValues(alpha: OpacityTokens.nearOpaque),
                 ),
                 SizedBox(width: LayoutTokens.gr0 - 1),
                 Text(
                   '$life',
                   style: TextStyle(
-                    color: _textColor,
+                    color: _textColor(colors),
                     fontWeight: FontWeight.w700,
                     fontSize: FontTokens.body,
                     height: 1,

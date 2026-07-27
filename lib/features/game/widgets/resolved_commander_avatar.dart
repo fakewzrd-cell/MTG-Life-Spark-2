@@ -1,4 +1,3 @@
-import '../../../ui/tokens/color_tokens.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -167,7 +166,7 @@ class CommanderAvatarImage extends StatelessWidget {
                   height: size * 0.35,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: ColorTokens.primaryAccent,
+                    color: playerColor,
                   ),
                 ),
               )

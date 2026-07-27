@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../ui/tokens/color_tokens.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/motion_tokens.dart';
@@ -58,7 +57,7 @@ class YourTurnPromptOverlay extends StatelessWidget {
                                 'Your turn',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  color: ColorTokens.onAccent,
+                                  color: colors.onAccent,
                                   fontSize: FontTokens.displayCommander,
                                   fontWeight: FontWeight.w800,
                                   height: 1.1,
@@ -69,7 +68,7 @@ class YourTurnPromptOverlay extends StatelessWidget {
                                 'Tap to continue',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  color: ColorTokens.onAccent.withValues(
+                                  color: colors.onAccent.withValues(
                                     alpha: 0.9,
                                   ),
                                   fontSize: FontTokens.body,

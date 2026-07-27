@@ -305,7 +305,7 @@ class _CommanderSelectScreenState
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: colors.backgroundPrimary,
       appBar: UiAppBar(
         title: _pickingPartner ? 'Select Partner' : _title,
       ),

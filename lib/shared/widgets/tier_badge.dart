@@ -12,7 +12,7 @@ Color wizardTierColor(String tier) {
     case 'Silver':
       return const Color(0xFFC0C0C0);
     case 'Gold':
-      return ColorTokens.accentGold;
+      return ColorTokens.emphasis;
     case 'Platinum':
       return const Color(0xFFE5E4E2);
     case 'Diamond':

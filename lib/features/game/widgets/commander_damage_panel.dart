@@ -80,7 +80,7 @@ Color commanderDamageColor(AppColorTokens colors, int damage) {
   final ko = GameConstants.commanderDamageKo;
   if (damage >= ko) return colors.error;
   if (damage >= ko - 3) return colors.warning;
-  if (damage >= 10) return colors.primaryAccent.withValues(alpha: 0.95);
+  if (damage >= 10) return colors.emphasis.withValues(alpha: OpacityTokens.nearOpaque);
   return colors.textPrimary;
 }
 

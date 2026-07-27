@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../../ui/theme/app_color_tokens.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,8 +10,6 @@ import '../../core/game/scryfall_service.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/utils/app_router.dart';
 import '../../ui/components/ui_app_bar.dart';
-import '../../ui/theme/app_color_tokens.dart';
-import '../../ui/tokens/color_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 
@@ -162,14 +161,14 @@ class _ProfilePicturePickerScreenState
             child: Text(
               widget.selectionMode ? 'Default' : 'Remove',
               style: TextStyle(
-                color: ColorTokens.danger,
+                color: colors.error,
                 fontWeight: FontWeight.w700,
               ),
             ),
           ),
         ],
       ),
-      backgroundColor: Colors.transparent,
+      backgroundColor: colors.backgroundPrimary,
       body: Column(
         children: [
           Padding(

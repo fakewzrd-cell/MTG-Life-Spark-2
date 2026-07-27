@@ -4,12 +4,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../ui/tokens/opacity_tokens.dart';
+import '../../ui/theme/app_color_tokens.dart';
 
 import '../../core/game/scryfall_service.dart';
 import '../../core/models/player_deck.dart';
 import '../../core/persistence/providers.dart';
-import '../../ui/theme/app_color_tokens.dart';
-import '../../ui/tokens/color_tokens.dart';
 import '../utils/commander_image_resolver.dart';
 
 /// How commander art is framed in a list row.
@@ -450,13 +449,13 @@ class DeckWinLossRatioBar extends StatelessWidget {
             if (w > 0)
               Expanded(
                 flex: w,
-                child: Container(color: ColorTokens.success),
+                child: Container(color: colors.success),
               ),
             if (l > 0)
               Expanded(
                 flex: l,
                 child: Container(
-                  color: ColorTokens.danger.withValues(alpha: OpacityTokens.nearOpaque),
+                  color: colors.error.withValues(alpha: OpacityTokens.nearOpaque),
                 ),
               ),
           ],
@@ -557,13 +556,13 @@ class DeckStatChips extends StatelessWidget {
         icon: Icons.emoji_events_outlined,
         label: 'W',
         value: '${deck.wins}',
-        valueColor: ColorTokens.success,
+        valueColor: colors.success,
       ),
       chip(
         icon: Icons.remove_circle_outline,
         label: 'L',
         value: '${deck.losses}',
-        valueColor: ColorTokens.danger.withValues(alpha: 0.95),
+        valueColor: colors.error.withValues(alpha: OpacityTokens.nearOpaque),
       ),
       chip(
         icon: Icons.sports_esports_outlined,

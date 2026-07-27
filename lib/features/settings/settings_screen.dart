@@ -1,5 +1,7 @@
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter/material.dart';
+
+import '../../ui/theme/app_color_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -15,9 +17,7 @@ import '../../shared/widgets/brand_logo.dart';
 import '../../ui/components/ui_app_bar.dart';
 import '../../ui/components/ui_snack_bar.dart';
 import '../../ui/components/ui_surface.dart';
-import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/app_color_palettes.dart';
-import '../../ui/tokens/color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
@@ -59,7 +59,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final colors = AppColorTokens.of(context);
     return Scaffold(
       appBar: const UiAppBar(title: 'Settings'),
-      backgroundColor: Colors.transparent,
+      backgroundColor: colors.backgroundPrimary,
       body: ListView(
         padding: LayoutTokens.shellListPadding(context, top: LayoutTokens.gr4),
         children: [
@@ -466,13 +466,13 @@ class _SettingTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final color = isDestructive ? ColorTokens.danger : scheme.onSurfaceVariant;
+    final colors = AppColorTokens.of(context);
+    final color = isDestructive ? colors.error : colors.textSecondary;
     return ListTile(
       title: Text(
         title,
         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: isDestructive ? ColorTokens.danger : null,
+              color: isDestructive ? colors.error : null,
             ),
         overflow: TextOverflow.ellipsis,
       ),

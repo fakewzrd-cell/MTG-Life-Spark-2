@@ -6,7 +6,6 @@ import '../../../core/game/game_state.dart';
 import '../../../core/game/player_game_state.dart';
 import '../../../shared/utils/game_haptics.dart';
 import '../../../shared/widgets/game_icon.dart';
-import '../../../ui/tokens/color_tokens.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
@@ -16,7 +15,7 @@ import 'game_modal_chrome.dart';
 
 /// Matches gameplay dial / counter glyph tint on the strip.
 Color politicsIconTone(BuildContext context) =>
-    ColorTokens.textSecondary.withValues(alpha: 0.95);
+    context.gameColors.textSecondary.withValues(alpha: OpacityTokens.nearOpaque);
 
 /// Truncates long player names for compact overview chips.
 String overviewShortPlayerName(String name, {int maxChars = 9}) {
@@ -572,7 +571,7 @@ class _PlayerPickerSheet extends StatelessWidget {
                   child: Text(
                     p.username.isNotEmpty ? p.username[0].toUpperCase() : '?',
                     style: TextStyle(
-                      color: ColorTokens.onAccent,
+                      color: colors.onAccent,
                       fontSize: FontTokens.caption,
                       fontWeight: FontWeight.bold,
                     ),

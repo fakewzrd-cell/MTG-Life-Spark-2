@@ -12,7 +12,6 @@ import '../../../shared/utils/app_router.dart';
 import '../../../shared/widgets/home_nav_bar.dart';
 import '../../../shared/widgets/player_feedback_widgets.dart';
 import '../../../shared/utils/game_haptics.dart';
-import '../../../ui/tokens/color_tokens.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
@@ -232,7 +231,7 @@ Future<void> _showPostForfeitFollowUp(
                   onPressed: () => Navigator.pop(dialogContext, false),
                   style: FilledButton.styleFrom(
                     backgroundColor: colors.primaryAccent,
-                    foregroundColor: ColorTokens.onAccent,
+                    foregroundColor: colors.onAccent,
                     shape: const StadiumBorder(),
                   ),
                   child: const Text('Stay & spectate'),
@@ -430,8 +429,8 @@ class _GameConcedeDialogState extends State<_GameConcedeDialog> {
                     child: FilledButton(
                       onPressed: () => _submit(ref),
                       style: FilledButton.styleFrom(
-                        backgroundColor: ColorTokens.danger,
-                        foregroundColor: ColorTokens.onAccent,
+                        backgroundColor: colors.error,
+                        foregroundColor: colors.onAccent,
                         shape: const StadiumBorder(),
                       ),
                       child: const Text('Forfeit'),

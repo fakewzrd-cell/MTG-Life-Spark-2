@@ -6,7 +6,6 @@ import '../../../shared/constants/app_icons.dart';
 import '../../../shared/widgets/game_icon.dart';
 import '../../../ui/components/ui_button.dart';
 import '../../../ui/theme/app_color_tokens.dart';
-import '../../../ui/tokens/color_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/motion_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
@@ -92,10 +91,10 @@ class _HubGuideDialogState extends ConsumerState<_HubGuideDialog> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
-    final accent = ColorTokens.primaryAccent;
+    final accent = colors.primaryAccent;
 
     return Dialog.fullscreen(
-      backgroundColor: Colors.transparent,
+      backgroundColor: colors.backgroundPrimary,
       child: SafeArea(
         child: Column(
           children: [

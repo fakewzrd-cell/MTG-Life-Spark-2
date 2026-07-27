@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../../../shared/utils/game_haptics.dart';
-import '../../../ui/tokens/color_tokens.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
@@ -126,7 +125,7 @@ class _TableToolsSheetState extends State<_TableToolsSheet> {
               onPressed: _roll,
               style: FilledButton.styleFrom(
                 backgroundColor: colors.primaryAccent,
-                foregroundColor: ColorTokens.onAccent,
+                foregroundColor: colors.onAccent,
                 shape: RoundedRectangleBorder(
                   borderRadius: RadiusTokens.radiusControlSm,
                 ),

@@ -5,11 +5,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/persistence/providers.dart';
 import '../../ui/theme/app_color_tokens.dart';
-import '../../ui/tokens/color_tokens.dart';
 import '../../shared/utils/app_router.dart';
 import '../../shared/widgets/brand_logo.dart';
 import '../../shared/widgets/game_icon.dart';
 import '../../ui/tokens/layout_tokens.dart';
+import '../../ui/tokens/opacity_tokens.dart';
 import '../../ui/components/ui_button.dart';
 import '../../ui/tokens/radius_tokens.dart';
 
@@ -31,7 +31,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       body:
           'Your Commander battlefield companion — life, counters, politics, '
           'and the stack, synced at the table.',
-      color: ColorTokens.primaryAccent,
       showBrandLogo: true,
     ),
     _OnboardingSlide(
@@ -39,28 +38,24 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       title: 'Host or Join',
       body:
           'One player hosts a game — others scan a QR code on the same Wi‑Fi network. No internet account needed. Works for 4 to 6 players at the same table.',
-      color: ColorTokens.primaryAccent,
     ),
     _OnboardingSlide(
       icon: Icons.favorite,
       title: 'Track Your Life',
       body:
           'Tap +/- to change life by 1. Hold +/- for ±5. Drag left or right to adjust quickly. Double-tap the life total to set an exact number. Undo is on the bottom bar (or shake, if enabled).',
-      color: ColorTokens.primaryAccent,
     ),
     _OnboardingSlide(
       icon: Icons.timer_outlined,
       title: 'Phase Bar & Turns',
       body:
           'Use the phase bar to step through the turn, or leave Phase tracker off in the lobby. Timeout pauses the whole game.',
-      color: ColorTokens.primaryAccent,
     ),
     _OnboardingSlide(
       icon: Icons.auto_awesome,
       title: 'Commander & Counters',
       body:
           'Commander damage opens as a threat list — how much each opponent has dealt you toward 21. Track poison (10), energy, experience, and rad. Use Proliferate to add 1 to all at once.',
-      color: ColorTokens.primaryAccent,
       useCommanderDamageIcon: true,
     ),
     _OnboardingSlide(
@@ -68,7 +63,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       title: 'Alliances & Politics',
       body:
           'Propose secret alliances with other players. They expire automatically or break when you attack each other. Track the Monarch and Initiative with a single tap.',
-      color: ColorTokens.primaryAccent,
     ),
   ];
 
@@ -120,8 +114,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   height: 8,
                   decoration: BoxDecoration(
                     color: _currentPage == i
-                        ? _slides[i].color
-                        : colors.textSecondary.withValues(alpha: 0.4),
+                        ? colors.primaryAccent
+                        : colors.textSecondary.withValues(alpha: OpacityTokens.moderate),
                     borderRadius: RadiusTokens.radiusControlMd,
                   ),
                 );
@@ -160,7 +154,6 @@ class _OnboardingSlide {
   final IconData icon;
   final String title;
   final String body;
-  final Color color;
   final bool showBrandLogo;
   final bool useCommanderDamageIcon;
 
@@ -168,7 +161,6 @@ class _OnboardingSlide {
     required this.icon,
     required this.title,
     required this.body,
-    required this.color,
     this.showBrandLogo = false,
     this.useCommanderDamageIcon = false,
   });
@@ -180,6 +172,7 @@ class _SlideView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColorTokens.of(context);
     final isNarrow = MediaQuery.sizeOf(context).width < 360;
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: isNarrow ? LayoutTokens.gr4 : LayoutTokens.gr6),
@@ -200,22 +193,22 @@ class _SlideView extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    slide.color.withValues(alpha: 0.25),
-                    slide.color.withValues(alpha: 0.08),
+                    colors.primaryAccent.withValues(alpha: OpacityTokens.soft),
+                    colors.primaryAccent.withValues(alpha: OpacityTokens.faint),
                   ],
                 ),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: slide.color.withValues(alpha: 0.2),
+                    color: colors.primaryAccent.withValues(alpha: OpacityTokens.soft),
                     blurRadius: 24,
                     offset: const Offset(0, 8),
                   ),
                 ],
               ),
               child: slide.useCommanderDamageIcon
-                  ? GameIcon.commanderDamage(size: 52, color: slide.color)
-                  : Icon(slide.icon, size: 52, color: slide.color),
+                  ? GameIcon.commanderDamage(size: 52, color: colors.primaryAccent)
+                  : Icon(slide.icon, size: 52, color: colors.primaryAccent),
             ),
           SizedBox(height: LayoutTokens.gr5),
           Text(
@@ -227,7 +220,7 @@ class _SlideView extends StatelessWidget {
           Text(
             slide.body,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  color: colors.textSecondary,
                   height: 1.6,
                 ),
             textAlign: TextAlign.center,

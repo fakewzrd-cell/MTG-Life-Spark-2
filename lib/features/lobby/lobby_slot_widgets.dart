@@ -1,9 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-import '../../core/models/player_slot.dart';
 import '../../ui/theme/app_color_tokens.dart';
-import '../../ui/tokens/color_tokens.dart';
+import '../../core/models/player_slot.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/opacity_tokens.dart';
@@ -193,7 +192,7 @@ class LobbyActionButton extends StatelessWidget {
 
     if (filled && highlighted) {
       bg = accent;
-      fg = ColorTokens.onAccent;
+      fg = colors.onAccent;
     } else if (highlighted) {
       bg = accent.withValues(alpha: OpacityTokens.soft);
       fg = colors.textPrimary;

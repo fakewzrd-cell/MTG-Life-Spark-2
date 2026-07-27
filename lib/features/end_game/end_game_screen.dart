@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 
+import '../../ui/theme/app_color_tokens.dart';
 import '../../core/network/session_providers.dart';
 import '../../core/game/game_providers.dart';
 import '../../core/game/game_state.dart';
@@ -21,13 +22,11 @@ import '../../shared/utils/app_router.dart';
 import '../../shared/utils/wizard_rank_titles.dart';
 import '../../shared/widgets/player_feedback_widgets.dart';
 import '../../ui/components/ui_button.dart';
-import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/opacity_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import '../../ui/tokens/typography_tokens.dart';
-import '../../ui/tokens/color_tokens.dart';
 
 class EndGameScreen extends ConsumerStatefulWidget {
   const EndGameScreen({super.key});
@@ -163,7 +162,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
     final isWinner = winner?.playerId == game.localPlayerId;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: colors.backgroundPrimary,
       body: SafeArea(
         child: _saving
             ? Center(
@@ -452,7 +451,7 @@ class _WinnerBanner extends StatelessWidget {
                           ? winner!.username[0].toUpperCase()
                           : '?',
                       style: TextStyle(
-                          color: ColorTokens.onAccent,
+                          color: colors.onAccent,
                           fontSize: FontTokens.displayCommander,
                           fontWeight: FontWeight.bold),
                     ),
@@ -469,7 +468,7 @@ class _WinnerBanner extends StatelessWidget {
                     ? winner!.username[0].toUpperCase()
                     : '?',
                 style: TextStyle(
-                    color: ColorTokens.onAccent,
+                    color: colors.onAccent,
                     fontSize: FontTokens.displayCommander,
                     fontWeight: FontWeight.bold),
               ),

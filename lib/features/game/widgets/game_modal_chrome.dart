@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../ui/tokens/color_tokens.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/motion_tokens.dart';
@@ -283,7 +282,7 @@ Future<bool?> showGameConfirmDialog({
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: destructive
-                ? FilledButton.styleFrom(backgroundColor: ColorTokens.danger)
+                ? FilledButton.styleFrom(backgroundColor: colors.error)
                 : FilledButton.styleFrom(backgroundColor: colors.primaryAccent),
             child: Text(confirmLabel),
           ),
@@ -331,7 +330,7 @@ Future<bool?> showGameChoiceDialog({
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: primaryDestructive
-                ? FilledButton.styleFrom(backgroundColor: ColorTokens.danger)
+                ? FilledButton.styleFrom(backgroundColor: colors.error)
                 : FilledButton.styleFrom(backgroundColor: colors.primaryAccent),
             child: Text(primaryLabel),
           ),

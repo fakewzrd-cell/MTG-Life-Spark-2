@@ -1,4 +1,3 @@
-import '../../../ui/tokens/color_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -12,6 +11,7 @@ import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
 import 'game_modal_chrome.dart';
+import '../../../ui/theme/app_color_tokens.dart';
 import 'game_colors.dart';
 import 'game_ui_tokens.dart';
 import '../../../ui/components/ui_snack_bar.dart';
@@ -77,6 +77,7 @@ Future<void> showProposeAllianceSheet({
     isScrollControlled: true,
     builder: (ctx) => StatefulBuilder(
       builder: (context, setState) {
+        final colors = context.gameColors;
         void sendWhisper() {
           final local = ref.read(gameProvider).localPlayer;
           if (local == null) return;
@@ -119,7 +120,7 @@ Future<void> showProposeAllianceSheet({
                   Text(
                     'Duration',
                     style: TextStyle(
-                      color: ColorTokens.textSecondary,
+                      color: colors.textSecondary,
                       fontSize: FontTokens.label,
                       fontWeight: FontWeight.w600,
                     ),
@@ -131,8 +132,8 @@ Future<void> showProposeAllianceSheet({
                       padding: EdgeInsets.only(bottom: LayoutTokens.gr1),
                       child: ListTile(
                         tileColor: selected
-                            ? ColorTokens.emphasis.withValues(alpha: 0.12)
-                            : ColorTokens.backgroundSecondary,
+                            ? colors.emphasis.withValues(alpha: OpacityTokens.subtle)
+                            : colors.backgroundSecondary,
                         shape: RoundedRectangleBorder(
                           borderRadius: RadiusTokens.radiusControlSm,
                         ),
@@ -140,7 +141,7 @@ Future<void> showProposeAllianceSheet({
                         trailing: selected
                             ? Icon(
                                 Icons.check_circle,
-                                color: ColorTokens.emphasis,
+                                color: colors.emphasis,
                               )
                             : null,
                         onTap: () => setState(() => duration = d),
@@ -151,7 +152,7 @@ Future<void> showProposeAllianceSheet({
                   Text(
                     'When to deliver',
                     style: TextStyle(
-                      color: ColorTokens.textSecondary,
+                      color: colors.textSecondary,
                       fontSize: FontTokens.label,
                       fontWeight: FontWeight.w600,
                     ),
@@ -295,13 +296,14 @@ class OverviewPlayerMarkerBadges extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
     final badges = <Widget>[];
     final localId = game.localPlayerId;
     final alliance = game.allianceFor(playerId);
     if (alliance != null && alliance.isRevealed) {
-      badges.add(_chip('Allied'));
+      badges.add(_chip(colors, 'Allied'));
     } else if (alliance != null && alliance.involves(localId)) {
-      badges.add(_chip('Secret ally'));
+      badges.add(_chip(colors, 'Secret ally'));
     }
 
     if (badges.isEmpty) return const SizedBox.shrink();
@@ -317,23 +319,23 @@ class OverviewPlayerMarkerBadges extends StatelessWidget {
     );
   }
 
-  Widget _chip(String label) {
+  Widget _chip(AppColorTokens colors, String label) {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: LayoutTokens.gr0 + 2,
         vertical: LayoutTokens.gr0 - 1,
       ),
       decoration: BoxDecoration(
-        color: ColorTokens.emphasis.withValues(alpha: OpacityTokens.subtle),
+        color: colors.emphasis.withValues(alpha: OpacityTokens.subtle),
         borderRadius: RadiusTokens.radiusControlSm,
         border: Border.all(
-          color: ColorTokens.emphasis.withValues(alpha: OpacityTokens.soft),
+          color: colors.emphasis.withValues(alpha: OpacityTokens.soft),
         ),
       ),
       child: Text(
         label,
         style: TextStyle(
-          color: ColorTokens.emphasis,
+          color: colors.emphasis,
           fontSize: FontTokens.hudXs,
           fontWeight: FontWeight.w700,
           height: 1.1,

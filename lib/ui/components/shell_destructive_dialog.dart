@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_color_tokens.dart';
-import '../tokens/color_tokens.dart';
+import '../../ui/theme/app_color_tokens.dart';
 import '../tokens/font_tokens.dart';
 import '../tokens/layout_tokens.dart';
 import '../tokens/radius_tokens.dart';
@@ -54,8 +53,8 @@ Future<bool> showShellDestructiveConfirm({
               child: FilledButton(
                 onPressed: () => Navigator.pop(ctx, true),
                 style: FilledButton.styleFrom(
-                  backgroundColor: ColorTokens.danger,
-                  foregroundColor: ColorTokens.onAccent,
+                  backgroundColor: colors.error,
+                  foregroundColor: colors.onAccent,
                   shape: const StadiumBorder(),
                   textStyle: TextStyle(
                     fontSize: FontTokens.body,

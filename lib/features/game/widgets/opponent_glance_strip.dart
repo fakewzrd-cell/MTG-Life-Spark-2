@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../core/game/game_state.dart';
 import '../../../core/game/player_game_state.dart';
-import '../../../ui/tokens/color_tokens.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
@@ -97,9 +96,9 @@ class _OpponentGlanceChip extends StatelessWidget {
     final lifeTone = eliminated
         ? colors.textSecondary
         : player.life <= 5
-            ? ColorTokens.danger
+            ? colors.error
             : player.life <= 10
-                ? ColorTokens.emphasis
+                ? colors.emphasis
                 : colors.textPrimary;
     final name = overviewShortPlayerName(player.username, maxChars: 8);
 

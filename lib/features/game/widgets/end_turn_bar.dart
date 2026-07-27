@@ -29,7 +29,7 @@ class EndTurnBar extends StatelessWidget {
     final colors = context.gameColors;
     final bg = enabled
         ? accentColor.withValues(alpha: OpacityTokens.soft)
-        : colors.backgroundSecondary.withValues(alpha: 0.4);
+        : colors.backgroundSecondary.withValues(alpha: OpacityTokens.moderate);
     final fg = enabled
         ? accentColor
         : colors.textSecondary.withValues(alpha: OpacityTokens.disabled);

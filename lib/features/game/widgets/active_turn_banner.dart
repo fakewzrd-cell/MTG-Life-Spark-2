@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/game/game_state.dart';
-import '../../../ui/tokens/color_tokens.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
@@ -20,9 +19,8 @@ class ActiveTurnBanner extends StatelessWidget {
     final colors = context.gameColors;
     final active = game.playerById(game.activePlayerId);
     final isLocal = game.isLocalPlayersTurn;
-    final accent = isLocal
-        ? colors.primaryAccent
-        : (active?.playerColor ?? colors.primaryAccent);
+    // Seat identity uses player color — brand accent is reserved for CTAs.
+    final accent = active?.playerColor ?? colors.primaryAccent;
     final name = isLocal
         ? 'You'
         : overviewShortPlayerName(active?.username ?? '—', maxChars: 14);
@@ -41,7 +39,7 @@ class ActiveTurnBanner extends StatelessWidget {
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
             colors: [
-              accent.withValues(alpha: isLocal ? 0.18 : 0.10),
+              accent.withValues(alpha: isLocal ? OpacityTokens.soft : OpacityTokens.faint),
               colors.surface.withValues(alpha: OpacityTokens.nearOpaque),
             ],
           ),
@@ -69,7 +67,7 @@ class ActiveTurnBanner extends StatelessWidget {
                 child: Text(
                   initial,
                   style: TextStyle(
-                    color: ColorTokens.onAccent,
+                    color: colors.onAccent,
                     fontWeight: FontWeight.w700,
                     fontSize: FontTokens.hudSm,
                   ),

@@ -279,7 +279,7 @@ class _PhaseNavCenter extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.gameColors;
     final phaseColor =
-        game.isLocalPlayersTurn ? colors.primaryAccent : colors.textSecondary;
+        game.isLocalPlayersTurn ? accentColor : colors.textSecondary;
 
     Widget buildLabel(BoxConstraints constraints) {
       final narrow = constraints.maxWidth < 108;

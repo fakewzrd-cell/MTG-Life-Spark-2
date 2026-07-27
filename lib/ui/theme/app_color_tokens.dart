@@ -41,6 +41,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     return Theme.of(context).extension<AppColorTokens>()!;
   }
 
+  /// Dark-scheme widget tokens from [palette].
   static AppColorTokens fromPalette(AppColorPalette palette) {
     return AppColorTokens(
       backgroundPrimary: palette.backgroundPrimary,
@@ -52,6 +53,26 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
       textSecondary: palette.textSecondary,
       textMuted: palette.textMuted,
       primaryAccent: palette.brandAccent,
+      onAccent: ColorTokens.onAccent,
+      success: ColorTokens.success,
+      warning: ColorTokens.warning,
+      error: ColorTokens.danger,
+      emphasis: palette.emphasis,
+    );
+  }
+
+  /// Light-scheme widget tokens from [palette].
+  static AppColorTokens fromLightPalette(AppColorPalette palette) {
+    return AppColorTokens(
+      backgroundPrimary: palette.lightBackgroundPrimary,
+      backgroundSecondary: palette.lightBackgroundSecondary,
+      surface: palette.lightSurface,
+      surfaceElevated: palette.lightSurfaceElevated,
+      borderSubtle: palette.lightBorderSubtle,
+      textPrimary: palette.lightTextPrimary,
+      textSecondary: palette.lightTextSecondary,
+      textMuted: palette.lightTextMuted,
+      primaryAccent: palette.lightPrimaryAccent,
       onAccent: ColorTokens.onAccent,
       success: ColorTokens.success,
       warning: ColorTokens.warning,

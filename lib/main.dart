@@ -21,7 +21,6 @@ import 'core/debug/web_logo_splash.dart';
 import 'core/network/session_connection_guard.dart';
 import 'shared/theme/theme_provider.dart';
 import 'shared/utils/app_router.dart';
-import 'shared/widgets/app_brand_backdrop.dart';
 import 'shared/widgets/branded_splash.dart';
 import 'shared/utils/commander_image_resolver.dart';
 import 'ui/tokens/color_tokens.dart';
@@ -334,13 +333,7 @@ class MgtLifeSparkApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       builder: (context, child) => SessionConnectionGuard(
         child: AppSystemUiScope(
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              const Positioned.fill(child: AppBrandBackdrop()),
-              child ?? const SizedBox.shrink(),
-            ],
-          ),
+          child: child ?? const SizedBox.shrink(),
         ),
       ),
     );

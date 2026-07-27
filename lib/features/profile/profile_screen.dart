@@ -13,9 +13,9 @@ import '../../shared/widgets/profile_default_banner.dart';
 import '../../shared/widgets/tier_badge.dart';
 import '../../ui/components/ui_button.dart';
 import '../../ui/theme/app_color_tokens.dart';
-import '../../ui/tokens/color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
+import '../../ui/tokens/opacity_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import '../game/widgets/game_modal_chrome.dart';
 import 'profile_carousel_sections.dart';
@@ -103,7 +103,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         profile.totalGamesPlayed > 0 || allMatches.isNotEmpty;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: colors.backgroundPrimary,
       body: SafeArea(
         top: false,
         bottom: false,
@@ -242,15 +242,16 @@ class _ProfileEditModePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColorTokens.of(context);
     return SizedBox(
       width: LayoutTokens.minTapTarget,
       height: LayoutTokens.minTapTarget,
       child: Center(
         child: Material(
-          color: ColorTokens.onAccent.withValues(alpha: 0.08),
+          color: colors.onAccent.withValues(alpha: OpacityTokens.faint),
           shape: CircleBorder(
             side: BorderSide(
-              color: ColorTokens.onAccent.withValues(alpha: 0.22),
+              color: colors.onAccent.withValues(alpha: OpacityTokens.soft),
             ),
           ),
           clipBehavior: Clip.antiAlias,
@@ -263,7 +264,7 @@ class _ProfileEditModePill extends StatelessWidget {
               child: Icon(
                 editing ? Icons.check_rounded : Icons.edit_outlined,
                 size: _iconSize,
-                color: ColorTokens.onAccent.withValues(alpha: 0.72),
+                color: colors.onAccent.withValues(alpha: OpacityTokens.strong),
                 semanticLabel: editing ? 'Done editing' : 'Edit profile',
               ),
             ),
@@ -295,7 +296,7 @@ class _ProfileHeroIdentityAndStats extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final nameStyle = Theme.of(context).textTheme.titleLarge?.copyWith(
-      color: ColorTokens.onAccent,
+      color: colors.onAccent,
       fontWeight: FontWeight.w700,
       letterSpacing: -0.3,
     );
@@ -344,7 +345,7 @@ class _ProfileHeroIdentityAndStats extends StatelessWidget {
                           icon: Icon(
                             Icons.edit_rounded,
                             size: 20,
-                            color: ColorTokens.onAccent.withValues(alpha: 0.92),
+                            color: colors.onAccent.withValues(alpha: 0.92),
                           ),
                         ),
                       ],
@@ -535,10 +536,10 @@ class _ProfileHeroAvatar extends StatelessWidget {
                   ),
                 ),
                 alignment: Alignment.center,
-                child: const Icon(
+                child: Icon(
                   Icons.camera_alt_rounded,
                   size: 16,
-                  color: ColorTokens.onAccent,
+                  color: colors.onAccent,
                 ),
               ),
             ),

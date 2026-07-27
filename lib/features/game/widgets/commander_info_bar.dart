@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../core/game/player_game_state.dart';
 import 'game_colors.dart';
-import '../../../ui/tokens/color_tokens.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
@@ -228,7 +227,7 @@ class _CastableCommanderAvatar extends StatelessWidget {
                             size: size >= LayoutTokens.minTapTarget
                                 ? LayoutTokens.gr2
                                 : LayoutTokens.gr0 * 2,
-                            color: ColorTokens.onAccent,
+                            color: colors.onAccent,
                           ),
                         ),
                       ),

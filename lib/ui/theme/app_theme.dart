@@ -25,8 +25,7 @@ class AppTheme {
 
     return ThemeData(
       brightness: Brightness.dark,
-      // Transparent so [AppBrandBackdrop] behind the navigator can show through.
-      scaffoldBackgroundColor: Colors.transparent,
+      scaffoldBackgroundColor: ColorTokens.backgroundPrimary,
 
       // ── Full M3 ColorScheme ────────────────────────────────────────────
       colorScheme: ColorScheme.dark(
@@ -409,8 +408,7 @@ class AppTheme {
 
     return ThemeData(
       brightness: Brightness.light,
-      // Transparent so [AppBrandBackdrop] behind the navigator can show through.
-      scaffoldBackgroundColor: Colors.transparent,
+      scaffoldBackgroundColor: ColorTokens.lightBackgroundPrimary,
 
       // ── Full M3 ColorScheme ────────────────────────────────────────────
       colorScheme: ColorScheme.light(
@@ -760,7 +758,7 @@ class AppTheme {
       ),
 
       useMaterial3: true,
-      extensions: [AppColorTokens.fromPalette(ColorTokens.palette)],
+      extensions: [AppColorTokens.fromLightPalette(ColorTokens.palette)],
     );
   }
 
