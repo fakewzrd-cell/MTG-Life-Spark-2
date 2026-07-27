@@ -7,6 +7,7 @@ import '../../core/game/game_providers.dart';
 import '../../core/game/lobby_state.dart';
 import '../../features/game_lobby/game_lobby_screen.dart';
 import '../../features/profile/profile_setup_screen.dart';
+import '../../features/profile/welcome_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/profile/profile_picture_picker_screen.dart';
@@ -23,6 +24,7 @@ import '../widgets/main_shell.dart';
 
 class AppRoutes {
   static const splash = '/';
+  static const welcome = '/welcome';
   static const profileSetup = '/profile-setup';
   static const onboarding = '/onboarding';
   static const home = '/home';
@@ -90,6 +92,10 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: AppRoutes.home,
     refreshListenable: refresh,
     routes: [
+      GoRoute(
+        path: AppRoutes.welcome,
+        builder: (context, state) => const WelcomeScreen(),
+      ),
       GoRoute(
         path: AppRoutes.profileSetup,
         builder: (context, state) => const ProfileSetupScreen(),
@@ -191,8 +197,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       final settings = ref.read(settingsRepositoryProvider).settings;
       final path = state.uri.path;
 
-      if (!hasProfile && path != AppRoutes.profileSetup) {
-        return AppRoutes.profileSetup;
+      if (!hasProfile) {
+        if (path == AppRoutes.welcome || path == AppRoutes.profileSetup) {
+          return null;
+        }
+        return AppRoutes.welcome;
+      }
+      if (path == AppRoutes.welcome) {
+        if (!settings.onboardingCompleted) return AppRoutes.onboarding;
+        return AppRoutes.home;
       }
       if (hasProfile && !settings.onboardingCompleted) {
         if (path == AppRoutes.onboarding || path == AppRoutes.profileSetup) {

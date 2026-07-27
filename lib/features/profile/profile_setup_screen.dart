@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import '../../core/models/player_profile.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/utils/app_router.dart';
-import '../../shared/widgets/brand_logo.dart';
 import '../../shared/widgets/default_profile_avatar.dart';
 import '../../ui/components/ui_button.dart';
 import '../../ui/theme/app_color_tokens.dart';
@@ -92,24 +91,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SizedBox(height: LayoutTokens.gr5),
-                      Center(
-                        child: Column(
-                          children: [
-                            const BrandLogo(
-                              layout: BrandLogoLayout.vertical,
-                              height: 140,
-                            ),
-                            SizedBox(height: LayoutTokens.gr4),
-                            Text(
-                              'Commander 2.0 — your digital battlefield.',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: LayoutTokens.gr5),
+                      SizedBox(height: LayoutTokens.gr6),
                       Text(
                         'Create your profile',
                         style: Theme.of(context).textTheme.headlineMedium,
@@ -119,7 +101,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                         'Choose a name and picture your table will recognize.',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
-                      SizedBox(height: LayoutTokens.gr4),
+                      SizedBox(height: LayoutTokens.gr5),
                       Center(
                         child: _SetupAvatarPicker(
                           avatarUrl: _avatarUrl,
@@ -176,7 +158,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     UiButton(
-                      label: 'Ready to play',
+                      label: 'Continue',
                       loading: _saving,
                       onPressed: _saving ? null : _save,
                     ),
