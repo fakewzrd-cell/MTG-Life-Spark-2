@@ -10,6 +10,7 @@ import '../bluetooth/ble_service.dart';
 import '../network/session_link_status.dart';
 import '../network/session_providers.dart';
 import '../network/ws_client_service.dart';
+import '../network/ws_host_service.dart';
 import '../models/game_feedback.dart';
 import '../models/player_profile.dart';
 import '../persistence/providers.dart';
@@ -37,6 +38,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
   Timer? _turnLimitTimer;
   Timer? _allianceDeliveryTimer;
   Timer? _hostLinkGraceTimer;
+  Timer? _clientReconnectTimer;
   int _seqNum = 0;
   static const _uuid = Uuid();
 
@@ -183,6 +185,10 @@ class GameStateNotifier extends StateNotifier<GameState> {
   @visibleForTesting
   void handleSessionMessageForTest(BleMessage msg) => _onSessionMessage(msg);
 
+  @visibleForTesting
+  void handleConnectionEventForTest(BleConnectionEvent event) =>
+      _onConnectionEvent(event);
+
   void initFromLobbyIfNeeded(LobbyState lobby) {
     if (!shouldInitializeFromLobby()) return;
     initFromLobby(lobby);
@@ -214,6 +220,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
       currentPhase: GamePhase.untap,
       roundNumber: 1,
       alliancesEnabled: lobby.config.alliancesEnabled,
+      teamsEnabled: lobby.config.teamsEnabled,
       isHost: isHost,
       localPlayerId: localPlayerId,
       gameStartTime: DateTime.now(),
@@ -352,6 +359,61 @@ class GameStateNotifier extends StateNotifier<GameState> {
       payload: {'turnOrder': turnOrder},
       seqNum: _nextSeq(),
     ));
+  }
+
+  /// Host-only: set seating / turn order. Preserves the current active player.
+  void hostSetTurnOrder(List<String> newOrder) {
+    if (!state.isHost) return;
+    if (state.timeoutActive || state.gameOver) return;
+    if (state.awaitingFirstPlayerRoll) return;
+    if (newOrder.length != state.players.length) return;
+    final ids = state.players.map((p) => p.playerId).toSet();
+    if (newOrder.toSet().length != newOrder.length) return;
+    if (!ids.containsAll(newOrder) || !newOrder.toSet().containsAll(ids)) {
+      return;
+    }
+    if (_listEquals(newOrder, state.turnOrder)) return;
+
+    final activeId = state.activePlayerId;
+    var nextIndex = newOrder.indexOf(activeId);
+    if (nextIndex < 0) nextIndex = 0;
+
+    state = state.copyWith(
+      turnOrder: List<String>.from(newOrder),
+      activePlayerIndex: nextIndex,
+    );
+    _appendGameLog('Turn order updated by host');
+    _send(BleMessage(
+      type: BleMessageType.turnOrderUpdate,
+      payload: {
+        'turnOrder': newOrder,
+        'activePlayerId': activeId,
+      },
+      seqNum: _nextSeq(),
+    ));
+  }
+
+  bool _listEquals(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  void _applyTurnOrderUpdate(Map<String, dynamic> payload) {
+    final order = (payload['turnOrder'] as List<dynamic>?)
+            ?.map((e) => e as String)
+            .toList() ??
+        const <String>[];
+    if (order.isEmpty) return;
+    final activeId = payload['activePlayerId'] as String? ?? state.activePlayerId;
+    var nextIndex = order.indexOf(activeId);
+    if (nextIndex < 0) nextIndex = 0;
+    state = state.copyWith(
+      turnOrder: order,
+      activePlayerIndex: nextIndex,
+    );
   }
 
   // ── Life ─────────────────────────────────────────────────────────────────
@@ -1446,6 +1508,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
   // ── Teams ────────────────────────────────────────────────────────────────
 
   void assignTeam(String playerId, int teamIndex) {
+    if (!state.teamsEnabled) return;
     if (!state.isHost && playerId != state.localPlayerId) return;
     state = state.copyWith(
       teamAssignments: {...state.teamAssignments, playerId: teamIndex},
@@ -1455,18 +1518,20 @@ class GameStateNotifier extends StateNotifier<GameState> {
       payload: {'pid': playerId, 'team': teamIndex},
       seqNum: _nextSeq(),
     ));
+    if (state.isHost) {
+      _hostRebuildTurnOrderByTeams();
+    }
   }
 
-  // ── Rematch ───────────────────────────────────────────────────────────────
-
-  void proposeRematch() {
-    if (!state.isHost) return;
-    _ref.read(rematchProposedProvider.notifier).state++;
-    _send(BleMessage(
-      type: BleMessageType.rematchPropose,
-      payload: {},
-      seqNum: _nextSeq(),
-    ));
+  /// Keep teammates contiguous in [turnOrder] after team changes (host only).
+  void _hostRebuildTurnOrderByTeams() {
+    if (!state.isHost || !state.teamsEnabled) return;
+    if (!state.teamAssignments.values.any((t) => t > 0)) return;
+    final grouped = GameState.groupTurnOrderByTeams(
+      state.playersInTurnOrder.map((p) => p.playerId).toList(),
+      state.teamAssignments,
+    );
+    hostSetTurnOrder(grouped);
   }
 
   /// Broadcast a post-game ballot so other seats can update received honors.
@@ -1859,8 +1924,26 @@ class GameStateNotifier extends StateNotifier<GameState> {
     if (event.status == BleConnectionStatus.connected) {
       _hostLinkGraceTimer?.cancel();
       _hostLinkGraceTimer = null;
+      _stopClientReconnectLoop();
       _ref.read(sessionLinkStatusProvider.notifier).state =
           SessionLinkStatus.connected;
+      if (state.isHost) {
+        _clearPeerLinkIssue(event.playerId);
+      }
+      return;
+    }
+
+    if (state.isHost) {
+      if (event.status == BleConnectionStatus.reconnecting) {
+        _markPeerReconnecting(event.playerId, awaitingDecision: false);
+        return;
+      }
+      if (event.status == BleConnectionStatus.disconnected) {
+        // Grace expired — soft prompt; do not auto-eliminate.
+        _markPeerReconnecting(event.playerId, awaitingDecision: true);
+        _ref.read(peerReconnectDecisionTickProvider.notifier).state++;
+        return;
+      }
       return;
     }
 
@@ -1869,15 +1952,80 @@ class GameStateNotifier extends StateNotifier<GameState> {
       return;
     }
 
-    if (state.isHost) {
-      // Host service already applied reconnect grace before emitting this.
-      _handleRemotePlayerLeft(event.playerId);
+    // Client: OS often drops the socket when switching apps — keep retrying.
+    _beginClientHostLinkRecovery();
+  }
+
+  void _markPeerReconnecting(String playerId, {required bool awaitingDecision}) {
+    if (playerId.isEmpty || playerId == state.localPlayerId) return;
+    final player = _playerById(playerId);
+    if (player == null || player.isEliminated) return;
+    final issues = Map<String, PeerLinkIssue>.from(
+      _ref.read(peerLinkIssuesProvider),
+    );
+    issues[playerId] = PeerLinkIssue(
+      playerId: playerId,
+      username: player.username,
+      awaitingHostDecision: awaitingDecision,
+    );
+    _ref.read(peerLinkIssuesProvider.notifier).state = issues;
+  }
+
+  void _clearPeerLinkIssue(String playerId) {
+    if (playerId.isEmpty) return;
+    final issues = Map<String, PeerLinkIssue>.from(
+      _ref.read(peerLinkIssuesProvider),
+    );
+    if (issues.remove(playerId) == null) return;
+    _ref.read(peerLinkIssuesProvider.notifier).state = issues;
+  }
+
+  /// Host: restart soft-drop grace for a peer still offline.
+  void keepWaitingForPeer(String playerId) {
+    if (!state.isHost || playerId.isEmpty) return;
+    final service = _ref.read(sessionServiceProvider);
+    // Peer may have returned while the decision dialog was open.
+    if (service != null && service.connectedPlayerIds.contains(playerId)) {
+      _clearPeerLinkIssue(playerId);
       return;
     }
+    if (service is WsHostService) {
+      service.extendReconnectGrace(playerId);
+    }
+    _markPeerReconnecting(playerId, awaitingDecision: false);
+  }
 
-    // Client: OS often drops the socket when switching to Texts — reconnect,
-    // do not end the match immediately.
-    _beginClientHostLinkRecovery();
+  /// Host: remove a soft-dropped peer from the table (eliminate).
+  void removePeerFromTable(String playerId) {
+    if (!state.isHost || playerId.isEmpty) return;
+    final service = _ref.read(sessionServiceProvider);
+    // Peer may have returned while the decision dialog was open.
+    if (service != null && service.connectedPlayerIds.contains(playerId)) {
+      _clearPeerLinkIssue(playerId);
+      return;
+    }
+    if (service is WsHostService) {
+      service.cancelReconnectGrace(playerId);
+    }
+    _clearPeerLinkIssue(playerId);
+    if (playerId == state.localPlayerId) return;
+    final player = _playerById(playerId);
+    if (player == null || player.isEliminated) return;
+
+    // Clients listen for playerDisconnected (same as historical leave sync).
+    // Do not also broadcast playerEliminated — that would skip the leave UI
+    // when it arrives first and the disconnect handler no-ops.
+    _eliminatePlayer(playerId, 'disconnect', null, broadcast: false);
+    _appendGameLog('${player.username} left the game');
+    _send(BleMessage(
+      type: BleMessageType.playerDisconnected,
+      payload: {'pid': playerId},
+      seqNum: _nextSeq(),
+    ));
+    _ref.read(playerLeftUiEventProvider.notifier).state = PlayerLeftUiEvent(
+      username: player.username,
+      gameEnded: state.gameOver,
+    );
   }
 
   void _beginClientHostLinkRecovery() {
@@ -1885,18 +2033,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
     _ref.read(sessionLinkStatusProvider.notifier).state =
         SessionLinkStatus.reconnecting;
 
-    final service = _ref.read(sessionServiceProvider);
-    if (service is WsClientService) {
-      unawaited(service.reconnectIfDisconnected().then((ok) {
-        if (state.players.isEmpty || state.gameOver) return;
-        if (ok) {
-          _hostLinkGraceTimer?.cancel();
-          _hostLinkGraceTimer = null;
-          _ref.read(sessionLinkStatusProvider.notifier).state =
-              SessionLinkStatus.connected;
-        }
-      }));
-    }
+    unawaited(_attemptClientReconnect());
 
     _hostLinkGraceTimer?.cancel();
     _hostLinkGraceTimer = Timer(kSessionReconnectGrace, () {
@@ -1907,13 +2044,73 @@ class GameStateNotifier extends StateNotifier<GameState> {
             SessionLinkStatus.connected;
         return;
       }
+      // Stay in the match — keep retrying and show Try again.
       _ref.read(sessionLinkStatusProvider.notifier).state =
           SessionLinkStatus.lost;
-      _handleHostSessionLost();
+    });
+
+    _clientReconnectTimer?.cancel();
+    _clientReconnectTimer =
+        Timer.periodic(const Duration(seconds: 3), (_) {
+      if (state.gameOver || state.players.isEmpty) {
+        _stopClientReconnectLoop();
+        return;
+      }
+      final service = _ref.read(sessionServiceProvider);
+      if (service is WsClientService && service.isReady) {
+        _stopClientReconnectLoop();
+        _hostLinkGraceTimer?.cancel();
+        _hostLinkGraceTimer = null;
+        _ref.read(sessionLinkStatusProvider.notifier).state =
+            SessionLinkStatus.connected;
+        return;
+      }
+      unawaited(_attemptClientReconnect());
     });
   }
 
+  Future<void> _attemptClientReconnect() async {
+    if (state.gameOver || state.players.isEmpty) return;
+    final service = _ref.read(sessionServiceProvider);
+    if (service is! WsClientService) return;
+    if (service.isReady) {
+      _stopClientReconnectLoop();
+      _hostLinkGraceTimer?.cancel();
+      _hostLinkGraceTimer = null;
+      _ref.read(sessionLinkStatusProvider.notifier).state =
+          SessionLinkStatus.connected;
+      return;
+    }
+    final ok = await service.reconnectIfDisconnected();
+    if (!ok || state.gameOver || state.players.isEmpty) return;
+    if (service.isReady) {
+      _stopClientReconnectLoop();
+      _hostLinkGraceTimer?.cancel();
+      _hostLinkGraceTimer = null;
+      _ref.read(sessionLinkStatusProvider.notifier).state =
+          SessionLinkStatus.connected;
+    }
+  }
+
+  /// Manual "Try again" from the reconnect banner.
+  void retryHostLink() {
+    if (state.isHost || state.gameOver) return;
+    _ref.read(sessionLinkStatusProvider.notifier).state =
+        SessionLinkStatus.reconnecting;
+    if (_clientReconnectTimer == null) {
+      _beginClientHostLinkRecovery();
+    } else {
+      unawaited(_attemptClientReconnect());
+    }
+  }
+
+  void _stopClientReconnectLoop() {
+    _clientReconnectTimer?.cancel();
+    _clientReconnectTimer = null;
+  }
+
   void _handleRemotePlayerLeft(String playerId) {
+    _clearPeerLinkIssue(playerId);
     if (playerId.isEmpty || playerId == state.localPlayerId) return;
     final player = _playerById(playerId);
     if (player == null || player.isEliminated) return;
@@ -1923,32 +2120,6 @@ class GameStateNotifier extends StateNotifier<GameState> {
     _ref.read(playerLeftUiEventProvider.notifier).state = PlayerLeftUiEvent(
       username: player.username,
       gameEnded: state.gameOver,
-    );
-  }
-
-  void _handleHostSessionLost() {
-    final leavers = state.players
-        .where(
-          (p) => !p.isEliminated && p.playerId != state.localPlayerId,
-        )
-        .toList();
-    for (final p in leavers) {
-      _eliminatePlayer(p.playerId, 'disconnect', null, broadcast: false);
-    }
-    if (!state.gameOver) {
-      final localAlive = state.localPlayer?.isEliminated != true;
-      state = state.copyWith(
-        gameOver: true,
-        winnerPlayerId: localAlive ? state.localPlayerId : null,
-      );
-    }
-    final label = leavers.length == 1
-        ? leavers.first.username
-        : (leavers.isEmpty ? 'The host' : 'A player');
-    _appendGameLog('$label left the game');
-    _ref.read(playerLeftUiEventProvider.notifier).state = PlayerLeftUiEvent(
-      username: label,
-      gameEnded: true,
     );
   }
 
@@ -2084,14 +2255,39 @@ class GameStateNotifier extends StateNotifier<GameState> {
         _applyElimination(msg.payload);
       case BleMessageType.playerDisconnected:
         _handleRemotePlayerLeft(msg.payload['pid'] as String? ?? '');
+      case BleMessageType.playerReconnecting:
+        final pid = msg.payload['pid'] as String? ?? '';
+        final done = msg.payload['done'] == true;
+        if (done) {
+          _clearPeerLinkIssue(pid);
+        } else {
+          _markPeerReconnecting(pid, awaitingDecision: false);
+        }
+      case BleMessageType.reconnectRequest:
+        if (state.isHost) {
+          final pid = msg.payload['pid'] as String? ?? '';
+          if (pid.isNotEmpty) {
+            _clearPeerLinkIssue(pid);
+            _send(BleMessage(
+              type: BleMessageType.stateSnapshot,
+              payload: buildSnapshot(),
+              seqNum: _nextSeq(),
+              targetPlayerId: pid,
+            ));
+          }
+        }
       case BleMessageType.stateSnapshot:
         applySnapshot(msg.payload);
       case BleMessageType.teamAssign:
+        if (!state.teamsEnabled) break;
         final pid = msg.payload['pid'] as String? ?? '';
         final team = (msg.payload['team'] as num?)?.toInt() ?? 0;
         state = state.copyWith(
           teamAssignments: {...state.teamAssignments, pid: team},
         );
+        if (state.isHost) {
+          _hostRebuildTurnOrderByTeams();
+        }
       case BleMessageType.variantStateUpdate:
         final planar = (msg.payload['planar'] as num?)?.toInt();
         final scheme = (msg.payload['scheme'] as num?)?.toInt();
@@ -2103,9 +2299,6 @@ class GameStateNotifier extends StateNotifier<GameState> {
         );
       case BleMessageType.stackUpdate:
         _applyStackUpdate(msg.payload);
-      case BleMessageType.rematchPropose:
-        _ref.read(rematchProposedProvider.notifier).state++;
-        break;
       case BleMessageType.matchFeedback:
         _ingestRemoteMatchFeedback(msg);
         break;
@@ -2131,6 +2324,9 @@ class GameStateNotifier extends StateNotifier<GameState> {
           );
         }
         break;
+      case BleMessageType.turnOrderUpdate:
+        _applyTurnOrderUpdate(msg.payload);
+        break;
       default:
         break;
     }
@@ -2139,7 +2335,9 @@ class GameStateNotifier extends StateNotifier<GameState> {
     if (state.isHost &&
         msg.type != BleMessageType.firstPlayerRollSubmit &&
         msg.type != BleMessageType.allianceDeclined &&
-        msg.type != BleMessageType.playerDisconnected) {
+        msg.type != BleMessageType.playerDisconnected &&
+        msg.type != BleMessageType.playerReconnecting &&
+        msg.type != BleMessageType.reconnectRequest) {
       _ref.read(sessionServiceProvider)?.send(
             msg,
             targetPlayerId: msg.targetPlayerId,
@@ -2474,14 +2672,19 @@ class GameStateNotifier extends StateNotifier<GameState> {
     _timeoutTimer?.cancel();
     _turnLimitTimer?.cancel();
     _allianceDeliveryTimer?.cancel();
+    _hostLinkGraceTimer?.cancel();
+    _stopClientReconnectLoop();
     _messageSub = null;
     _connectionSub = null;
     _timeoutTimer = null;
     _turnLimitTimer = null;
     _allianceDeliveryTimer = null;
+    _hostLinkGraceTimer = null;
     _seqNum = 0;
-    _ref.read(rematchProposedProvider.notifier).state = 0;
     _ref.read(playerLeftUiEventProvider.notifier).state = null;
+    _ref.read(peerLinkIssuesProvider.notifier).state = {};
+    _ref.read(sessionLinkStatusProvider.notifier).state =
+        SessionLinkStatus.connected;
     state = GameState.empty();
   }
 
@@ -2489,8 +2692,14 @@ class GameStateNotifier extends StateNotifier<GameState> {
   void dispose() {
     _hostLinkGraceTimer?.cancel();
     _hostLinkGraceTimer = null;
-    _ref.read(sessionLinkStatusProvider.notifier).state =
-        SessionLinkStatus.connected;
+    _stopClientReconnectLoop();
+    try {
+      _ref.read(sessionLinkStatusProvider.notifier).state =
+          SessionLinkStatus.connected;
+      _ref.read(peerLinkIssuesProvider.notifier).state = {};
+    } catch (_) {
+      // Container may already be disposing in tests.
+    }
     _messageSub?.cancel();
     _connectionSub?.cancel();
     _timeoutTimer?.cancel();

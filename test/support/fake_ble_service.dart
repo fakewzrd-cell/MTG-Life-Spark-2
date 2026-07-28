@@ -23,7 +23,10 @@ class FakeBleService implements BleService {
       _connectionController.stream;
 
   @override
-  List<String> get connectedPlayerIds => const [];
+  List<String> get connectedPlayerIds => List.unmodifiable(connectedIds);
+
+  /// Mutable seat list for tests that exercise soft-drop / remove guards.
+  List<String> connectedIds = const [];
 
   @override
   bool get isReady => true;
@@ -50,5 +53,9 @@ class FakeBleService implements BleService {
 
   void emit(BleMessage message) {
     _messageController.add(message);
+  }
+
+  void emitConnection(BleConnectionEvent event) {
+    _connectionController.add(event);
   }
 }

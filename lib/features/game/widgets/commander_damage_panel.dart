@@ -91,15 +91,15 @@ bool isCommanderGameSession({
   GameFormat? gameFormat,
   int? startingLife,
 }) {
+  // Lobby format wins — commander damage is available even before anyone
+  // picks a commander card.
+  if (gameFormat?.isCommanderStyle == true) return true;
   if (local.commanderName != null || local.hasPartner) return true;
   if (allPlayers.any((p) => p.commanderName != null || p.hasPartner)) {
     return true;
   }
-  // Solo Commander pod — use lobby format / starting life, not current life.
-  if (allPlayers.length <= 1) {
-    if (gameFormat?.isCommanderStyle == true) return true;
-    if (startingLife == GameFormat.commander.defaultStartingLife) return true;
-  }
+  // Fallback when format is missing: 40 starting life implies Commander.
+  if (startingLife == GameFormat.commander.defaultStartingLife) return true;
   return false;
 }
 

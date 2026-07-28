@@ -10,7 +10,6 @@ import '../../core/game/game_providers.dart';
 import '../../core/game/game_state.dart';
 import '../../core/game/lobby_state.dart';
 import '../../core/game/player_game_state.dart';
-import '../../core/game/game_session_events.dart';
 import '../../core/game/progression_service.dart';
 import '../../core/game/session_exit_helpers.dart';
 import '../../shared/widgets/game_icon.dart';
@@ -43,9 +42,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
   bool _feedbackSubmitted = false;
   final Set<String> _likePlayerIds = {};
   final Set<String> _dislikePlayerIds = {};
-  String? _mvpPlayerId;
-  String? _teamPlayerId;
-  String? _underdogPlayerId;
+  String? _starPlayerId;
 
   @override
   void initState() {
@@ -57,20 +54,11 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
     final game = ref.read(gameProvider);
     if (!game.gameOver) {
       if (!mounted) return;
-      context.go(
-        game.localPlayer != null ? AppRoutes.game : AppRoutes.lobby,
-      );
+      // Align with router safety net: stale /end-game → home.
+      context.go(AppRoutes.home);
       return;
     }
     _saveMatch();
-  }
-
-  Future<void> _joinRematchLobby() async {
-    final game = ref.read(gameProvider);
-    final target = game.isHost ? AppRoutes.lobbyHost : AppRoutes.lobby;
-    await quitActiveGame(ref);
-    if (!mounted) return;
-    context.go(target);
   }
 
   Future<void> _saveMatch() async {
@@ -78,11 +66,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
 
     final game = ref.read(gameProvider);
     if (!game.gameOver) {
-      if (mounted) {
-        context.go(
-          game.localPlayer != null ? AppRoutes.game : AppRoutes.lobby,
-        );
-      }
+      if (mounted) context.go(AppRoutes.home);
       return;
     }
 
@@ -116,9 +100,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
           voterPlayerId: game.localPlayerId,
           likePlayerIds: pending!.likePlayerIds,
           dislikePlayerIds: pending.dislikePlayerIds,
-          mvpPlayerId: pending.mvpPlayerId,
-          teamPlayerId: pending.teamPlayerId,
-          underdogPlayerId: pending.underdogPlayerId,
+          starPlayerId: pending.starPlayerId,
         );
         await service.saveFeedback(feedback);
         ref.read(gameProvider.notifier).broadcastMatchFeedback(feedback);
@@ -151,11 +133,6 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
     final game = ref.watch(gameProvider);
-    ref.listen<int>(rematchProposedProvider, (prev, next) {
-      if (next > 0 && next != prev && mounted) {
-        _joinRematchLobby();
-      }
-    });
     final winner = game.winnerPlayerId != null
         ? game.playerById(game.winnerPlayerId!)
         : null;
@@ -248,16 +225,44 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
 
                     SizedBox(height: LayoutTokens.gr2),
 
-                    // ── Post-game feedback (like/dislike, MVP, Team Player) ─
+                    // ── Final standings ────────────────────────────────────
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: LayoutTokens.shellPageInset,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Final Standings',
+                            style: TypographyTokens.sectionTitle(
+                              colors.textSecondary,
+                            ).copyWith(
+                              fontSize: FontTokens.label,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                          SizedBox(height: LayoutTokens.gr1),
+                          ...game.players.map((p) => _FinalPlayerRow(
+                                p: p,
+                                isWinner: p.playerId == game.winnerPlayerId,
+                                isLocal: p.playerId == game.localPlayerId,
+                              )),
+                        ],
+                      ),
+                    ),
+
+                    SizedBox(height: LayoutTokens.gr4),
+
+                    // ── Post-game feedback (like/dislike + star) ─
                     if (_result != null && _result!.matchId.isNotEmpty)
                       _FeedbackCard(
                         game: game,
                         feedbackSubmitted: _feedbackSubmitted,
                         likePlayerIds: _likePlayerIds,
                         dislikePlayerIds: _dislikePlayerIds,
-                        mvpPlayerId: _mvpPlayerId,
-                        teamPlayerId: _teamPlayerId,
-                        underdogPlayerId: _underdogPlayerId,
+                        starPlayerId: _starPlayerId,
                         onLike: (pid) => setState(() {
                           togglePlayerLike(
                             likeIds: _likePlayerIds,
@@ -288,52 +293,16 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
                             },
                           );
                         }),
-                        onMvpChanged: (pid) =>
-                            setState(() => _mvpPlayerId = pid),
-                        onTeamPlayerChanged: (pid) =>
-                            setState(() => _teamPlayerId = pid),
-                        onUnderdogChanged: (pid) =>
-                            setState(() => _underdogPlayerId = pid),
+                        onStarChanged: (pid) =>
+                            setState(() => _starPlayerId = pid),
                         onSubmit: () => _submitFeedback(game),
                       ),
-
-                    SizedBox(height: LayoutTokens.gr2),
-
-                    // ── Final standings ────────────────────────────────────
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: LayoutTokens.shellPageInset,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Final Standings',
-                            style: TypographyTokens.sectionTitle(
-                              colors.textSecondary,
-                            ).copyWith(
-                              fontSize: FontTokens.label,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 1,
-                            ),
-                          ),
-                          SizedBox(height: LayoutTokens.gr1),
-                          ...game.players.map((p) => _FinalPlayerRow(
-                                p: p,
-                                isWinner: p.playerId == game.winnerPlayerId,
-                                isLocal: p.playerId == game.localPlayerId,
-                              )),
-                        ],
-                      ),
-                    ),
 
                     SizedBox(height: LayoutTokens.gr5),
 
                     // ── Actions ────────────────────────────────────────────
                     _ActionButtons(
-                      isHost: game.isHost,
                       onHome: () => _leaveToHome(context),
-                      onRematch: () => _doRematch(context, ref, game),
                     ),
 
                     SizedBox(height: LayoutTokens.gr5),
@@ -345,19 +314,10 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
   }
 
   Future<void> _leaveToHome(BuildContext context) async {
-    await quitActiveGame(ref);
+    // Navigate away first while gameOver is still true. Clearing state before
+    // go(home) rebuilds this route empty and fights the /end-game redirect.
     if (context.mounted) context.go(AppRoutes.home);
-  }
-
-  Future<void> _doRematch(
-    BuildContext context,
-    WidgetRef ref,
-    GameState game,
-  ) async {
-    ref.read(gameProvider.notifier).proposeRematch();
     await quitActiveGame(ref);
-    if (!context.mounted) return;
-    context.go(game.isHost ? AppRoutes.lobbyHost : AppRoutes.lobby);
   }
 
   Future<void> _submitFeedback(GameState game) async {
@@ -367,9 +327,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
       voterPlayerId: game.localPlayerId,
       likePlayerIds: _likePlayerIds.toList(),
       dislikePlayerIds: _dislikePlayerIds.toList(),
-      mvpPlayerId: _mvpPlayerId,
-      teamPlayerId: _teamPlayerId,
-      underdogPlayerId: _underdogPlayerId,
+      starPlayerId: _starPlayerId,
     );
     await ref.read(progressionServiceProvider).saveFeedback(feedback);
     ref.read(gameProvider.notifier).broadcastMatchFeedback(feedback);
@@ -650,14 +608,10 @@ class _FeedbackCard extends StatelessWidget {
   final bool feedbackSubmitted;
   final Set<String> likePlayerIds;
   final Set<String> dislikePlayerIds;
-  final String? mvpPlayerId;
-  final String? teamPlayerId;
-  final String? underdogPlayerId;
+  final String? starPlayerId;
   final void Function(String) onLike;
   final void Function(String) onDislike;
-  final void Function(String?) onMvpChanged;
-  final void Function(String?) onTeamPlayerChanged;
-  final void Function(String?) onUnderdogChanged;
+  final void Function(String?) onStarChanged;
   final VoidCallback onSubmit;
 
   const _FeedbackCard({
@@ -665,14 +619,10 @@ class _FeedbackCard extends StatelessWidget {
     required this.feedbackSubmitted,
     required this.likePlayerIds,
     required this.dislikePlayerIds,
-    required this.mvpPlayerId,
-    required this.teamPlayerId,
-    required this.underdogPlayerId,
+    required this.starPlayerId,
     required this.onLike,
     required this.onDislike,
-    required this.onMvpChanged,
-    required this.onTeamPlayerChanged,
-    required this.onUnderdogChanged,
+    required this.onStarChanged,
     required this.onSubmit,
   });
 
@@ -730,12 +680,8 @@ class _FeedbackCard extends StatelessWidget {
             dislikePlayerIds: dislikePlayerIds,
             onLike: onLike,
             onDislike: onDislike,
-            mvpPlayerId: mvpPlayerId,
-            teamPlayerId: teamPlayerId,
-            underdogPlayerId: underdogPlayerId,
-            onMvpChanged: onMvpChanged,
-            onTeamPlayerChanged: onTeamPlayerChanged,
-            onUnderdogChanged: onUnderdogChanged,
+            starPlayerId: starPlayerId,
+            onStarChanged: onStarChanged,
             voteSpacing: LayoutTokens.gr1,
           ),
           SizedBox(height: LayoutTokens.gr3),
@@ -943,37 +889,21 @@ class _FinalPlayerRow extends StatelessWidget {
 // ── Action Buttons ────────────────────────────────────────────────────────────
 
 class _ActionButtons extends StatelessWidget {
-  final bool isHost;
   final VoidCallback onHome;
-  final VoidCallback onRematch;
 
   const _ActionButtons({
-    required this.isHost,
     required this.onHome,
-    required this.onRematch,
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: LayoutTokens.ctaHorizontal),
-      child: Column(
-        children: [
-          if (isHost) ...[
-            UiButton(
-              label: 'Rematch',
-              icon: const Icon(Icons.replay_rounded, size: 20),
-              onPressed: onRematch,
-            ),
-            SizedBox(height: LayoutTokens.gr2),
-          ],
-          UiButton(
-            label: 'Back to Home',
-            variant: UiButtonVariant.secondary,
-            icon: const Icon(Icons.home_outlined, size: 20),
-            onPressed: onHome,
-          ),
-        ],
+      child: UiButton(
+        label: 'Back to Home',
+        variant: UiButtonVariant.secondary,
+        icon: const Icon(Icons.home_outlined, size: 20),
+        onPressed: onHome,
       ),
     );
   }

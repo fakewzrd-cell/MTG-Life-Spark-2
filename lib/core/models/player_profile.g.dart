@@ -36,7 +36,7 @@ class PlayerProfileAdapter extends TypeAdapter<PlayerProfile> {
       profileAvatarImageUrl: fields[16] as String?,
       likesReceived: fields[17] as int,
       dislikesReceived: fields[18] as int,
-      honorsMvpReceived: fields[19] as int,
+      honorsStarReceived: fields[19] as int,
       honorsTeamPlayerReceived: fields[20] as int,
       honorsUnderdogReceived: fields[21] as int,
       profileBannerImageUrl: fields[22] as String?,
@@ -88,7 +88,7 @@ class PlayerProfileAdapter extends TypeAdapter<PlayerProfile> {
       ..writeByte(18)
       ..write(obj.dislikesReceived)
       ..writeByte(19)
-      ..write(obj.honorsMvpReceived)
+      ..write(obj.honorsStarReceived)
       ..writeByte(20)
       ..write(obj.honorsTeamPlayerReceived)
       ..writeByte(21)

@@ -1016,6 +1016,13 @@ class _GameplayToggles extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _GameplaySwitchTile(
+          title: 'Teams',
+          subtitle: 'Assign team colors on the table',
+          value: config.teamsEnabled,
+          onChanged: (v) =>
+              notifier.updateConfig(config.copyWith(teamsEnabled: v)),
+        ),
+        _GameplaySwitchTile(
           title: 'Planechase',
           subtitle: 'Internet required for planar deck',
           value: config.planechaseEnabled,

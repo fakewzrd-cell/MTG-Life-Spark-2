@@ -71,15 +71,7 @@ class FeedbackRepository {
   int get totalDislikesGiven =>
       allFeedback().fold<int>(0, (sum, f) => sum + f.dislikePlayerIds.length);
 
-  /// Count of feedback entries where MVP was chosen.
-  int get totalMvpVotesGiven => allFeedback()
-      .fold<int>(0, (sum, f) => sum + (f.mvpPlayerId != null ? 1 : 0));
-
-  /// Count of feedback entries where Team Player was chosen.
-  int get totalTeamPlayerVotesGiven => allFeedback()
-      .fold<int>(0, (sum, f) => sum + (f.teamPlayerId != null ? 1 : 0));
-
-  /// Count of feedback entries where Underdog was chosen.
-  int get totalUnderdogVotesGiven => allFeedback()
-      .fold<int>(0, (sum, f) => sum + (f.underdogPlayerId != null ? 1 : 0));
+  /// Count of feedback entries where Star of the game was chosen.
+  int get totalStarVotesGiven => allFeedback()
+      .fold<int>(0, (sum, f) => sum + (f.starPlayerId != null ? 1 : 0));
 }

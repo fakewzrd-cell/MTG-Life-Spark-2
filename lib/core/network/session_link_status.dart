@@ -8,7 +8,7 @@ enum SessionLinkStatus {
   /// Brief drop / app resume — auto-reconnect in progress.
   reconnecting,
 
-  /// Grace period expired; table cannot continue on this device.
+  /// Grace period expired; still retrying — show Try again (match stays open).
   lost,
 }
 

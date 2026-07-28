@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mgt_life_spark/core/game/game_providers.dart';
 import 'package:mgt_life_spark/core/models/game_feedback.dart';
@@ -21,29 +22,34 @@ void main() {
     expect(find.text('Join Game'), findsOneWidget);
   });
 
-  testWidgets('forfeit opens dialog with rate opponents and Forfeit button',
+  testWidgets('forfeit dialog shows like/dislike and star of the game',
       (tester) async {
     final game = harnessGame(localId: 'alice');
-    final local = game.localPlayer!;
 
     await tester.pumpWidget(
       wrapGameWidget(
         game: game,
-        child: Scaffold(
-          body: GameBottomBar(
-            game: game,
-            local: local,
-            onToggleOverview: () {},
+        child: Consumer(
+          builder: (context, ref, _) => Scaffold(
+            body: TextButton(
+              onPressed: () =>
+                  showGameForfeitFlow(context, ref, game.localPlayerId),
+              child: const Text('Open forfeit'),
+            ),
           ),
         ),
       ),
     );
 
-    await tester.tap(find.bySemanticsLabel('Forfeit'));
+    await tester.tap(find.text('Open forfeit'));
     await tester.pumpAndSettle();
 
     expect(find.text('Forfeit?'), findsOneWidget);
     expect(find.text('Rate opponents'), findsOneWidget);
+    expect(find.text('Star of the game'), findsOneWidget);
+    expect(find.text('MVP'), findsNothing);
+    expect(find.text('Team Player'), findsNothing);
+    expect(find.text('Underdog'), findsNothing);
     expect(
       find.widgetWithText(FilledButton, 'Forfeit'),
       findsOneWidget,
@@ -74,6 +80,8 @@ void main() {
 
     expect(find.text('Final Standings'), findsOneWidget);
     expect(find.text('Rate Your Opponents'), findsOneWidget);
+    expect(find.text('Star of the game'), findsOneWidget);
+    expect(find.text('MVP'), findsNothing);
     expect(find.text('Thanks! Your feedback has been recorded.'), findsNothing);
   });
 

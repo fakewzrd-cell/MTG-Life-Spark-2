@@ -14,7 +14,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mgt_life_spark/features/game/widgets/game_performance_widgets.dart';
 import 'package:mgt_life_spark/features/game/widgets/game_timeout_widgets.dart';
 import 'package:mgt_life_spark/features/game/widgets/gameplay_dials_strip_widget.dart';
-import 'package:mgt_life_spark/features/game/widgets/life_gesture_hint_banner.dart';
 import 'package:mgt_life_spark/features/game/widgets/phase_nav_cluster.dart';
 import 'package:mgt_life_spark/features/game/widgets/variant_card_panel.dart';
 
@@ -27,7 +26,6 @@ import '../support/game_widget_harness.dart';
 /// effects (wakelock, shake-to-undo sensors).
 Widget _playTabHarness({required bool hasExtraRows}) {
   const playGapSm = SizedBox(height: 8);
-  const playGapMd = SizedBox(height: 12);
   const lifeBandMaxW = 360.0;
   const lifeBandH = 192.0;
   const lifeMinFloor = 96.0;
@@ -65,17 +63,14 @@ Widget _playTabHarness({required bool hasExtraRows}) {
             ),
           ),
         );
-        final dialStrip = Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: ScopedGameplayDials(
-            playerId: 'alice',
-            compactVertical: dialCompact,
-            onAdjustCounter: (_, __) {},
-            onSetCounterAbsolute: (_, __) {},
-            onRegisterCustomDial: (_, __) => true,
-            onAddDialToStrip: (_) => true,
-            onRemoveDialFromStrip: (_) {},
-          ),
+        final dialStrip = ScopedGameplayDials(
+          playerId: 'alice',
+          compactVertical: dialCompact,
+          onAdjustCounter: (_, __) {},
+          onSetCounterAbsolute: (_, __) {},
+          onRegisterCustomDial: (_, __) => true,
+          onAddDialToStrip: (_) => true,
+          onRemoveDialFromStrip: (_) {},
         );
 
         // Variant decks and the turn timer are now pinned, fixed-height
@@ -99,24 +94,23 @@ Widget _playTabHarness({required bool hasExtraRows}) {
           context,
           compactVertical: dialCompact,
         );
-        final comfortableMin = PhaseNavCluster.barHeight +
-            12 +
-            (hasExtraRows ? extraRowEstimate * 2 : 0.0) +
+        final comfortableMin = (hasExtraRows ? extraRowEstimate * 2 : 0.0) +
             lifeMinFloor +
             8 +
-            dialStripH;
+            dialStripH +
+            8 +
+            PhaseNavCluster.barHeight;
 
         if (playConstraints.maxHeight >= comfortableMin) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              phaseBar,
-              playGapMd,
               ...extraRows,
               Expanded(child: lifeCounter),
-              const LifeGestureHintBanner(),
               playGapSm,
               dialStrip,
+              playGapSm,
+              phaseBar,
             ],
           );
         }
@@ -129,13 +123,12 @@ Widget _playTabHarness({required bool hasExtraRows}) {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,
               children: [
-                phaseBar,
-                playGapMd,
                 ...extraRows,
                 SizedBox(height: lifeMinFloor, child: lifeCounter),
-                const LifeGestureHintBanner(),
                 playGapSm,
                 dialStrip,
+                playGapSm,
+                phaseBar,
               ],
             ),
           ),

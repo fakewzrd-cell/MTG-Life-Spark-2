@@ -9,9 +9,7 @@ void main() {
       matchId: 'm1',
       voterPlayerId: 'Alice',
       likePlayerIds: ['Bob'],
-      mvpPlayerId: 'Bob',
-      teamPlayerId: 'Carol',
-      underdogPlayerId: 'Dave',
+      starPlayerId: 'Bob',
     );
 
     final msg = BleMessage.matchFeedback(
@@ -27,9 +25,7 @@ void main() {
     final parsed = GameFeedback.fromJson(decoded.payload);
     expect(parsed.matchId, 'm1');
     expect(parsed.voterPlayerId, 'Alice');
-    expect(parsed.mvpPlayerId, 'Bob');
-    expect(parsed.teamPlayerId, 'Carol');
-    expect(parsed.underdogPlayerId, 'Dave');
+    expect(parsed.starPlayerId, 'Bob');
     expect(parsed.likePlayerIds, ['Bob']);
   });
 }

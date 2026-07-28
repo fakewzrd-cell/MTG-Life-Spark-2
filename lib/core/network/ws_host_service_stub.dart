@@ -56,4 +56,8 @@ class WsHostService implements BleService {
     String? targetPlayerId,
     String? excludePlayerId,
   }) async {}
+
+  void extendReconnectGrace(String playerId) {}
+
+  void cancelReconnectGrace(String playerId) {}
 }

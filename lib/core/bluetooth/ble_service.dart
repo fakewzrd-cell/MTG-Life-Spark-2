@@ -5,6 +5,9 @@ enum BleConnectionStatus {
   scanning,
   connecting,
   connected,
+
+  /// Soft drop — peer may still resume within reconnect grace.
+  reconnecting,
   rejected, // protocol version mismatch
   error,
 }

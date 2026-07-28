@@ -35,7 +35,6 @@ import '../widgets/game_performance_widgets.dart';
 import '../widgets/game_timeout_widgets.dart';
 import '../widgets/gameplay_dials_strip_widget.dart';
 import '../widgets/hub_guide_sheet.dart';
-import '../widgets/life_gesture_hint_banner.dart';
 import '../widgets/opponent_glance_strip.dart';
 import '../widgets/end_turn_bar.dart';
 import '../widgets/phase_nav_cluster.dart';
@@ -57,6 +56,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   /// Prevents re-prompting after we decide to show (or skip) the hub guide.
   bool _hubGuideHandled = false;
   bool _hubGuideCheckScheduled = false;
+  /// Ensures we only navigate to end-game once per match (not on every
+  /// post-KO state tick such as log appends).
+  bool _navigatedToEndGame = false;
   StreamSubscription<Object?>? _gameOverSub;
   ShakeDetector? _shakeDetector;
   final DateTime _localInitStarted = DateTime.now();
@@ -112,12 +114,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   void _listenForGameOver() {
     _gameOverSub = ref.read(gameProvider.notifier).stream.listen((state) {
-      if (state.gameOver && mounted) {
-        // Disconnect leave flow shows its own dialog then navigates.
-        final leave = ref.read(playerLeftUiEventProvider);
-        if (leave != null && leave.gameEnded) return;
-        context.go(AppRoutes.endGame);
-      }
+      if (!state.gameOver || !mounted || _navigatedToEndGame) return;
+      _navigatedToEndGame = true;
+      // Single destination for match end (including disconnect KO).
+      // Mid-match leaves use playerLeftUiEvent dialog only — no second nav.
+      context.go(AppRoutes.endGame);
     });
   }
 
@@ -284,17 +285,52 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         if (!context.mounted) return;
         final event = next;
         ref.read(gameProvider.notifier).clearPlayerLeftUiEvent();
+        // Match already ending → game-over listener owns navigation to EndGame.
+        if (event.gameEnded) return;
         await showGameConfirmDialog(
           context: context,
           title: 'Player left',
-          message: event.gameEnded
-              ? '${event.username} left the game. Heading to match feedback.'
-              : '${event.username} left the game.',
-          confirmLabel: event.gameEnded ? 'Continue' : 'OK',
+          message: '${event.username} left the game.',
+          confirmLabel: 'OK',
+        );
+      });
+    });
+
+    ref.listen<int>(peerReconnectDecisionTickProvider, (prev, next) {
+      if (prev == null || next <= prev) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!context.mounted) return;
+        if (!ref.read(gameProvider).isHost) return;
+        final issues = ref.read(peerLinkIssuesProvider);
+        final pending = issues.values
+            .where((i) => i.awaitingHostDecision)
+            .toList();
+        if (pending.isEmpty) return;
+        final peer = pending.first;
+        final keep = await showGameChoiceDialog(
+          context: context,
+          title: '${peer.username} still offline',
+          content: Text(
+            'Keep waiting for them to reconnect, or remove them from the table?',
+            style: GameModalChrome.dialogBodyStyle(context),
+          ),
+          primaryLabel: 'Keep waiting',
+          secondaryLabel: 'Remove from table',
+          primaryDestructive: false,
+          barrierDismissible: false,
+          // Title X should not remove the player.
+          closeResult: true,
         );
         if (!context.mounted) return;
-        if (event.gameEnded && ref.read(gameProvider).gameOver) {
-          context.go(AppRoutes.endGame);
+        // Peer may have returned while the dialog was open.
+        final still =
+            ref.read(peerLinkIssuesProvider)[peer.playerId];
+        if (still == null || !still.awaitingHostDecision) return;
+        final notifier = ref.read(gameProvider.notifier);
+        if (keep == true) {
+          notifier.keepWaitingForPeer(peer.playerId);
+        } else if (keep == false) {
+          notifier.removePeerFromTable(peer.playerId);
         }
       });
     });
@@ -367,9 +403,22 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               Consumer(
                 builder: (context, ref, _) {
                   final link = ref.watch(sessionLinkStatusProvider);
-                  if (link != SessionLinkStatus.reconnecting) {
+                  final peerIssues = ref.watch(peerLinkIssuesProvider);
+                  final showOwnLink = link == SessionLinkStatus.reconnecting ||
+                      link == SessionLinkStatus.lost;
+                  final peerNames = peerIssues.values
+                      .map((i) => i.username)
+                      .toList();
+                  if (!showOwnLink && peerNames.isEmpty) {
                     return const SizedBox.shrink();
                   }
+                  final label = showOwnLink
+                      ? (link == SessionLinkStatus.lost
+                          ? 'Still trying to reach the table…'
+                          : 'Reconnecting to table…')
+                      : (peerNames.length == 1
+                          ? '${peerNames.first} is reconnecting…'
+                          : '${peerNames.length} players reconnecting…');
                   return SafeArea(
                     child: Align(
                       alignment: Alignment.topCenter,
@@ -383,13 +432,36 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                             horizontal: LayoutTokens.gr4,
                             vertical: LayoutTokens.gr2,
                           ),
-                          child: Text(
-                            'Reconnecting to table…',
-                            style: TextStyle(
-                              color: colors.textPrimary,
-                              fontSize: FontTokens.body,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  label,
+                                  style: TextStyle(
+                                    color: colors.textPrimary,
+                                    fontSize: FontTokens.body,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              if (showOwnLink) ...[
+                                SizedBox(width: LayoutTokens.gr3),
+                                TextButton(
+                                  onPressed: () => ref
+                                      .read(gameProvider.notifier)
+                                      .retryHostLink(),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: colors.textPrimary,
+                                    padding: EdgeInsets.zero,
+                                    minimumSize: Size.zero,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  child: const Text('Try again'),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
                       ),
@@ -475,8 +547,6 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
         : (isCompact ? 160.0 : 192.0);
     final playGapSm =
         tightVertical ? LayoutTokens.gr1 : LayoutTokens.gr2;
-    final playGapMd =
-        tightVertical ? LayoutTokens.gr2 : LayoutTokens.gr3;
 
     void adjustLife(int delta) {
       if (delta == 0) return;
@@ -488,13 +558,9 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
         .toList();
     final lobbyConfig = ref.read(lobbyProvider).config;
     final showCommanderHud = lobbyConfig.format.isCommanderStyle;
-    final showCommanderDamage = showCommanderHud &&
-        isCommanderGameSession(
-          local: local,
-          allPlayers: game.players,
-          gameFormat: lobbyConfig.format,
-          startingLife: lobbyConfig.startingLife,
-        );
+    // Always show commander damage in Commander format — even before anyone
+    // has selected a commander card.
+    final showCommanderDamage = showCommanderHud;
     final maxCmdDamage = maxCommanderDamageTrack(
       local,
       opponentsWithCommanders,
@@ -631,24 +697,21 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
                       ),
                     ),
                   );
-                  final dialStrip = Padding(
-                    padding: EdgeInsets.only(bottom: playGapSm),
-                    child: ScopedGameplayDials(
-                      playerId: local.playerId,
-                      compactVertical: dialCompact,
-                      onAdjustCounter: (field, delta) =>
-                          notifier.adjustCounter(local.playerId, field, delta),
-                      onSetCounterAbsolute: (field, v) => notifier
-                          .setGameplayDialAbsolute(local.playerId, field, v),
-                      onRegisterCustomDial: (key, label) => notifier
-                          .registerCustomGameplayDial(
-                              local.playerId, key, label),
-                      onAddDialToStrip: (field) =>
-                          notifier.addGameplayDialToStrip(
-                              local.playerId, field),
-                      onRemoveDialFromStrip: (field) => notifier
-                          .removeGameplayDialFromStrip(local.playerId, field),
-                    ),
+                  final dialStrip = ScopedGameplayDials(
+                    playerId: local.playerId,
+                    compactVertical: dialCompact,
+                    onAdjustCounter: (field, delta) =>
+                        notifier.adjustCounter(local.playerId, field, delta),
+                    onSetCounterAbsolute: (field, v) => notifier
+                        .setGameplayDialAbsolute(local.playerId, field, v),
+                    onRegisterCustomDial: (key, label) => notifier
+                        .registerCustomGameplayDial(
+                            local.playerId, key, label),
+                    onAddDialToStrip: (field) =>
+                        notifier.addGameplayDialToStrip(
+                            local.playerId, field),
+                    onRemoveDialFromStrip: (field) => notifier
+                        .removeGameplayDialFromStrip(local.playerId, field),
                   );
 
                   // Small pinned rows above the life counter: optional variant
@@ -688,30 +751,30 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
                   final turnChromeH = game.phasesEnabled
                       ? PhaseNavCluster.barHeight
                       : EndTurnBar.barHeight;
-                  final comfortableMin = turnChromeH +
-                      playGapMd +
-                      extraRowEstimate + // Card lookup always present
+                  final comfortableMin = extraRowEstimate + // Card lookup always present
                       (variantsEnabled ? extraRowEstimate : 0.0) +
                       (showTurnTimer ? extraRowEstimate : 0.0) +
                       lifeMinFloor +
                       playGapSm +
-                      dialStripH;
+                      dialStripH +
+                      playGapSm +
+                      turnChromeH;
 
                   if (playConstraints.maxHeight >= comfortableMin) {
                     // Normal case (virtually all portrait phones/tablets):
                     // the life counter simply fills whatever space remains
                     // via Expanded — no manual pixel math, and structurally
                     // impossible to overflow here.
+                    // End turn / phases sit under counters for thumb reach.
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        phaseBar,
-                        SizedBox(height: playGapMd),
                         ...extraRows,
                         Expanded(child: lifeCounter),
-                        const LifeGestureHintBanner(),
                         SizedBox(height: playGapSm),
                         dialStrip,
+                        SizedBox(height: playGapSm),
+                        phaseBar,
                       ],
                     );
                   }
@@ -730,13 +793,12 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          phaseBar,
-                          SizedBox(height: playGapMd),
                           ...extraRows,
                           SizedBox(height: lifeMinFloor, child: lifeCounter),
-                          const LifeGestureHintBanner(),
                           SizedBox(height: playGapSm),
                           dialStrip,
+                          SizedBox(height: playGapSm),
+                          phaseBar,
                         ],
                       ),
                     ),

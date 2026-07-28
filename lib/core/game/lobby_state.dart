@@ -21,6 +21,8 @@ class LobbyConfig {
   final GameFormat format;
   final int startingLife;
   final bool alliancesEnabled;
+  /// When true, Table overview can assign team colors mid-game.
+  final bool teamsEnabled;
   final int maxPlayers;
 
   // Gameplay variants (placeholders for future implementation)
@@ -47,6 +49,7 @@ class LobbyConfig {
     this.format = GameFormat.commander,
     this.startingLife = 40,
     this.alliancesEnabled = true,
+    this.teamsEnabled = false,
     this.maxPlayers = GameConstants.maxLobbyPlayers,
     this.planechaseEnabled = false,
     this.archenemyEnabled = false,
@@ -66,6 +69,7 @@ class LobbyConfig {
     GameFormat? format,
     int? startingLife,
     bool? alliancesEnabled,
+    bool? teamsEnabled,
     int? maxPlayers,
     bool? planechaseEnabled,
     bool? archenemyEnabled,
@@ -82,6 +86,7 @@ class LobbyConfig {
         format: format ?? this.format,
         startingLife: startingLife ?? this.startingLife,
         alliancesEnabled: alliancesEnabled ?? this.alliancesEnabled,
+        teamsEnabled: teamsEnabled ?? this.teamsEnabled,
         maxPlayers: maxPlayers ?? this.maxPlayers,
         planechaseEnabled: planechaseEnabled ?? this.planechaseEnabled,
         archenemyEnabled: archenemyEnabled ?? this.archenemyEnabled,
@@ -103,6 +108,7 @@ class LobbyConfig {
         'format': format.name,
         'startingLife': startingLife,
         'alliancesEnabled': alliancesEnabled,
+        'teamsEnabled': teamsEnabled,
         'maxPlayers': maxPlayers,
         'planechaseEnabled': planechaseEnabled,
         'archenemyEnabled': archenemyEnabled,
@@ -122,6 +128,7 @@ class LobbyConfig {
             GameFormat.commander,
         startingLife: (json['startingLife'] as num?)?.toInt() ?? 40,
         alliancesEnabled: json['alliancesEnabled'] as bool? ?? true,
+        teamsEnabled: json['teamsEnabled'] as bool? ?? false,
         maxPlayers: LobbyConfig.clampMaxPlayers(
           (json['maxPlayers'] as num?)?.toInt() ?? GameConstants.maxLobbyPlayers,
         ),
@@ -583,12 +590,13 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
       return;
     }
     if (event.status == BleConnectionStatus.disconnected) {
-      // Emitted only after host reconnect grace expires.
+      // Emitted only after host reconnect grace expires (lobby soft-drop).
       final players =
           state.players.where((p) => p.playerId != event.playerId).toList();
       state = state.copyWith(players: players);
       if (state.isHost) _broadcastLobbyUpdate();
     }
+    // reconnecting: keep seat while they resume.
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────

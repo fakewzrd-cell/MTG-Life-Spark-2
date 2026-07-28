@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mgt_life_spark/core/bluetooth/ble_message.dart';
 import 'package:mgt_life_spark/core/bluetooth/ble_protocol.dart';
+import 'package:mgt_life_spark/core/bluetooth/ble_service.dart';
 import 'package:mgt_life_spark/core/network/session_providers.dart';
 import 'package:mgt_life_spark/core/game/game_providers.dart';
 import 'package:mgt_life_spark/core/game/game_session_events.dart';
@@ -295,25 +296,6 @@ void main() {
       );
     });
 
-    test('rematchPropose bumps rematchProposedProvider', () {
-      final ble = FakeBleService();
-      final container = _container(ble: ble);
-      addTearDown(container.dispose);
-
-      final notifier = container.read(gameProvider.notifier);
-      notifier.setGameStateForTest(_twoPlayerGame(localId: 'alice'));
-
-      notifier.handleSessionMessageForTest(
-        BleMessage(
-          type: BleMessageType.rematchPropose,
-          payload: {'origin': 'host'},
-          seqNum: 1,
-        ),
-      );
-
-      expect(container.read(rematchProposedProvider), 1);
-    });
-
     test('client cannot end turn when not active player', () {
       final ble = FakeBleService();
       final container = _container(ble: ble);
@@ -427,6 +409,175 @@ void main() {
       notifier.concede('carol');
 
       expect(notifier.state.initiativePlayerId, isNull);
+    });
+  });
+
+  group('GameStateNotifier peer reconnect', () {
+    test('host soft-drop does not eliminate; grace expiry awaits decision', () {
+      final ble = FakeBleService();
+      final container = _container(ble: ble);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(gameProvider.notifier);
+      notifier.setGameStateForTest(
+        _twoPlayerGame(localId: 'alice', isHost: true),
+      );
+
+      notifier.handleConnectionEventForTest(const BleConnectionEvent(
+        playerId: 'bob',
+        status: BleConnectionStatus.reconnecting,
+      ));
+
+      expect(notifier.state.playerById('bob')!.isEliminated, isFalse);
+      expect(
+        container.read(peerLinkIssuesProvider)['bob']?.awaitingHostDecision,
+        isFalse,
+      );
+
+      final tickBefore = container.read(peerReconnectDecisionTickProvider);
+      notifier.handleConnectionEventForTest(const BleConnectionEvent(
+        playerId: 'bob',
+        status: BleConnectionStatus.disconnected,
+      ));
+
+      expect(notifier.state.playerById('bob')!.isEliminated, isFalse);
+      expect(
+        container.read(peerLinkIssuesProvider)['bob']?.awaitingHostDecision,
+        isTrue,
+      );
+      expect(container.read(peerReconnectDecisionTickProvider), tickBefore + 1);
+    });
+
+    test('host remove eliminates and syncs via playerDisconnected only', () {
+      final ble = FakeBleService();
+      final container = _container(ble: ble);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(gameProvider.notifier);
+      notifier.setGameStateForTest(
+        _twoPlayerGame(localId: 'alice', isHost: true),
+      );
+
+      notifier.handleConnectionEventForTest(const BleConnectionEvent(
+        playerId: 'bob',
+        status: BleConnectionStatus.disconnected,
+      ));
+      notifier.removePeerFromTable('bob');
+
+      expect(notifier.state.playerById('bob')!.isEliminated, isTrue);
+      expect(container.read(peerLinkIssuesProvider).containsKey('bob'), isFalse);
+      expect(
+        ble.sentMessages.where((m) => m.type == BleMessageType.playerDisconnected),
+        hasLength(1),
+      );
+      expect(
+        ble.sentMessages.any((m) => m.type == BleMessageType.playerEliminated),
+        isFalse,
+      );
+      expect(container.read(playerLeftUiEventProvider)?.username, 'bob');
+    });
+
+    test('host remove is a no-op if peer already reconnected', () {
+      final ble = FakeBleService()..connectedIds = ['bob'];
+      final container = _container(ble: ble);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(gameProvider.notifier);
+      notifier.setGameStateForTest(
+        _twoPlayerGame(localId: 'alice', isHost: true),
+      );
+      container.read(peerLinkIssuesProvider.notifier).state = {
+        'bob': const PeerLinkIssue(
+          playerId: 'bob',
+          username: 'bob',
+          awaitingHostDecision: true,
+        ),
+      };
+
+      notifier.removePeerFromTable('bob');
+
+      expect(notifier.state.playerById('bob')!.isEliminated, isFalse);
+      expect(ble.sentMessages, isEmpty);
+      expect(container.read(peerLinkIssuesProvider).containsKey('bob'), isFalse);
+    });
+
+    test('clients mark peer reconnecting from message and clear on done', () {
+      final ble = FakeBleService();
+      final container = _container(ble: ble);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(gameProvider.notifier);
+      notifier.setGameStateForTest(
+        _twoPlayerGame(localId: 'alice', isHost: false),
+      );
+
+      notifier.handleSessionMessageForTest(
+        BleMessage(
+          type: BleMessageType.playerReconnecting,
+          payload: {'pid': 'bob'},
+          seqNum: 1,
+        ),
+      );
+      expect(
+        container.read(peerLinkIssuesProvider)['bob']?.awaitingHostDecision,
+        isFalse,
+      );
+
+      notifier.handleSessionMessageForTest(
+        BleMessage(
+          type: BleMessageType.playerReconnecting,
+          payload: {'pid': 'bob', 'done': true},
+          seqNum: 2,
+        ),
+      );
+      expect(container.read(peerLinkIssuesProvider).containsKey('bob'), isFalse);
+    });
+
+    test('client playerDisconnected eliminates and fires leave UI', () {
+      final ble = FakeBleService();
+      final container = _container(ble: ble);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(gameProvider.notifier);
+      notifier.setGameStateForTest(
+        _twoPlayerGame(localId: 'alice', isHost: false),
+      );
+
+      notifier.handleSessionMessageForTest(
+        BleMessage(
+          type: BleMessageType.playerDisconnected,
+          payload: {'pid': 'bob'},
+          seqNum: 1,
+        ),
+      );
+
+      expect(notifier.state.playerById('bob')!.isEliminated, isTrue);
+      expect(container.read(playerLeftUiEventProvider)?.username, 'bob');
+    });
+
+    test('reconnectRequest on host pushes targeted snapshot', () {
+      final ble = FakeBleService();
+      final container = _container(ble: ble);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(gameProvider.notifier);
+      notifier.setGameStateForTest(
+        _twoPlayerGame(localId: 'alice', isHost: true),
+      );
+
+      notifier.handleSessionMessageForTest(
+        BleMessage(
+          type: BleMessageType.reconnectRequest,
+          payload: {'pid': 'bob', 'username': 'bob'},
+          seqNum: 1,
+        ),
+      );
+
+      final snap = ble.sentMessages
+          .where((m) => m.type == BleMessageType.stateSnapshot)
+          .toList();
+      expect(snap, hasLength(1));
+      expect(ble.lastTargetPlayerId, 'bob');
     });
   });
 }

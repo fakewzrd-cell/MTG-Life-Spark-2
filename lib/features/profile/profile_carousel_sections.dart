@@ -523,39 +523,117 @@ String _recentMatchPlayerInitials(String name) {
   return t.length >= 2 ? t.substring(0, 2).toUpperCase() : t.toUpperCase();
 }
 
-Widget _recentMatchDetailRow(
-  BuildContext context,
-  AppColorTokens colors,
-  String label,
-  String value, {
-  bool compact = false,
-}) {
-  final labelStyle = Theme.of(context).textTheme.labelMedium?.copyWith(
-    color: colors.textSecondary,
-    fontWeight: FontWeight.w700,
-    letterSpacing: 0.2,
-    fontSize: compact ? FontTokens.caption : null,
-  );
-  final valueStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
-    color: colors.textPrimary,
-    fontWeight: FontWeight.w600,
-    fontSize: compact ? FontTokens.sm : null,
-    height: compact ? 1.25 : null,
-  );
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Text(label, style: labelStyle, maxLines: 1, overflow: TextOverflow.ellipsis),
-      SizedBox(height: compact ? LayoutTokens.gr0 : LayoutTokens.gr1),
-      Text(
-        value,
-        style: valueStyle,
-        maxLines: compact ? 2 : 3,
-        overflow: TextOverflow.ellipsis,
-      ),
-    ],
-  );
+/// One standings row: avatar + name (ellipsis) + fixed life column.
+class _RecentMatchStandingRow extends StatelessWidget {
+  const _RecentMatchStandingRow({
+    required this.participant,
+    required this.colors,
+    this.imageUrl,
+  });
+
+  final MatchParticipantSnapshot participant;
+  final AppColorTokens colors;
+  final String? imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = participant;
+    final title = (p.commanderName != null && p.commanderName!.trim().isNotEmpty)
+        ? p.commanderName!.trim()
+        : p.username;
+    final showUsernameSubtitle =
+        p.commanderName != null &&
+        p.commanderName!.trim().isNotEmpty &&
+        p.username.trim().isNotEmpty &&
+        p.username.trim().toLowerCase() != p.commanderName!.trim().toLowerCase();
+    final initials = _recentMatchPlayerInitials(title);
+    final lifeLabel = p.finalLife != null ? '${p.finalLife}' : '—';
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        CircleAvatar(
+          radius: 14,
+          backgroundColor: colors.primaryAccent.withValues(alpha: 0.28),
+          backgroundImage: imageUrl != null && imageUrl!.isNotEmpty
+              ? CachedNetworkImageProvider(imageUrl!)
+              : null,
+          child: imageUrl == null || imageUrl!.isEmpty
+              ? Text(
+                  initials,
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    color: colors.textPrimary,
+                  ),
+                )
+              : null,
+        ),
+        SizedBox(width: LayoutTokens.gr2),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  if (p.isWinner) ...[
+                    GameIcon.monarch(
+                      size: 13,
+                      color: colors.emphasis,
+                    ),
+                    const SizedBox(width: 4),
+                  ],
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        color: colors.textPrimary,
+                        fontSize: FontTokens.hudSm,
+                        fontWeight:
+                            p.isWinner ? FontWeight.w700 : FontWeight.w600,
+                        height: 1.2,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              if (showUsernameSubtitle)
+                Text(
+                  p.username,
+                  style: TextStyle(
+                    color: colors.textSecondary,
+                    fontSize: FontTokens.caption,
+                    fontWeight: FontWeight.w500,
+                    height: 1.2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+            ],
+          ),
+        ),
+        SizedBox(width: LayoutTokens.gr1),
+        SizedBox(
+          width: 44,
+          child: Text(
+            lifeLabel,
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              color: p.isWinner ? colors.emphasis : colors.textPrimary,
+              fontSize: FontTokens.hudSm,
+              fontWeight: FontWeight.w700,
+              fontFeatures: const [FontFeature.tabularFigures()],
+              height: 1.2,
+            ),
+            maxLines: 1,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class ProfileRecentGamesModule extends StatefulWidget {
@@ -814,6 +892,22 @@ bool _participantSnapshotIsLocal(
   return p.playerId == 'local';
 }
 
+List<PlayerDeck> _decksOrEmpty(WidgetRef ref) {
+  try {
+    return ref.read(deckRepositoryProvider).getAll();
+  } catch (_) {
+    return const [];
+  }
+}
+
+PlayerDeck? _deckByIdOrNull(WidgetRef ref, String id) {
+  try {
+    return ref.read(deckRepositoryProvider).getById(id);
+  } catch (_) {
+    return null;
+  }
+}
+
 /// Commander art for recent-game tiles: snapshot URL, then saved deck lookup.
 String? _resolveCommanderImageForRecentCard(
   WidgetRef ref,
@@ -828,8 +922,7 @@ String? _resolveCommanderImageForRecentCard(
 
   final commander = participant.commanderName?.trim();
   if (commander != null && commander.isNotEmpty) {
-    final decks = ref.read(deckRepositoryProvider).getAll();
-    for (final d in decks) {
+    for (final d in _decksOrEmpty(ref)) {
       if (d.commanderName.toLowerCase() == commander.toLowerCase()) {
         final url = d.commanderImageUrl?.trim();
         if (url != null && url.isNotEmpty) return url;
@@ -840,8 +933,7 @@ String? _resolveCommanderImageForRecentCard(
   if (_participantSnapshotIsLocal(participant, profile)) {
     final deckId = match.localDeckIdSnapshot?.trim();
     if (deckId != null && deckId.isNotEmpty) {
-      final deck = ref.read(deckRepositoryProvider).getById(deckId);
-      final url = deck?.commanderImageUrl?.trim();
+      final url = _deckByIdOrNull(ref, deckId)?.commanderImageUrl?.trim();
       if (url != null && url.isNotEmpty) return url;
     }
     final selected = profile?.selectedCommanderImageUrl?.trim();
@@ -876,7 +968,6 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final m = widget.match;
     final colors = widget.colors;
     final fmt = DateFormat('MMM d, y');
@@ -1029,139 +1120,68 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
     }
 
     Widget detailsColumn(double maxHeight) {
-      final metaBlocks = <Widget>[
-        _recentMatchDetailRow(
-          context,
-          colors,
-          'Duration',
-          _formatDurationSeconds(secs),
-          compact: true,
-        ),
-        if (m.podNameSnapshot != null && m.podNameSnapshot!.isNotEmpty)
-          _recentMatchDetailRow(
-            context,
-            colors,
-            'Pod',
-            m.podNameSnapshot!,
-            compact: true,
-          ),
-        if (m.localDeckIdSnapshot != null &&
-            m.localDeckIdSnapshot!.isNotEmpty)
-          _recentMatchDetailRow(
-            context,
-            colors,
-            'Deck',
-            ref
-                    .read(deckRepositoryProvider)
-                    .getById(m.localDeckIdSnapshot!)
-                    ?.displayName ??
-                m.localDeckIdSnapshot!,
-            compact: true,
-          ),
+      final durationLabel = _formatDurationSeconds(secs);
+      final deckName = (m.localDeckIdSnapshot != null &&
+              m.localDeckIdSnapshot!.isNotEmpty)
+          ? (_deckByIdOrNull(ref, m.localDeckIdSnapshot!)?.displayName ??
+              m.localDeckIdSnapshot!)
+          : null;
+      final podName =
+          (m.podNameSnapshot != null && m.podNameSnapshot!.isNotEmpty)
+              ? m.podNameSnapshot
+              : null;
+
+      final metaStripStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: colors.textSecondary,
+            fontWeight: FontWeight.w600,
+            fontSize: FontTokens.caption,
+            height: 1.35,
+          );
+      final metaExtraStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: colors.textSecondary.withValues(alpha: 0.9),
+            fontWeight: FontWeight.w500,
+            fontSize: FontTokens.caption,
+            height: 1.3,
+          );
+
+      final metaBits = <String>[durationLabel, playerLine];
+      final metaExtras = <String>[
+        if (podName != null) podName,
+        if (deckName != null) deckName,
       ];
 
-      Widget? playersBlock;
+      Widget? standingsBlock;
       if (participants.isNotEmpty) {
-        playersBlock = Column(
+        final ordered = _participantsByPlacement(participants);
+        standingsBlock = Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Players',
+              'Standings',
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: colors.textSecondary,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.2,
-                fontSize: FontTokens.caption,
-              ),
+                    color: colors.textSecondary,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.2,
+                    fontSize: FontTokens.caption,
+                  ),
             ),
-            SizedBox(height: LayoutTokens.gr0),
-            Wrap(
-              spacing: LayoutTokens.gr1,
-              runSpacing: LayoutTokens.gr1,
-              children: _participantsByPlacement(participants).map((p) {
-                final chipImageUrl = _resolveCommanderImageForRecentCard(
+            SizedBox(height: LayoutTokens.gr1),
+            for (var i = 0; i < ordered.length; i++) ...[
+              if (i > 0) SizedBox(height: LayoutTokens.gr1),
+              _RecentMatchStandingRow(
+                participant: ordered[i],
+                colors: colors,
+                imageUrl: _resolveCommanderImageForRecentCard(
                   ref,
-                  p,
+                  ordered[i],
                   m,
                   profile,
-                );
-                final chipInitials = _recentMatchPlayerInitials(
-                  (p.commanderName != null &&
-                          p.commanderName!.trim().isNotEmpty)
-                      ? p.commanderName!
-                      : p.username,
-                );
-                return Chip(
-                  visualDensity: VisualDensity.compact,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  padding: const EdgeInsets.symmetric(horizontal: 2),
-                  labelPadding: const EdgeInsets.only(left: 2, right: 4),
-                  avatar: CircleAvatar(
-                    radius: 10,
-                    backgroundColor: colors.primaryAccent.withValues(
-                      alpha: 0.28,
-                    ),
-                    backgroundImage:
-                        chipImageUrl != null && chipImageUrl.isNotEmpty
-                            ? CachedNetworkImageProvider(chipImageUrl)
-                            : null,
-                    child: chipImageUrl == null || chipImageUrl.isEmpty
-                        ? Text(
-                            chipInitials,
-                            style: TextStyle(
-                              fontSize: 7,
-                              fontWeight: FontWeight.w600,
-                              color: colors.textPrimary,
-                            ),
-                          )
-                        : null,
-                  ),
-                  label: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (p.isWinner) ...[
-                        GameIcon.monarch(
-                          size: 12,
-                          color: colors.emphasis,
-                        ),
-                        const SizedBox(width: 4),
-                      ],
-                      Flexible(
-                        child: Text(
-                          '${p.commanderName ?? p.username}'
-                          '${p.finalLife != null ? ' · ${p.finalLife} life' : ''}',
-                          style: TextStyle(
-                            color: colors.textPrimary,
-                            fontSize: FontTokens.hudXs,
-                            fontWeight:
-                                p.isWinner ? FontWeight.w700 : FontWeight.w500,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  backgroundColor: scheme.surfaceContainerLow,
-                  side: BorderSide.none,
-                );
-              }).toList(),
-            ),
+                ),
+              ),
+            ],
           ],
         );
-      }
-
-      final bodyChildren = <Widget>[];
-      for (var i = 0; i < metaBlocks.length; i++) {
-        if (i > 0) bodyChildren.add(SizedBox(height: LayoutTokens.gr2));
-        bodyChildren.add(metaBlocks[i]);
-      }
-      if (playersBlock != null) {
-        if (bodyChildren.isNotEmpty) {
-          bodyChildren.add(SizedBox(height: LayoutTokens.gr2));
-        }
-        bodyChildren.add(playersBlock);
       }
 
       return SizedBox(
@@ -1200,6 +1220,22 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
               overflow: TextOverflow.ellipsis,
             ),
             SizedBox(height: LayoutTokens.gr1),
+            Text(
+              metaBits.join(' · '),
+              style: metaStripStyle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            if (metaExtras.isNotEmpty) ...[
+              SizedBox(height: LayoutTokens.gr0),
+              Text(
+                metaExtras.join(' · '),
+                style: metaExtraStyle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+            SizedBox(height: LayoutTokens.gr1),
             Divider(
               height: 1,
               thickness: 1,
@@ -1208,10 +1244,11 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
             SizedBox(height: LayoutTokens.gr2),
             Expanded(
               child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: bodyChildren,
-                ),
+                child: standingsBlock ??
+                    Text(
+                      'No player details saved for this match.',
+                      style: metaStripStyle,
+                    ),
               ),
             ),
           ],

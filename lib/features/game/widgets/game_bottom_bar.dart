@@ -88,26 +88,25 @@ class GameBottomBar extends ConsumerWidget {
                   ),
                 ),
               ),
-              if (game.isHost)
-                Expanded(
-                  child: Center(
-                    child: _GameBarButton(
-                      icon: game.timeoutActive
-                          ? Icons.timer_off_outlined
-                          : Icons.timer,
-                      label: game.timeoutActive ? 'End' : 'Timeout',
-                      iconSize: iconSize,
-                      compact: compact,
-                      onTap: () {
-                        if (game.timeoutActive) {
-                          notifier.endTimeout();
-                        } else {
-                          _showTimeoutPicker(context, notifier);
-                        }
-                      },
-                    ),
+              Expanded(
+                child: Center(
+                  child: _GameBarButton(
+                    icon: game.timeoutActive
+                        ? Icons.timer_off_outlined
+                        : Icons.timer,
+                    label: game.timeoutActive ? 'End' : 'Timeout',
+                    iconSize: iconSize,
+                    compact: compact,
+                    onTap: () {
+                      if (game.timeoutActive) {
+                        notifier.endTimeout();
+                      } else {
+                        _showTimeoutPicker(context, notifier);
+                      }
+                    },
                   ),
                 ),
+              ),
               Expanded(
                 child: Center(
                   child: _GameBarButton(
@@ -259,10 +258,8 @@ Future<void> _showPostForfeitFollowUp(
 
   if (leave != true || !context.mounted) return;
   await recordLocalConcedeBeforeExit(ref);
+  if (context.mounted) context.go(AppRoutes.home);
   await quitActiveGame(ref);
-  if (context.mounted) {
-    context.go(AppRoutes.home);
-  }
 }
 
 // ── Concede Dialog (with feedback) ───────────────────────────────────────────
@@ -285,17 +282,13 @@ class _GameConcedeDialog extends StatefulWidget {
 class _GameConcedeDialogState extends State<_GameConcedeDialog> {
   final Set<String> _likePlayerIds = {};
   final Set<String> _dislikePlayerIds = {};
-  String? _mvpPlayerId;
-  String? _teamPlayerId;
-  String? _underdogPlayerId;
+  String? _starPlayerId;
 
   void _submit(WidgetRef ref) {
     final pending = PendingFeedbackData(
       likePlayerIds: _likePlayerIds.toList(),
       dislikePlayerIds: _dislikePlayerIds.toList(),
-      mvpPlayerId: _mvpPlayerId,
-      teamPlayerId: _teamPlayerId,
-      underdogPlayerId: _underdogPlayerId,
+      starPlayerId: _starPlayerId,
     );
     ref.read(pendingFeedbackProvider.notifier).state =
         pending.hasContent ? pending : null;
@@ -399,14 +392,8 @@ class _GameConcedeDialogState extends State<_GameConcedeDialog> {
                           },
                         );
                       }),
-                      mvpPlayerId: _mvpPlayerId,
-                      teamPlayerId: _teamPlayerId,
-                      underdogPlayerId: _underdogPlayerId,
-                      onMvpChanged: (id) => setState(() => _mvpPlayerId = id),
-                      onTeamPlayerChanged: (id) =>
-                          setState(() => _teamPlayerId = id),
-                      onUnderdogChanged: (id) =>
-                          setState(() => _underdogPlayerId = id),
+                      starPlayerId: _starPlayerId,
+                      onStarChanged: (id) => setState(() => _starPlayerId = id),
                     ),
                   ],
                 ],

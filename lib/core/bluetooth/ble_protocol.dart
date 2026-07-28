@@ -47,13 +47,19 @@ enum BleMessageType {
   firstPlayerRollSubmit,
   firstPlayerTurnOrder,
 
+  /// Host mid-game / table seat turn-order edit (preserves whose turn).
+  turnOrderUpdate,
+
   // Player events
   concede,
   playerEliminated,
   playerDisconnected,
+
+  /// Soft drop / resume signal. Payload: `pid`, optional `done: true` when back.
+  playerReconnecting,
   reconnectRequest,
 
-  // Rematch
+  // Rematch (legacy wire types — unused in app UI; kept for older clients)
   rematchPropose,
   rematchRespond,
   rematchConfirm,
@@ -67,6 +73,6 @@ enum BleMessageType {
   // Stack tracker
   stackUpdate,
 
-  /// End-game likes / MVP / Team / Underdog ballot (LAN sync).
+  /// End-game likes / Star of the game ballot (LAN sync).
   matchFeedback,
 }

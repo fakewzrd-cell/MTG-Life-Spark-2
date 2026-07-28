@@ -219,9 +219,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       final game = ref.read(gameProvider);
 
       if (path == AppRoutes.endGame) {
+        // Stale /end-game after session clear → home. Leave navigates to home
+        // before reset; this is a safety net.
         if (!game.gameOver) {
-          if (game.localPlayer != null) return AppRoutes.game;
-          return AppRoutes.lobby;
+          return AppRoutes.home;
         }
       }
 

@@ -64,11 +64,14 @@ class PlayerProfile extends HiveObject {
   int dislikesReceived;
 
   @HiveField(19)
-  int honorsMvpReceived;
+  /// Stars of the game received (Hive field 19 was formerly MVP count).
+  int honorsStarReceived;
 
+  /// Legacy Hive field — no longer shown; retained for storage compatibility.
   @HiveField(20)
   int honorsTeamPlayerReceived;
 
+  /// Legacy Hive field — no longer shown; retained for storage compatibility.
   @HiveField(21)
   int honorsUnderdogReceived;
 
@@ -100,7 +103,7 @@ class PlayerProfile extends HiveObject {
     this.profileAvatarImageUrl,
     this.likesReceived = 0,
     this.dislikesReceived = 0,
-    this.honorsMvpReceived = 0,
+    this.honorsStarReceived = 0,
     this.honorsTeamPlayerReceived = 0,
     this.honorsUnderdogReceived = 0,
     this.profileBannerImageUrl,

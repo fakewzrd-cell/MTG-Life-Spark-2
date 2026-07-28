@@ -6,6 +6,7 @@ import '../../../ui/tokens/motion_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
 import 'game_colors.dart';
+import 'game_ui_tokens.dart';
 
 /// Shared dialog and bottom-sheet chrome for in-game modals.
 abstract final class GameModalChrome {
@@ -301,6 +302,8 @@ Future<bool?> showGameChoiceDialog({
   String? secondaryLabel,
   bool primaryDestructive = false,
   bool barrierDismissible = true,
+  /// Result when the title close control is tapped (default: secondary/`false`).
+  bool? closeResult = false,
 }) {
   return showDialog<bool>(
     context: context,
@@ -315,24 +318,44 @@ Future<bool?> showGameChoiceDialog({
         ),
         title: GameDialogTitleRow(
           title: title,
-          onClose: () => Navigator.pop(ctx, false),
+          onClose: () => Navigator.pop(ctx, closeResult),
         ),
         content: content,
+        actionsPadding: EdgeInsets.zero,
         actions: [
-          if (secondaryLabel != null)
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(
-                secondaryLabel,
-                style: TextStyle(color: colors.textSecondary),
-              ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              LayoutTokens.gr3,
+              LayoutTokens.gr2,
+              LayoutTokens.gr3,
+              LayoutTokens.gr3,
             ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: primaryDestructive
-                ? FilledButton.styleFrom(backgroundColor: colors.error)
-                : FilledButton.styleFrom(backgroundColor: colors.primaryAccent),
-            child: Text(primaryLabel),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FilledButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  style: primaryDestructive
+                      ? GameUiTokens.destructiveFilledButton(colors)
+                      : GameUiTokens.sheetPrimaryButton(colors.primaryAccent),
+                  child: Text(primaryLabel),
+                ),
+                if (secondaryLabel != null) ...[
+                  SizedBox(height: LayoutTokens.gr2),
+                  FilledButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    style: FilledButton.styleFrom(
+                      minimumSize:
+                          const Size(0, LayoutTokens.minTapTarget),
+                      backgroundColor: colors.backgroundSecondary,
+                      foregroundColor: colors.textPrimary,
+                    ),
+                    child: Text(secondaryLabel),
+                  ),
+                ],
+              ],
+            ),
           ),
         ],
       );

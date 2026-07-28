@@ -2,24 +2,18 @@
 class PendingFeedbackData {
   final List<String> likePlayerIds;
   final List<String> dislikePlayerIds;
-  final String? mvpPlayerId;
-  final String? teamPlayerId;
-  final String? underdogPlayerId;
+  final String? starPlayerId;
 
   const PendingFeedbackData({
     this.likePlayerIds = const [],
     this.dislikePlayerIds = const [],
-    this.mvpPlayerId,
-    this.teamPlayerId,
-    this.underdogPlayerId,
+    this.starPlayerId,
   });
 
   bool get hasContent =>
       likePlayerIds.isNotEmpty ||
       dislikePlayerIds.isNotEmpty ||
-      mvpPlayerId != null ||
-      teamPlayerId != null ||
-      underdogPlayerId != null;
+      starPlayerId != null;
 }
 
 /// Feedback given by a player after a game ends.
@@ -28,18 +22,16 @@ class GameFeedback {
   final String voterPlayerId;
   final List<String> likePlayerIds;
   final List<String> dislikePlayerIds;
-  final String? mvpPlayerId;
-  final String? teamPlayerId;
-  final String? underdogPlayerId;
+
+  /// Optional single honor: Star of the game.
+  final String? starPlayerId;
 
   const GameFeedback({
     required this.matchId,
     required this.voterPlayerId,
     this.likePlayerIds = const [],
     this.dislikePlayerIds = const [],
-    this.mvpPlayerId,
-    this.teamPlayerId,
-    this.underdogPlayerId,
+    this.starPlayerId,
   });
 
   Map<String, dynamic> toJson() => {
@@ -47,24 +39,25 @@ class GameFeedback {
         'voterPlayerId': voterPlayerId,
         'likePlayerIds': likePlayerIds,
         'dislikePlayerIds': dislikePlayerIds,
-        'mvpPlayerId': mvpPlayerId,
-        'teamPlayerId': teamPlayerId,
-        'underdogPlayerId': underdogPlayerId,
+        'starPlayerId': starPlayerId,
       };
 
-  factory GameFeedback.fromJson(Map<String, dynamic> json) => GameFeedback(
-        matchId: json['matchId'] as String,
-        voterPlayerId: json['voterPlayerId'] as String,
-        likePlayerIds: (json['likePlayerIds'] as List<dynamic>?)
-                ?.map((e) => e as String)
-                .toList() ??
-            [],
-        dislikePlayerIds: (json['dislikePlayerIds'] as List<dynamic>?)
-                ?.map((e) => e as String)
-                .toList() ??
-            [],
-        mvpPlayerId: json['mvpPlayerId'] as String?,
-        teamPlayerId: json['teamPlayerId'] as String?,
-        underdogPlayerId: json['underdogPlayerId'] as String?,
-      );
+  factory GameFeedback.fromJson(Map<String, dynamic> json) {
+    // Legacy ballots used mvpPlayerId; fold into star.
+    final star = json['starPlayerId'] as String? ??
+        json['mvpPlayerId'] as String?;
+    return GameFeedback(
+      matchId: json['matchId'] as String,
+      voterPlayerId: json['voterPlayerId'] as String,
+      likePlayerIds: (json['likePlayerIds'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
+      dislikePlayerIds: (json['dislikePlayerIds'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
+      starPlayerId: star,
+    );
+  }
 }

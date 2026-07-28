@@ -28,6 +28,9 @@ class WsHostService implements BleService {
   /// playerId → grace timer before announcing a real disconnect.
   final Map<String, Timer> _reconnectGrace = {};
 
+  /// Seats currently soft-dropped (grace or awaiting host decision).
+  final Set<String> _softDropped = {};
+
   HttpServer? _server;
   int _seqNum = 0;
   int _nextClientId = 0;
@@ -87,6 +90,7 @@ class WsHostService implements BleService {
       t.cancel();
     }
     _reconnectGrace.clear();
+    _softDropped.clear();
     await _server?.close(force: true);
     _server = null;
     final openSockets = List<WebSocket>.from(_sockets.values);
@@ -178,7 +182,8 @@ class WsHostService implements BleService {
       final playerId = message.payload['pid'] as String? ?? '';
       if (playerId.isEmpty) return;
       _bindVerifiedClient(clientKey, playerId);
-      // Do not forward as lobby join — game/lobby layers just need the socket.
+      // Forward so the game layer can push a fresh snapshot to this seat.
+      _messageController.add(message);
       return;
     }
 
@@ -245,12 +250,23 @@ class WsHostService implements BleService {
       }
     }
 
+    final wasSoftDropped = _softDropped.remove(playerId);
     _reconnectGrace.remove(playerId)?.cancel();
     _verified[clientKey] = playerId;
     _connectionController.add(BleConnectionEvent(
       playerId: playerId,
       status: BleConnectionStatus.connected,
     ));
+    if (wasSoftDropped) {
+      _broadcastExcept(
+        BleMessage(
+          type: BleMessageType.playerReconnecting,
+          payload: {'pid': playerId, 'done': true},
+          seqNum: _nextSeq(),
+        ),
+        excludeKey: clientKey,
+      );
+    }
   }
 
   void _onDisconnect(String clientKey) {
@@ -259,26 +275,66 @@ class WsHostService implements BleService {
     if (playerId == null) return;
 
     // Already waiting on this player — keep the existing grace window.
-    if (_reconnectGrace.containsKey(playerId)) return;
+    if (_reconnectGrace.containsKey(playerId)) {
+      _softDropped.add(playerId);
+      return;
+    }
 
-    // Soft drop: wait for Texts/app-switch resume before announcing leave.
+    // Soft drop: announce reconnecting; host decides after grace (no auto-kick).
+    _softDropped.add(playerId);
+    _connectionController.add(BleConnectionEvent(
+      playerId: playerId,
+      status: BleConnectionStatus.reconnecting,
+    ));
+    _broadcastExcept(
+      BleMessage(
+        type: BleMessageType.playerReconnecting,
+        payload: {'pid': playerId},
+        seqNum: _nextSeq(),
+      ),
+      excludeKey: clientKey,
+    );
+    _startReconnectGrace(playerId);
+  }
+
+  void _startReconnectGrace(String playerId) {
+    _reconnectGrace.remove(playerId)?.cancel();
     _reconnectGrace[playerId] = Timer(kSessionReconnectGrace, () {
       _reconnectGrace.remove(playerId);
       // Player already re-bound on another socket.
       if (_verified.containsValue(playerId)) return;
+      // Grace expired — UI asks host Keep waiting / Remove (no auto-eliminate).
       _connectionController.add(BleConnectionEvent(
         playerId: playerId,
         status: BleConnectionStatus.disconnected,
       ));
-      _broadcastExcept(
-        BleMessage(
-          type: BleMessageType.playerDisconnected,
-          payload: {'pid': playerId},
-          seqNum: _nextSeq(),
-        ),
-        excludeKey: clientKey,
-      );
     });
+  }
+
+  /// Host chose "Keep waiting" — restart the soft-drop grace window.
+  void extendReconnectGrace(String playerId) {
+    if (playerId.isEmpty) return;
+    if (_verified.containsValue(playerId)) return;
+    _softDropped.add(playerId);
+    _connectionController.add(BleConnectionEvent(
+      playerId: playerId,
+      status: BleConnectionStatus.reconnecting,
+    ));
+    _broadcastExcept(
+      BleMessage(
+        type: BleMessageType.playerReconnecting,
+        payload: {'pid': playerId},
+        seqNum: _nextSeq(),
+      ),
+      excludeKey: '',
+    );
+    _startReconnectGrace(playerId);
+  }
+
+  /// Host removed the seat (or lobby dropped them) — stop waiting.
+  void cancelReconnectGrace(String playerId) {
+    _reconnectGrace.remove(playerId)?.cancel();
+    _softDropped.remove(playerId);
   }
 
   // ── Sending ───────────────────────────────────────────────────────────────
@@ -313,7 +369,8 @@ class WsHostService implements BleService {
       {required String excludeKey}) {
     final encoded = jsonEncode(message.toJson());
     for (final entry in _sockets.entries) {
-      if (entry.key != excludeKey) _trySend(entry.value, encoded);
+      if (excludeKey.isNotEmpty && entry.key == excludeKey) continue;
+      _trySend(entry.value, encoded);
     }
   }
 

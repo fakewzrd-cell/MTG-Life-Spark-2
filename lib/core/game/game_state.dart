@@ -33,6 +33,8 @@ class GameState {
   final List<AllianceProposal> pendingProposals;
   final List<AllianceProposal> scheduledProposals;
   final bool alliancesEnabled;
+  /// Lobby toggle — when false, Table hides team assign / team chrome.
+  final bool teamsEnabled;
 
   // Game result
   final bool gameOver;
@@ -103,6 +105,7 @@ class GameState {
     this.pendingProposals = const [],
     this.scheduledProposals = const [],
     this.alliancesEnabled = true,
+    this.teamsEnabled = false,
     this.gameOver = false,
     this.winnerPlayerId,
     this.isHost = false,
@@ -154,6 +157,7 @@ class GameState {
     List<AllianceProposal>? pendingProposals,
     List<AllianceProposal>? scheduledProposals,
     bool? alliancesEnabled,
+    bool? teamsEnabled,
     bool? gameOver,
     Object? winnerPlayerId = _sentinel,
     bool? isHost,
@@ -210,6 +214,7 @@ class GameState {
       pendingProposals: pendingProposals ?? this.pendingProposals,
       scheduledProposals: scheduledProposals ?? this.scheduledProposals,
       alliancesEnabled: alliancesEnabled ?? this.alliancesEnabled,
+      teamsEnabled: teamsEnabled ?? this.teamsEnabled,
       gameOver: gameOver ?? this.gameOver,
       winnerPlayerId: identical(winnerPlayerId, _sentinel)
           ? this.winnerPlayerId
@@ -262,6 +267,71 @@ class GameState {
   }
 
   bool get isLocalPlayersTurn => activePlayerId == localPlayerId;
+
+  /// Players sorted by [turnOrder], with any missing IDs appended.
+  List<PlayerGameState> get playersInTurnOrder {
+    if (players.isEmpty) return const [];
+    if (turnOrder.isEmpty) return List<PlayerGameState>.from(players);
+
+    final byId = {for (final p in players) p.playerId: p};
+    final ordered = <PlayerGameState>[];
+    final seen = <String>{};
+    for (final id in turnOrder) {
+      final p = byId[id];
+      if (p == null || !seen.add(id)) continue;
+      ordered.add(p);
+    }
+    for (final p in players) {
+      if (seen.add(p.playerId)) ordered.add(p);
+    }
+    return ordered;
+  }
+
+  /// [playersInTurnOrder] rotated so [startPlayerId] is first (when present).
+  List<PlayerGameState> playersInTurnOrderFrom(String? startPlayerId) {
+    final ordered = playersInTurnOrder;
+    if (ordered.isEmpty || startPlayerId == null || startPlayerId.isEmpty) {
+      return ordered;
+    }
+    final i = ordered.indexWhere((p) => p.playerId == startPlayerId);
+    if (i <= 0) return ordered;
+    return [...ordered.sublist(i), ...ordered.sublist(0, i)];
+  }
+
+  /// Clusters teammates together without jumping a whole team to the front.
+  ///
+  /// Walks [currentOrder]; unassigned players stay put. When a teamed player
+  /// is reached, all of that team's members are emitted in their existing
+  /// relative order (at the position of the first teammate encountered).
+  static List<String> groupTurnOrderByTeams(
+    List<String> currentOrder,
+    Map<String, int> teamAssignments,
+  ) {
+    if (currentOrder.isEmpty) return const [];
+    final hasTeams = teamAssignments.values.any((t) => t > 0);
+    if (!hasTeams) return List<String>.from(currentOrder);
+
+    int teamOf(String id) => teamAssignments[id] ?? 0;
+
+    final result = <String>[];
+    final used = <String>{};
+    for (final id in currentOrder) {
+      if (used.contains(id)) continue;
+      final t = teamOf(id);
+      if (t == 0) {
+        result.add(id);
+        used.add(id);
+        continue;
+      }
+      for (final other in currentOrder) {
+        if (used.contains(other)) continue;
+        if (teamOf(other) != t) continue;
+        result.add(other);
+        used.add(other);
+      }
+    }
+    return result;
+  }
 
   PlayerGameState? get localPlayer {
     for (final p in players) {
@@ -334,6 +404,7 @@ class GameState {
         'scheduledProposals':
             scheduledProposals.map((p) => p.toJson()).toList(),
         'alliancesEnabled': alliancesEnabled,
+        'teamsEnabled': teamsEnabled,
         'gameOver': gameOver,
         'winnerPlayerId': winnerPlayerId,
         'teamAssignments': teamAssignments.map((k, v) => MapEntry(k, v)),
@@ -396,6 +467,7 @@ class GameState {
               .toList() ??
           [],
       alliancesEnabled: json['alliancesEnabled'] as bool? ?? true,
+      teamsEnabled: json['teamsEnabled'] as bool? ?? false,
       gameOver: json['gameOver'] as bool? ?? false,
       winnerPlayerId: json['winnerPlayerId'] as String?,
       isHost: isHost,

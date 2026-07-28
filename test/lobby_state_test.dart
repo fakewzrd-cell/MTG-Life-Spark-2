@@ -40,6 +40,7 @@ void main() {
       const config = LobbyConfig(
         startingLife: 30,
         alliancesEnabled: false,
+        teamsEnabled: true,
         turnTimeLimitSeconds: 600,
         trackTurnDuration: true,
       );
@@ -48,6 +49,7 @@ void main() {
 
       expect(restored.startingLife, 30);
       expect(restored.alliancesEnabled, false);
+      expect(restored.teamsEnabled, isTrue);
       expect(restored.turnTimeLimitSeconds, 600);
       expect(restored.trackTurnDuration, isTrue);
     });

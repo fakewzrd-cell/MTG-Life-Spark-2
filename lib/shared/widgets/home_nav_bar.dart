@@ -36,9 +36,7 @@ class HomeNavBar {
     if (concededEarly) {
       await recordLocalConcedeBeforeExit(ref);
     }
+    if (context.mounted) context.go(AppRoutes.home);
     await quitActiveGame(ref);
-    if (context.mounted) {
-      context.go(AppRoutes.home);
-    }
   }
 }

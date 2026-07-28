@@ -574,17 +574,13 @@ class _ProfileFloatingStatsPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
     final honors = <(String, String)>[
-      (_formatProfileStat(profile.honorsMvpReceived), 'MVP'),
-      (_formatProfileStat(profile.honorsTeamPlayerReceived), 'Team'),
-      (_formatProfileStat(profile.honorsUnderdogReceived), 'Underdog'),
+      (_formatProfileStat(profile.honorsStarReceived), 'Stars'),
     ];
 
     return Semantics(
       label:
           '${profile.totalWins} wins, '
-          '${profile.honorsMvpReceived} MVP, '
-          '${profile.honorsTeamPlayerReceived} team player, '
-          '${profile.honorsUnderdogReceived} underdog honors',
+          '${profile.honorsStarReceived} stars of the game',
       child: Material(
         color: colors.surface.withValues(alpha: 0.88),
         borderRadius: RadiusTokens.radiusPill,

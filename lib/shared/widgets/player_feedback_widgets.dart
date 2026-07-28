@@ -93,7 +93,7 @@ class PlayerFeedbackRow extends StatelessWidget {
   }
 }
 
-/// MVP / Team / Underdog picker shared across end-game and forfeit flows.
+/// Single optional honor picker (Star of the game).
 class PlayerFeedbackVoteDropdown extends StatelessWidget {
   const PlayerFeedbackVoteDropdown({
     super.key,
@@ -206,7 +206,7 @@ class PlayerFeedbackVoteDropdown extends StatelessWidget {
   }
 }
 
-/// Opponent thumbs + vote dropdowns (no card chrome — wrap as needed).
+/// Opponent thumbs + optional Star of the game (no card chrome — wrap as needed).
 class PlayerFeedbackFields extends StatelessWidget {
   const PlayerFeedbackFields({
     super.key,
@@ -215,12 +215,8 @@ class PlayerFeedbackFields extends StatelessWidget {
     required this.dislikePlayerIds,
     required this.onLike,
     required this.onDislike,
-    required this.mvpPlayerId,
-    required this.teamPlayerId,
-    required this.underdogPlayerId,
-    required this.onMvpChanged,
-    required this.onTeamPlayerChanged,
-    required this.onUnderdogChanged,
+    required this.starPlayerId,
+    required this.onStarChanged,
     this.rateOpponentsTitle,
     this.voteSpacing = LayoutTokens.gr2,
   });
@@ -230,12 +226,8 @@ class PlayerFeedbackFields extends StatelessWidget {
   final Set<String> dislikePlayerIds;
   final void Function(String playerId) onLike;
   final void Function(String playerId) onDislike;
-  final String? mvpPlayerId;
-  final String? teamPlayerId;
-  final String? underdogPlayerId;
-  final void Function(String?) onMvpChanged;
-  final void Function(String?) onTeamPlayerChanged;
-  final void Function(String?) onUnderdogChanged;
+  final String? starPlayerId;
+  final void Function(String?) onStarChanged;
   final String? rateOpponentsTitle;
   final double voteSpacing;
 
@@ -268,29 +260,13 @@ class PlayerFeedbackFields extends StatelessWidget {
             onDislike: () => onDislike(p.playerId),
           ),
         ),
-        SizedBox(height: LayoutTokens.gr2),
-        PlayerFeedbackVoteDropdown(
-          label: 'MVP',
-          hint: 'Most Valuable Player',
-          players: opponents,
-          selectedId: mvpPlayerId,
-          onChanged: onMvpChanged,
-        ),
         SizedBox(height: voteSpacing),
         PlayerFeedbackVoteDropdown(
-          label: 'Team Player',
-          hint: 'Best teammate',
+          label: 'Star of the game',
+          hint: 'Optional — pick one player',
           players: opponents,
-          selectedId: teamPlayerId,
-          onChanged: onTeamPlayerChanged,
-        ),
-        SizedBox(height: voteSpacing),
-        PlayerFeedbackVoteDropdown(
-          label: 'Underdog',
-          hint: 'Best comeback or underdog performance',
-          players: opponents,
-          selectedId: underdogPlayerId,
-          onChanged: onUnderdogChanged,
+          selectedId: starPlayerId,
+          onChanged: onStarChanged,
         ),
       ],
     );

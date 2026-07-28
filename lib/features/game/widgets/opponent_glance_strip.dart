@@ -9,7 +9,9 @@ import '../../../ui/tokens/radius_tokens.dart';
 import 'game_colors.dart';
 import 'political_row_widget.dart';
 
-/// Compact opponent life strip on the Play tab — tap to open Table overview.
+/// Compact pod strip on the Play tab — full turn order including you.
+///
+/// Chips start at the active player and wrap clockwise. Tap opens Table.
 class OpponentGlanceStrip extends StatelessWidget {
   const OpponentGlanceStrip({
     super.key,
@@ -25,21 +27,12 @@ class OpponentGlanceStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
-    final opponents = game.players
-        .where((p) => p.playerId != localPlayerId)
-        .toList()
-      ..sort((a, b) {
-        if (a.isEliminated != b.isEliminated) {
-          return a.isEliminated ? 1 : -1;
-        }
-        return a.life.compareTo(b.life);
-      });
-
-    if (opponents.isEmpty) return const SizedBox.shrink();
+    final pod = game.playersInTurnOrderFrom(game.activePlayerId);
+    if (pod.isEmpty) return const SizedBox.shrink();
 
     return Semantics(
       button: true,
-      label: 'Open table overview',
+      label: 'Open table overview, turn order',
       child: Material(
         color: colors.surface.withValues(alpha: OpacityTokens.nearOpaque),
         borderRadius: RadiusTokens.radiusControlMd,
@@ -61,9 +54,13 @@ class OpponentGlanceStrip extends StatelessWidget {
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        for (var i = 0; i < opponents.length; i++) ...[
+                        for (var i = 0; i < pod.length; i++) ...[
                           if (i > 0) SizedBox(width: LayoutTokens.gr1),
-                          _OpponentGlanceChip(player: opponents[i]),
+                          _PodGlanceChip(
+                            player: pod[i],
+                            isLocal: pod[i].playerId == localPlayerId,
+                            isActive: pod[i].playerId == game.activePlayerId,
+                          ),
                         ],
                       ],
                     ),
@@ -84,10 +81,16 @@ class OpponentGlanceStrip extends StatelessWidget {
   }
 }
 
-class _OpponentGlanceChip extends StatelessWidget {
-  const _OpponentGlanceChip({required this.player});
+class _PodGlanceChip extends StatelessWidget {
+  const _PodGlanceChip({
+    required this.player,
+    required this.isLocal,
+    required this.isActive,
+  });
 
   final PlayerGameState player;
+  final bool isLocal;
+  final bool isActive;
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +103,9 @@ class _OpponentGlanceChip extends StatelessWidget {
             : player.life <= 10
                 ? colors.emphasis
                 : colors.textPrimary;
-    final name = overviewShortPlayerName(player.username, maxChars: 8);
+    final name = isLocal
+        ? 'You'
+        : overviewShortPlayerName(player.username, maxChars: 8);
 
     return Container(
       padding: EdgeInsets.symmetric(
@@ -110,8 +115,18 @@ class _OpponentGlanceChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: eliminated
             ? colors.backgroundSecondary.withValues(alpha: OpacityTokens.half)
-            : player.playerColor.withValues(alpha: 0.12),
+            : player.playerColor.withValues(alpha: isLocal ? 0.22 : 0.12),
         borderRadius: RadiusTokens.radiusControlSm,
+        border: isActive
+            ? Border.all(
+                color: colors.primaryAccent.withValues(alpha: 0.85),
+                width: 1.5,
+              )
+            : isLocal
+                ? Border.all(
+                    color: player.playerColor.withValues(alpha: 0.55),
+                  )
+                : null,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

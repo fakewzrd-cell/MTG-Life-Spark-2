@@ -14,9 +14,22 @@ void main() {
         isTrue,
       );
       expect(
-        const PendingFeedbackData(mvpPlayerId: 'b').hasContent,
+        const PendingFeedbackData(starPlayerId: 'b').hasContent,
         isTrue,
       );
+    });
+  });
+
+  group('GameFeedback legacy mvp', () {
+    test('fromJson folds mvpPlayerId into starPlayerId', () {
+      final parsed = GameFeedback.fromJson({
+        'matchId': 'm1',
+        'voterPlayerId': 'Alice',
+        'likePlayerIds': <String>[],
+        'dislikePlayerIds': <String>[],
+        'mvpPlayerId': 'Bob',
+      });
+      expect(parsed.starPlayerId, 'Bob');
     });
   });
 }

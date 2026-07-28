@@ -53,9 +53,7 @@ Future<void> recordLocalConcedeBeforeExit(WidgetRef ref) async {
       voterPlayerId: game.localPlayerId,
       likePlayerIds: pending!.likePlayerIds,
       dislikePlayerIds: pending.dislikePlayerIds,
-      mvpPlayerId: pending.mvpPlayerId,
-      teamPlayerId: pending.teamPlayerId,
-      underdogPlayerId: pending.underdogPlayerId,
+      starPlayerId: pending.starPlayerId,
     );
     await service.saveFeedback(feedback);
     ref.read(gameProvider.notifier).broadcastMatchFeedback(feedback);

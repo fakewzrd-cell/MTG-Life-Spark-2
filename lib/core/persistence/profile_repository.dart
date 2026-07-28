@@ -93,23 +93,20 @@ class ProfileRepository {
 
     var likes = 0;
     var dislikes = 0;
-    var mvp = 0;
-    var team = 0;
-    var under = 0;
+    var stars = 0;
 
     for (final f in feedbackRepo.allFeedback()) {
       if (f.likePlayerIds.contains(localPlayerId)) likes++;
       if (f.dislikePlayerIds.contains(localPlayerId)) dislikes++;
-      if (f.mvpPlayerId == localPlayerId) mvp++;
-      if (f.teamPlayerId == localPlayerId) team++;
-      if (f.underdogPlayerId == localPlayerId) under++;
+      if (f.starPlayerId == localPlayerId) stars++;
     }
 
     profile.likesReceived = likes;
     profile.dislikesReceived = dislikes;
-    profile.honorsMvpReceived = mvp;
-    profile.honorsTeamPlayerReceived = team;
-    profile.honorsUnderdogReceived = under;
+    profile.honorsStarReceived = stars;
+    // Clear legacy honor buckets so profile UI stays consistent.
+    profile.honorsTeamPlayerReceived = 0;
+    profile.honorsUnderdogReceived = 0;
     await profile.save();
   }
 

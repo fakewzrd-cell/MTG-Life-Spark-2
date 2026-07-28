@@ -90,12 +90,14 @@ class _SessionConnectionGuardState extends ConsumerState<SessionConnectionGuard>
       return;
     }
 
-    // Retry a few times after resume (Wi‑Fi / host may need a moment).
+    // Retry until the socket is back or the session ends (Wi‑Fi / host may lag).
     _resumeRetryTimer?.cancel();
-    var attempts = 0;
     _resumeRetryTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      attempts++;
       unawaited(() async {
+        if (!mounted || ref.read(sessionRoleProvider) == SessionRole.none) {
+          timer.cancel();
+          return;
+        }
         final again = await service.reconnectIfDisconnected();
         if (!mounted) {
           timer.cancel();
@@ -107,8 +109,10 @@ class _SessionConnectionGuardState extends ConsumerState<SessionConnectionGuard>
               SessionLinkStatus.connected;
           return;
         }
-        if (attempts >= 10) {
-          timer.cancel();
+        final link = ref.read(sessionLinkStatusProvider);
+        if (link != SessionLinkStatus.lost) {
+          ref.read(sessionLinkStatusProvider.notifier).state =
+              SessionLinkStatus.reconnecting;
         }
       }());
     });

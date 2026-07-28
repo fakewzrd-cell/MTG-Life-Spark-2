@@ -52,35 +52,26 @@ class GameOverviewView extends ConsumerWidget {
         : _GameOverviewPlayerCard(p: p, game: game);
   }
 
-  /// Groups by team when any team is assigned; otherwise a flat roster.
-  /// Unassigned players (team 0) render as their own trailing group.
-  List<Widget> _buildPlayerListChildren(BuildContext context, GameState game) {
-    final colors = context.gameColors;
-    final assignments = game.teamAssignments;
-    final hasTeams = assignments.values.any((t) => t > 0);
+  bool _canHostReorder(GameState game) =>
+      game.isHost &&
+      !game.gameOver &&
+      !game.timeoutActive &&
+      !game.awaitingFirstPlayerRoll &&
+      game.players.length > 1;
 
-    if (!hasTeams) {
-      return game.players.map((p) => _rowFor(p, game)).toList();
-    }
+  List<Widget> _buildPlayerListChildren(GameState game) =>
+      game.playersInTurnOrder.map((p) => _rowFor(p, game)).toList();
 
-    final byTeam = <int, List<PlayerGameState>>{};
-    for (final p in game.players) {
-      final t = assignments[p.playerId] ?? 0;
-      byTeam.putIfAbsent(t, () => []).add(p);
-    }
-    final teamIds = byTeam.keys.where((t) => t > 0).toList()..sort();
-
-    final children = <Widget>[];
-    for (final t in teamIds) {
-      children.add(_TeamGroupHeader(teamIndex: t, colors: colors));
-      children.addAll(byTeam[t]!.map((p) => _rowFor(p, game)));
-    }
-    final unassigned = byTeam[0];
-    if (unassigned != null && unassigned.isNotEmpty) {
-      children.add(_TeamGroupHeader(teamIndex: 0, colors: colors));
-      children.addAll(unassigned.map((p) => _rowFor(p, game)));
-    }
-    return children;
+  void _onHostReorder(WidgetRef ref, GameState game, int oldIndex, int newIndex) {
+    final order =
+        game.playersInTurnOrder.map((p) => p.playerId).toList(growable: true);
+    if (oldIndex < 0 || oldIndex >= order.length) return;
+    var target = newIndex;
+    if (target > oldIndex) target -= 1;
+    if (target < 0 || target >= order.length) return;
+    final id = order.removeAt(oldIndex);
+    order.insert(target, id);
+    ref.read(gameProvider.notifier).hostSetTurnOrder(order);
   }
 
   @override
@@ -89,11 +80,6 @@ class GameOverviewView extends ConsumerWidget {
     final notifier = ref.read(gameProvider.notifier);
     final aliveCount = game.activePlayers.length;
     final activePlayer = game.playerById(game.activePlayerId);
-    final turnSubtitle = activePlayer == null
-        ? null
-        : activePlayer.playerId == game.localPlayerId
-            ? 'Your turn'
-            : '${overviewShortPlayerName(activePlayer.username, maxChars: 16)}\'s turn';
 
     const pageInset = LayoutTokens.shellPageInset;
     final identity = game.localPlayer?.commanderColorIdentity ?? const [];
@@ -130,39 +116,18 @@ class GameOverviewView extends ConsumerWidget {
                   surfaceTintColor: Colors.transparent,
                   elevation: 0,
                   scrolledUnderElevation: 0,
-                  toolbarHeight: turnSubtitle == null
-                      ? LayoutTokens.minTapTarget
-                      : LayoutTokens.minTapTarget + LayoutTokens.gr2,
+                  toolbarHeight: LayoutTokens.minTapTarget,
                   leadingWidth: pageInset + LayoutTokens.minTapTarget,
                   centerTitle: true,
-                  title: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Round ${game.roundNumber}',
-                        style: TextStyle(
-                          color: colors.textPrimary,
-                          fontSize: FontTokens.title,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.2,
-                          height: 1,
-                        ),
-                      ),
-                      if (turnSubtitle != null) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          turnSubtitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: colors.textSecondary,
-                            fontSize: FontTokens.hudXs,
-                            fontWeight: FontWeight.w600,
-                            height: 1,
-                          ),
-                        ),
-                      ],
-                    ],
+                  title: Text(
+                    'Round ${game.roundNumber}',
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontSize: FontTokens.title,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.2,
+                      height: 1,
+                    ),
                   ),
                   leading: SizedBox(
                     width: pageInset + LayoutTokens.minTapTarget,
@@ -310,6 +275,21 @@ class GameOverviewView extends ConsumerWidget {
                             ),
                           ),
                         ),
+                        if (_canHostReorder(game)) ...[
+                          SizedBox(width: LayoutTokens.gr2),
+                          Expanded(
+                            child: Text(
+                              'Hold & drag to reorder turns',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: colors.textSecondary,
+                                fontSize: FontTokens.hudXs,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -322,71 +302,92 @@ class GameOverviewView extends ConsumerWidget {
                     pageInset,
                     LayoutTokens.gr3,
                   ),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate(
-                      _buildPlayerListChildren(context, game),
-                    ),
-                  ),
+                  sliver: _canHostReorder(game)
+                      ? SliverReorderableList(
+                          itemCount: game.playersInTurnOrder.length,
+                          onReorder: (oldIndex, newIndex) =>
+                              _onHostReorder(ref, game, oldIndex, newIndex),
+                          itemBuilder: (context, index) {
+                            final p = game.playersInTurnOrder[index];
+                            return ReorderableDelayedDragStartListener(
+                              key: ValueKey(p.playerId),
+                              index: index,
+                              child: _rowFor(p, game),
+                            );
+                          },
+                        )
+                      : SliverList(
+                          delegate: SliverChildListDelegate(
+                            _buildPlayerListChildren(game),
+                          ),
+                        ),
                 ),
               ],
             ),
           ),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              color: colors.backgroundPrimary.withValues(alpha: 0.94),
-              border: Border(
-                top: BorderSide(
-                  color: colors.textSecondary.withValues(alpha: 0.12),
-                ),
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                pageInset,
+                LayoutTokens.gr2,
+                pageInset,
+                LayoutTokens.gr2,
               ),
-            ),
-            child: SafeArea(
-              top: false,
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  pageInset,
-                  LayoutTokens.gr2,
-                  pageInset,
-                  LayoutTokens.gr2,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    EndTurnBar(
-                      accentColor: chromeAccent,
-                      enabled: endTurnEnabled,
-                      onEndTurn: () => notifier.endTurn(),
-                      waitingForName: waitingForName,
-                    ),
-                    if (game.localPlayer != null &&
-                        !game.localPlayer!.isEliminated &&
-                        !game.gameOver) ...[
-                      SizedBox(height: LayoutTokens.gr1),
-                      TextButton(
-                        onPressed: () => showGameForfeitFlow(
-                          context,
-                          ref,
-                          game.localPlayerId,
-                        ),
-                        style: TextButton.styleFrom(
-                          foregroundColor: colors.error,
-                          minimumSize: const Size(
-                            0,
-                            LayoutTokens.minTapTarget,
-                          ),
-                        ),
-                        child: Text(
-                          'Forfeit',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: FontTokens.body,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  EndTurnBar(
+                    accentColor: chromeAccent,
+                    enabled: endTurnEnabled,
+                    onEndTurn: () => notifier.endTurn(),
+                    waitingForName: waitingForName,
+                  ),
+                  if (game.localPlayer != null &&
+                      !game.localPlayer!.isEliminated &&
+                      !game.gameOver) ...[
+                    SizedBox(height: LayoutTokens.gr1),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: colors.surface.withValues(alpha: 0.94),
+                        borderRadius: RadiusTokens.radiusControlSm,
+                      ),
+                      child: ClipRRect(
+                        borderRadius: RadiusTokens.radiusControlSm,
+                        child: SizedBox(
+                          height: EndTurnBar.barHeight,
+                          child: Material(
+                            color: colors.error.withValues(
+                              alpha: OpacityTokens.soft,
+                            ),
+                            child: InkWell(
+                              onTap: () {
+                                context.gameHapticLight();
+                                showGameForfeitFlow(
+                                  context,
+                                  ref,
+                                  game.localPlayerId,
+                                );
+                              },
+                              child: Center(
+                                child: Text(
+                                  'Forfeit',
+                                  style: TextStyle(
+                                    fontSize: FontTokens.title,
+                                    fontWeight: FontWeight.w700,
+                                    color: colors.error,
+                                    height: 1.1,
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ],
+                    ),
                   ],
-                ),
+                ],
               ),
             ),
           ),
@@ -408,7 +409,9 @@ class _ActivePlayerSpotlight extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.gameColors;
     final isLocal = player.playerId == game.localPlayerId;
-    final teamIdx = game.teamAssignments[player.playerId] ?? 0;
+    final teamIdx = game.teamsEnabled
+        ? (game.teamAssignments[player.playerId] ?? 0)
+        : 0;
     final accent = teamIdx > 0 ? teamColor(teamIdx) : player.playerColor;
     final isMonarch = game.isMonarch(player.playerId);
     final hasInit = game.hasInitiative(player.playerId);
@@ -524,58 +527,10 @@ class _ActivePlayerSpotlight extends StatelessWidget {
               eliminated: false,
               isActive: true,
               accent: accent,
+              showHeart: true,
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// Section header for a team cluster in the roster ("Team 1", "Unassigned").
-class _TeamGroupHeader extends StatelessWidget {
-  const _TeamGroupHeader({required this.teamIndex, required this.colors});
-
-  final int teamIndex;
-  final AppColorTokens colors;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = teamIndex == 0 ? colors.textSecondary : teamColor(teamIndex);
-    final label = teamIndex == 0 ? 'Unassigned' : 'Team $teamIndex';
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        LayoutTokens.gr0,
-        LayoutTokens.gr2,
-        LayoutTokens.gr0,
-        LayoutTokens.gr1,
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
-          SizedBox(width: LayoutTokens.gr1),
-          Text(
-            label,
-            style: TextStyle(
-              color: colors.textSecondary,
-              fontSize: FontTokens.hudXs,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.4,
-            ),
-          ),
-          SizedBox(width: LayoutTokens.gr1),
-          Expanded(
-            child: Divider(
-              height: 1,
-              thickness: 1,
-              color: colors.textSecondary.withValues(alpha: 0.14),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -682,12 +637,14 @@ class _GameOverviewLifeBadge extends StatelessWidget {
     required this.eliminated,
     required this.isActive,
     required this.accent,
+    this.showHeart = false,
   });
 
   final int life;
   final bool eliminated;
   final bool isActive;
   final Color accent;
+  final bool showHeart;
 
   Color _textColor(AppColorTokens colors) {
     if (eliminated) return colors.textSecondary;
@@ -700,12 +657,12 @@ class _GameOverviewLifeBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
     return Container(
-      constraints: const BoxConstraints(
-        minWidth: 56,
+      constraints: BoxConstraints(
+        minWidth: showHeart ? 56 : 40,
         minHeight: LayoutTokens.minTapTarget,
       ),
       padding: EdgeInsets.symmetric(
-        horizontal: LayoutTokens.gr1 + 2,
+        horizontal: showHeart ? LayoutTokens.gr1 + 2 : LayoutTokens.gr1,
         vertical: LayoutTokens.gr0 + 2,
       ),
       decoration: BoxDecoration(
@@ -717,40 +674,53 @@ class _GameOverviewLifeBadge extends StatelessWidget {
       alignment: Alignment.center,
       child: eliminated
           ? Text(
-            'OUT',
-            style: TextStyle(
-              color: _textColor(colors),
-              fontWeight: FontWeight.w700,
-              fontSize: FontTokens.hudSm,
-              height: 1,
-            ),
-          )
-          : Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.favorite_rounded,
-                size: 18,
-                color: _textColor(colors).withValues(alpha: OpacityTokens.nearOpaque),
+              'OUT',
+              style: TextStyle(
+                color: _textColor(colors),
+                fontWeight: FontWeight.w700,
+                fontSize: FontTokens.hudSm,
+                height: 1,
               ),
-              SizedBox(width: LayoutTokens.gr0),
-              Text(
-                '$life',
-                style: TextStyle(
-                  color: _textColor(colors),
-                  fontWeight: FontWeight.w700,
-                  fontSize: FontTokens.body,
-                  height: 1,
-                  fontFeatures: const [FontFeature.tabularFigures()],
+            )
+          : showHeart
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.favorite_rounded,
+                      size: 18,
+                      color: _textColor(colors).withValues(
+                        alpha: OpacityTokens.nearOpaque,
+                      ),
+                    ),
+                    SizedBox(width: LayoutTokens.gr0),
+                    Text(
+                      '$life',
+                      style: TextStyle(
+                        color: _textColor(colors),
+                        fontWeight: FontWeight.w700,
+                        fontSize: FontTokens.body,
+                        height: 1,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ],
+                )
+              : Text(
+                  '$life',
+                  style: TextStyle(
+                    color: _textColor(colors),
+                    fontWeight: FontWeight.w700,
+                    fontSize: FontTokens.body,
+                    height: 1,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
                 ),
-              ),
-            ],
-          ),
     );
   }
 }
 
-/// Compact − / life / + for Table roster — host can edit anyone; others only self.
+/// Compact − / life / + for Table roster — host only.
 class _GameOverviewLifeStepper extends StatelessWidget {
   const _GameOverviewLifeStepper({
     required this.life,
@@ -804,26 +774,15 @@ class _GameOverviewLifeStepper extends StatelessWidget {
           ),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr0),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.favorite_rounded,
-                  size: 16,
-                  color: _textColor(colors).withValues(alpha: OpacityTokens.nearOpaque),
-                ),
-                SizedBox(width: LayoutTokens.gr0 - 1),
-                Text(
-                  '$life',
-                  style: TextStyle(
-                    color: _textColor(colors),
-                    fontWeight: FontWeight.w700,
-                    fontSize: FontTokens.body,
-                    height: 1,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
-              ],
+            child: Text(
+              '$life',
+              style: TextStyle(
+                color: _textColor(colors),
+                fontWeight: FontWeight.w700,
+                fontSize: FontTokens.body,
+                height: 1,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
             ),
           ),
           _LifeStepButton(
@@ -1037,7 +996,9 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
     final colors = context.gameColors;
     final isActive = p.playerId == game.activePlayerId;
     final isLocal = p.playerId == game.localPlayerId;
-    final teamIdx = game.teamAssignments[p.playerId] ?? 0;
+    final teamIdx = game.teamsEnabled
+        ? (game.teamAssignments[p.playerId] ?? 0)
+        : 0;
     final local = game.localPlayer;
     final notifier = ref.read(gameProvider.notifier);
     final pendingLabel = pendingAllianceLabel(game, p.playerId);
@@ -1054,10 +1015,13 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                 game.allianceFor(p.playerId) == null) ||
             (myAlliance != null &&
                 (isLocal || myAlliance.involves(p.playerId))));
+    final canAssignTeam =
+        game.teamsEnabled && (isLocal || game.isHost);
     final showMenu =
-        !p.isEliminated && local != null && (isLocal || hasAllianceMenu);
-    final canEditLife = !p.isEliminated &&
-        (game.isHost || p.playerId == game.localPlayerId);
+        !p.isEliminated &&
+        local != null &&
+        (isLocal || hasAllianceMenu || canAssignTeam);
+    final canEditLife = !p.isEliminated && game.isHost;
 
     Widget card = AnimatedContainer(
       duration: MotionTokens.slow,
@@ -1177,11 +1141,11 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                         _GameOverviewCommanderTaxChip(tax: p.commanderTax),
                         SizedBox(width: LayoutTokens.gr1),
                       ],
-                      if (p.isEliminated)
+                      if (p.isEliminated || !canEditLife)
                         _GameOverviewLifeBadge(
                           life: p.life,
-                          eliminated: true,
-                          isActive: false,
+                          eliminated: p.isEliminated,
+                          isActive: isActive && !p.isEliminated,
                           accent: borderColor,
                         )
                       else
@@ -1189,7 +1153,7 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                           life: p.life,
                           isActive: isActive,
                           accent: borderColor,
-                          enabled: canEditLife,
+                          enabled: true,
                           onDelta: (delta) =>
                               notifier.adjustLife(p.playerId, delta),
                         ),
@@ -1229,7 +1193,7 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                           },
                           itemBuilder: (context) {
                             final items = <PopupMenuEntry<String>>[];
-                            if (isLocal) {
+                            if (canAssignTeam) {
                               items.add(
                                 const PopupMenuItem(
                                   value: 'team',

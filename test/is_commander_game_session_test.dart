@@ -63,6 +63,21 @@ void main() {
     );
   });
 
+  test('multiplayer commander format shows damage UI without commanders picked', () {
+    final local = _player(id: 'a', life: 40);
+    final other = _player(id: 'b', life: 40);
+
+    expect(
+      isCommanderGameSession(
+        local: local,
+        allPlayers: [local, other],
+        gameFormat: GameFormat.commander,
+        startingLife: 40,
+      ),
+      isTrue,
+    );
+  });
+
   group('shouldInitializeGameFromLobby', () {
     test('returns true when local player is missing', () {
       expect(
