@@ -38,6 +38,7 @@ import '../widgets/hub_guide_sheet.dart';
 import '../widgets/opponent_glance_strip.dart';
 import '../widgets/end_turn_bar.dart';
 import '../widgets/phase_nav_cluster.dart';
+import '../widgets/table_tool_result_overlay.dart';
 import '../widgets/stack_tracker_tab.dart';
 import '../widgets/variant_card_panel.dart';
 import '../widgets/your_turn_prompt_overlay.dart';
@@ -480,6 +481,13 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 YourTurnPromptOverlay(
                   onDismiss: () => setState(() => _showYourTurnPrompt = false),
                 ),
+              Consumer(
+                builder: (context, ref, _) {
+                  final announcement = ref.watch(tableToolAnnouncementProvider);
+                  if (announcement == null) return const SizedBox.shrink();
+                  return TableToolResultOverlay(announcement: announcement);
+                },
+              ),
             ],
           ),
         ),

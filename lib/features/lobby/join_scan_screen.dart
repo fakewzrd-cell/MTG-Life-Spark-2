@@ -527,7 +527,7 @@ class _WaitingRoomViewState extends ConsumerState<_WaitingRoomView> {
     PlayerSlot? mySlot;
     if (profile != null) {
       for (final slot in lobby.players) {
-        if (slot.playerId == profile.username) {
+        if (slot.playerId == profile.playerId) {
           mySlot = slot;
           break;
         }
@@ -562,7 +562,7 @@ class _WaitingRoomViewState extends ConsumerState<_WaitingRoomView> {
                           onPressed: () => showDeckPickerSheet(
                             context,
                             ref,
-                            profile.username,
+                            profile.playerId,
                           ),
                         ),
                       ),
@@ -574,7 +574,7 @@ class _WaitingRoomViewState extends ConsumerState<_WaitingRoomView> {
                           filled: true,
                           onPressed: () {
                             context.push(AppRoutes.commanderSelect, extra: {
-                              'playerId': profile.username,
+                              'playerId': profile.playerId,
                             });
                           },
                         ),
@@ -591,7 +591,7 @@ class _WaitingRoomViewState extends ConsumerState<_WaitingRoomView> {
                       onPressed: () => showDeckPickerSheet(
                         context,
                         ref,
-                        profile.username,
+                        profile.playerId,
                       ),
                     ),
                   ),

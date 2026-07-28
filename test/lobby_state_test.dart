@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mgt_life_spark/core/bluetooth/ble_message.dart';
 import 'package:mgt_life_spark/core/bluetooth/ble_protocol.dart';
 import 'package:mgt_life_spark/core/game/game_format.dart';
 import 'package:mgt_life_spark/core/network/session_providers.dart';
@@ -113,6 +114,8 @@ void main() {
       expect(lobby.isHost, isTrue);
       expect(lobby.players, hasLength(1));
       expect(lobby.players.single.username, 'host');
+      expect(lobby.players.single.playerId, isNotEmpty);
+      expect(lobby.players.single.playerId, isNot('host'));
       expect(lobby.players.single.isHost, isTrue);
     });
 
@@ -171,13 +174,60 @@ void main() {
 
       final notifier = container.read(lobbyProvider.notifier);
       notifier.initAsHost();
-      notifier.setReady('host', ready: true);
+      final hostId = container.read(lobbyProvider).players.single.playerId;
+      notifier.setReady(hostId, ready: true);
 
       expect(container.read(lobbyProvider).players.single.isReady, isTrue);
       expect(
         ble.sentMessages.where((m) => m.type == BleMessageType.stateSnapshot),
         isNotEmpty,
       );
+    });
+
+    test('host accepts duplicate display names with distinct seat ids', () {
+      final ble = FakeBleService();
+      final container = _lobbyContainer(
+        ble: ble,
+        profileRepo: TestProfileRepository(
+          profile: PlayerProfile(
+            username: 'Planeswalker',
+            playerId: 'host-uuid',
+          ),
+        ),
+      );
+      addTearDown(container.dispose);
+
+      final notifier = container.read(lobbyProvider.notifier);
+      notifier.initAsHost();
+
+      ble.emit(
+        BleMessage(
+          type: BleMessageType.lobbyPlayerJoined,
+          payload: {'pid': 'guest-uuid-1', 'username': 'Planeswalker'},
+          seqNum: 1,
+        ),
+      );
+      ble.emit(
+        BleMessage(
+          type: BleMessageType.lobbyPlayerJoined,
+          payload: {'pid': 'guest-uuid-2', 'username': 'Planeswalker'},
+          seqNum: 2,
+        ),
+      );
+
+      // Allow stream handlers to run.
+      return Future<void>.delayed(Duration.zero).then((_) {
+        final lobby = container.read(lobbyProvider);
+        expect(lobby.players, hasLength(3));
+        expect(
+          lobby.players.map((p) => p.username).toList(),
+          everyElement('Planeswalker'),
+        );
+        expect(
+          lobby.players.map((p) => p.playerId).toSet(),
+          {'host-uuid', 'guest-uuid-1', 'guest-uuid-2'},
+        );
+      });
     });
 
     test('reset clears players and stops listening', () {

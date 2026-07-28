@@ -36,6 +36,7 @@ class PlayerSlot {
   });
 
   PlayerSlot copyWith({
+    String? username,
     String? commanderName,
     String? commanderImageUrl,
     Object? partnerCommanderName = _sentinelPartner,
@@ -48,7 +49,7 @@ class PlayerSlot {
   }) {
     return PlayerSlot(
       playerId: playerId,
-      username: username,
+      username: username ?? this.username,
       commanderName: commanderName ?? this.commanderName,
       commanderImageUrl: commanderImageUrl ?? this.commanderImageUrl,
       partnerCommanderName: identical(partnerCommanderName, _sentinelPartner)

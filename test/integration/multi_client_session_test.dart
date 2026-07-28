@@ -14,6 +14,7 @@ import 'package:mgt_life_spark/core/network/ws_host_service.dart';
 import 'package:mgt_life_spark/core/persistence/providers.dart';
 
 import '../support/test_profile_repository.dart';
+import '../support/test_settings_repository.dart';
 
 void main() {
   group('Multi-client session sync', () {
@@ -80,8 +81,11 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         profileRepositoryProvider.overrideWithValue(
-          TestProfileRepository(profile: PlayerProfile(username: 'host')),
+          TestProfileRepository(
+            profile: PlayerProfile(username: 'host', playerId: 'host-seat'),
+          ),
         ),
+        settingsRepositoryProvider.overrideWithValue(TestSettingsRepository()),
       ],
     );
     addTearDown(container.dispose);
@@ -90,7 +94,7 @@ void main() {
 
     final lobbyNotifier = container.read(lobbyProvider.notifier);
     lobbyNotifier.initAsHost();
-    lobbyNotifier.setReady('host', ready: true);
+    lobbyNotifier.setReady('host-seat', ready: true);
 
     final lobby = container.read(lobbyProvider);
     expect(lobby.isHost, isTrue);
@@ -100,6 +104,6 @@ void main() {
 
     expect(game.isHost, isTrue);
     expect(game.players.length, 1);
-    expect(game.players.single.playerId, 'host');
+    expect(game.players.single.playerId, 'host-seat');
   });
 }

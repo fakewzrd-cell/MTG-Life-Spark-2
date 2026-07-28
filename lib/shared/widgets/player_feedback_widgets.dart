@@ -93,7 +93,7 @@ class PlayerFeedbackRow extends StatelessWidget {
   }
 }
 
-/// Single optional honor picker (Star of the game).
+/// Single optional honor picker (Spark of the game).
 class PlayerFeedbackVoteDropdown extends StatelessWidget {
   const PlayerFeedbackVoteDropdown({
     super.key,
@@ -206,7 +206,7 @@ class PlayerFeedbackVoteDropdown extends StatelessWidget {
   }
 }
 
-/// Opponent thumbs + optional Star of the game (no card chrome — wrap as needed).
+/// Opponent thumbs + optional Spark of the game (no card chrome — wrap as needed).
 class PlayerFeedbackFields extends StatelessWidget {
   const PlayerFeedbackFields({
     super.key,
@@ -262,7 +262,7 @@ class PlayerFeedbackFields extends StatelessWidget {
         ),
         SizedBox(height: voteSpacing),
         PlayerFeedbackVoteDropdown(
-          label: 'Star of the game',
+          label: 'Spark of the game',
           hint: 'Optional — pick one player',
           players: opponents,
           selectedId: starPlayerId,

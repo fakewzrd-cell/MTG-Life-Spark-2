@@ -228,7 +228,7 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
     if (profile == null) return;
 
     final hostSlot = PlayerSlot(
-      playerId: profile.username,
+      playerId: profile.playerId,
       username: profile.username,
       playerColor: AppTheme.playerColor(0),
       isHost: true,
@@ -464,7 +464,7 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
 
     // Optimistically update local state
     final players = state.players.map((p) {
-      if (p.playerId != profile.username) return p;
+      if (p.playerId != profile.playerId) return p;
       return p.copyWith(isReady: ready);
     }).toList();
     state = state.copyWith(players: players);
@@ -522,6 +522,7 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
   void _hostHandlePlayerJoined(Map<String, dynamic> payload) {
     final playerId = payload['pid'] as String? ?? '';
     final username = payload['username'] as String? ?? playerId;
+    if (playerId.isEmpty) return;
     if (state.players.any((p) => p.playerId == playerId)) return;
     if (state.players.length >= state.config.maxPlayers) {
       _rejectLobbyJoin(playerId);
@@ -616,19 +617,20 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
 
     PlayerSlot? slot;
     for (final player in state.players) {
-      if (player.playerId == profile.username) {
+      if (player.playerId == profile.playerId) {
         slot = player;
         break;
       }
     }
     if (slot == null) return;
 
+    final synced = slot.copyWith(username: profile.username);
     _send(BleMessage(
       type: BleMessageType.lobbyPlayerReady,
       payload: {
-        'pid': profile.username,
-        'ready': slot.isReady,
-        'slot': slot.toJson(),
+        'pid': profile.playerId,
+        'ready': synced.isReady,
+        'slot': synced.toJson(),
       },
       seqNum: _nextSeq(),
     ));

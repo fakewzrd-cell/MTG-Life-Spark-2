@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/models/player_identity.dart';
 import '../../core/models/player_profile.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/utils/app_router.dart';
@@ -23,7 +24,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
 
   Future<void> _skip() async {
     setState(() => _skipping = true);
-    final profile = PlayerProfile(username: 'Planeswalker');
+    final profile = PlayerProfile(
+      username: generateSparkDisplayName(),
+      playerId: generatePlayerId(),
+    );
     await ref.read(profileRepositoryProvider).saveProfile(profile);
     bumpProfileRevision(ref);
     if (mounted) context.go(AppRoutes.onboarding);

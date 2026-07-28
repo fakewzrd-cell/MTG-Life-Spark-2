@@ -64,7 +64,7 @@ class PlayerProfile extends HiveObject {
   int dislikesReceived;
 
   @HiveField(19)
-  /// Stars of the game received (Hive field 19 was formerly MVP count).
+  /// Sparks of the game received (Hive field 19 was formerly MVP count).
   int honorsStarReceived;
 
   /// Legacy Hive field — no longer shown; retained for storage compatibility.
@@ -83,8 +83,13 @@ class PlayerProfile extends HiveObject {
   @HiveField(23, defaultValue: <String>[])
   List<String> profileExtraStatIds;
 
+  /// Stable seat id for lobby / match sync (not the display [username]).
+  @HiveField(24, defaultValue: '')
+  String playerId;
+
   PlayerProfile({
     required this.username,
+    this.playerId = '',
     this.level = 1,
     this.xp = 0,
     this.tier = 'Bronze',

@@ -71,7 +71,7 @@ class FeedbackRepository {
   int get totalDislikesGiven =>
       allFeedback().fold<int>(0, (sum, f) => sum + f.dislikePlayerIds.length);
 
-  /// Count of feedback entries where Star of the game was chosen.
+  /// Count of feedback entries where Spark of the game was chosen.
   int get totalStarVotesGiven => allFeedback()
       .fold<int>(0, (sum, f) => sum + (f.starPlayerId != null ? 1 : 0));
 }

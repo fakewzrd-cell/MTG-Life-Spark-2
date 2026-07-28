@@ -1,4 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
+import '../models/player_identity.dart';
 import '../models/player_profile.dart';
 import '../models/commander_stats.dart';
 import '../../shared/utils/wizard_rank_titles.dart';
@@ -16,15 +17,34 @@ class ProfileRepository {
     if (!Hive.isBoxOpen(_commanderStatsBox)) {
       await Hive.openBox<CommanderStats>(_commanderStatsBox);
     }
+    // Migrate legacy profiles that used username as seat id.
+    final existing = _box.get(_profileKey);
+    if (existing != null && existing.playerId.isEmpty) {
+      existing.playerId = generatePlayerId();
+      await existing.save();
+    }
   }
 
   Box<PlayerProfile> get _box => Hive.box<PlayerProfile>(_profileBox);
   Box<CommanderStats> get _statsBox =>
       Hive.box<CommanderStats>(_commanderStatsBox);
 
-  PlayerProfile? getProfile() => _box.get(_profileKey);
+  PlayerProfile? getProfile() {
+    final profile = _box.get(_profileKey);
+    if (profile == null) return null;
+    if (profile.playerId.isEmpty) {
+      profile.playerId = generatePlayerId();
+      // Best-effort persist; callers that mutate should save anyway.
+      // ignore: discarded_futures
+      profile.save();
+    }
+    return profile;
+  }
 
   Future<void> saveProfile(PlayerProfile profile) async {
+    if (profile.playerId.isEmpty) {
+      profile.playerId = generatePlayerId();
+    }
     await _box.put(_profileKey, profile);
   }
 
@@ -83,7 +103,7 @@ class ProfileRepository {
   }
 
   /// Recompute likes/honors **received** by scanning all stored match feedback.
-  /// Local player is matched by [localPlayerId] (same as in-game `playerId`, typically username).
+  /// Local player is matched by stable [localPlayerId] (profile.playerId).
   Future<void> recomputeSocialStatsFromFeedback(
     FeedbackRepository feedbackRepo,
     String localPlayerId,

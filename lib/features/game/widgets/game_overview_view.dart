@@ -40,16 +40,67 @@ String? eliminationReasonShortLabel(String? reason) => switch (reason) {
 
 // ── Overview View ─────────────────────────────────────────────────────────
 
-class GameOverviewView extends ConsumerWidget {
+class GameOverviewView extends ConsumerStatefulWidget {
   final GameState game;
   final VoidCallback onClose;
 
   const GameOverviewView({super.key, required this.game, required this.onClose});
 
-  Widget _rowFor(PlayerGameState p, GameState game) {
+  @override
+  ConsumerState<GameOverviewView> createState() => _GameOverviewViewState();
+}
+
+class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
+  final GlobalKey _activeCardKey = GlobalKey();
+
+  GameState get game => widget.game;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollActiveIntoView());
+  }
+
+  @override
+  void didUpdateWidget(covariant GameOverviewView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.game.activePlayerId != game.activePlayerId) {
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _scrollActiveIntoView());
+    }
+  }
+
+  void _scrollActiveIntoView({int attempt = 0}) {
+    final ctx = _activeCardKey.currentContext;
+    if (ctx != null && mounted) {
+      Scrollable.ensureVisible(
+        ctx,
+        duration: MotionTokens.slow,
+        curve: Curves.easeOutCubic,
+        alignment: 0.12,
+      );
+      return;
+    }
+    // Reorderable/sliver lists may not have built the active row yet.
+    if (attempt < 6 && mounted) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _scrollActiveIntoView(attempt: attempt + 1),
+      );
+    }
+  }
+
+  Widget _rowFor(PlayerGameState p) {
     return p.isEliminated
         ? _EliminatedPlayerRow(p: p, game: game)
         : _GameOverviewPlayerCard(p: p, game: game);
+  }
+
+  Widget _keyedRow(PlayerGameState p) {
+    final row = _rowFor(p);
+    if (p.playerId == game.activePlayerId && !p.isEliminated) {
+      return KeyedSubtree(key: _activeCardKey, child: row);
+    }
+    return row;
   }
 
   bool _canHostReorder(GameState game) =>
@@ -59,10 +110,10 @@ class GameOverviewView extends ConsumerWidget {
       !game.awaitingFirstPlayerRoll &&
       game.players.length > 1;
 
-  List<Widget> _buildPlayerListChildren(GameState game) =>
-      game.playersInTurnOrder.map((p) => _rowFor(p, game)).toList();
+  List<Widget> _buildPlayerListChildren() =>
+      game.playersInTurnOrder.map(_keyedRow).toList();
 
-  void _onHostReorder(WidgetRef ref, GameState game, int oldIndex, int newIndex) {
+  void _onHostReorder(int oldIndex, int newIndex) {
     final order =
         game.playersInTurnOrder.map((p) => p.playerId).toList(growable: true);
     if (oldIndex < 0 || oldIndex >= order.length) return;
@@ -75,7 +126,7 @@ class GameOverviewView extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final colors = context.gameColors;
     final notifier = ref.read(gameProvider.notifier);
     final aliveCount = game.activePlayers.length;
@@ -91,9 +142,8 @@ class GameOverviewView extends ConsumerWidget {
         ? null
         : (activePlayer?.username);
 
-    // No top SafeArea around the scroll — [SliverAppBar] (primary) must paint
-    // its chrome behind the status bar. A SafeArea wrapper was clipping that
-    // darker header into a floating “box” under Round.
+    // Transparent top chrome so the identity gradient reads edge-to-edge;
+    // [SliverAppBar] (primary) still owns status-bar inset without a dark band.
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -107,15 +157,20 @@ class GameOverviewView extends ConsumerWidget {
         children: [
           Expanded(
             child: CustomScrollView(
+              // Keep pod-sized rosters built so the active card key exists for
+              // ensureVisible (especially with host reorder / long lists).
+              cacheExtent: 2400,
               slivers: [
                 SliverAppBar(
                   pinned: true,
                   primary: true,
-                  backgroundColor:
-                      colors.backgroundPrimary.withValues(alpha: 0.92),
+                  backgroundColor: Colors.transparent,
                   surfaceTintColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  forceMaterialTransparency: true,
                   elevation: 0,
                   scrolledUnderElevation: 0,
+                  foregroundColor: colors.textPrimary,
                   toolbarHeight: LayoutTokens.minTapTarget,
                   leadingWidth: pageInset + LayoutTokens.minTapTarget,
                   centerTitle: true,
@@ -135,9 +190,21 @@ class GameOverviewView extends ConsumerWidget {
                       padding: EdgeInsets.only(left: pageInset),
                       child: Align(
                         alignment: Alignment.center,
-                        child: Tooltip(
-                          message: 'Close overview',
-                          child: GameDialogCloseButton(onPressed: onClose),
+                        child: Semantics(
+                          button: true,
+                          label: 'Close overview',
+                          child: IconButton(
+                            tooltip: 'Close overview',
+                            onPressed: widget.onClose,
+                            icon: Icon(
+                              Icons.close_rounded,
+                              color: colors.textPrimary,
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: LayoutTokens.minTapTarget,
+                              minHeight: LayoutTokens.minTapTarget,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -153,9 +220,7 @@ class GameOverviewView extends ConsumerWidget {
                           onPressed: () => showTableToolsSheet(context),
                           icon: Icon(
                             Icons.casino_outlined,
-                            color: colors.textSecondary.withValues(
-                              alpha: 0.9,
-                            ),
+                            color: colors.textPrimary,
                           ),
                           constraints: const BoxConstraints(
                             minWidth: LayoutTokens.minTapTarget,
@@ -176,9 +241,7 @@ class GameOverviewView extends ConsumerWidget {
                             onPressed: () => showGameHistorySheet(context),
                             icon: Icon(
                               Icons.history_rounded,
-                              color: colors.textSecondary.withValues(
-                                alpha: 0.9,
-                              ),
+                              color: colors.textPrimary,
                             ),
                             constraints: const BoxConstraints(
                               minWidth: LayoutTokens.minTapTarget,
@@ -202,22 +265,6 @@ class GameOverviewView extends ConsumerWidget {
                     child: TablePoliticsStatusLine(game: game),
                   ),
                 ),
-
-                if (activePlayer != null)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        pageInset,
-                        LayoutTokens.gr2,
-                        pageInset,
-                        0,
-                      ),
-                      child: _ActivePlayerSpotlight(
-                        game: game,
-                        player: activePlayer,
-                      ),
-                    ),
-                  ),
 
                 if (game.timeoutActive)
                   SliverToBoxAdapter(
@@ -305,20 +352,19 @@ class GameOverviewView extends ConsumerWidget {
                   sliver: _canHostReorder(game)
                       ? SliverReorderableList(
                           itemCount: game.playersInTurnOrder.length,
-                          onReorder: (oldIndex, newIndex) =>
-                              _onHostReorder(ref, game, oldIndex, newIndex),
+                          onReorder: _onHostReorder,
                           itemBuilder: (context, index) {
                             final p = game.playersInTurnOrder[index];
                             return ReorderableDelayedDragStartListener(
                               key: ValueKey(p.playerId),
                               index: index,
-                              child: _rowFor(p, game),
+                              child: _keyedRow(p),
                             );
                           },
                         )
                       : SliverList(
                           delegate: SliverChildListDelegate(
-                            _buildPlayerListChildren(game),
+                            _buildPlayerListChildren(),
                           ),
                         ),
                 ),
@@ -392,145 +438,6 @@ class GameOverviewView extends ConsumerWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Hero band for the current turn holder — answers "whose turn?" at a glance
-/// without scrolling the roster below.
-class _ActivePlayerSpotlight extends StatelessWidget {
-  const _ActivePlayerSpotlight({required this.game, required this.player});
-
-  final GameState game;
-  final PlayerGameState player;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.gameColors;
-    final isLocal = player.playerId == game.localPlayerId;
-    final teamIdx = game.teamsEnabled
-        ? (game.teamAssignments[player.playerId] ?? 0)
-        : 0;
-    final accent = teamIdx > 0 ? teamColor(teamIdx) : player.playerColor;
-    final isMonarch = game.isMonarch(player.playerId);
-    final hasInit = game.hasInitiative(player.playerId);
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            accent.withValues(alpha: 0.22),
-            colors.surface,
-          ],
-        ),
-        borderRadius: RadiusTokens.radiusMd,
-      ),
-      child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: LayoutTokens.gr2,
-          vertical: LayoutTokens.gr2,
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: accent,
-              child: Text(
-                player.username.isNotEmpty
-                    ? player.username[0].toUpperCase()
-                    : '?',
-                style: TextStyle(
-                  color: colors.onAccent,
-                  fontWeight: FontWeight.w700,
-                  fontSize: FontTokens.body,
-                ),
-              ),
-            ),
-            SizedBox(width: LayoutTokens.gr2),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        'NOW PLAYING',
-                        style: TextStyle(
-                          color: accent,
-                          fontSize: FontTokens.hudXs,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.6,
-                        ),
-                      ),
-                      if (isMonarch) ...[
-                        SizedBox(width: LayoutTokens.gr1),
-                        GameIcon.monarch(
-                          size: 14,
-                          color: politicsIconTone(context),
-                        ),
-                      ],
-                      if (hasInit) ...[
-                        SizedBox(width: LayoutTokens.gr0),
-                        GameIcon.initiative(
-                          size: 14,
-                          color: politicsIconTone(context),
-                        ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(
-                          text: player.username,
-                          style: TextStyle(
-                            color: colors.textPrimary,
-                            fontWeight: FontWeight.w700,
-                            fontSize: FontTokens.title,
-                            height: 1.1,
-                          ),
-                        ),
-                        if (isLocal)
-                          TextSpan(
-                            text: ' · you',
-                            style: TextStyle(
-                              color: colors.textSecondary,
-                              fontWeight: FontWeight.w600,
-                              fontSize: FontTokens.hudXs,
-                            ),
-                          ),
-                      ],
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (game.phasesEnabled)
-                    Text(
-                      game.currentPhase.streamlinedShortLabel,
-                      style: TextStyle(
-                        color: colors.textSecondary,
-                        fontSize: FontTokens.hudSm,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            SizedBox(width: LayoutTokens.gr2),
-            _GameOverviewLifeBadge(
-              life: player.life,
-              eliminated: false,
-              isActive: true,
-              accent: accent,
-              showHeart: true,
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -728,6 +635,7 @@ class _GameOverviewLifeStepper extends StatelessWidget {
     required this.accent,
     required this.enabled,
     required this.onDelta,
+    this.showHeart = false,
   });
 
   final int life;
@@ -735,6 +643,7 @@ class _GameOverviewLifeStepper extends StatelessWidget {
   final Color accent;
   final bool enabled;
   final void Function(int delta) onDelta;
+  final bool showHeart;
 
   Color _textColor(AppColorTokens colors) {
     if (life <= 5) return colors.error;
@@ -774,16 +683,40 @@ class _GameOverviewLifeStepper extends StatelessWidget {
           ),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr0),
-            child: Text(
-              '$life',
-              style: TextStyle(
-                color: _textColor(colors),
-                fontWeight: FontWeight.w700,
-                fontSize: FontTokens.body,
-                height: 1,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
-            ),
+            child: showHeart
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.favorite_rounded,
+                        size: 16,
+                        color: _textColor(colors).withValues(
+                          alpha: OpacityTokens.nearOpaque,
+                        ),
+                      ),
+                      SizedBox(width: LayoutTokens.gr0),
+                      Text(
+                        '$life',
+                        style: TextStyle(
+                          color: _textColor(colors),
+                          fontWeight: FontWeight.w700,
+                          fontSize: FontTokens.body,
+                          height: 1,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ],
+                  )
+                : Text(
+                    '$life',
+                    style: TextStyle(
+                      color: _textColor(colors),
+                      fontWeight: FontWeight.w700,
+                      fontSize: FontTokens.body,
+                      height: 1,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
           ),
           _LifeStepButton(
             icon: Icons.add_rounded,
@@ -1022,43 +955,55 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
         local != null &&
         (isLocal || hasAllianceMenu || canAssignTeam);
     final canEditLife = !p.isEliminated && game.isHost;
+    final showAsActive = isActive && !p.isEliminated;
 
     Widget card = AnimatedContainer(
       duration: MotionTokens.slow,
+      curve: Curves.easeOutCubic,
       margin: EdgeInsets.only(bottom: LayoutTokens.gr2),
       decoration: BoxDecoration(
+        gradient: showAsActive
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  borderColor.withValues(alpha: 0.24),
+                  colors.surface,
+                ],
+              )
+            : null,
         color: p.isEliminated
             ? colors.backgroundSecondary.withValues(alpha: OpacityTokens.half)
-            : isActive
-                ? borderColor.withValues(alpha: OpacityTokens.faint)
+            : showAsActive
+                ? null
                 : isLocal
                     ? colors.surface.withValues(alpha: OpacityTokens.nearOpaque)
                     : colors.surface,
-        borderRadius: RadiusTokens.radiusSm,
+        borderRadius:
+            showAsActive ? RadiusTokens.radiusMd : RadiusTokens.radiusSm,
       ),
       child: ClipRRect(
-        borderRadius: RadiusTokens.radiusSm,
+        borderRadius:
+            showAsActive ? RadiusTokens.radiusMd : RadiusTokens.radiusSm,
         child: Stack(
           children: [
             OverviewCommanderArtBackdrop(player: p),
-            if (isActive && !p.isEliminated)
+            if (showAsActive)
               Positioned(
                 left: 0,
                 top: 0,
                 bottom: 0,
                 child: Container(
-                  width: 3,
+                  width: 4,
                   color: borderColor,
                 ),
               ),
             Padding(
               padding: EdgeInsets.fromLTRB(
-                isActive && !p.isEliminated
-                    ? LayoutTokens.gr1
-                    : LayoutTokens.gr2,
                 LayoutTokens.gr2,
+                showAsActive ? LayoutTokens.gr3 : LayoutTokens.gr2,
                 LayoutTokens.gr2,
-                LayoutTokens.gr2,
+                showAsActive ? LayoutTokens.gr3 : LayoutTokens.gr2,
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -1069,6 +1014,36 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        if (showAsActive) ...[
+                          Row(
+                            children: [
+                              Text(
+                                'NOW PLAYING',
+                                style: TextStyle(
+                                  color: borderColor,
+                                  fontSize: FontTokens.hudXs,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.6,
+                                ),
+                              ),
+                              if (isMonarch) ...[
+                                SizedBox(width: LayoutTokens.gr1),
+                                GameIcon.monarch(
+                                  size: 14,
+                                  color: politicsIconTone(context),
+                                ),
+                              ],
+                              if (hasInit) ...[
+                                SizedBox(width: LayoutTokens.gr0),
+                                GameIcon.initiative(
+                                  size: 14,
+                                  color: politicsIconTone(context),
+                                ),
+                              ],
+                            ],
+                          ),
+                          SizedBox(height: LayoutTokens.gr0),
+                        ],
                         Row(
                           children: [
                             Expanded(
@@ -1082,8 +1057,10 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                                             ? colors.textSecondary
                                             : colors.textPrimary,
                                         fontWeight: FontWeight.w700,
-                                        fontSize: FontTokens.hudSm,
-                                        height: 1.3,
+                                        fontSize: showAsActive
+                                            ? FontTokens.title
+                                            : FontTokens.hudSm,
+                                        height: 1.2,
                                       ),
                                     ),
                                     if (isLocal)
@@ -1093,7 +1070,7 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                                           color: colors.textSecondary,
                                           fontWeight: FontWeight.w500,
                                           fontSize: FontTokens.hudXs,
-                                          height: 1.3,
+                                          height: 1.2,
                                         ),
                                       ),
                                   ],
@@ -1102,7 +1079,7 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            if (isMonarch || hasInit) ...[
+                            if (!showAsActive && (isMonarch || hasInit)) ...[
                               SizedBox(width: LayoutTokens.gr1),
                               _PlayerPoliticsBadges(
                                 isMonarch: isMonarch,
@@ -1111,6 +1088,17 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                             ],
                           ],
                         ),
+                        if (showAsActive && game.phasesEnabled) ...[
+                          SizedBox(height: 2),
+                          Text(
+                            game.currentPhase.streamlinedShortLabel,
+                            style: TextStyle(
+                              color: colors.textSecondary,
+                              fontSize: FontTokens.hudSm,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                         OverviewPlayerMarkerBadges(
                           game: game,
                           playerId: p.playerId,
@@ -1145,15 +1133,17 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                         _GameOverviewLifeBadge(
                           life: p.life,
                           eliminated: p.isEliminated,
-                          isActive: isActive && !p.isEliminated,
+                          isActive: showAsActive,
                           accent: borderColor,
+                          showHeart: showAsActive,
                         )
                       else
                         _GameOverviewLifeStepper(
                           life: p.life,
-                          isActive: isActive,
+                          isActive: showAsActive,
                           accent: borderColor,
                           enabled: true,
+                          showHeart: showAsActive,
                           onDelta: (delta) =>
                               notifier.adjustLife(p.playerId, delta),
                         ),
@@ -1251,7 +1241,11 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
       ),
     );
 
-    return card;
+    return Semantics(
+      container: true,
+      label: showAsActive ? 'Now playing: ${p.username}' : null,
+      child: card,
+    );
   }
 
   static void _showTeamSelectorSheet(

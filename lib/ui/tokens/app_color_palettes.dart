@@ -6,6 +6,8 @@ enum AppColorSchemeId {
   crimson,
   slate,
   forest,
+  obsidian,
+  fog,
 }
 
 /// Full dark/light palette for one color scheme.
@@ -106,7 +108,14 @@ class AppColorPalette {
 }
 
 abstract final class AppColorPalettes {
-  static const List<AppColorPalette> all = [violet, crimson, slate, forest];
+  static const List<AppColorPalette> all = [
+    violet,
+    crimson,
+    slate,
+    forest,
+    obsidian,
+    fog,
+  ];
 
   static const AppColorPalette violet = AppColorPalette(
     id: AppColorSchemeId.violet,
@@ -288,11 +297,105 @@ abstract final class AppColorPalettes {
     lightSurfaceContainerHighest: Color(0xFF86EFAC),
   );
 
+  static const AppColorPalette obsidian = AppColorPalette(
+    id: AppColorSchemeId.obsidian,
+    label: 'Obsidian',
+    description: 'Near-black surfaces with soft violet spark accents',
+    previewAccent: Color(0xFFB794FF),
+    previewBackground: Color(0xFF050507),
+    brandBlack: Color(0xFF050507),
+    brandAccent: Color(0xFFB794FF),
+    brandAccentSoft: Color(0xFFD4C0FF),
+    brandAccentMuted: Color(0xFF1A1A22),
+    backgroundPrimary: Color(0xFF050507),
+    backgroundSecondary: Color(0xFF0A0A0E),
+    surface: Color(0xFF121218),
+    surfaceElevated: Color(0xFF1A1A22),
+    borderSubtle: Color(0xFF2A2A34),
+    textPrimary: Color(0xFFF5F5F7),
+    textSecondary: Color(0xFF9A9AA8),
+    textMuted: Color(0xFF6A6A78),
+    emphasis: Color(0xFFD4C0FF),
+    darkPrimaryContainer: Color(0xFF241B38),
+    darkOnPrimaryContainer: Color(0xFFEDE4FF),
+    darkSecondaryContainer: Color(0xFF1A1A22),
+    darkInversePrimary: Color(0xFF8B6AD4),
+    darkSurfaceContainerLowest: Color(0xFF000000),
+    darkSurfaceContainerLow: Color(0xFF08080C),
+    lightBackgroundPrimary: Color(0xFFF3F2F7),
+    lightBackgroundSecondary: Color(0xFFE8E7EF),
+    lightSurface: Color(0xFFFFFFFF),
+    lightSurfaceElevated: Color(0xFFF0EFF5),
+    lightBorderSubtle: Color(0xFFD2D0DC),
+    lightTextPrimary: Color(0xFF0C0C12),
+    lightTextSecondary: Color(0xFF4C4C5A),
+    lightTextMuted: Color(0xFF727280),
+    lightPrimaryAccent: Color(0xFF6D28D9),
+    lightPrimaryContainer: Color(0xFFEDE9FE),
+    lightOnPrimaryContainer: Color(0xFF2E1065),
+    lightSecondaryContainer: Color(0xFFE5E4EC),
+    lightOnSecondaryContainer: Color(0xFF1A1A24),
+    lightInversePrimary: Color(0xFFD4C0FF),
+    lightSurfaceContainerLow: Color(0xFFF3F2F7),
+    lightSurfaceContainer: Color(0xFFE8E7EF),
+    lightSurfaceContainerHigh: Color(0xFFDEDEE6),
+    lightSurfaceContainerHighest: Color(0xFFD2D2DC),
+  );
+
+  static const AppColorPalette fog = AppColorPalette(
+    id: AppColorSchemeId.fog,
+    label: 'Fog',
+    description: 'Soft white and grey with cool charcoal text',
+    previewAccent: Color(0xFF4B5563),
+    previewBackground: Color(0xFFF4F5F7),
+    brandBlack: Color(0xFF111827),
+    brandAccent: Color(0xFF4B5563),
+    brandAccentSoft: Color(0xFF9CA3AF),
+    brandAccentMuted: Color(0xFFE5E7EB),
+    // Dark mode companion for Fog (still usable if theme flips).
+    backgroundPrimary: Color(0xFF111827),
+    backgroundSecondary: Color(0xFF1F2937),
+    surface: Color(0xFF273244),
+    surfaceElevated: Color(0xFF334155),
+    borderSubtle: Color(0xFF475569),
+    textPrimary: Color(0xFFF9FAFB),
+    textSecondary: Color(0xFFCBD5E1),
+    textMuted: Color(0xFF94A3B8),
+    emphasis: Color(0xFFE5E7EB),
+    darkPrimaryContainer: Color(0xFF1F2937),
+    darkOnPrimaryContainer: Color(0xFFF3F4F6),
+    darkSecondaryContainer: Color(0xFF273244),
+    darkInversePrimary: Color(0xFF9CA3AF),
+    darkSurfaceContainerLowest: Color(0xFF0B1220),
+    darkSurfaceContainerLow: Color(0xFF152033),
+    // Primary Fog look: light grey / white.
+    lightBackgroundPrimary: Color(0xFFF4F5F7),
+    lightBackgroundSecondary: Color(0xFFE8EAEE),
+    lightSurface: Color(0xFFFFFFFF),
+    lightSurfaceElevated: Color(0xFFF0F1F4),
+    lightBorderSubtle: Color(0xFFD1D5DB),
+    lightTextPrimary: Color(0xFF111827),
+    lightTextSecondary: Color(0xFF4B5563),
+    lightTextMuted: Color(0xFF6B7280),
+    lightPrimaryAccent: Color(0xFF374151),
+    lightPrimaryContainer: Color(0xFFE5E7EB),
+    lightOnPrimaryContainer: Color(0xFF111827),
+    lightSecondaryContainer: Color(0xFFF3F4F6),
+    lightOnSecondaryContainer: Color(0xFF1F2937),
+    lightInversePrimary: Color(0xFF9CA3AF),
+    lightSurfaceContainerLow: Color(0xFFF4F5F7),
+    lightSurfaceContainer: Color(0xFFE8EAEE),
+    lightSurfaceContainerHigh: Color(0xFFDEE1E6),
+    lightSurfaceContainerHighest: Color(0xFFD1D5DB),
+  );
+
   static AppColorPalette byId(AppColorSchemeId id) => switch (id) {
         AppColorSchemeId.violet => violet,
         AppColorSchemeId.crimson => crimson,
         AppColorSchemeId.slate => slate,
         AppColorSchemeId.forest => forest,
+        AppColorSchemeId.obsidian => obsidian,
+        AppColorSchemeId.fog => fog,
       };
 
   static AppColorSchemeId parse(String? raw) {
@@ -300,6 +403,8 @@ abstract final class AppColorPalettes {
       'crimson' => AppColorSchemeId.crimson,
       'slate' => AppColorSchemeId.slate,
       'forest' => AppColorSchemeId.forest,
+      'obsidian' => AppColorSchemeId.obsidian,
+      'fog' => AppColorSchemeId.fog,
       _ => AppColorSchemeId.violet,
     };
   }

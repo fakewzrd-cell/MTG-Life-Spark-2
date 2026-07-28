@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/models/player_identity.dart';
 import '../../core/models/player_profile.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/utils/app_router.dart';
@@ -24,6 +25,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   final _usernameController = TextEditingController();
   bool _saving = false;
   String? _avatarUrl;
+  late final String _seatId = generatePlayerId();
 
   static const double _avatarSize = 96;
   static const double _cameraBadgeSize = 28;
@@ -51,6 +53,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
 
     final profile = PlayerProfile(
       username: _usernameController.text.trim(),
+      playerId: _seatId,
       profileAvatarImageUrl: _avatarUrl,
     );
     await ref.read(profileRepositoryProvider).saveProfile(profile);
@@ -62,7 +65,8 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   Future<void> _skip() async {
     setState(() => _saving = true);
     final profile = PlayerProfile(
-      username: 'Planeswalker',
+      username: generateSparkDisplayName(),
+      playerId: _seatId,
       profileAvatarImageUrl: _avatarUrl,
     );
     await ref.read(profileRepositoryProvider).saveProfile(profile);

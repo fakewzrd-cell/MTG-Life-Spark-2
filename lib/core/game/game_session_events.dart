@@ -36,3 +36,79 @@ final peerLinkIssuesProvider =
 
 /// Bumped when a peer's grace expires so the host UI can prompt once.
 final peerReconnectDecisionTickProvider = StateProvider<int>((ref) => 0);
+
+/// Shared mid-match dice / coin announcement (ephemeral UI, not game state).
+enum TableToolKind { d6, d20, coin }
+
+class TableToolAnnouncement {
+  const TableToolAnnouncement({
+    required this.id,
+    required this.playerId,
+    required this.username,
+    required this.kind,
+    this.dieValue,
+    this.coinHeads,
+  });
+
+  final String id;
+  final String playerId;
+  final String username;
+  final TableToolKind kind;
+  final int? dieValue;
+  final bool? coinHeads;
+
+  String get resultLabel {
+    switch (kind) {
+      case TableToolKind.d6:
+      case TableToolKind.d20:
+        return '${dieValue ?? '?'}';
+      case TableToolKind.coin:
+        return (coinHeads ?? false) ? 'Heads' : 'Tails';
+    }
+  }
+
+  String get toolLabel => switch (kind) {
+        TableToolKind.d6 => 'd6',
+        TableToolKind.d20 => 'd20',
+        TableToolKind.coin => 'Coin',
+      };
+
+  String get headline => switch (kind) {
+        TableToolKind.d6 => '$username rolled a $resultLabel',
+        TableToolKind.d20 => '$username rolled a $resultLabel',
+        TableToolKind.coin => '$username flipped $resultLabel',
+      };
+
+  factory TableToolAnnouncement.fromPayload(Map<String, dynamic> payload) {
+    final tool = payload['tool'] as String? ?? 'd6';
+    final kind = switch (tool) {
+      'd20' => TableToolKind.d20,
+      'coin' => TableToolKind.coin,
+      _ => TableToolKind.d6,
+    };
+    return TableToolAnnouncement(
+      id: payload['id'] as String? ?? '',
+      playerId: payload['pid'] as String? ?? '',
+      username: payload['username'] as String? ?? 'Player',
+      kind: kind,
+      dieValue: (payload['die'] as num?)?.toInt(),
+      coinHeads: payload['heads'] as bool?,
+    );
+  }
+
+  Map<String, dynamic> toPayload() => {
+        'id': id,
+        'pid': playerId,
+        'username': username,
+        'tool': switch (kind) {
+          TableToolKind.d6 => 'd6',
+          TableToolKind.d20 => 'd20',
+          TableToolKind.coin => 'coin',
+        },
+        if (dieValue != null) 'die': dieValue,
+        if (coinHeads != null) 'heads': coinHeads,
+      };
+}
+
+final tableToolAnnouncementProvider =
+    StateProvider<TableToolAnnouncement?>((ref) => null);

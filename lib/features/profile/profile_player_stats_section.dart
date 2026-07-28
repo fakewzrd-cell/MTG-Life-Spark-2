@@ -270,9 +270,6 @@ class ProfilePlayerStatsSection extends ConsumerWidget {
         final cardHeight = profileCarouselCardHeight(context);
         final cardWidth = kProfileCarouselCardWidth;
 
-        final hasReactions =
-            profile.likesReceived + profile.dislikesReceived > 0;
-
         final tiles = <Widget>[
           _PlayerStatsCarouselTile(
             width: cardWidth,
@@ -310,7 +307,7 @@ class ProfilePlayerStatsSection extends ConsumerWidget {
           _PlayerStatsCarouselTile(
             width: cardWidth,
             height: cardHeight,
-            child: hasReactions
+            child: hasPlayedGames
                 ? _BehaviourBarCard(
                     profile: profile,
                     colors: colors,
@@ -319,9 +316,7 @@ class ProfilePlayerStatsSection extends ConsumerWidget {
                 : _PlayerStatsEmptyCard(
                     title: 'Player behaviour',
                     colors: colors,
-                    message: hasPlayedGames
-                        ? 'Play and collect likes or dislikes to unlock this.'
-                        : kProfileUntilFirstGameMessage,
+                    message: kProfileUntilFirstGameMessage,
                   ),
           ),
           _PlayerStatsCarouselTile(
@@ -657,12 +652,30 @@ class _WorstDeckCard extends ConsumerWidget {
   }
 }
 
-/// 0 = Good, 1 = Salty (from dislike ratio among reactions).
-double _saltFraction(PlayerProfile profile) {
-  final total = profile.likesReceived + profile.dislikesReceived;
-  if (total == 0) return 0.5;
-  return (profile.dislikesReceived / total).clamp(0.0, 1.0);
+/// Behaviour spectrum position in \[0, 1\]: 0 = Good, 0.5 = Neutral, 1 = Salty.
+///
+/// Starts neutral with no reactions. Likes nudge left; dislikes nudge right.
+/// Uses a soft curve so early feedback does not slam the knob to an extreme.
+@visibleForTesting
+double behaviourSaltFraction({
+  required int likes,
+  required int dislikes,
+}) {
+  final l = likes < 0 ? 0 : likes;
+  final d = dislikes < 0 ? 0 : dislikes;
+  if (l == 0 && d == 0) return 0.5;
+  // Higher = slower drift from center; ~4 keeps first few reactions gentle.
+  const scale = 4.0;
+  final net = (l - d).toDouble();
+  // softsign in (-1, 1); +likes → Good (left).
+  final signed = net / (scale + net.abs());
+  return (0.5 - 0.5 * signed).clamp(0.0, 1.0);
 }
+
+double _saltFraction(PlayerProfile profile) => behaviourSaltFraction(
+      likes: profile.likesReceived,
+      dislikes: profile.dislikesReceived,
+    );
 
 IconData _behaviourSmileyIcon(double salt) {
   if (salt < 0.28) return Icons.sentiment_very_satisfied_rounded;
@@ -722,10 +735,15 @@ Widget _behaviourSpectrumTrack({
   final double h = thumbSize;
   final double barTop = (thumbSize - barHeight) / 2;
   final saltPct = (salt * 100).round();
+  final leaning = saltPct < 45
+      ? 'leaning good'
+      : saltPct > 55
+          ? 'leaning salty'
+          : 'neutral';
 
   return Semantics(
-    label: 'Behaviour spectrum, $saltPct percent toward salty',
-    value: '$saltPct%',
+    label: 'Behaviour spectrum, $leaning',
+    value: '$saltPct% toward salty',
     child: SizedBox(
     width: w,
     height: h,

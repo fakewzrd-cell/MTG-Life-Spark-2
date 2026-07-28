@@ -46,7 +46,7 @@ void main() {
 
     expect(find.text('Forfeit?'), findsOneWidget);
     expect(find.text('Rate opponents'), findsOneWidget);
-    expect(find.text('Star of the game'), findsOneWidget);
+    expect(find.text('Spark of the game'), findsOneWidget);
     expect(find.text('MVP'), findsNothing);
     expect(find.text('Team Player'), findsNothing);
     expect(find.text('Underdog'), findsNothing);
@@ -80,7 +80,7 @@ void main() {
 
     expect(find.text('Final Standings'), findsOneWidget);
     expect(find.text('Rate Your Opponents'), findsOneWidget);
-    expect(find.text('Star of the game'), findsOneWidget);
+    expect(find.text('Spark of the game'), findsOneWidget);
     expect(find.text('MVP'), findsNothing);
     expect(find.text('Thanks! Your feedback has been recorded.'), findsNothing);
   });

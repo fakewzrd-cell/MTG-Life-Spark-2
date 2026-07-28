@@ -85,7 +85,7 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
     await context.push(
       AppRoutes.commanderSelect,
       extra: {
-        'playerId': profile.username,
+        'playerId': profile.playerId,
         'newDeckDisplayName': result.name,
         'deckFormat': result.format.name,
         'deckStyleId': result.deckStyleId,
@@ -144,7 +144,7 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
     await context.push(
       AppRoutes.commanderSelect,
       extra: {
-        'playerId': profile.username,
+        'playerId': profile.playerId,
         'editDeckId': deck.id,
         'deckFormat': deck.format,
       },

@@ -9,17 +9,19 @@ import 'package:mgt_life_spark/core/persistence/providers.dart';
 
 import 'support/fake_ble_service.dart';
 import 'support/test_profile_repository.dart';
+import 'support/test_settings_repository.dart';
 
 void main() {
   test('lobby ready state initializes game with local player and turn order', () {
     final ble = FakeBleService();
-    final profile = PlayerProfile(username: 'host');
+    final profile = PlayerProfile(username: 'host', playerId: 'host-seat');
     final container = ProviderContainer(
       overrides: [
         sessionServiceProvider.overrideWith((ref) => ble),
         profileRepositoryProvider.overrideWithValue(
           TestProfileRepository(profile: profile),
         ),
+        settingsRepositoryProvider.overrideWithValue(TestSettingsRepository()),
       ],
     );
     addTearDown(container.dispose);
@@ -28,7 +30,7 @@ void main() {
 
     final lobbyNotifier = container.read(lobbyProvider.notifier);
     lobbyNotifier.initAsHost();
-    lobbyNotifier.setReady('host', ready: true);
+    lobbyNotifier.setReady('host-seat', ready: true);
 
     final lobby = container.read(lobbyProvider);
     expect(lobby.canStart, isTrue);
@@ -38,11 +40,11 @@ void main() {
     gameNotifier.initFromLobbyIfNeeded(lobby);
 
     final game = container.read(gameProvider);
-    expect(game.localPlayer?.playerId, 'host');
+    expect(game.localPlayer?.playerId, 'host-seat');
     expect(game.isHost, isTrue);
     expect(game.players.length, 1);
-    expect(game.players.single.playerId, 'host');
-    expect(game.turnOrder, contains('host'));
+    expect(game.players.single.playerId, 'host-seat');
+    expect(game.turnOrder, contains('host-seat'));
     expect(game.currentPhase, GamePhase.untap);
     expect(game.gameStartTime, isNotNull);
   });

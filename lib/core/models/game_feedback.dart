@@ -23,7 +23,7 @@ class GameFeedback {
   final List<String> likePlayerIds;
   final List<String> dislikePlayerIds;
 
-  /// Optional single honor: Star of the game.
+  /// Optional single honor: Spark of the game.
   final String? starPlayerId;
 
   const GameFeedback({

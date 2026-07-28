@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meta/meta.dart';
@@ -197,7 +198,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
   void initFromLobby(LobbyState lobby) {
     final profile = _ref.read(profileRepositoryProvider).getProfile();
     final deckRepo = _ref.read(deckRepositoryProvider);
-    final localPlayerId = profile?.username ?? '';
+    final localPlayerId = profile?.playerId ?? '';
     // Lobby host flag covers web practice sessions where no WS host runs.
     final isHost = lobby.isHost ||
         _ref.read(sessionRoleProvider) == SessionRole.host;
@@ -1544,6 +1545,74 @@ class GameStateNotifier extends StateNotifier<GameState> {
     ));
   }
 
+  /// Roll / flip a shared table tool and show the result to every seat.
+  void announceTableToolRoll(TableToolKind kind) {
+    if (state.localPlayerId.isEmpty || state.gameOver) return;
+    final rand = Random();
+    int? dieValue;
+    bool? coinHeads;
+    switch (kind) {
+      case TableToolKind.d6:
+        dieValue = rand.nextInt(6) + 1;
+      case TableToolKind.d20:
+        dieValue = rand.nextInt(20) + 1;
+      case TableToolKind.coin:
+        coinHeads = rand.nextBool();
+    }
+    final announcement = TableToolAnnouncement(
+      id: _uuid.v4(),
+      playerId: state.localPlayerId,
+      username: state.localPlayer?.username ?? 'Player',
+      kind: kind,
+      dieValue: dieValue,
+      coinHeads: coinHeads,
+    );
+    _publishTableToolAnnouncement(announcement, appendLog: true);
+    _send(BleMessage.tableToolResult(
+      seqNum: _nextSeq(),
+      id: announcement.id,
+      playerId: announcement.playerId,
+      username: announcement.username,
+      tool: switch (kind) {
+        TableToolKind.d6 => 'd6',
+        TableToolKind.d20 => 'd20',
+        TableToolKind.coin => 'coin',
+      },
+      dieValue: dieValue,
+      coinHeads: coinHeads,
+    ));
+  }
+
+  void dismissTableToolAnnouncement() {
+    _ref.read(tableToolAnnouncementProvider.notifier).state = null;
+  }
+
+  void _publishTableToolAnnouncement(
+    TableToolAnnouncement announcement, {
+    required bool appendLog,
+  }) {
+    _ref.read(tableToolAnnouncementProvider.notifier).state = announcement;
+    if (appendLog) {
+      _trimAndSetLogs(_logsWithAppended(announcement.headline));
+    }
+  }
+
+  void _handleTableToolResult(BleMessage msg) {
+    final announcement = TableToolAnnouncement.fromPayload(msg.payload);
+    if (announcement.id.isEmpty || announcement.playerId.isEmpty) return;
+    // Local roller already published before send.
+    if (announcement.playerId == state.localPlayerId) return;
+    if (announcement.kind != TableToolKind.coin &&
+        (announcement.dieValue == null || announcement.dieValue! < 1)) {
+      return;
+    }
+    if (announcement.kind == TableToolKind.coin &&
+        announcement.coinHeads == null) {
+      return;
+    }
+    _publishTableToolAnnouncement(announcement, appendLog: true);
+  }
+
   // ── Concede ───────────────────────────────────────────────────────────────
 
   void concede(String playerId) {
@@ -2301,6 +2370,9 @@ class GameStateNotifier extends StateNotifier<GameState> {
         _applyStackUpdate(msg.payload);
       case BleMessageType.matchFeedback:
         _ingestRemoteMatchFeedback(msg);
+        break;
+      case BleMessageType.tableToolResult:
+        _handleTableToolResult(msg);
         break;
       case BleMessageType.firstPlayerRollSubmit:
         if (state.isHost) {

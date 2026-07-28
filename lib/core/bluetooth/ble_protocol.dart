@@ -73,6 +73,9 @@ enum BleMessageType {
   // Stack tracker
   stackUpdate,
 
-  /// End-game likes / Star of the game ballot (LAN sync).
+  /// End-game likes / Spark of the game ballot (LAN sync).
   matchFeedback,
+
+  /// Shared mid-match d6 / d20 / coin result for the whole table.
+  tableToolResult,
 }

@@ -52,8 +52,9 @@ class _HubGuideDialogState extends ConsumerState<_HubGuideDialog> {
       icon: Icons.grid_view_rounded,
       title: 'Table overview',
       body:
-          'Open Table for the whole pod. Tools has dice and coin flips; History '
-          'is in the header. End turn stays pinned; Forfeit sits below it.',
+          'Open Table for the whole pod. Tools has dice and coin flips that '
+          'everyone sees; History is in the header. End turn stays pinned; '
+          'Forfeit sits below it.',
     ),
     _HubGuideSlide(
       icon: Icons.favorite_rounded,

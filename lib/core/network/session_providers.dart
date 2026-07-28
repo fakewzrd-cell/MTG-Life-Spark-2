@@ -31,7 +31,7 @@ Future<bool> startHostSession(WidgetRef ref) async {
   }
 
   final host = WsHostService(
-    hostPlayerId: profile.username,
+    hostPlayerId: profile.playerId,
     hostUsername: profile.username,
     joinToken: SessionJoinUri.generateToken(),
   );
@@ -59,7 +59,7 @@ Future<void> startClientSession(WidgetRef ref) async {
   if (profile == null) return;
 
   final client = WsClientService(
-    localPlayerId: profile.username,
+    localPlayerId: profile.playerId,
     localUsername: profile.username,
   );
   await client.initialize();

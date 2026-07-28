@@ -180,4 +180,27 @@ class BleMessage {
         payload: feedbackJson,
         seqNum: seqNum,
       );
+
+  /// Shared table dice / coin flip so the whole pod sees the same result.
+  static BleMessage tableToolResult({
+    required int seqNum,
+    required String id,
+    required String playerId,
+    required String username,
+    required String tool,
+    int? dieValue,
+    bool? coinHeads,
+  }) =>
+      BleMessage(
+        type: BleMessageType.tableToolResult,
+        payload: {
+          'id': id,
+          'pid': playerId,
+          'username': username,
+          'tool': tool,
+          if (dieValue != null) 'die': dieValue,
+          if (coinHeads != null) 'heads': coinHeads,
+        },
+        seqNum: seqNum,
+      );
 }

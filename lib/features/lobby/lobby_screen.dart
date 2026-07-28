@@ -493,7 +493,7 @@ class _PlayerSlotCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColorTokens.of(context);
     final isLocalHost = ref.watch(
-      profileRepositoryProvider.select((r) => r.getProfile()?.username),
+      profileRepositoryProvider.select((r) => r.getProfile()?.playerId),
     );
     final isMe = slot.playerId == isLocalHost;
     final lobbyFormat = ref.watch(lobbyProvider).config.format;

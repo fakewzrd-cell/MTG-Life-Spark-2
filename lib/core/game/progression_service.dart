@@ -233,7 +233,7 @@ class ProgressionService {
     if (profile != null) {
       await _profileRepo.recomputeSocialStatsFromFeedback(
         _feedbackRepo,
-        profile.username,
+        profile.playerId,
       );
     }
   }
