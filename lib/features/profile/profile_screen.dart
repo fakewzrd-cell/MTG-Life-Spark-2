@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart' show NumberFormat;
+import 'package:intl/intl.dart' show DateFormat, NumberFormat;
 
 import '../../core/models/player_profile.dart';
 import '../../core/persistence/providers.dart';
@@ -101,6 +101,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final scrollBottomPad = LayoutTokens.shellBottomInset(context);
     final hasPlayedGames =
         profile.totalGamesPlayed > 0 || allMatches.isNotEmpty;
+    final firstPlayed = allMatches.isEmpty
+        ? null
+        : allMatches.map((m) => m.date).reduce((a, b) => a.isBefore(b) ? a : b);
 
     return Scaffold(
       backgroundColor: colors.backgroundPrimary,
@@ -115,6 +118,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 profile: profile,
                 colors: colors,
                 metrics: heroMetrics,
+                firstPlayed: firstPlayed,
                 editing: _editing,
                 onEnterEdit: _enterEditMode,
                 onExitEdit: _exitEditMode,
@@ -131,7 +135,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     profile: profile,
                     colors: colors,
                     hasPlayedGames: hasPlayedGames,
-                  ),                  SizedBox(height: LayoutTokens.shellSectionGap),
+                  ),
+                  SizedBox(height: LayoutTokens.shellSectionGap),
                   ProfileDeckPerformanceSection(
                     colors: colors,
                     hasPlayedGames: hasPlayedGames,
@@ -160,6 +165,7 @@ class _ProfileHeroCard extends StatelessWidget {
     required this.profile,
     required this.colors,
     required this.metrics,
+    required this.firstPlayed,
     required this.editing,
     required this.onEnterEdit,
     required this.onExitEdit,
@@ -170,6 +176,7 @@ class _ProfileHeroCard extends StatelessWidget {
   final PlayerProfile profile;
   final AppColorTokens colors;
   final ProfileHeroLayoutMetrics metrics;
+  final DateTime? firstPlayed;
   final bool editing;
   final VoidCallback onEnterEdit;
   final VoidCallback onExitEdit;
@@ -193,10 +200,22 @@ class _ProfileHeroCard extends StatelessWidget {
             Positioned.fill(child: defaultBannerFill(context)),
             Positioned(
               top: metrics.topInset + LayoutTokens.gr2,
+              left: metrics.overlayHPadding,
               right: metrics.overlayHPadding,
-              child: _ProfileEditModePill(
-                editing: editing,
-                onPressed: editing ? onExitEdit : onEnterEdit,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _ProfileHeroCaption(
+                      firstPlayed: firstPlayed,
+                      colors: colors,
+                    ),
+                  ),
+                  SizedBox(width: LayoutTokens.gr1),
+                  _ProfileEditModePill(
+                    editing: editing,
+                    onPressed: editing ? onExitEdit : onEnterEdit,
+                  ),
+                ],
               ),
             ),
             Positioned.fill(
@@ -227,6 +246,35 @@ class _ProfileHeroCard extends StatelessWidget {
   }
 }
 
+/// Top-leading tenure caption — balances the Edit pill across the banner.
+class _ProfileHeroCaption extends StatelessWidget {
+  const _ProfileHeroCaption({
+    required this.firstPlayed,
+    required this.colors,
+  });
+
+  final DateTime? firstPlayed;
+  final AppColorTokens colors;
+
+  @override
+  Widget build(BuildContext context) {
+    final since = firstPlayed;
+    return Text(
+      since == null
+          ? 'New player'
+          : 'Playing since ${DateFormat.yMMM().format(since)}',
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        fontSize: FontTokens.label,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.4,
+        color: colors.onAccent.withValues(alpha: OpacityTokens.strong),
+      ),
+    );
+  }
+}
+
 /// Top-trailing Edit ↔ Done mode toggle — quiet so it doesn't compete with the hero.
 class _ProfileEditModePill extends StatelessWidget {
   const _ProfileEditModePill({
@@ -237,35 +285,53 @@ class _ProfileEditModePill extends StatelessWidget {
   final bool editing;
   final VoidCallback onPressed;
 
-  static const double _visualSize = 36;
-  static const double _iconSize = 16;
+  static const double _visualHeight = 28;
 
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
-    return SizedBox(
-      width: LayoutTokens.minTapTarget,
-      height: LayoutTokens.minTapTarget,
-      child: Center(
+    return Semantics(
+      button: true,
+      label: editing ? 'Done editing' : 'Edit profile',
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          minWidth: LayoutTokens.minTapTarget,
+          minHeight: LayoutTokens.minTapTarget,
+        ),
         child: Material(
-          color: colors.onAccent.withValues(alpha: OpacityTokens.faint),
-          shape: CircleBorder(
-            side: BorderSide(
-              color: colors.onAccent.withValues(alpha: OpacityTokens.soft),
-            ),
-          ),
-          clipBehavior: Clip.antiAlias,
+          color: Colors.transparent,
           child: InkWell(
             onTap: onPressed,
-            customBorder: const CircleBorder(),
-            child: SizedBox(
-              width: _visualSize,
-              height: _visualSize,
-              child: Icon(
-                editing ? Icons.check_rounded : Icons.edit_outlined,
-                size: _iconSize,
-                color: colors.onAccent.withValues(alpha: OpacityTokens.strong),
-                semanticLabel: editing ? 'Done editing' : 'Edit profile',
+            customBorder: const StadiumBorder(),
+            child: Center(
+              child: Container(
+                height: _visualHeight,
+                padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr2),
+                decoration: ShapeDecoration(
+                  color: colors.onAccent.withValues(alpha: OpacityTokens.faint),
+                  shape: StadiumBorder(
+                    side: BorderSide(
+                      color: colors.onAccent.withValues(
+                        alpha: OpacityTokens.soft,
+                      ),
+                    ),
+                  ),
+                ),
+                child: Center(
+                  child: ExcludeSemantics(
+                    child: Text(
+                      editing ? 'Done' : 'Edit',
+                      style: TextStyle(
+                        fontSize: FontTokens.label,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.2,
+                        color: colors.onAccent.withValues(
+                          alpha: OpacityTokens.nearOpaque,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -564,7 +630,7 @@ class _ProfileHeroAvatar extends StatelessWidget {
   }
 }
 
-/// Dark pill: Wins as the primary career stat, honors as a quieter cluster.
+/// Dark pill: win–loss record leads, with sparks and games as quieter cells.
 class _ProfileFloatingStatsPill extends StatelessWidget {
   const _ProfileFloatingStatsPill({required this.profile});
 
@@ -573,14 +639,17 @@ class _ProfileFloatingStatsPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
-    final honors = <(String, String)>[
-      (_formatProfileStat(profile.honorsStarReceived), 'Sparks'),
-    ];
+    final wins = profile.totalWins;
+    final losses = profile.totalLosses;
+    final games = profile.totalGamesPlayed > 0
+        ? profile.totalGamesPlayed
+        : wins + losses;
 
     return Semantics(
       label:
-          '${profile.totalWins} wins, '
-          '${profile.honorsStarReceived} sparks of the game',
+          '$wins wins, $losses losses, '
+          '${profile.honorsStarReceived} sparks of the game, '
+          '$games games played',
       child: Material(
         color: colors.surface.withValues(alpha: 0.88),
         borderRadius: RadiusTokens.radiusPill,
@@ -590,32 +659,47 @@ class _ProfileFloatingStatsPill extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                flex: 5,
                 child: _StatColumn(
-                  value: _formatProfileStat(profile.totalWins),
-                  shortLabel: 'Wins',
+                  value: '$wins–$losses',
+                  shortLabel: 'Record',
                   emphasized: true,
                   accentColor: colors.primaryAccent,
                 ),
               ),
-              Container(
-                width: 1,
-                height: 28,
-                margin: const EdgeInsets.symmetric(horizontal: 2),
-                color: colors.borderSubtle.withValues(alpha: 0.55),
-              ),
-              for (final item in honors)
-                Expanded(
-                  flex: 4,
-                  child: _StatColumn(
-                    value: item.$1,
-                    shortLabel: item.$2,
-                  ),
+              _StatDivider(colors: colors),
+              Expanded(
+                child: _StatColumn(
+                  value: _formatProfileStat(profile.honorsStarReceived),
+                  shortLabel: 'Sparks',
                 ),
+              ),
+              _StatDivider(colors: colors),
+              Expanded(
+                child: _StatColumn(
+                  value: _formatProfileStat(games),
+                  shortLabel: 'Games',
+                ),
+              ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _StatDivider extends StatelessWidget {
+  const _StatDivider({required this.colors});
+
+  final AppColorTokens colors;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 28,
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      color: colors.borderSubtle.withValues(alpha: 0.55),
     );
   }
 }

@@ -110,7 +110,7 @@ class _HubGuideDialogState extends ConsumerState<_HubGuideDialog> {
                 children: [
                   Expanded(
                     child: Text(
-                      'How the hub works',
+                      'Quick tour',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.w700,
                             color: colors.textPrimary,

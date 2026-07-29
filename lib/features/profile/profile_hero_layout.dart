@@ -48,7 +48,7 @@ class ProfileHeroLayoutMetrics {
     );
 
     final overlayContentHeight =
-        identityRowHeight + LayoutTokens.gr4 + statsPillHeight;
+        identityRowHeight + LayoutTokens.gr4 + statsPillHeight * textScale;
 
     final topInset = padding.top;
     // Clears status bar plus room for the top-trailing Edit/Done pill.
@@ -62,14 +62,16 @@ class ProfileHeroLayoutMetrics {
 
     final availH = math.max(200.0, size.height - padding.vertical);
     final portrait = size.height >= size.width;
-    final visualFrac = portrait ? 0.32 : 0.28;
+    final visualFrac = portrait ? 0.30 : 0.26;
     final visualHeight =
         (availH * visualFrac * (0.88 + 0.12 * (textScale - 1))).clamp(
-          240.0,
-          360.0,
+          232.0,
+          312.0,
         );
 
-    final cardHeight = math.max(visualHeight, minCardHeight).clamp(260.0, 400.0);
+    // Cap only the decorative stretch — content minimum always wins so the
+    // overlay can never be clipped at large text scales.
+    final cardHeight = math.max(minCardHeight, visualHeight.clamp(260.0, 372.0));
 
     final overlayHPadding = LayoutTokens.shellPageInset;
 
