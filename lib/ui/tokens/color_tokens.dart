@@ -32,7 +32,7 @@ class ColorTokens {
 
   static Color get brandBlack => _palette.brandBlack;
   static Color get brandAccent => _palette.brandAccent;
-  static const Color onAccent = Color(0xFFFFFFFF);
+  static Color get onAccent => _palette.onAccent;
 
   static Color get brandAccentSoft => _palette.brandAccentSoft;
   static Color get brandAccentMuted => _palette.brandAccentMuted;
@@ -64,6 +64,17 @@ class ColorTokens {
   static const Color success = Color(0xFF4ADE80);
   static const Color warning = Color(0xFFFBBF24);
   static const Color danger = Color(0xFFF87171);
+  static const Color onDanger = Color(0xFF0B0B0F);
+
+  /// Picks the more legible neutral foreground for an arbitrary opaque fill.
+  static Color onColor(Color background) {
+    final luminance = background.computeLuminance();
+    final darkContrast = (luminance + 0.05) / 0.05;
+    final lightContrast = 1.05 / (luminance + 0.05);
+    return darkContrast >= lightContrast
+        ? const Color(0xFF0B0B0F)
+        : const Color(0xFFFFFFFF);
+  }
 
   static Color get emphasis => _palette.emphasis;
 

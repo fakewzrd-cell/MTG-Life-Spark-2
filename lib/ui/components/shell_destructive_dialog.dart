@@ -54,7 +54,7 @@ Future<bool> showShellDestructiveConfirm({
                 onPressed: () => Navigator.pop(ctx, true),
                 style: FilledButton.styleFrom(
                   backgroundColor: colors.error,
-                  foregroundColor: colors.onAccent,
+                  foregroundColor: colors.onError,
                   shape: const StadiumBorder(),
                   textStyle: TextStyle(
                     fontSize: FontTokens.body,

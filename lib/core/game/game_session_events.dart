@@ -37,6 +37,28 @@ final peerLinkIssuesProvider =
 /// Bumped when a peer's grace expires so the host UI can prompt once.
 final peerReconnectDecisionTickProvider = StateProvider<int>((ref) => 0);
 
+enum LifeChangeSource { local, remote }
+
+/// Ephemeral accessibility event for changes to the local seat's life total.
+class LifeChangeAnnouncement {
+  const LifeChangeAnnouncement({
+    required this.id,
+    required this.total,
+    required this.delta,
+    required this.source,
+    this.actorUsername,
+  });
+
+  final int id;
+  final int total;
+  final int delta;
+  final LifeChangeSource source;
+  final String? actorUsername;
+}
+
+final localLifeChangeProvider =
+    StateProvider<LifeChangeAnnouncement?>((ref) => null);
+
 /// Shared mid-match dice / coin announcement (ephemeral UI, not game state).
 enum TableToolKind { d6, d20, coin }
 

@@ -112,6 +112,35 @@ void main() {
     expect(find.text('NOW PLAYING'), findsOneWidget);
     expect(find.text('p2'), findsWidgets);
   });
+
+  testWidgets('four-player overview fits a tablet landscape window',
+      (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1280, 800);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final players = <PlayerGameState>[
+      harnessPlayer(id: 'p0'),
+      harnessPlayer(id: 'p1'),
+      harnessPlayer(id: 'p2'),
+      harnessPlayer(id: 'p3'),
+    ];
+    final game = GameState(
+      players: players,
+      turnOrder: players.map((p) => p.playerId).toList(),
+      localPlayerId: 'p0',
+      activePlayerIndex: 2,
+      gameStartTime: DateTime(2026, 1, 1),
+      autoKoFromCommanderDamage: true,
+      commanderDamageReducesLife: true,
+    );
+
+    await _pumpOverview(tester, game: game);
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('NOW PLAYING'), findsOneWidget);
+  });
 }
 
 /// Tiny helper — ProviderScope from flutter_riverpod doesn't expose container

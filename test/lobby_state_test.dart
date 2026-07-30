@@ -7,6 +7,7 @@ import 'package:mgt_life_spark/core/game/game_format.dart';
 import 'package:mgt_life_spark/core/network/session_providers.dart';
 import 'package:mgt_life_spark/core/game/lobby_state.dart';
 import 'package:mgt_life_spark/core/models/app_settings.dart';
+import 'package:mgt_life_spark/core/models/player_deck.dart';
 import 'package:mgt_life_spark/core/models/player_profile.dart';
 import 'package:mgt_life_spark/core/models/player_slot.dart';
 import 'package:mgt_life_spark/core/persistence/providers.dart';
@@ -181,6 +182,65 @@ void main() {
       expect(
         ble.sentMessages.where((m) => m.type == BleMessageType.stateSnapshot),
         isNotEmpty,
+      );
+    });
+
+    test('setCommander preserves selected deck until explicitly cleared', () {
+      final ble = FakeBleService();
+      final container = _lobbyContainer(ble: ble);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(lobbyProvider.notifier);
+      notifier.initAsHost();
+      final hostId = container.read(lobbyProvider).players.single.playerId;
+      final deck = PlayerDeck(
+        id: 'tracked-deck',
+        displayName: 'Tracked deck',
+        commanderName: 'Original commander',
+        commanderColorIdentity: const ['W'],
+      );
+
+      notifier.applyDeck(playerId: hostId, deck: deck);
+      notifier.setCommander(
+        playerId: hostId,
+        commanderName: 'Replacement commander',
+        commanderImageUrl: 'https://example.com/replacement.jpg',
+        commanderColorIdentity: const ['U', 'B'],
+      );
+
+      var slot = container.read(lobbyProvider).players.single;
+      expect(slot.commanderName, 'Replacement commander');
+      expect(slot.commanderColorIdentity, ['U', 'B']);
+      expect(slot.selectedDeckId, 'tracked-deck');
+      expect(
+        ble.sentMessages.where((m) => m.type == BleMessageType.stateSnapshot),
+        isNotEmpty,
+      );
+
+      notifier.clearSelectedDeck(hostId);
+      slot = container.read(lobbyProvider).players.single;
+      expect(slot.selectedDeckId, isNull);
+      expect(slot.commanderName, 'Replacement commander');
+    });
+
+    test('setCommander does not create deck attribution', () {
+      final ble = FakeBleService();
+      final container = _lobbyContainer(ble: ble);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(lobbyProvider.notifier);
+      notifier.initAsHost();
+      final hostId = container.read(lobbyProvider).players.single.playerId;
+
+      notifier.setCommander(
+        playerId: hostId,
+        commanderName: 'Manual commander',
+        commanderImageUrl: '',
+      );
+
+      expect(
+        container.read(lobbyProvider).players.single.selectedDeckId,
+        isNull,
       );
     });
 

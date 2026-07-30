@@ -29,6 +29,7 @@ import '../widgets/game_bottom_bar.dart';
 import '../widgets/game_colors.dart';
 import '../widgets/game_first_player_roll_overlay.dart';
 import '../widgets/game_hud_header.dart';
+import '../widgets/game_life_announcer.dart';
 import '../widgets/game_modal_chrome.dart';
 import '../widgets/game_overview_view.dart';
 import '../widgets/game_performance_widgets.dart';
@@ -260,6 +261,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final timeoutActive = ref.watch(
       gameProvider.select((g) => g.timeoutActive),
     );
+    final gameOver = ref.watch(gameProvider.select((g) => g.gameOver));
     final timeoutStartTime = ref.watch(
       gameProvider.select((g) => g.timeoutStartTime),
     );
@@ -401,6 +403,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                         setState(() => _showOverview = true),
                   ),
                 ),
+              GameLifeAnnouncer(enabled: !gameOver && !timeoutActive),
               Consumer(
                 builder: (context, ref, _) {
                   final link = ref.watch(sessionLinkStatusProvider);
@@ -420,49 +423,56 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                       : (peerNames.length == 1
                           ? '${peerNames.first} is reconnecting…'
                           : '${peerNames.length} players reconnecting…');
-                  return SafeArea(
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      child: Material(
-                        color: colors.warning.withValues(
-                          alpha: OpacityTokens.soft,
-                        ),
-                        borderRadius: BorderRadius.circular(LayoutTokens.gr2),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: LayoutTokens.gr4,
-                            vertical: LayoutTokens.gr2,
+                  return Semantics(
+                    container: true,
+                    explicitChildNodes: true,
+                    liveRegion: true,
+                    label: label,
+                    child: SafeArea(
+                      child: Align(
+                        alignment: Alignment.topCenter,
+                        child: Material(
+                          color: colors.warning.withValues(
+                            alpha: OpacityTokens.soft,
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  label,
-                                  style: TextStyle(
-                                    color: colors.textPrimary,
-                                    fontSize: FontTokens.body,
-                                    fontWeight: FontWeight.w600,
+                          borderRadius:
+                              BorderRadius.circular(LayoutTokens.gr2),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: LayoutTokens.gr4,
+                              vertical: LayoutTokens.gr2,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    label,
+                                    style: TextStyle(
+                                      color: colors.textPrimary,
+                                      fontSize: FontTokens.body,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              if (showOwnLink) ...[
-                                SizedBox(width: LayoutTokens.gr3),
-                                TextButton(
-                                  onPressed: () => ref
-                                      .read(gameProvider.notifier)
-                                      .retryHostLink(),
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: colors.textPrimary,
-                                    padding: EdgeInsets.zero,
-                                    minimumSize: Size.zero,
-                                    tapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
+                                if (showOwnLink) ...[
+                                  SizedBox(width: LayoutTokens.gr3),
+                                  TextButton(
+                                    onPressed: () => ref
+                                        .read(gameProvider.notifier)
+                                        .retryHostLink(),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: colors.textPrimary,
+                                      padding: EdgeInsets.zero,
+                                      minimumSize: Size.zero,
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    child: const Text('Try again'),
                                   ),
-                                  child: const Text('Try again'),
-                                ),
+                                ],
                               ],
-                            ],
+                            ),
                           ),
                         ),
                       ),
@@ -577,6 +587,12 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
     final chromeAccent = CommanderIdentityColors.gameChromeAccent(
       local.commanderColorIdentity,
     );
+    final activePlayer = game.playerById(game.activePlayerId);
+    final turnLabel = game.isLocalPlayersTurn
+        ? 'Your turn'
+        : activePlayer == null
+            ? 'Current turn'
+            : "${activePlayer.username}'s turn";
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -591,6 +607,7 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
           child: GameHudHeader(
             tightVertical: tightVertical,
             accentColor: chromeAccent,
+            turnLabel: turnLabel,
             isLocalPlayersTurn: showCommanderHud &&
                 game.isLocalPlayersTurn &&
                 !local.isEliminated,

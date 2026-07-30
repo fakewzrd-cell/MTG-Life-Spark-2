@@ -80,6 +80,53 @@ void main() {
       expect(ble.sentMessages.last.originPlayerId, 'alice');
     });
 
+    test('publishes local life announcements for accessibility', () {
+      final ble = FakeBleService();
+      final container = _container(ble: ble);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(gameProvider.notifier);
+      notifier.setGameStateForTest(_twoPlayerGame(localId: 'alice'));
+      notifier.adjustLife('alice', -3);
+
+      final announcement = container.read(localLifeChangeProvider);
+      expect(announcement, isNotNull);
+      expect(announcement!.total, 37);
+      expect(announcement.delta, -3);
+      expect(announcement.source, LifeChangeSource.local);
+    });
+
+    test('publishes remote life announcements for the local seat', () {
+      final ble = FakeBleService();
+      final container = _container(ble: ble);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(gameProvider.notifier);
+      notifier.setGameStateForTest(
+        _twoPlayerGame(localId: 'alice', isHost: true),
+      );
+      notifier.handleSessionMessageForTest(
+        BleMessage(
+          type: BleMessageType.stateDelta,
+          payload: {
+            'pid': 'alice',
+            'field': 'life',
+            'val': 35,
+            'delta': -5,
+            'origin': 'bob',
+          },
+          seqNum: 1,
+        ),
+      );
+
+      final announcement = container.read(localLifeChangeProvider);
+      expect(announcement, isNotNull);
+      expect(announcement!.total, 35);
+      expect(announcement.delta, -5);
+      expect(announcement.source, LifeChangeSource.remote);
+      expect(announcement.actorUsername, 'bob');
+    });
+
     test('host rebroadcast excludes message originator', () {
       final ble = FakeBleService();
       final container = _container(ble: ble);
@@ -192,6 +239,90 @@ void main() {
       );
 
       expect(profileRepo.commanderKillIncrements, 0);
+    });
+
+    test('client can record commander damage received from an opponent', () {
+      final ble = FakeBleService();
+      final container = _container(ble: ble);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(gameProvider.notifier);
+      notifier.setGameStateForTest(
+        _twoPlayerGame(
+          localId: 'alice',
+          players: [_player(id: 'alice', life: 40), _player(id: 'bob')],
+        ),
+      );
+
+      notifier.applyCommanderDamage(
+        fromPlayerId: 'bob',
+        partnerIndex: 0,
+        toPlayerId: 'alice',
+        delta: 3,
+      );
+
+      final alice = notifier.state.players.first;
+      expect(alice.commanderDamageFrom('bob', partnerIndex: 0), 3);
+      expect(alice.life, 37);
+      expect(
+        ble.sentMessages
+            .where((m) => m.type == BleMessageType.commanderDamage),
+        isNotEmpty,
+      );
+    });
+
+    test('client can still record commander damage it dealt', () {
+      final ble = FakeBleService();
+      final container = _container(ble: ble);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(gameProvider.notifier);
+      notifier.setGameStateForTest(
+        _twoPlayerGame(
+          localId: 'alice',
+          players: [_player(id: 'alice'), _player(id: 'bob', life: 40)],
+        ),
+      );
+
+      notifier.applyCommanderDamage(
+        fromPlayerId: 'alice',
+        partnerIndex: 0,
+        toPlayerId: 'bob',
+        delta: 2,
+      );
+
+      final bob = notifier.state.players.last;
+      expect(bob.commanderDamageFrom('alice', partnerIndex: 0), 2);
+      expect(bob.life, 38);
+    });
+
+    test('client cannot record commander damage between two opponents', () {
+      final ble = FakeBleService();
+      final container = _container(ble: ble);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(gameProvider.notifier);
+      notifier.setGameStateForTest(
+        _twoPlayerGame(
+          localId: 'alice',
+          players: [
+            _player(id: 'alice'),
+            _player(id: 'bob', life: 40),
+            _player(id: 'cara'),
+          ],
+        ),
+      );
+
+      notifier.applyCommanderDamage(
+        fromPlayerId: 'cara',
+        partnerIndex: 0,
+        toPlayerId: 'bob',
+        delta: 4,
+      );
+
+      final bob = notifier.state.players[1];
+      expect(bob.commanderDamageFrom('cara', partnerIndex: 0), 0);
+      expect(bob.life, 40);
     });
 
     test('stateDelta sync is idempotent on absolute values', () {

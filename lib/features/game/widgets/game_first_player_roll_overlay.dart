@@ -158,39 +158,56 @@ class _GameFirstPlayerRollOverlayState extends State<GameFirstPlayerRollOverlay>
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: LayoutTokens.gr5),
-              GestureDetector(
-                onTap: hasRolled || _rolling ? null : _doRoll,
-                child: AnimatedBuilder(
-                  animation: Listenable.merge([_wobble, _landScale]),
-                  builder: (context, child) {
-                    final wobbleAngle =
-                        _rolling ? _wobble.value * pi * 4 : 0.0;
-                    final tiltX = _rolling ? sin(_wobble.value * pi * 6) * 0.35 : 0.0;
-                    final scale = _rolling ? 1.0 : _landScale.value;
-                    return Transform(
-                      alignment: Alignment.center,
-                      transform: Matrix4.identity()
-                        ..setEntry(3, 2, 0.001)
-                        ..rotateX(tiltX)
-                        ..rotateZ(wobbleAngle),
-                      child: Transform.scale(scale: scale, child: child),
-                    );
-                  },
-                  child: _DieFace(
-                    value: _displayFace,
-                    colors: colors,
-                    highlighted: hasRolled,
+              Semantics(
+                button: true,
+                enabled: !hasRolled && !_rolling,
+                excludeSemantics: true,
+                label: 'Roll die',
+                value: _rolling
+                    ? 'Rolling'
+                    : hasRolled
+                        ? 'Rolled $_myRoll'
+                        : 'Not rolled',
+                child: GestureDetector(
+                  onTap: hasRolled || _rolling ? null : _doRoll,
+                  child: AnimatedBuilder(
+                    animation: Listenable.merge([_wobble, _landScale]),
+                    builder: (context, child) {
+                      final wobbleAngle =
+                          _rolling ? _wobble.value * pi * 4 : 0.0;
+                      final tiltX =
+                          _rolling ? sin(_wobble.value * pi * 6) * 0.35 : 0.0;
+                      final scale = _rolling ? 1.0 : _landScale.value;
+                      return Transform(
+                        alignment: Alignment.center,
+                        transform: Matrix4.identity()
+                          ..setEntry(3, 2, 0.001)
+                          ..rotateX(tiltX)
+                          ..rotateZ(wobbleAngle),
+                        child: Transform.scale(scale: scale, child: child),
+                      );
+                    },
+                    child: _DieFace(
+                      value: _displayFace,
+                      colors: colors,
+                      highlighted: hasRolled,
+                    ),
                   ),
                 ),
               ),
               const SizedBox(height: LayoutTokens.gr4),
               if (hasRolled)
-                Text(
-                  'You rolled $_myRoll!',
-                  style: TextStyle(
-                    color: colors.success,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
+                Semantics(
+                  liveRegion: true,
+                  label: 'You rolled $_myRoll',
+                  excludeSemantics: true,
+                  child: Text(
+                    'You rolled $_myRoll!',
+                    style: TextStyle(
+                      color: colors.success,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 )
               else if (_rolling)
@@ -210,26 +227,34 @@ class _GameFirstPlayerRollOverlayState extends State<GameFirstPlayerRollOverlay>
               const SizedBox(height: LayoutTokens.gr4),
               _RollProgressList(game: widget.game),
               const SizedBox(height: LayoutTokens.gr3),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: LayoutTokens.gr3,
-                  vertical: LayoutTokens.gr1,
-                ),
-                decoration: BoxDecoration(
-                  color: colors.backgroundSecondary,
-                  borderRadius: RadiusTokens.radiusControlSm,
-                ),
-                child: Text(
-                  widget.game.isHost
-                      ? '$othersRolled / $totalPlayers players have rolled'
-                      : hasRolled
-                          ? 'Waiting for others to roll…'
-                          : 'Tap the die above to roll',
-                  style: TextStyle(
-                    color: colors.textSecondary,
-                    fontSize: 12,
+              Semantics(
+                label: widget.game.isHost
+                    ? '$othersRolled of $totalPlayers players have rolled'
+                    : hasRolled
+                        ? 'Waiting for other players to roll'
+                        : 'Roll die to continue',
+                excludeSemantics: true,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: LayoutTokens.gr3,
+                    vertical: LayoutTokens.gr1,
                   ),
-                  textAlign: TextAlign.center,
+                  decoration: BoxDecoration(
+                    color: colors.backgroundSecondary,
+                    borderRadius: RadiusTokens.radiusControlSm,
+                  ),
+                  child: Text(
+                    widget.game.isHost
+                        ? '$othersRolled / $totalPlayers players have rolled'
+                        : hasRolled
+                            ? 'Waiting for others to roll…'
+                            : 'Tap the die above to roll',
+                    style: TextStyle(
+                      color: colors.textSecondary,
+                      fontSize: 12,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ),
             ],
@@ -313,33 +338,39 @@ class _RollProgressList extends StatelessWidget {
         final isLocal = p.playerId == game.localPlayerId;
         return Padding(
           padding: const EdgeInsets.only(bottom: LayoutTokens.gr1),
-          child: Row(
-            children: [
-              Icon(
-                roll != null ? Icons.check_circle : Icons.hourglass_empty,
-                size: 18,
-                color: roll != null ? colors.success : colors.textMuted,
-              ),
-              const SizedBox(width: LayoutTokens.gr1),
-              Expanded(
-                child: Text(
-                  isLocal ? '${p.username} (you)' : p.username,
-                  style: TextStyle(
-                    color: colors.textPrimary,
-                    fontWeight: isLocal ? FontWeight.w700 : FontWeight.w500,
+          child: Semantics(
+            container: true,
+            excludeSemantics: true,
+            label: '${isLocal ? '${p.username}, you' : p.username}, '
+                '${roll == null ? 'waiting to roll' : 'rolled $roll'}',
+            child: Row(
+              children: [
+                Icon(
+                  roll != null ? Icons.check_circle : Icons.hourglass_empty,
+                  size: 18,
+                  color: roll != null ? colors.success : colors.textMuted,
+                ),
+                const SizedBox(width: LayoutTokens.gr1),
+                Expanded(
+                  child: Text(
+                    isLocal ? '${p.username} (you)' : p.username,
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontWeight: isLocal ? FontWeight.w700 : FontWeight.w500,
+                    ),
                   ),
                 ),
-              ),
-              if (roll != null)
-                Text(
-                  '$roll',
-                  style: TextStyle(
-                    color: colors.emphasis,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
+                if (roll != null)
+                  Text(
+                    '$roll',
+                    style: TextStyle(
+                      color: colors.emphasis,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         );
       }).toList(),
@@ -454,91 +485,100 @@ class _TurnOrderSlotCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
-    return Container(
-      margin: const EdgeInsets.only(bottom: LayoutTokens.gr2),
-      padding: const EdgeInsets.symmetric(
-        horizontal: LayoutTokens.gr3,
-        vertical: LayoutTokens.gr2,
-      ),
-      decoration: BoxDecoration(
-        color: isFirst
-            ? colors.emphasis.withValues(alpha: 0.12)
-            : colors.surface,
-        borderRadius: RadiusTokens.radiusMd,
-        border: Border.all(
-          color: isFirst
-              ? colors.emphasis
-              : colors.borderSubtle.withValues(alpha: OpacityTokens.soft),
-          width: isFirst ? 2 : 1,
+    final semanticName = isLocal ? '$username, you' : username;
+    final semanticRoll = roll == null ? 'roll unavailable' : 'rolled $roll';
+    return Semantics(
+      container: true,
+      excludeSemantics: true,
+      label: '$placeLabel, $semanticName, $semanticRoll'
+          '${isFirst ? ', goes first' : ''}',
+      child: Container(
+        margin: const EdgeInsets.only(bottom: LayoutTokens.gr2),
+        padding: const EdgeInsets.symmetric(
+          horizontal: LayoutTokens.gr3,
+          vertical: LayoutTokens.gr2,
         ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.25),
-              borderRadius: RadiusTokens.radiusControlSm,
-            ),
-            child: Text(
-              placeLabel,
-              style: TextStyle(
-                color: colors.textPrimary,
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-              ),
-            ),
+        decoration: BoxDecoration(
+          color: isFirst
+              ? colors.emphasis.withValues(alpha: 0.12)
+              : colors.surface,
+          borderRadius: RadiusTokens.radiusMd,
+          border: Border.all(
+            color: isFirst
+                ? colors.emphasis
+                : colors.borderSubtle.withValues(alpha: OpacityTokens.soft),
+            width: isFirst ? 2 : 1,
           ),
-          const SizedBox(width: LayoutTokens.gr2),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isLocal ? '$username (you)' : username,
-                  style: TextStyle(
-                    color: colors.textPrimary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                  ),
-                ),
-                if (isFirst)
-                  Text(
-                    'Goes first',
-                    style: TextStyle(
-                      color: colors.emphasis,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          if (roll != null)
+        ),
+        child: Row(
+          children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              width: 40,
+              height: 40,
+              alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: colors.backgroundSecondary,
+                color: accent.withValues(alpha: 0.25),
                 borderRadius: RadiusTokens.radiusControlSm,
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+              child: Text(
+                placeLabel,
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+            const SizedBox(width: LayoutTokens.gr2),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.casino, size: 14, color: colors.textSecondary),
-                  const SizedBox(width: 4),
                   Text(
-                    '$roll',
+                    isLocal ? '$username (you)' : username,
                     style: TextStyle(
                       color: colors.textPrimary,
                       fontWeight: FontWeight.w700,
+                      fontSize: 15,
                     ),
                   ),
+                  if (isFirst)
+                    Text(
+                      'Goes first',
+                      style: TextStyle(
+                        color: colors.emphasis,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                 ],
               ),
             ),
-        ],
+            if (roll != null)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: colors.backgroundSecondary,
+                  borderRadius: RadiusTokens.radiusControlSm,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.casino, size: 14, color: colors.textSecondary),
+                    const SizedBox(width: 4),
+                    Text(
+                      '$roll',
+                      style: TextStyle(
+                        color: colors.textPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

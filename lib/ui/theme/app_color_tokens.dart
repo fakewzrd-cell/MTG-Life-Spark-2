@@ -16,6 +16,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     required this.textMuted,
     required this.primaryAccent,
     required this.onAccent,
+    required this.onError,
     required this.success,
     required this.warning,
     required this.error,
@@ -32,6 +33,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
   final Color textMuted;
   final Color primaryAccent;
   final Color onAccent;
+  final Color onError;
   final Color success;
   final Color warning;
   final Color error;
@@ -53,7 +55,8 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
       textSecondary: palette.textSecondary,
       textMuted: palette.textMuted,
       primaryAccent: palette.brandAccent,
-      onAccent: ColorTokens.onAccent,
+      onAccent: palette.onAccent,
+      onError: ColorTokens.onDanger,
       success: ColorTokens.success,
       warning: ColorTokens.warning,
       error: ColorTokens.danger,
@@ -73,7 +76,8 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
       textSecondary: palette.lightTextSecondary,
       textMuted: palette.lightTextMuted,
       primaryAccent: palette.lightPrimaryAccent,
-      onAccent: ColorTokens.onAccent,
+      onAccent: ColorTokens.onColor(palette.lightPrimaryAccent),
+      onError: ColorTokens.onDanger,
       success: ColorTokens.success,
       warning: ColorTokens.warning,
       error: ColorTokens.danger,
@@ -93,6 +97,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
     Color? textMuted,
     Color? primaryAccent,
     Color? onAccent,
+    Color? onError,
     Color? success,
     Color? warning,
     Color? error,
@@ -109,6 +114,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
       textMuted: textMuted ?? this.textMuted,
       primaryAccent: primaryAccent ?? this.primaryAccent,
       onAccent: onAccent ?? this.onAccent,
+      onError: onError ?? this.onError,
       success: success ?? this.success,
       warning: warning ?? this.warning,
       error: error ?? this.error,
@@ -132,6 +138,7 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
       textMuted: Color.lerp(textMuted, other.textMuted, t)!,
       primaryAccent: Color.lerp(primaryAccent, other.primaryAccent, t)!,
       onAccent: Color.lerp(onAccent, other.onAccent, t)!,
+      onError: Color.lerp(onError, other.onError, t)!,
       success: Color.lerp(success, other.success, t)!,
       warning: Color.lerp(warning, other.warning, t)!,
       error: Color.lerp(error, other.error, t)!,

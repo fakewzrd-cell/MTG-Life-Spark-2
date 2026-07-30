@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/game/commander_identity_colors.dart';
@@ -117,11 +118,9 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
     final order =
         game.playersInTurnOrder.map((p) => p.playerId).toList(growable: true);
     if (oldIndex < 0 || oldIndex >= order.length) return;
-    var target = newIndex;
-    if (target > oldIndex) target -= 1;
-    if (target < 0 || target >= order.length) return;
+    if (newIndex < 0 || newIndex >= order.length) return;
     final id = order.removeAt(oldIndex);
-    order.insert(target, id);
+    order.insert(newIndex, id);
     ref.read(gameProvider.notifier).hostSetTurnOrder(order);
   }
 
@@ -159,7 +158,7 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
             child: CustomScrollView(
               // Keep pod-sized rosters built so the active card key exists for
               // ensureVisible (especially with host reorder / long lists).
-              cacheExtent: 2400,
+              scrollCacheExtent: const ScrollCacheExtent.pixels(2400),
               slivers: [
                 SliverAppBar(
                   pinned: true,
@@ -352,7 +351,7 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
                   sliver: _canHostReorder(game)
                       ? SliverReorderableList(
                           itemCount: game.playersInTurnOrder.length,
-                          onReorder: _onHostReorder,
+                          onReorderItem: _onHostReorder,
                           itemBuilder: (context, index) {
                             final p = game.playersInTurnOrder[index];
                             return ReorderableDelayedDragStartListener(

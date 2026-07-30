@@ -39,7 +39,11 @@ Future<void> main() async {
       }
     };
 
-    runApp(const ProviderScope(child: _AppBootstrap()));
+    runApp(
+      const ProviderScope(
+        child: AppAdaptiveOrientationScope(child: _AppBootstrap()),
+      ),
+    );
   }, (error, stack) {
     if (kDebugMode) {
       debugPrint('Zone error: $error');

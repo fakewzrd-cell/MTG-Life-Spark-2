@@ -358,7 +358,6 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
         partnerCommanderImageUrl:
             hasPartner ? (partnerCommanderImageUrl ?? '') : null,
         hasPartner: hasPartner,
-        selectedDeckId: null,
         commanderColorIdentity: List<String>.from(commanderColorIdentity),
       );
     }).toList();

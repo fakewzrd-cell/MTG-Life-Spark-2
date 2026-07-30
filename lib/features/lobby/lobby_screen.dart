@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,6 +44,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
   String? _qrErrorMessage;
   /// True after we successfully became host — used to detect external leave.
   var _hadHostSession = false;
+  var _leaveInProgress = false;
 
   @override
   void initState() {
@@ -145,6 +148,17 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     }
   }
 
+  Future<void> _leaveHostFlow() async {
+    if (_leaveInProgress) return;
+    _leaveInProgress = true;
+    try {
+      final left = await leaveActiveSessionIfConfirmed(context, ref);
+      if (left && mounted) context.pop();
+    } finally {
+      _leaveInProgress = false;
+    }
+  }
+
   @override
   void dispose() {
     super.dispose();
@@ -156,6 +170,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     // tab switch), bounce back to the Host/Join hub instead of a dead lobby.
     ref.listen<SessionRole>(sessionRoleProvider, (previous, next) {
       if (!_hadHostSession) return;
+      if (_leaveInProgress) return;
       if (next != SessionRole.none) return;
       if (!context.mounted) return;
       context.go(AppRoutes.lobby);
@@ -164,20 +179,22 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     final lobby = ref.watch(lobbyProvider);
     final colors = AppColorTokens.of(context);
 
-    return Scaffold(
-      backgroundColor: colors.backgroundPrimary,
-      appBar: UiAppBar(
-        title: 'Host Lobby',
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          tooltip: 'Leave lobby',
-          onPressed: () async {
-            final left = await leaveActiveSessionIfConfirmed(context, ref);
-            if (left && context.mounted) context.pop();
-          },
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) unawaited(_leaveHostFlow());
+      },
+      child: Scaffold(
+        backgroundColor: colors.backgroundPrimary,
+        appBar: UiAppBar(
+          title: 'Host Lobby',
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            tooltip: 'Leave lobby',
+            onPressed: () => unawaited(_leaveHostFlow()),
+          ),
         ),
-      ),
-      body: SafeArea(
+        body: SafeArea(
         bottom: false,
         child: Builder(
           builder: (context) {
@@ -214,6 +231,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
               ],
             );
           },
+        ),
         ),
       ),
     );

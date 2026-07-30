@@ -16,7 +16,7 @@ abstract final class GameUiTokens {
   static ButtonStyle sheetPrimaryButton(Color accent) => FilledButton.styleFrom(
         minimumSize: const Size(0, LayoutTokens.minTapTarget),
         backgroundColor: accent,
-        foregroundColor: ColorTokens.onAccent,
+        foregroundColor: ColorTokens.onColor(accent),
       );
 
   static ButtonStyle sheetCancelButton(AppColorTokens colors) =>
@@ -32,6 +32,6 @@ abstract final class GameUiTokens {
       FilledButton.styleFrom(
         minimumSize: const Size(0, LayoutTokens.minTapTarget),
         backgroundColor: colors.error,
-        foregroundColor: colors.textPrimary,
+        foregroundColor: colors.onError,
       );
 }

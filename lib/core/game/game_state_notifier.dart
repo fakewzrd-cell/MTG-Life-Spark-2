@@ -41,6 +41,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
   Timer? _hostLinkGraceTimer;
   Timer? _clientReconnectTimer;
   int _seqNum = 0;
+  int _lifeAnnouncementId = 0;
   static const _uuid = Uuid();
 
   GameStateNotifier(this._ref) : super(GameState.empty());
@@ -89,6 +90,21 @@ class GameStateNotifier extends StateNotifier<GameState> {
 
   void _appendGameLog(String message, {int? turnNumber}) {
     _trimAndSetLogs(_logsWithAppended(message, turnNumber: turnNumber));
+  }
+
+  void _publishLifeAnnouncement({
+    required int total,
+    required int delta,
+    required LifeChangeSource source,
+    String? actorUsername,
+  }) {
+    _ref.read(localLifeChangeProvider.notifier).state = LifeChangeAnnouncement(
+      id: _lifeAnnouncementId++,
+      total: total,
+      delta: delta,
+      source: source,
+      actorUsername: actorUsername,
+    );
   }
 
   void _appendCommanderDamageLog(
@@ -446,6 +462,13 @@ class GameStateNotifier extends StateNotifier<GameState> {
         '${player.username}: Life ${delta > 0 ? '+' : ''}$delta',
       ),
     );
+    if (playerId == state.localPlayerId) {
+      _publishLifeAnnouncement(
+        total: newLife,
+        delta: delta,
+        source: LifeChangeSource.local,
+      );
+    }
 
     _send(BleMessage.stateDelta(
       seqNum: _nextSeq(),
@@ -651,7 +674,13 @@ class GameStateNotifier extends StateNotifier<GameState> {
     required int delta,
   }) {
     if (state.timeoutActive) return;
-    if (!_canMutatePlayer(fromPlayerId)) return;
+    // Either seat in the exchange may record it: the victim tracks damage
+    // received, the attacker tracks damage dealt. The write lands on the
+    // victim, so checking only the attacker locks clients out of their own
+    // received-damage tracks.
+    if (!_canMutatePlayer(toPlayerId) && !_canMutatePlayer(fromPlayerId)) {
+      return;
+    }
     final victim = _playerById(toPlayerId);
     if (victim == null || victim.isEliminated || delta == 0) return;
 
@@ -2455,8 +2484,23 @@ class GameStateNotifier extends StateNotifier<GameState> {
       final local = state.localPlayerId;
       if (field == 'life') {
         if (pid == local && actor != null && actor.playerId != local) {
+          _publishLifeAnnouncement(
+            total: newValue,
+            delta: delta,
+            source: LifeChangeSource.remote,
+            actorUsername: actor.username,
+          );
           _appendGameLog(
             '${actor.username} changed your life ${delta > 0 ? '+' : ''}$delta',
+          );
+        } else if (pid == local) {
+          _publishLifeAnnouncement(
+            total: newValue,
+            delta: delta,
+            source: LifeChangeSource.remote,
+          );
+          _appendGameLog(
+            '${synced.username}: Life ${delta > 0 ? '+' : ''}$delta',
           );
         } else {
           _appendGameLog(
@@ -2523,6 +2567,14 @@ class GameStateNotifier extends StateNotifier<GameState> {
 
     if (amount != 0) {
       _appendCommanderDamageLog(fromId, toId, amount);
+    }
+    if (toId == state.localPlayerId && newLife != victim.life) {
+      _publishLifeAnnouncement(
+        total: newLife,
+        delta: newLife - victim.life,
+        source: LifeChangeSource.remote,
+        actorUsername: _playerById(fromId)?.username,
+      );
     }
 
     _checkLossConditions();
@@ -2753,7 +2805,9 @@ class GameStateNotifier extends StateNotifier<GameState> {
     _allianceDeliveryTimer = null;
     _hostLinkGraceTimer = null;
     _seqNum = 0;
+    _lifeAnnouncementId = 0;
     _ref.read(playerLeftUiEventProvider.notifier).state = null;
+    _ref.read(localLifeChangeProvider.notifier).state = null;
     _ref.read(peerLinkIssuesProvider.notifier).state = {};
     _ref.read(sessionLinkStatusProvider.notifier).state =
         SessionLinkStatus.connected;
@@ -2769,6 +2823,7 @@ class GameStateNotifier extends StateNotifier<GameState> {
       _ref.read(sessionLinkStatusProvider.notifier).state =
           SessionLinkStatus.connected;
       _ref.read(peerLinkIssuesProvider.notifier).state = {};
+      _ref.read(localLifeChangeProvider.notifier).state = null;
     } catch (_) {
       // Container may already be disposing in tests.
     }

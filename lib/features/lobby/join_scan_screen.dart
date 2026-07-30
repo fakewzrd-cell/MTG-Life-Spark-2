@@ -40,6 +40,7 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
   _JoinPhase _phase = _JoinPhase.scanning;
   bool _cameraPermissionGranted = false;
   bool _scanned = false;
+  bool _leaveInProgress = false;
   int _connectAttempt = 0;
   Timer? _connectTimeout;
 
@@ -289,16 +290,22 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
   }
 
   Future<void> _leaveJoinFlow() async {
-    final needsConfirm = _phase == _JoinPhase.connecting ||
-        _phase == _JoinPhase.waitingRoom;
-    if (needsConfirm) {
-      final ok = await confirmLeaveActiveSession(context);
-      if (!ok || !mounted) return;
+    if (_leaveInProgress) return;
+    _leaveInProgress = true;
+    try {
+      final needsConfirm = _phase == _JoinPhase.connecting ||
+          _phase == _JoinPhase.waitingRoom;
+      if (needsConfirm) {
+        final ok = await confirmLeaveActiveSession(context);
+        if (!ok || !mounted) return;
+      }
+      await _cancelConnectAttempt();
+      await _stopScanner();
+      await endSession(ref);
+      if (mounted) context.pop();
+    } finally {
+      _leaveInProgress = false;
     }
-    await _cancelConnectAttempt();
-    await _stopScanner();
-    await endSession(ref);
-    if (mounted) context.pop();
   }
 
   void _showSnackbar(String msg, {bool isError = false}) {
@@ -311,29 +318,35 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
-    return Scaffold(
-      backgroundColor: colors.backgroundPrimary,
-      appBar: UiAppBar(
-        title: 'Join a Game',
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          tooltip: 'Leave',
-          onPressed: () => unawaited(_leaveJoinFlow()),
-        ),
-      ),
-      body: switch (_phase) {
-        _JoinPhase.scanning =>
-          _cameraPermissionGranted && _scannerController != null
-              ? _QrScanView(
-                  controller: _scannerController!,
-                  onDetect: _onDetect,
-                )
-              : _PermissionDeniedView(
-                  onRetry: () => _syncCameraPermission(requestIfNeeded: true),
-                ),
-        _JoinPhase.connecting => const _ConnectingView(),
-        _JoinPhase.waitingRoom => const _WaitingRoomView(),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) unawaited(_leaveJoinFlow());
       },
+      child: Scaffold(
+        backgroundColor: colors.backgroundPrimary,
+        appBar: UiAppBar(
+          title: 'Join a Game',
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            tooltip: 'Leave',
+            onPressed: () => unawaited(_leaveJoinFlow()),
+          ),
+        ),
+        body: switch (_phase) {
+          _JoinPhase.scanning =>
+            _cameraPermissionGranted && _scannerController != null
+                ? _QrScanView(
+                    controller: _scannerController!,
+                    onDetect: _onDetect,
+                  )
+                : _PermissionDeniedView(
+                    onRetry: () => _syncCameraPermission(requestIfNeeded: true),
+                  ),
+          _JoinPhase.connecting => const _ConnectingView(),
+          _JoinPhase.waitingRoom => const _WaitingRoomView(),
+        },
+      ),
     );
   }
 }

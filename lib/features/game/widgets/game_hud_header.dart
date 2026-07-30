@@ -14,6 +14,7 @@ class GameHudHeader extends StatelessWidget {
     required this.selectedTabIndex,
     required this.onTabSelected,
     required this.accentColor,
+    required this.turnLabel,
     required this.tightVertical,
     this.isLocalPlayersTurn = false,
   });
@@ -22,6 +23,7 @@ class GameHudHeader extends StatelessWidget {
   final int selectedTabIndex;
   final ValueChanged<int> onTabSelected;
   final Color accentColor;
+  final String turnLabel;
   final bool tightVertical;
 
   /// When true, the header card uses [accentColor] for active-turn chrome.
@@ -34,7 +36,10 @@ class GameHudHeader extends StatelessWidget {
     final activeTurn = isLocalPlayersTurn;
 
     return Semantics(
-      label: activeTurn ? 'Your turn' : null,
+      container: true,
+      explicitChildNodes: true,
+      liveRegion: true,
+      label: turnLabel,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: activeTurn
