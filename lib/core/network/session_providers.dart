@@ -1,12 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../bluetooth/ble_message.dart';
+import '../bluetooth/ble_protocol.dart';
+import '../bluetooth/ble_service.dart';
 import '../game/game_providers.dart';
 import '../game/lobby_state.dart';
-import '../bluetooth/ble_service.dart';
+import '../persistence/providers.dart';
 import 'session_join_uri.dart';
 import 'ws_client_service.dart';
 import 'ws_host_service.dart';
-import '../persistence/providers.dart';
 
 /// Which role this device is playing in the current session.
 enum SessionRole { none, host, client }
@@ -70,12 +72,30 @@ Future<void> startClientSession(WidgetRef ref) async {
 
 /// Tears down the network session and clears in-memory game/lobby state.
 Future<void> endSession(WidgetRef ref) async {
+  final role = ref.read(sessionRoleProvider);
+  final service = ref.read(sessionServiceProvider);
+
+  // Tell guests the host is ending on purpose so they stop reconnect retries.
+  if (role == SessionRole.host && service != null) {
+    try {
+      await service.send(
+        BleMessage(
+          type: BleMessageType.hostEndedSession,
+          payload: const {},
+          seqNum: 0,
+        ),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+    } catch (_) {
+      // Best-effort; teardown continues even if the flush fails.
+    }
+  }
+
   // Clear game/lobby first so disconnect events from socket teardown do not
   // eliminate peers or force end-game on the device that is leaving.
   ref.read(gameProvider.notifier).reset();
   ref.read(lobbyProvider.notifier).reset();
 
-  final service = ref.read(sessionServiceProvider);
   await service?.dispose();
   ref.read(sessionServiceProvider.notifier).state = null;
   ref.read(sessionRoleProvider.notifier).state = SessionRole.none;

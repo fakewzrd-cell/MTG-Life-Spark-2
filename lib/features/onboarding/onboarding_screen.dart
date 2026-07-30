@@ -176,58 +176,63 @@ class _SlideView extends StatelessWidget {
     final isNarrow = MediaQuery.sizeOf(context).width < 360;
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: isNarrow ? LayoutTokens.gr4 : LayoutTokens.gr6),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          if (slide.showBrandLogo)
-            const BrandLogo(
-              layout: BrandLogoLayout.horizontal,
-              height: 48,
-            )
-          else
-            Container(
-              width: 110,
-              height: 110,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    colors.primaryAccent.withValues(alpha: OpacityTokens.soft),
-                    colors.primaryAccent.withValues(alpha: OpacityTokens.faint),
-                  ],
-                ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: colors.primaryAccent.withValues(alpha: OpacityTokens.soft),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
+      child: SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.sizeOf(context).height * 0.55,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (slide.showBrandLogo)
+                const BrandLogo(
+                  layout: BrandLogoLayout.horizontal,
+                  height: 48,
+                )
+              else
+                Container(
+                  width: 110,
+                  height: 110,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        colors.primaryAccent.withValues(alpha: OpacityTokens.soft),
+                        colors.primaryAccent.withValues(alpha: OpacityTokens.faint),
+                      ],
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: colors.primaryAccent.withValues(alpha: OpacityTokens.soft),
+                        blurRadius: 24,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: slide.useCommanderDamageIcon
-                  ? GameIcon.commanderDamage(size: 52, color: colors.primaryAccent)
-                  : Icon(slide.icon, size: 52, color: colors.primaryAccent),
-            ),
-          SizedBox(height: LayoutTokens.gr5),
-          Text(
-            slide.title,
-            style: Theme.of(context).textTheme.headlineLarge,
-            textAlign: TextAlign.center,
-          ),
-          SizedBox(height: LayoutTokens.gr4),
-          Text(
-            slide.body,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: colors.textSecondary,
-                  height: 1.6,
+                  child: slide.useCommanderDamageIcon
+                      ? GameIcon.commanderDamage(size: 52, color: colors.primaryAccent)
+                      : Icon(slide.icon, size: 52, color: colors.primaryAccent),
                 ),
-            textAlign: TextAlign.center,
-            maxLines: 6,
-            overflow: TextOverflow.ellipsis,
+              SizedBox(height: LayoutTokens.gr5),
+              Text(
+                slide.title,
+                style: Theme.of(context).textTheme.headlineLarge,
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: LayoutTokens.gr4),
+              Text(
+                slide.body,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: colors.textSecondary,
+                      height: 1.6,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

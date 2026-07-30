@@ -15,6 +15,9 @@ class PlayerLeftUiEvent {
 final playerLeftUiEventProvider =
     StateProvider<PlayerLeftUiEvent?>((ref) => null);
 
+/// Fired when the host deliberately ends the session (not a transient drop).
+final hostEndedSessionUiEventProvider = StateProvider<bool>((ref) => false);
+
 /// A seat whose socket dropped; host may wait or remove after grace.
 class PeerLinkIssue {
   const PeerLinkIssue({

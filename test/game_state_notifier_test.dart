@@ -5,6 +5,7 @@ import 'package:mgt_life_spark/core/bluetooth/ble_message.dart';
 import 'package:mgt_life_spark/core/bluetooth/ble_protocol.dart';
 import 'package:mgt_life_spark/core/bluetooth/ble_service.dart';
 import 'package:mgt_life_spark/core/network/session_providers.dart';
+import 'package:mgt_life_spark/core/network/session_link_status.dart';
 import 'package:mgt_life_spark/core/game/game_providers.dart';
 import 'package:mgt_life_spark/core/game/game_session_events.dart';
 import 'package:mgt_life_spark/core/game/game_state.dart';
@@ -125,6 +126,41 @@ void main() {
       expect(announcement.delta, -5);
       expect(announcement.source, LifeChangeSource.remote);
       expect(announcement.actorUsername, 'bob');
+    });
+
+    test('hostEndedSession stops client reconnect and raises UI event', () {
+      final ble = FakeBleService();
+      final container = _container(ble: ble);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(gameProvider.notifier);
+      notifier.setGameStateForTest(_twoPlayerGame(localId: 'alice'));
+
+      notifier.handleSessionMessageForTest(
+        BleMessage(
+          type: BleMessageType.hostEndedSession,
+          payload: const {},
+          seqNum: 1,
+        ),
+      );
+
+      expect(container.read(hostEndedSessionUiEventProvider), isTrue);
+      expect(
+        container.read(sessionLinkStatusProvider),
+        SessionLinkStatus.connected,
+      );
+
+      // A later disconnect must not flip into reconnecting forever.
+      notifier.handleConnectionEventForTest(
+        const BleConnectionEvent(
+          playerId: 'host',
+          status: BleConnectionStatus.disconnected,
+        ),
+      );
+      expect(
+        container.read(sessionLinkStatusProvider),
+        SessionLinkStatus.connected,
+      );
     });
 
     test('host rebroadcast excludes message originator', () {

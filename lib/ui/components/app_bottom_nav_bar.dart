@@ -140,6 +140,7 @@ class _DockNavItem extends StatelessWidget {
       button: true,
       selected: selected,
       label: destination.label,
+      excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,

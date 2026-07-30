@@ -14,6 +14,7 @@ import '../../shared/theme/app_theme.dart';
 import '../../shared/utils/commander_image_resolver.dart';
 import 'game_constants.dart';
 import 'game_format.dart';
+import 'game_session_events.dart';
 
 // ── Config ─────────────────────────────────────────────────────────────────
 
@@ -492,6 +493,12 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
 
       case BleMessageType.gameStart:
         _handleGameStart(message.payload);
+        break;
+
+      case BleMessageType.hostEndedSession:
+        if (!state.isHost) {
+          _ref.read(hostEndedSessionUiEventProvider.notifier).state = true;
+        }
         break;
 
       default:

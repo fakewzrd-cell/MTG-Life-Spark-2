@@ -42,6 +42,8 @@ class GameStateNotifier extends StateNotifier<GameState> {
   Timer? _clientReconnectTimer;
   int _seqNum = 0;
   int _lifeAnnouncementId = 0;
+  /// Client-only: host announced a deliberate session end; skip reconnect.
+  bool _hostSessionEnded = false;
   static const _uuid = Uuid();
 
   GameStateNotifier(this._ref) : super(GameState.empty());
@@ -2050,6 +2052,9 @@ class GameStateNotifier extends StateNotifier<GameState> {
       return;
     }
 
+    // Host already told us the session is over — do not retry forever.
+    if (_hostSessionEnded) return;
+
     // Client: OS often drops the socket when switching apps — keep retrying.
     _beginClientHostLinkRecovery();
   }
@@ -2225,6 +2230,22 @@ class GameStateNotifier extends StateNotifier<GameState> {
     _ref.read(playerLeftUiEventProvider.notifier).state = null;
   }
 
+  void clearHostEndedSessionUiEvent() {
+    _ref.read(hostEndedSessionUiEventProvider.notifier).state = false;
+  }
+
+  void _handleHostEndedSession() {
+    if (state.isHost) return;
+    _hostSessionEnded = true;
+    _stopClientReconnectLoop();
+    _hostLinkGraceTimer?.cancel();
+    _hostLinkGraceTimer = null;
+    _ref.read(sessionLinkStatusProvider.notifier).state =
+        SessionLinkStatus.connected;
+    _ref.read(peerLinkIssuesProvider.notifier).state = {};
+    _ref.read(hostEndedSessionUiEventProvider.notifier).state = true;
+  }
+
   void _onSessionMessage(BleMessage msg) {
     // Clients apply optimistically before send; ignore echoed own actions.
     if (!state.isHost &&
@@ -2353,6 +2374,8 @@ class GameStateNotifier extends StateNotifier<GameState> {
         _applyElimination(msg.payload);
       case BleMessageType.playerDisconnected:
         _handleRemotePlayerLeft(msg.payload['pid'] as String? ?? '');
+      case BleMessageType.hostEndedSession:
+        _handleHostEndedSession();
       case BleMessageType.playerReconnecting:
         final pid = msg.payload['pid'] as String? ?? '';
         final done = msg.payload['done'] == true;
@@ -2438,7 +2461,8 @@ class GameStateNotifier extends StateNotifier<GameState> {
         msg.type != BleMessageType.allianceDeclined &&
         msg.type != BleMessageType.playerDisconnected &&
         msg.type != BleMessageType.playerReconnecting &&
-        msg.type != BleMessageType.reconnectRequest) {
+        msg.type != BleMessageType.reconnectRequest &&
+        msg.type != BleMessageType.hostEndedSession) {
       _ref.read(sessionServiceProvider)?.send(
             msg,
             targetPlayerId: msg.targetPlayerId,
@@ -2806,9 +2830,11 @@ class GameStateNotifier extends StateNotifier<GameState> {
     _hostLinkGraceTimer = null;
     _seqNum = 0;
     _lifeAnnouncementId = 0;
+    _hostSessionEnded = false;
     _ref.read(playerLeftUiEventProvider.notifier).state = null;
     _ref.read(localLifeChangeProvider.notifier).state = null;
     _ref.read(peerLinkIssuesProvider.notifier).state = {};
+    _ref.read(hostEndedSessionUiEventProvider.notifier).state = false;
     _ref.read(sessionLinkStatusProvider.notifier).state =
         SessionLinkStatus.connected;
     state = GameState.empty();

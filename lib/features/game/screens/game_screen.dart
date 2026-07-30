@@ -14,6 +14,7 @@ import '../../../core/game/game_providers.dart';
 import '../../../core/game/game_session_events.dart';
 import '../../../core/game/lobby_state.dart';
 import '../../../core/network/session_link_status.dart';
+import '../../../core/network/session_providers.dart';
 import '../../../core/persistence/providers.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../core/services/shake_detector.dart';
@@ -63,7 +64,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   bool _navigatedToEndGame = false;
   StreamSubscription<Object?>? _gameOverSub;
   ShakeDetector? _shakeDetector;
-  final DateTime _localInitStarted = DateTime.now();
+  Timer? _localInitTimeout;
+  bool _localInitTimedOut = false;
 
   /// Cached so [dispose] never uses `ref` after Riverpod tears down this widget.
   bool _enteredWithHiddenSystemBars = false;
@@ -79,6 +81,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     if (_enteredWithHiddenSystemBars) {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     }
+    _localInitTimeout = Timer(const Duration(seconds: 15), () {
+      if (!mounted) return;
+      if (ref.read(gameProvider).localPlayer != null) return;
+      setState(() => _localInitTimedOut = true);
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _listenForGameOver();
       _startShakeDetector();
@@ -105,6 +112,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   @override
   void dispose() {
+    _localInitTimeout?.cancel();
     _shakeDetector?.stop();
     WakelockPlus.disable();
     if (_enteredWithHiddenSystemBars) {
@@ -162,9 +170,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final localPresent = ref.watch(
       gameProvider.select((g) => g.localPlayer != null),
     );
+    if (localPresent) {
+      _localInitTimeout?.cancel();
+      _localInitTimeout = null;
+    }
     if (!localPresent) {
-      final elapsed = DateTime.now().difference(_localInitStarted);
-      if (elapsed < const Duration(seconds: 15)) {
+      if (!_localInitTimedOut) {
         return Scaffold(
           backgroundColor: colors.backgroundPrimary,
           body: Center(
@@ -296,6 +307,23 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           message: '${event.username} left the game.',
           confirmLabel: 'OK',
         );
+      });
+    });
+
+    ref.listen<bool>(hostEndedSessionUiEventProvider, (prev, next) {
+      if (next != true) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!context.mounted) return;
+        ref.read(gameProvider.notifier).clearHostEndedSessionUiEvent();
+        await showGameConfirmDialog(
+          context: context,
+          title: 'Session ended',
+          message: 'The host ended the game.',
+          confirmLabel: 'OK',
+        );
+        if (!context.mounted) return;
+        context.go(AppRoutes.lobby);
+        await quitActiveGame(ref);
       });
     });
 

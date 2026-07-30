@@ -13,6 +13,9 @@ enum BleMessageType {
   gameEnd,
   stateSnapshot,
 
+  /// Host is deliberately ending the session; clients should stop reconnecting.
+  hostEndedSession,
+
   // Game state
   stateDelta,
   commanderDamage,

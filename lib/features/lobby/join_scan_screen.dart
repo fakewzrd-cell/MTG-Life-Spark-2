@@ -10,6 +10,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../core/network/session_providers.dart';
 import '../../core/bluetooth/ble_service.dart';
 import '../../core/game/game_format.dart';
+import '../../core/game/game_session_events.dart';
 import '../../core/game/lobby_state.dart';
 import '../../core/models/player_slot.dart';
 import '../../core/network/session_join_uri.dart';
@@ -308,6 +309,20 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
     }
   }
 
+  Future<void> _exitAfterHostEndedSession() async {
+    if (_leaveInProgress) return;
+    _leaveInProgress = true;
+    try {
+      _showSnackbar('The host ended the session.');
+      await _cancelConnectAttempt();
+      await _stopScanner();
+      await endSession(ref);
+      if (mounted) context.pop();
+    } finally {
+      _leaveInProgress = false;
+    }
+  }
+
   void _showSnackbar(String msg, {bool isError = false}) {
     if (!mounted) return;
     showUiSnackBar(context, msg, isError: isError);
@@ -318,6 +333,16 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+
+    ref.listen<bool>(hostEndedSessionUiEventProvider, (prev, next) {
+      if (next != true) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ref.read(hostEndedSessionUiEventProvider.notifier).state = false;
+        unawaited(_exitAfterHostEndedSession());
+      });
+    });
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {

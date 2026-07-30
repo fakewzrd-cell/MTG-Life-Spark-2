@@ -32,6 +32,21 @@ void main() {
     }
   });
 
+  test('appearance previews match the dark fields the app renders', () {
+    for (final palette in AppColorPalettes.all) {
+      expect(
+        palette.previewBackground,
+        palette.backgroundPrimary,
+        reason: '${palette.label} preview background must match dark mode',
+      );
+      expect(
+        palette.previewAccent,
+        palette.brandAccent,
+        reason: '${palette.label} preview accent must match dark mode',
+      );
+    }
+  });
+
   test('muted text has AA contrast on every dark surface', () {
     for (final palette in AppColorPalettes.all) {
       final surfaces = {

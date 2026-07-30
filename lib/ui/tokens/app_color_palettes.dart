@@ -354,7 +354,7 @@ abstract final class AppColorPalettes {
     label: 'Fog',
     description: 'Soft white and grey with cool charcoal text',
     previewAccent: Color(0xFF4B5563),
-    previewBackground: Color(0xFFF4F5F7),
+    previewBackground: Color(0xFF111827),
     brandBlack: Color(0xFF111827),
     brandAccent: Color(0xFF4B5563),
     onAccent: Color(0xFFFFFFFF),

@@ -53,6 +53,7 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
   bool _loading = false;
   bool _confirming = false;
   String? _error;
+  int _searchRequestId = 0;
 
   @override
   void initState() {
@@ -86,6 +87,7 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
       });
       return;
     }
+    final requestId = ++_searchRequestId;
     setState(() {
       _loading = true;
       _error = null;
@@ -94,7 +96,7 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
     try {
       final service = ref.read(scryfallServiceProvider);
       final results = await service.searchCards(query);
-      if (!mounted) return;
+      if (!mounted || requestId != _searchRequestId) return;
       setState(() {
         _results = results.take(20).toList();
         _loading = false;
@@ -104,7 +106,7 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
       });
     } catch (e, st) {
       appLog('StackCardPicker: Scryfall search failed', error: e, stackTrace: st);
-      if (!mounted) return;
+      if (!mounted || requestId != _searchRequestId) return;
       setState(() {
         _results = [];
         _loading = false;

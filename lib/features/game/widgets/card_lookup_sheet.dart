@@ -44,6 +44,7 @@ class _CardLookupSheetState extends ConsumerState<_CardLookupSheet> {
   bool _searching = false;
   bool _loadingDetail = false;
   String? _error;
+  int _searchRequestId = 0;
 
   /// Cap for the whole sheet — never force this height when content is short.
   static const double _maxSheetFraction = 0.88;
@@ -84,13 +85,14 @@ class _CardLookupSheetState extends ConsumerState<_CardLookupSheet> {
       });
       return;
     }
+    final requestId = ++_searchRequestId;
     setState(() {
       _searching = true;
       _error = null;
     });
     try {
       final cards = await ref.read(scryfallServiceProvider).searchCards(q);
-      if (!mounted) return;
+      if (!mounted || requestId != _searchRequestId) return;
       setState(() {
         _results = cards.take(20).toList();
         _searching = false;
@@ -100,7 +102,7 @@ class _CardLookupSheetState extends ConsumerState<_CardLookupSheet> {
       });
     } catch (e, st) {
       appLog('CardLookup: Scryfall search failed', error: e, stackTrace: st);
-      if (!mounted) return;
+      if (!mounted || requestId != _searchRequestId) return;
       setState(() {
         _searching = false;
         _results = [];

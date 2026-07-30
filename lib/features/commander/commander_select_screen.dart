@@ -65,6 +65,7 @@ class _CommanderSelectScreenState
   List<ScryfallCard> _results = [];
   bool _loading = false;
   String? _error;
+  int _searchRequestId = 0;
 
   // Selected cards
   ScryfallCard? _primary;
@@ -165,6 +166,7 @@ class _CommanderSelectScreenState
       setState(() => _results = []);
       return;
     }
+    final requestId = ++_searchRequestId;
     setState(() {
       _loading = true;
       _error = null;
@@ -174,7 +176,7 @@ class _CommanderSelectScreenState
       final results = _isCommanderPick
           ? await service.searchCommanders(query)
           : await service.searchCards(query);
-      if (!mounted) return;
+      if (!mounted || requestId != _searchRequestId) return;
       setState(() {
         _results = results;
         _loading = false;
@@ -185,7 +187,7 @@ class _CommanderSelectScreenState
         }
       });
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || requestId != _searchRequestId) return;
       setState(() {
         _results = [];
         _loading = false;
