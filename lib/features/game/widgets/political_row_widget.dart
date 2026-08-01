@@ -6,6 +6,7 @@ import '../../../core/game/game_state.dart';
 import '../../../core/game/player_game_state.dart';
 import '../../../shared/utils/game_haptics.dart';
 import '../../../shared/widgets/game_icon.dart';
+import '../../../ui/tokens/color_tokens.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
@@ -571,7 +572,7 @@ class _PlayerPickerSheet extends StatelessWidget {
                   child: Text(
                     p.username.isNotEmpty ? p.username[0].toUpperCase() : '?',
                     style: TextStyle(
-                      color: colors.onAccent,
+                      color: ColorTokens.onColor(p.playerColor),
                       fontSize: FontTokens.caption,
                       fontWeight: FontWeight.bold,
                     ),

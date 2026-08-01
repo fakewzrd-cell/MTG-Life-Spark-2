@@ -1,7 +1,7 @@
 name: mgt_life_spark
 description: Life Spark — your MTG companion for multiplayer tables.
 publish_to: none
-version: 1.0.19+25
+version: 1.0.21+27
 
 environment:
   sdk: '>=3.7.0 <4.0.0'
@@ -61,6 +61,9 @@ dependencies:
   cupertino_icons: ^1.0.8
   google_fonts: ^8.1.0
   video_player: ^2.11.1
+  share_plus: ^13.3.0
+  file_selector: ^1.0.3
+
 
 dev_dependencies:
   flutter_test:

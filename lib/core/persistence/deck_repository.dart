@@ -34,6 +34,14 @@ class DeckRepository {
     await _box.delete(id);
   }
 
+  /// Replace every saved deck (used by backup restore).
+  Future<void> replaceAll(List<PlayerDeck> decks) async {
+    await _box.clear();
+    for (final deck in decks) {
+      await _box.put(deck.id, deck);
+    }
+  }
+
   /// Copy identity (not W–L) into a new deck entry.
   Future<PlayerDeck> duplicate(PlayerDeck source) async {
     final copy = PlayerDeck(

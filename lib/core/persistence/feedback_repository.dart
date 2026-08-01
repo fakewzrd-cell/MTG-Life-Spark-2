@@ -74,4 +74,20 @@ class FeedbackRepository {
   /// Count of feedback entries where Spark of the game was chosen.
   int get totalStarVotesGiven => allFeedback()
       .fold<int>(0, (sum, f) => sum + (f.starPlayerId != null ? 1 : 0));
+
+  /// Wipe all stored feedback (used by backup restore).
+  Future<void> clearAll() async {
+    await _box.clear();
+  }
+
+  /// Raw key→JSON snapshot for restore rollback.
+  Map<String, String> snapshotRaw() =>
+      _box.toMap().map((key, value) => MapEntry(key.toString(), value));
+
+  /// Replace every feedback row (used by backup restore rollback).
+  Future<void> replaceRaw(Map<String, String> entries) async {
+    await _box.clear();
+    if (entries.isEmpty) return;
+    await _box.putAll(entries);
+  }
 }

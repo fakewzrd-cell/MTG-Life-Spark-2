@@ -26,7 +26,6 @@ import '../support/game_widget_harness.dart';
 /// effects (wakelock, shake-to-undo sensors).
 Widget _playTabHarness({required bool hasExtraRows}) {
   const playGapSm = SizedBox(height: 8);
-  const lifeBandMaxW = 360.0;
   const lifeBandH = 192.0;
   const lifeMinFloor = 96.0;
   const extraRowEstimate = 44.0;
@@ -37,30 +36,20 @@ Widget _playTabHarness({required bool hasExtraRows}) {
       builder: (context, playConstraints) {
         final dialCompact = playConstraints.maxHeight < 520;
 
-        final phaseBar = Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: lifeBandMaxW),
-            child: PhaseNavCluster(
-              game: harnessGame(localId: 'alice'),
-              accentColor: Colors.blue,
-              onBack: () {},
-              onNext: () {},
-              onPickPhase: (_) {},
-              onEndTurn: () {},
-              endTurnEnabled: true,
-            ),
-          ),
+        final phaseBar = PhaseNavCluster(
+          game: harnessGame(localId: 'alice'),
+          accentColor: Colors.blue,
+          onBack: () {},
+          onNext: () {},
+          onPickPhase: (_) {},
+          onEndTurn: () {},
+          endTurnEnabled: true,
         );
-        final lifeCounter = Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: lifeBandMaxW,
-              maxHeight: lifeBandH,
-            ),
-            child: const ScopedLifeCounter(
-              playerId: 'alice',
-              onLifeChange: _noopLifeChange,
-            ),
+        final lifeCounter = ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: lifeBandH),
+          child: const ScopedLifeCounter(
+            playerId: 'alice',
+            onLifeChange: _noopLifeChange,
           ),
         );
         final dialStrip = ScopedGameplayDials(

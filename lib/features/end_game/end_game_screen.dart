@@ -16,12 +16,12 @@ import '../../shared/widgets/game_icon.dart';
 import '../../core/persistence/providers.dart';
 import '../../core/debug/app_log.dart';
 import '../../core/models/game_feedback.dart';
-import '../../shared/utils/achievement_definitions.dart';
 import '../../shared/utils/app_router.dart';
 import '../../shared/utils/wizard_rank_titles.dart';
 import '../../shared/widgets/player_feedback_widgets.dart';
 import '../../ui/components/ui_button.dart';
 import '../../ui/tokens/layout_tokens.dart';
+import '../../ui/tokens/color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/opacity_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
@@ -218,11 +218,6 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
                         isWinner: isWinner,
                       ),
 
-                    // ── New achievements ───────────────────────────────────
-                    if (_result != null &&
-                        _result!.newAchievementIds.isNotEmpty)
-                      _AchievementsCard(ids: _result!.newAchievementIds),
-
                     SizedBox(height: LayoutTokens.gr2),
 
                     // ── Final standings ────────────────────────────────────
@@ -409,7 +404,7 @@ class _WinnerBanner extends StatelessWidget {
                           ? winner!.username[0].toUpperCase()
                           : '?',
                       style: TextStyle(
-                          color: colors.onAccent,
+                          color: ColorTokens.onColor(winner!.playerColor),
                           fontSize: FontTokens.displayCommander,
                           fontWeight: FontWeight.bold),
                     ),
@@ -426,7 +421,7 @@ class _WinnerBanner extends StatelessWidget {
                     ? winner!.username[0].toUpperCase()
                     : '?',
                 style: TextStyle(
-                    color: colors.onAccent,
+                    color: ColorTokens.onColor(winner!.playerColor),
                     fontSize: FontTokens.displayCommander,
                     fontWeight: FontWeight.bold),
               ),
@@ -689,78 +684,6 @@ class _FeedbackCard extends StatelessWidget {
             label: 'Submit Feedback',
             onPressed: onSubmit,
           ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Achievements Card ─────────────────────────────────────────────────────────
-
-class _AchievementsCard extends StatelessWidget {
-  final List<String> ids;
-
-  const _AchievementsCard({required this.ids});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = AppColorTokens.of(context);
-    final defs = ids
-        .map((id) => AchievementDefinitions.byId(id))
-        .whereType<AchievementDef>()
-        .toList();
-
-    if (defs.isEmpty) return const SizedBox.shrink();
-
-    return Container(
-      margin: EdgeInsets.fromLTRB(
-        LayoutTokens.shellPageInset,
-        LayoutTokens.gr1,
-        LayoutTokens.shellPageInset,
-        0,
-      ),
-      padding: EdgeInsets.all(LayoutTokens.gr2),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: RadiusTokens.radiusChip,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'New Achievements',
-            style: TextStyle(
-              color: colors.success,
-              fontSize: FontTokens.hudSm,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          SizedBox(height: LayoutTokens.gr1),
-          ...defs.map((def) => Padding(
-                padding: EdgeInsets.only(bottom: LayoutTokens.gr0),
-                child: Row(
-                  children: [
-                    Text(def.icon,
-                        style: TextStyle(fontSize: FontTokens.bodyLg)),
-                    SizedBox(width: LayoutTokens.gr1),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(def.title,
-                            style: TextStyle(
-                                color: colors.textPrimary,
-                                fontSize: FontTokens.hudSm,
-                                fontWeight: FontWeight.w600)),
-                        Text(def.description,
-                            style: TextStyle(
-                              color: colors.textSecondary,
-                              fontSize: FontTokens.xs,
-                            )),
-                      ],
-                    ),
-                  ],
-                ),
-              )),
         ],
       ),
     );

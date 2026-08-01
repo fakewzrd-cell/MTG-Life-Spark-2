@@ -408,7 +408,7 @@ class _QrScanView extends StatelessWidget {
             'Point the camera at the host\'s QR code',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: colors.onAccent,
+              color: colors.textPrimary,
               fontSize: FontTokens.body,
               fontWeight: FontWeight.w600,
               shadows: const [Shadow(blurRadius: 6, color: Colors.black)],

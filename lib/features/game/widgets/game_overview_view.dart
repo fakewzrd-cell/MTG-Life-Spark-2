@@ -23,6 +23,7 @@ import 'game_history_tab.dart';
 import 'game_modal_chrome.dart';
 import 'game_timeout_widgets.dart';
 import 'overview_commander_art_backdrop.dart';
+import 'player_whisper_sheet.dart';
 import 'political_row_widget.dart';
 import 'table_tools_sheet.dart';
 import 'team_colors.dart';
@@ -133,8 +134,14 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
 
     const pageInset = LayoutTokens.shellPageInset;
     final identity = game.localPlayer?.commanderColorIdentity ?? const [];
-    final gradientColors = CommanderIdentityColors.gameplayGradient(identity);
-    final chromeAccent = CommanderIdentityColors.gameChromeAccent(identity);
+    final gradientColors = CommanderIdentityColors.gameplayGradient(
+      colors,
+      identity,
+    );
+    final chromeAccent = CommanderIdentityColors.gameChromeAccent(
+      colors,
+      identity,
+    );
     final endTurnEnabled =
         !game.timeoutActive && (game.isLocalPlayersTurn || game.isHost);
     final waitingForName = endTurnEnabled
@@ -949,10 +956,13 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                 (isLocal || myAlliance.involves(p.playerId))));
     final canAssignTeam =
         game.teamsEnabled && (isLocal || game.isHost);
+    final canWhisper = !isLocal &&
+        !game.gameOver &&
+        game.players.where((pl) => !pl.isEliminated).length >= 2;
     final showMenu =
         !p.isEliminated &&
         local != null &&
-        (isLocal || hasAllianceMenu || canAssignTeam);
+        (isLocal || hasAllianceMenu || canAssignTeam || canWhisper);
     final canEditLife = !p.isEliminated && game.isHost;
     final showAsActive = isActive && !p.isEliminated;
 
@@ -1161,6 +1171,12 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                           ),
                           onSelected: (value) {
                             switch (value) {
+                              case 'whisper':
+                                showPlayerWhisperSheet(
+                                  context: context,
+                                  ref: ref,
+                                  target: p,
+                                );
                               case 'propose':
                                 showProposeAllianceSheet(
                                   context: context,
@@ -1182,6 +1198,14 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                           },
                           itemBuilder: (context) {
                             final items = <PopupMenuEntry<String>>[];
+                            if (canWhisper) {
+                              items.add(
+                                const PopupMenuItem(
+                                  value: 'whisper',
+                                  child: Text('Send whisper'),
+                                ),
+                              );
+                            }
                             if (canAssignTeam) {
                               items.add(
                                 const PopupMenuItem(

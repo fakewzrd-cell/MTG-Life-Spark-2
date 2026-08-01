@@ -14,6 +14,7 @@ import '../../core/persistence/providers.dart';
 import '../../shared/theme/theme_provider.dart';
 import '../../shared/utils/app_router.dart';
 import '../../shared/widgets/brand_logo.dart';
+import '../../ui/components/shell_destructive_dialog.dart';
 import '../../ui/components/ui_app_bar.dart';
 import '../../ui/components/ui_snack_bar.dart';
 import '../../ui/components/ui_surface.dart';
@@ -115,6 +116,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           SizedBox(height: LayoutTokens.shellSectionGap),
           _SectionHeader('Appearance'),
+          _SwitchTile(
+            title: 'Dark appearance',
+            subtitle: 'Light mode uses soft backgrounds — try Fog or Slate',
+            value: _settings.useDarkTheme,
+            onChanged: (v) {
+              _settings.useDarkTheme = v;
+              _save();
+            },
+            icon: Icons.dark_mode_outlined,
+          ),
           _ColorSchemePicker(
             selected: ref.watch(colorSchemePreferenceProvider),
             onSelected: (id) {
@@ -157,6 +168,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             subtitle: 'Free up storage from cached card images',
             onTap: _clearCache,
             isDestructive: true,
+          ),
+          _SettingTile(
+            title: 'Export backup',
+            subtitle:
+                'Save profile, decks, pods, and settings to a shareable file',
+            onTap: _exportBackup,
+          ),
+          _SettingTile(
+            title: 'Restore backup',
+            subtitle: 'Replace data on this device from a .lifespark file',
+            onTap: _restoreBackup,
           ),
           SizedBox(height: LayoutTokens.shellSectionGap),
           _SectionHeader('Help'),
@@ -298,6 +320,65 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       showUiSnackBar(context, 'Could not clear image cache.', isError: true);
     }
   }
+
+  Future<void> _exportBackup() async {
+    try {
+      final shared = await ref.read(backupServiceProvider).exportAndShare();
+      if (!mounted) return;
+      // Only celebrate a completed share — cancel / unknown stay quiet.
+      if (shared) {
+        showUiSnackBar(context, 'Backup shared.');
+      }
+    } catch (e, st) {
+      appLog('Settings: export backup failed', error: e, stackTrace: st);
+      if (!mounted) return;
+      showUiSnackBar(context, 'Could not export backup.', isError: true);
+    }
+  }
+
+  Future<void> _restoreBackup() async {
+    try {
+      final pending = await ref.read(backupServiceProvider).pickBackupFile();
+      if (!mounted) return;
+      if (pending == null) return;
+
+      final confirmed = await showShellDestructiveConfirm(
+        context: context,
+        title: 'Restore ${pending.profile.username}?',
+        message:
+            'This replaces your profile, decks, pods, and settings on this device with the selected backup. Local match history on this phone will be cleared (it is not part of backups).',
+        confirmLabel: 'Restore',
+        cancelLabel: 'Cancel',
+      );
+      if (!confirmed || !mounted) return;
+
+      final backup =
+          await ref.read(backupServiceProvider).restoreBackup(pending);
+      if (!mounted) return;
+
+      _settings = ref.read(settingsRepositoryProvider).settings;
+      ref
+          .read(colorSchemePreferenceProvider.notifier)
+          .hydrateFromRepository();
+      bumpSettingsRevision(ref);
+      bumpProfileRevision(ref);
+      bumpDeckListRevision(ref);
+      bumpPodPresetsRevision(ref);
+      setState(() {});
+      showUiSnackBar(
+        context,
+        'Restored backup for ${backup.profile.username}.',
+      );
+    } catch (e, st) {
+      appLog('Settings: restore backup failed', error: e, stackTrace: st);
+      if (!mounted) return;
+      showUiSnackBar(
+        context,
+        'Could not restore backup. Check the file and try again.',
+        isError: true,
+      );
+    }
+  }
 }
 
 class _SectionHeader extends StatelessWidget {
@@ -328,26 +409,53 @@ class _ColorSchemePicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palettes = AppColorPalettes.all;
+    const crossAxisCount = 3;
+    const crossSpacing = LayoutTokens.gr2;
+    const mainSpacing = LayoutTokens.gr1;
+    const tileHeight = LayoutTokens.minTapTarget;
+    final rowCount = (palettes.length / crossAxisCount).ceil();
+
     return Padding(
-      padding: EdgeInsets.only(bottom: LayoutTokens.gr2),
+      padding: EdgeInsets.only(bottom: LayoutTokens.gr1),
       child: UiSurface(
-        padding: EdgeInsets.all(LayoutTokens.gr3),
+        padding: EdgeInsets.all(LayoutTokens.gr2),
         borderRadius: RadiusTokens.radiusMd,
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            for (var i = 0; i < AppColorPalettes.all.length; i++) ...[
-              if (i > 0) SizedBox(width: LayoutTokens.gr2),
-              Expanded(
-                child: _ColorSwatchButton(
-                  palette: AppColorPalettes.all[i],
-                  selected: AppColorPalettes.all[i].id == selected,
-                  onTap: () => onSelected(AppColorPalettes.all[i].id),
+            for (var row = 0; row < rowCount; row++) ...[
+              if (row > 0) const SizedBox(height: mainSpacing),
+              SizedBox(
+                height: tileHeight,
+                child: Row(
+                  children: [
+                    for (var col = 0; col < crossAxisCount; col++) ...[
+                      if (col > 0) const SizedBox(width: crossSpacing),
+                      Expanded(
+                        child: _swatchAt(
+                          palettes,
+                          row * crossAxisCount + col,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ],
           ],
         ),
       ),
+    );
+  }
+
+  Widget _swatchAt(List<AppColorPalette> palettes, int index) {
+    if (index >= palettes.length) return const SizedBox.shrink();
+    final palette = palettes[index];
+    return _ColorSwatchButton(
+      palette: palette,
+      selected: palette.id == selected,
+      onTap: () => onSelected(palette.id),
     );
   }
 }
@@ -374,27 +482,24 @@ class _ColorSwatchButton extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           borderRadius: RadiusTokens.radiusSm,
-          child: AspectRatio(
-            aspectRatio: 1,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: palette.previewBackground,
-                borderRadius: RadiusTokens.radiusSm,
-                border: Border.all(
-                  color: selected
-                      ? palette.previewAccent
-                      : Colors.transparent,
-                  width: 2.5,
-                ),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: palette.previewBackground,
+              borderRadius: RadiusTokens.radiusSm,
+              border: Border.all(
+                color: selected
+                    ? palette.previewAccent
+                    : Colors.transparent,
+                width: 2.5,
               ),
-              child: Center(
-                child: Container(
-                  width: 16,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: palette.previewAccent,
-                    shape: BoxShape.circle,
-                  ),
+            ),
+            child: Center(
+              child: Container(
+                width: 18,
+                height: 18,
+                decoration: BoxDecoration(
+                  color: palette.previewAccent,
+                  shape: BoxShape.circle,
                 ),
               ),
             ),

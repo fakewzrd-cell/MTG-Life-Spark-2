@@ -185,7 +185,7 @@ class _SlideView extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (slide.showBrandLogo)
-                const BrandLogo(
+                BrandLogo(
                   layout: BrandLogoLayout.horizontal,
                   height: 48,
                 )

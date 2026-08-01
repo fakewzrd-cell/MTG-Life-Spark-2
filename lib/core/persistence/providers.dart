@@ -3,11 +3,11 @@ import '../models/player_profile.dart';
 import '../models/pod_preset.dart';
 import 'profile_repository.dart';
 import 'match_repository.dart';
-import 'achievement_repository.dart';
 import 'feedback_repository.dart';
 import 'pod_repository.dart';
 import 'deck_repository.dart';
 import 'settings_repository.dart';
+import 'backup_service.dart';
 
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
   return ProfileRepository();
@@ -74,12 +74,19 @@ void bumpDeckListRevision(WidgetRef ref) {
   ref.read(deckListRevisionProvider.notifier).state++;
 }
 
-final achievementRepositoryProvider = Provider<AchievementRepository>((ref) {
-  return AchievementRepository();
-});
-
 final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
   return SettingsRepository();
+});
+
+final backupServiceProvider = Provider<BackupService>((ref) {
+  return BackupService(
+    profileRepo: ref.read(profileRepositoryProvider),
+    settingsRepo: ref.read(settingsRepositoryProvider),
+    deckRepo: ref.read(deckRepositoryProvider),
+    podRepo: ref.read(podRepositoryProvider),
+    matchRepo: ref.read(matchRepositoryProvider),
+    feedbackRepo: ref.read(feedbackRepositoryProvider),
+  );
 });
 
 /// Bumped when app settings change so router redirect and UI refresh.

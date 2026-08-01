@@ -81,4 +81,7 @@ enum BleMessageType {
 
   /// Shared mid-match d6 / d20 / coin result for the whole table.
   tableToolResult,
+
+  /// Private note to one player (ephemeral UI — not game state).
+  playerWhisper,
 }

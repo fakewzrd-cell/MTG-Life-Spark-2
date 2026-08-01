@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../ui/tokens/color_tokens.dart';
+import '../../ui/theme/app_color_tokens.dart';
 
 /// Maps Scryfall `color_identity` letters (W,U,B,R,G) to splash colors for gameplay chrome.
 abstract final class CommanderIdentityColors {
@@ -12,15 +12,16 @@ abstract final class CommanderIdentityColors {
     'G': Color(0xFF00733E),
   };
 
-  /// Gradient stops for scaffold / life counter chrome — violet shell only.
-  static List<Color> gameplayGradient([
+  /// Gradient stops for scaffold / overview / life counter — follows [colors].
+  static List<Color> gameplayGradient(
+    AppColorTokens colors, [
     List<String> identity = const [],
   ]) {
-    final base = ColorTokens.backgroundPrimary;
-    final mid = ColorTokens.backgroundSecondary;
-    final end = ColorTokens.surface;
-    final brand = ColorTokens.brandAccent;
-    final soft = ColorTokens.brandAccentSoft;
+    final base = colors.backgroundPrimary;
+    final mid = colors.backgroundSecondary;
+    final end = colors.surface;
+    final brand = colors.primaryAccent;
+    final soft = Color.lerp(brand, base, 0.82)!;
 
     return [
       base,
@@ -30,28 +31,35 @@ abstract final class CommanderIdentityColors {
     ];
   }
 
-  /// Accent for phase nav, tabs, and HUD chrome — brand purple, not seat color.
-  static Color gameChromeAccent([List<String> identity = const []]) {
-    if (identity.isEmpty) return ColorTokens.brandAccent;
-    final tint = _identityTint(identity, ColorTokens.brandAccent);
-    return Color.lerp(ColorTokens.brandAccent, tint, 0.12)!;
+  /// Accent for phase nav, tabs, and HUD chrome — brand tint, not seat color.
+  static Color gameChromeAccent(
+    AppColorTokens colors, [
+    List<String> identity = const [],
+  ]) {
+    if (identity.isEmpty) return colors.primaryAccent;
+    final tint = _identityTint(identity, colors.primaryAccent);
+    return Color.lerp(colors.primaryAccent, tint, 0.12)!;
   }
 
-  static Color emphasisBorder([List<String> identity = const []]) {
+  static Color emphasisBorder(
+    AppColorTokens colors, [
+    List<String> identity = const [],
+  ]) {
+    final soft = Color.lerp(colors.primaryAccent, colors.backgroundPrimary, 0.65)!;
     return Color.lerp(
-      ColorTokens.brandAccentSoft,
-      gameChromeAccent(identity),
+      soft,
+      gameChromeAccent(colors, identity),
       0.35,
     )!;
   }
 
   /// Blended WUBRG tint for a commander (falls back to app accent when unknown).
-  static Color identityTint(List<String> identity) {
-    return _identityTint(identity, ColorTokens.brandAccent);
+  static Color identityTint(AppColorTokens colors, List<String> identity) {
+    return _identityTint(identity, colors.primaryAccent);
   }
 
   static Color _identityTint(List<String> identity, Color fallback) {
-    if (identity.isEmpty) return ColorTokens.brandAccent;
+    if (identity.isEmpty) return fallback;
     if (identity.length == 1) {
       return mana[identity.first] ?? fallback;
     }

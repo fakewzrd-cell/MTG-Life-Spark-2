@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' show DateFormat, NumberFormat;
 
+import '../../core/debug/app_log.dart';
 import '../../core/models/player_profile.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/utils/app_router.dart';
@@ -12,14 +13,17 @@ import '../../shared/widgets/default_profile_avatar.dart';
 import '../../shared/widgets/profile_default_banner.dart';
 import '../../shared/widgets/tier_badge.dart';
 import '../../ui/components/ui_button.dart';
+import '../../ui/components/ui_snack_bar.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
+import '../../ui/tokens/motion_tokens.dart';
 import '../../ui/tokens/opacity_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import '../game/widgets/game_modal_chrome.dart';
 import 'profile_carousel_sections.dart';
 import 'profile_hero_layout.dart';
+import 'profile_options_sheet.dart';
 import 'profile_player_stats_section.dart';
 import 'ranks_info_sheet.dart';
 
@@ -56,6 +60,34 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     profile.username = next;
     await ref.read(profileRepositoryProvider).saveProfile(profile);
     bumpProfileRevision(ref);
+  }
+
+  Future<void> _openProfileOptions() async {
+    final action = await showProfileOptionsSheet(context);
+    if (!mounted || action == null) return;
+    switch (action) {
+      case ProfileSheetAction.editProfile:
+        _enterEditMode();
+      case ProfileSheetAction.backupProfile:
+        // Wait for the options sheet to finish dismissing before share UI.
+        await Future<void>.delayed(MotionTokens.standard);
+        if (!mounted) return;
+        await _exportBackup();
+    }
+  }
+
+  Future<void> _exportBackup() async {
+    try {
+      final shared = await ref.read(backupServiceProvider).exportAndShare();
+      if (!mounted) return;
+      if (shared) {
+        showUiSnackBar(context, 'Backup shared.');
+      }
+    } catch (e, st) {
+      appLog('Profile: export backup failed', error: e, stackTrace: st);
+      if (!mounted) return;
+      showUiSnackBar(context, 'Could not export backup.', isError: true);
+    }
   }
 
   @override
@@ -120,7 +152,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 metrics: heroMetrics,
                 firstPlayed: firstPlayed,
                 editing: _editing,
-                onEnterEdit: _enterEditMode,
+                onOpenOptions: _openProfileOptions,
                 onExitEdit: _exitEditMode,
                 onEditName: () => _editUsername(profile),
                 onEditAvatar: () => context.push(AppRoutes.profileAvatar),
@@ -167,7 +199,7 @@ class _ProfileHeroCard extends StatelessWidget {
     required this.metrics,
     required this.firstPlayed,
     required this.editing,
-    required this.onEnterEdit,
+    required this.onOpenOptions,
     required this.onExitEdit,
     required this.onEditName,
     required this.onEditAvatar,
@@ -178,7 +210,7 @@ class _ProfileHeroCard extends StatelessWidget {
   final ProfileHeroLayoutMetrics metrics;
   final DateTime? firstPlayed;
   final bool editing;
-  final VoidCallback onEnterEdit;
+  final VoidCallback onOpenOptions;
   final VoidCallback onExitEdit;
   final VoidCallback onEditName;
   final VoidCallback onEditAvatar;
@@ -211,9 +243,9 @@ class _ProfileHeroCard extends StatelessWidget {
                     ),
                   ),
                   SizedBox(width: LayoutTokens.gr1),
-                  _ProfileEditModePill(
+                  _ProfileHeroActionPill(
                     editing: editing,
-                    onPressed: editing ? onExitEdit : onEnterEdit,
+                    onPressed: editing ? onExitEdit : onOpenOptions,
                   ),
                 ],
               ),
@@ -246,7 +278,7 @@ class _ProfileHeroCard extends StatelessWidget {
   }
 }
 
-/// Top-leading tenure caption — balances the Edit pill across the banner.
+/// Top-leading tenure caption — balances the action pill across the banner.
 class _ProfileHeroCaption extends StatelessWidget {
   const _ProfileHeroCaption({
     required this.firstPlayed,
@@ -269,15 +301,15 @@ class _ProfileHeroCaption extends StatelessWidget {
         fontSize: FontTokens.label,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.4,
-        color: colors.onAccent.withValues(alpha: OpacityTokens.strong),
+        color: colors.textSecondary,
       ),
     );
   }
 }
 
-/// Top-trailing Edit ↔ Done mode toggle — quiet so it doesn't compete with the hero.
-class _ProfileEditModePill extends StatelessWidget {
-  const _ProfileEditModePill({
+/// Top-trailing control: opens Profile menu, or exits edit with one tap (Done).
+class _ProfileHeroActionPill extends StatelessWidget {
+  const _ProfileHeroActionPill({
     required this.editing,
     required this.onPressed,
   });
@@ -292,7 +324,7 @@ class _ProfileEditModePill extends StatelessWidget {
     final colors = AppColorTokens.of(context);
     return Semantics(
       button: true,
-      label: editing ? 'Done editing' : 'Edit profile',
+      label: editing ? 'Done editing' : 'Profile options',
       child: ConstrainedBox(
         constraints: const BoxConstraints(
           minWidth: LayoutTokens.minTapTarget,
@@ -308,10 +340,10 @@ class _ProfileEditModePill extends StatelessWidget {
                 height: _visualHeight,
                 padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr2),
                 decoration: ShapeDecoration(
-                  color: colors.onAccent.withValues(alpha: OpacityTokens.faint),
+                  color: colors.textPrimary.withValues(alpha: OpacityTokens.faint),
                   shape: StadiumBorder(
                     side: BorderSide(
-                      color: colors.onAccent.withValues(
+                      color: colors.textPrimary.withValues(
                         alpha: OpacityTokens.soft,
                       ),
                     ),
@@ -319,17 +351,25 @@ class _ProfileEditModePill extends StatelessWidget {
                 ),
                 child: Center(
                   child: ExcludeSemantics(
-                    child: Text(
-                      editing ? 'Done' : 'Edit',
-                      style: TextStyle(
-                        fontSize: FontTokens.label,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.2,
-                        color: colors.onAccent.withValues(
-                          alpha: OpacityTokens.nearOpaque,
-                        ),
-                      ),
-                    ),
+                    child: editing
+                        ? Text(
+                            'Done',
+                            style: TextStyle(
+                              fontSize: FontTokens.label,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.2,
+                              color: colors.textPrimary.withValues(
+                                alpha: OpacityTokens.nearOpaque,
+                              ),
+                            ),
+                          )
+                        : Icon(
+                            Icons.more_horiz_rounded,
+                            size: 20,
+                            color: colors.textPrimary.withValues(
+                              alpha: OpacityTokens.nearOpaque,
+                            ),
+                          ),
                   ),
                 ),
               ),
@@ -362,7 +402,7 @@ class _ProfileHeroIdentityAndStats extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final nameStyle = Theme.of(context).textTheme.titleLarge?.copyWith(
-      color: colors.onAccent,
+      color: colors.textPrimary,
       fontWeight: FontWeight.w700,
       letterSpacing: -0.3,
     );
@@ -411,7 +451,7 @@ class _ProfileHeroIdentityAndStats extends StatelessWidget {
                           icon: Icon(
                             Icons.edit_rounded,
                             size: 20,
-                            color: colors.onAccent.withValues(alpha: 0.92),
+                            color: colors.textPrimary.withValues(alpha: 0.92),
                           ),
                         ),
                       ],

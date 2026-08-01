@@ -37,12 +37,12 @@ class AppIcons {
   /// Launch / bootstrap splash — Life Spark mark (white on transparent).
   static const String splashLogo = 'assets/images/splash_logo.png';
 
-  /// Brand mark only (white on transparent) — same art as splash.
+  /// Life Spark mark (white silhouette — tint via [BrandLogo]).
   static const String lifeSparkLogo = 'assets/images/life_spark_logo.png';
 
-  /// Horizontal wordmark (mark + LIFE SPARK) for app bars / headers.
+  /// Horizontal wordmark (mark + LIFE SPARK); tint via [BrandLogo].
   static const String logoHorizontal = 'assets/images/logo_horizontal.png';
 
-  /// Vertical wordmark (mark above LIFE SPARK) for splash reveal / setup.
+  /// Vertical wordmark (mark above LIFE SPARK); tint via [BrandLogo].
   static const String logoVertical = 'assets/images/logo_vertical.png';
 }

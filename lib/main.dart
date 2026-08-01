@@ -8,7 +8,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'core/models/commander_stats.dart';
 import 'core/models/player_profile.dart';
 import 'core/models/match_record.dart';
-import 'core/models/achievement_record.dart';
 import 'core/models/app_settings.dart';
 import 'core/models/pod_preset.dart';
 import 'core/game/game_format.dart';
@@ -195,7 +194,6 @@ Future<void> _initHive() async {
   Hive.registerAdapter(PlayerProfileAdapter());
   Hive.registerAdapter(MatchRecordAdapter());
   Hive.registerAdapter(CommanderStatsAdapter());
-  Hive.registerAdapter(AchievementRecordAdapter());
   Hive.registerAdapter(AppSettingsAdapter());
   Hive.registerAdapter(PodPresetAdapter());
   Hive.registerAdapter(PlayerDeckAdapter());
@@ -221,7 +219,6 @@ Future<void> _openHiveBoxes() async {
     Hive.openBox<PlayerProfile>('playerProfile'),
     Hive.openBox<MatchRecord>('matchHistory'),
     Hive.openBox<CommanderStats>('commanderStats'),
-    Hive.openBox<AchievementRecord>('achievements'),
     Hive.openBox<AppSettings>('appSettings'),
     Hive.openBox<String>('matchFeedback'),
     Hive.openBox<PodPreset>('podPresets'),
@@ -328,11 +325,15 @@ class MgtLifeSparkApp extends ConsumerWidget {
     // tear it down here or the overlay vanishes before this frame is on screen.
     final router = ref.watch(routerProvider);
 
-    final theme = ref.watch(effectiveThemeProvider);
+    final lightTheme = ref.watch(appLightThemeProvider);
+    final darkTheme = ref.watch(appDarkThemeProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
       title: 'Life Spark',
-      theme: theme,
+      theme: lightTheme,
+      darkTheme: darkTheme,
+      themeMode: themeMode,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
       builder: (context, child) => SessionConnectionGuard(

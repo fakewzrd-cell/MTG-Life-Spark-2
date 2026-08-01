@@ -176,6 +176,7 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
             borderRadius: RadiusTokens.radiusBento,
             gradient: LinearGradient(
               colors: CommanderIdentityColors.gameplayGradient(
+                colors,
                 widget.commanderColorIdentity,
               ),
             ),

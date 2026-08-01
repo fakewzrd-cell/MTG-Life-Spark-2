@@ -45,6 +45,9 @@ class GameStateNotifier extends StateNotifier<GameState> {
   /// Client-only: host announced a deliberate session end; skip reconnect.
   bool _hostSessionEnded = false;
   static const _uuid = Uuid();
+  static const _whisperMinInterval = Duration(seconds: 15);
+  static const _whisperMaxTextLength = 80;
+  final Map<String, DateTime> _lastWhisperSentTo = {};
 
   GameStateNotifier(this._ref) : super(GameState.empty());
 
@@ -1644,6 +1647,63 @@ class GameStateNotifier extends StateNotifier<GameState> {
     _publishTableToolAnnouncement(announcement, appendLog: true);
   }
 
+  /// Quick private note to one opponent (Overview ⋮ menu). Ephemeral — not logged.
+  bool sendPlayerWhisper(String toPlayerId, String text) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty ||
+        trimmed.length > _whisperMaxTextLength ||
+        state.gameOver ||
+        state.localPlayerId.isEmpty) {
+      return false;
+    }
+    if (toPlayerId.isEmpty || toPlayerId == state.localPlayerId) return false;
+    if (_playerById(toPlayerId)?.isEliminated ?? true) return false;
+    if (state.players.where((p) => !p.isEliminated).length < 2) return false;
+
+    final last = _lastWhisperSentTo[toPlayerId];
+    if (last != null &&
+        DateTime.now().difference(last) < _whisperMinInterval) {
+      return false;
+    }
+
+    final from = state.localPlayer;
+    if (from == null) return false;
+
+    _lastWhisperSentTo[toPlayerId] = DateTime.now();
+    _send(
+      BleMessage.playerWhisper(
+        seqNum: _nextSeq(),
+        id: _uuid.v4(),
+        fromPlayerId: from.playerId,
+        fromUsername: from.username,
+        toPlayerId: toPlayerId,
+        text: trimmed,
+      ),
+    );
+    return true;
+  }
+
+  void dismissPlayerWhisper() {
+    _ref.read(playerWhisperAnnouncementProvider.notifier).state = null;
+  }
+
+  void _publishPlayerWhisper(PlayerWhisperAnnouncement whisper) {
+    _ref.read(playerWhisperAnnouncementProvider.notifier).state = whisper;
+  }
+
+  void _handlePlayerWhisper(BleMessage msg) {
+    final whisper = PlayerWhisperAnnouncement.fromPayload(msg.payload);
+    if (whisper.id.isEmpty ||
+        whisper.fromPlayerId.isEmpty ||
+        whisper.toPlayerId.isEmpty ||
+        whisper.text.isEmpty) {
+      return;
+    }
+    if (whisper.toPlayerId != state.localPlayerId) return;
+    if (whisper.fromPlayerId == state.localPlayerId) return;
+    _publishPlayerWhisper(whisper);
+  }
+
   // ── Concede ───────────────────────────────────────────────────────────────
 
   void concede(String playerId) {
@@ -2426,6 +2486,9 @@ class GameStateNotifier extends StateNotifier<GameState> {
       case BleMessageType.tableToolResult:
         _handleTableToolResult(msg);
         break;
+      case BleMessageType.playerWhisper:
+        _handlePlayerWhisper(msg);
+        break;
       case BleMessageType.firstPlayerRollSubmit:
         if (state.isHost) {
           final pid = msg.payload['pid'] as String? ?? '';
@@ -2833,6 +2896,9 @@ class GameStateNotifier extends StateNotifier<GameState> {
     _hostSessionEnded = false;
     _ref.read(playerLeftUiEventProvider.notifier).state = null;
     _ref.read(localLifeChangeProvider.notifier).state = null;
+    _ref.read(tableToolAnnouncementProvider.notifier).state = null;
+    _ref.read(playerWhisperAnnouncementProvider.notifier).state = null;
+    _lastWhisperSentTo.clear();
     _ref.read(peerLinkIssuesProvider.notifier).state = {};
     _ref.read(hostEndedSessionUiEventProvider.notifier).state = false;
     _ref.read(sessionLinkStatusProvider.notifier).state =

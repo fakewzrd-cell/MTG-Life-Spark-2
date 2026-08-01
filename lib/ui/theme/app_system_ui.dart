@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'app_color_tokens.dart';
+
 const double kLargeScreenOrientationBreakpoint = 600;
 
 /// Phones stay portrait for table readability. Android 16 ignores orientation
@@ -36,14 +38,31 @@ abstract final class AppSystemUi {
     );
   }
 
-  static SystemUiOverlayStyle overlayStyle(BuildContext context) {
+  static SystemUiOverlayStyle overlayStyle(
+    BuildContext context, {
+    bool matchBottomNav = false,
+  }) {
+    final colors = AppColorTokens.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    // Dock nav uses backgroundPrimary @ 78% over the same scaffold tone.
+    final navBarColor = matchBottomNav
+        ? Color.alphaBlend(
+            colors.backgroundPrimary.withValues(alpha: 0.78),
+            colors.backgroundPrimary,
+          )
+        : colors.backgroundPrimary;
+
     return SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
       statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
       statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+      systemNavigationBarColor: navBarColor,
       systemNavigationBarIconBrightness:
           isDark ? Brightness.light : Brightness.dark,
+      systemNavigationBarContrastEnforced: false,
+      systemNavigationBarDividerColor:
+          colors.borderSubtle.withValues(alpha: 0.22),
     );
   }
 }
@@ -106,17 +125,24 @@ class _AppAdaptiveOrientationScopeState
   Widget build(BuildContext context) => widget.child;
 }
 
-/// Applies icon brightness to a subtree. Bar backgrounds are drawn by Flutter
-/// content behind the Android system insets rather than deprecated Window APIs.
+/// Applies [AppSystemUi.overlayStyle] to a subtree (status + navigation bar).
+///
+/// Uses Flutter [SystemUiOverlayStyle] — not the deprecated Android XML
+/// `android:navigationBarColor` / `android:statusBarColor` window attrs.
 class AppSystemUiScope extends StatelessWidget {
-  const AppSystemUiScope({super.key, required this.child});
+  const AppSystemUiScope({
+    super.key,
+    required this.child,
+    this.matchBottomNav = false,
+  });
 
   final Widget child;
+  final bool matchBottomNav;
 
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: AppSystemUi.overlayStyle(context),
+      value: AppSystemUi.overlayStyle(context, matchBottomNav: matchBottomNav),
       child: child,
     );
   }

@@ -147,6 +147,14 @@ class ProfileRepository {
 
   CommanderStats? getCommanderStats(String name) => _statsBox.get(name);
 
+  /// Overwrite all per-commander stats (used by backup restore).
+  Future<void> replaceAllCommanderStats(List<CommanderStats> stats) async {
+    await _statsBox.clear();
+    for (final s in stats) {
+      await _statsBox.put(s.commanderName, s);
+    }
+  }
+
   /// XP required to advance from [level] to the next level.
   static int xpRequiredForLevel(int level) {
     const thresholds = [

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -40,6 +39,7 @@ import '../widgets/hub_guide_sheet.dart';
 import '../widgets/opponent_glance_strip.dart';
 import '../widgets/end_turn_bar.dart';
 import '../widgets/phase_nav_cluster.dart';
+import '../widgets/player_whisper_overlay.dart';
 import '../widgets/table_tool_result_overlay.dart';
 import '../widgets/stack_tracker_tab.dart';
 import '../widgets/variant_card_panel.dart';
@@ -266,8 +266,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final gradientChrome = ref.watch(
       gameProvider.select((g) => g.localPlayer!.commanderColorIdentity),
     );
-    final gradientColors =
-        CommanderIdentityColors.gameplayGradient(gradientChrome);
+    final gradientColors = CommanderIdentityColors.gameplayGradient(
+      colors,
+      gradientChrome,
+    );
     final localPlayerId = ref.read(gameProvider).localPlayerId;
     final timeoutActive = ref.watch(
       gameProvider.select((g) => g.timeoutActive),
@@ -413,7 +415,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           ),
         ),
         child: Scaffold(
-          backgroundColor: colors.backgroundPrimary,
+          backgroundColor: Colors.transparent,
           body: Stack(
             children: [
               if (_showOverview)
@@ -526,6 +528,13 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   return TableToolResultOverlay(announcement: announcement);
                 },
               ),
+              Consumer(
+                builder: (context, ref, _) {
+                  final whisper = ref.watch(playerWhisperAnnouncementProvider);
+                  if (whisper == null) return const SizedBox.shrink();
+                  return PlayerWhisperOverlay(whisper: whisper);
+                },
+              ),
             ],
           ),
         ),
@@ -586,8 +595,7 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
     final tightVertical =
         screenHeight < GameLayoutBreakpoints.shortViewport;
     final horizontalInset = LayoutTokens.gr3;
-    final rawMaxW = min(screenWidth - horizontalInset * 2, 400.0);
-    final lifeBandMaxW = rawMaxW - (rawMaxW % 4);
+    // Match dial strip / HUD inset: full column width (no 400px life band).
     final lifeBandH = tightVertical
         ? (isCompact ? 128.0 : 148.0)
         : (isCompact ? 160.0 : 192.0);
@@ -613,6 +621,7 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
     );
 
     final chromeAccent = CommanderIdentityColors.gameChromeAccent(
+      colors,
       local.commanderColorIdentity,
     );
     final activePlayer = game.playerById(game.activePlayerId);
@@ -709,45 +718,34 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
                       .where((p) => p.playerId == game.activePlayerId)
                       .map((p) => p.username)
                       .firstOrNull;
-                  final phaseBar = Center(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: lifeBandMaxW),
-                      child: game.phasesEnabled
-                          ? PhaseNavCluster(
-                              game: game,
-                              accentColor: chromeAccent,
-                              onBack: !game.timeoutActive
-                                  ? notifier.previousPhase
-                                  : null,
-                              onNext: !game.timeoutActive
-                                  ? notifier.advancePhase
-                                  : null,
-                              onPickPhase: game.timeoutActive
-                                  ? null
-                                  : notifier.setPhase,
-                              onEndTurn: notifier.endTurn,
-                              endTurnEnabled: endTurnEnabled,
-                            )
-                          : EndTurnBar(
-                              accentColor: chromeAccent,
-                              enabled: endTurnEnabled,
-                              onEndTurn: notifier.endTurn,
-                              waitingForName: endTurnEnabled
-                                  ? null
-                                  : activeName,
-                            ),
-                    ),
-                  );
-                  final lifeCounter = Center(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: lifeBandMaxW,
-                        maxHeight: lifeBandH,
-                      ),
-                      child: ScopedLifeCounter(
-                        playerId: local.playerId,
-                        onLifeChange: adjustLife,
-                      ),
+                  final phaseBar = game.phasesEnabled
+                      ? PhaseNavCluster(
+                          game: game,
+                          accentColor: chromeAccent,
+                          onBack: !game.timeoutActive
+                              ? notifier.previousPhase
+                              : null,
+                          onNext: !game.timeoutActive
+                              ? notifier.advancePhase
+                              : null,
+                          onPickPhase: game.timeoutActive
+                              ? null
+                              : notifier.setPhase,
+                          onEndTurn: notifier.endTurn,
+                          endTurnEnabled: endTurnEnabled,
+                        )
+                      : EndTurnBar(
+                          accentColor: chromeAccent,
+                          enabled: endTurnEnabled,
+                          onEndTurn: notifier.endTurn,
+                          waitingForName:
+                              endTurnEnabled ? null : activeName,
+                        );
+                  final lifeCounter = ConstrainedBox(
+                    constraints: BoxConstraints(maxHeight: lifeBandH),
+                    child: ScopedLifeCounter(
+                      playerId: local.playerId,
+                      onLifeChange: adjustLife,
                     ),
                   );
                   final dialStrip = ScopedGameplayDials(

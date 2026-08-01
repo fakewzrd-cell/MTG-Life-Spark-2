@@ -413,7 +413,7 @@ class AppTheme {
       // ── Full M3 ColorScheme ────────────────────────────────────────────
       colorScheme: ColorScheme.light(
         primary: ColorTokens.lightPrimaryAccent,
-        onPrimary: ColorTokens.onAccent,
+        onPrimary: ColorTokens.onColor(ColorTokens.lightPrimaryAccent),
         primaryContainer: ColorTokens.lightPrimaryContainer,
         onPrimaryContainer: ColorTokens.lightOnPrimaryContainer,
         secondary: ColorTokens.lightSecondary,

@@ -58,4 +58,40 @@ class MatchRepository {
   Future<void> deleteMatch(String matchId) async {
     await _box.delete(matchId);
   }
+
+  /// Wipe all match history (used by backup restore).
+  Future<void> clearAll() async {
+    await _box.clear();
+  }
+
+  /// Snapshot every row for restore rollback (includes placeholders).
+  List<MatchRecord> snapshotAll() =>
+      _box.values.map(_cloneRecord).toList(growable: false);
+
+  /// Replace every row (used by backup restore rollback).
+  Future<void> replaceAll(List<MatchRecord> records) async {
+    await _box.clear();
+    for (final record in records) {
+      await _box.put(record.matchId, record);
+    }
+  }
 }
+
+MatchRecord _cloneRecord(MatchRecord m) => MatchRecord(
+      matchId: m.matchId,
+      date: m.date,
+      commanderName: m.commanderName,
+      partnerCommanderName: m.partnerCommanderName,
+      opponentNames: List<String>.from(m.opponentNames),
+      result: m.result,
+      eliminationReason: m.eliminationReason,
+      format: m.format,
+      durationMinutes: m.durationMinutes,
+      startingLifeTotal: m.startingLifeTotal,
+      playerCount: m.playerCount,
+      durationSeconds: m.durationSeconds,
+      participantsJson: m.participantsJson,
+      podNameSnapshot: m.podNameSnapshot,
+      locationSnapshot: m.locationSnapshot,
+      localDeckIdSnapshot: m.localDeckIdSnapshot,
+    );

@@ -1,6 +1,6 @@
 # Life Spark — Privacy Policy
 
-**Last updated:** 20 July 2026  
+**Last updated:** 31 July 2026  
 **Developer:** Federick Vidot  
 **Contact:** Use the in-app Feedback screen, or the support email listed on the Google Play listing.
 
@@ -25,6 +25,9 @@ The App stores locally (using on-device storage) information such as:
 
 This data remains on your device unless you choose to clear app storage or uninstall the App.
 
+### Optional local backup
+If you use **Back up profile** / **Restore backup**, the App can export or import a backup file you choose to save or share (for example via Files, Drive, or Messages). That file contains profile, decks, settings, and related progress you choose to include. Life Spark does not upload backups to a Life Spark cloud service; sharing destinations you pick are governed by those apps’ own policies.
+
 ### Camera
 If you use **Join Game**, the App requests camera access to scan a host QR code. Camera frames are used only to decode the QR code on-device. We do not upload photos or video to our servers.
 
@@ -45,6 +48,7 @@ Third parties that may receive data only as needed for the features above:
 
 - **Scryfall** — card image/data requests when the App fetches card art (subject to Scryfall’s own terms/privacy).
 - **Other players on your local network** — when you host or join a game, session/game state is shared with those devices for multiplayer.
+- **Apps you choose when sharing a backup** — only if you export a backup and pick a share destination.
 
 Google Play may collect standard install/usage statistics according to Google’s policies when you download from Play.
 
@@ -57,6 +61,7 @@ Life Spark is a general-audience utility. It is not directed at children under 1
 - Deny camera permission if you do not need QR join (you may still use other features).
 - Clear app data or uninstall to remove local profile/match data from the device.
 - Leave a multiplayer session anytime from the App.
+- Delete any backup files you previously exported from Files / cloud storage yourself.
 
 ## Unofficial Fan Content
 

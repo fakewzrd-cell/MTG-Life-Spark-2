@@ -8,6 +8,7 @@ import 'game_colors.dart';
 import '../../../ui/theme/app_color_tokens.dart';
 import 'game_modal_chrome.dart';
 import '../../../ui/components/ui_snack_bar.dart';
+import '../../../shared/widgets/d20_icon.dart';
 import '../../../shared/widgets/game_icon.dart';
 import '../../../shared/utils/game_haptics.dart';
 import '../../../ui/tokens/layout_tokens.dart';
@@ -910,8 +911,7 @@ class _AddCounterPillTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(_kDialPillCornerRadius),
             ),
             child: Center(
-              child: Icon(
-                Icons.add_rounded,
+              child: D20Icon(
                 size: metrics.addIconSize,
                 color: isEliminated ? colors.textSecondary : colors.primaryAccent,
               ),
@@ -1246,8 +1246,12 @@ class _WheelGrooveShadow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
-    final grooveColor =
-        Color.lerp(colors.backgroundPrimary, Colors.black, 0.55)!;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final grooveColor = Color.lerp(
+      colors.backgroundPrimary,
+      colors.textPrimary,
+      isDark ? 0.55 : 0.14,
+    )!;
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(

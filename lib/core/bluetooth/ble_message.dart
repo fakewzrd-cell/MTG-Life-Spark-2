@@ -203,4 +203,26 @@ class BleMessage {
         },
         seqNum: seqNum,
       );
+
+  /// Ephemeral private message to one seat (Overview whisper).
+  static BleMessage playerWhisper({
+    required int seqNum,
+    required String id,
+    required String fromPlayerId,
+    required String fromUsername,
+    required String toPlayerId,
+    required String text,
+  }) =>
+      BleMessage(
+        type: BleMessageType.playerWhisper,
+        payload: {
+          'id': id,
+          'from': fromPlayerId,
+          'fromName': fromUsername,
+          'to': toPlayerId,
+          'text': text,
+        },
+        seqNum: seqNum,
+        targetPlayerId: toPlayerId,
+      );
 }

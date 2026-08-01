@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/game_feedback.dart';
 import '../models/match_record.dart';
-import '../persistence/achievement_repository.dart';
 import '../persistence/feedback_repository.dart';
 import '../persistence/deck_repository.dart';
 import '../persistence/match_repository.dart';
@@ -29,7 +28,6 @@ class ProgressResult {
   final int xpGained;
   final int oldLevel;
   final int newLevel;
-  final List<String> newAchievementIds;
 
   /// False for solo/practice — no XP or ranked profile updates.
   final bool awardsProgression;
@@ -39,7 +37,6 @@ class ProgressResult {
     required this.xpGained,
     required this.oldLevel,
     required this.newLevel,
-    required this.newAchievementIds,
     this.awardsProgression = true,
   });
 
@@ -48,19 +45,16 @@ class ProgressResult {
 
 class ProgressionService {
   final ProfileRepository _profileRepo;
-  final AchievementRepository _achievementRepo;
   final MatchRepository _matchRepo;
   final FeedbackRepository _feedbackRepo;
   final DeckRepository _deckRepo;
 
   ProgressionService({
     required ProfileRepository profileRepo,
-    required AchievementRepository achievementRepo,
     required MatchRepository matchRepo,
     required FeedbackRepository feedbackRepo,
     required DeckRepository deckRepo,
   })  : _profileRepo = profileRepo,
-        _achievementRepo = achievementRepo,
         _matchRepo = matchRepo,
         _feedbackRepo = feedbackRepo,
         _deckRepo = deckRepo;
@@ -77,12 +71,12 @@ class ProgressionService {
 
     if (local == null || profile == null) {
       return const ProgressResult(
-          matchId: '',
-          xpGained: 0,
-          oldLevel: 1,
-          newLevel: 1,
-          newAchievementIds: [],
-          awardsProgression: false);
+        matchId: '',
+        xpGained: 0,
+        oldLevel: 1,
+        newLevel: 1,
+        awardsProgression: false,
+      );
     }
 
     final awardsProgression = matchAwardsProgression(finalState);
@@ -97,7 +91,6 @@ class ProgressionService {
         xpGained: 0,
         oldLevel: profile.level,
         newLevel: profile.level,
-        newAchievementIds: const [],
         awardsProgression: false,
       );
     }
@@ -110,7 +103,6 @@ class ProgressionService {
         xpGained: 0,
         oldLevel: profile.level,
         newLevel: profile.level,
-        newAchievementIds: const [],
       );
     }
 
@@ -185,7 +177,7 @@ class ProgressionService {
       localDeckIdSnapshot: local.selectedDeckId,
     ));
 
-    // ── Update profile / deck / achievements ──────────────────────────────
+    // ── Update profile / deck ─────────────────────────────────────────────
     await _profileRepo.recordMatchResult(
       commanderName: local.commanderName ?? 'Unknown',
       won: won,
@@ -202,7 +194,6 @@ class ProgressionService {
     }
 
     final updatedProfile = _profileRepo.getProfile()!;
-    final newAchievements = await _checkAchievements(updatedProfile, won);
     final newLevel = updatedProfile.level;
 
     return ProgressResult(
@@ -210,7 +201,6 @@ class ProgressionService {
       xpGained: xp,
       oldLevel: oldLevel,
       newLevel: newLevel,
-      newAchievementIds: newAchievements,
     );
   }
 
@@ -262,54 +252,11 @@ class ProgressionService {
     }
     if (changed) await _deckRepo.save(deck);
   }
-
-  Future<List<String>> _checkAchievements(
-    dynamic profile,
-    bool won,
-  ) async {
-    final newlyUnlocked = <String>[];
-    final unlockedIds = _achievementRepo.getUnlockedIds();
-
-    Future<void> tryUnlock(String id) async {
-      if (!unlockedIds.contains(id)) {
-        await _achievementRepo.unlock(id);
-        newlyUnlocked.add(id);
-        unlockedIds.add(id); // update local set
-      }
-    }
-
-    if (won) {
-      await tryUnlock('first_win');
-    }
-
-    if (profile.totalGamesPlayed >= 10) await tryUnlock('games_10');
-    if (profile.totalGamesPlayed >= 50) await tryUnlock('games_50');
-    if (profile.totalGamesPlayed >= 100) await tryUnlock('games_100');
-
-    if (profile.lifetimePoisonDealt >= 50) await tryUnlock('poison_50');
-    if (profile.lifetimePoisonDealt >= 100) await tryUnlock('poison_100');
-
-    if (profile.lifetimeCommanderKills >= 1) await tryUnlock('commander_kill_1');
-    if (profile.lifetimeCommanderKills >= 5) await tryUnlock('commander_kill_5');
-
-    if (profile.level >= 11) await tryUnlock('reach_silver');
-    if (profile.level >= 26) await tryUnlock('reach_gold');
-    if (profile.level >= 76) await tryUnlock('reach_diamond');
-
-    final cmdStats = _profileRepo
-        .getCommanderStats(profile.selectedCommanderName ?? '');
-    if (cmdStats != null && cmdStats.wins >= 5) {
-      await tryUnlock('same_commander_5');
-    }
-
-    return newlyUnlocked;
-  }
 }
 
 final progressionServiceProvider = Provider<ProgressionService>((ref) {
   return ProgressionService(
     profileRepo: ref.read(profileRepositoryProvider),
-    achievementRepo: ref.read(achievementRepositoryProvider),
     matchRepo: ref.read(matchRepositoryProvider),
     feedbackRepo: ref.read(feedbackRepositoryProvider),
     deckRepo: ref.read(deckRepositoryProvider),

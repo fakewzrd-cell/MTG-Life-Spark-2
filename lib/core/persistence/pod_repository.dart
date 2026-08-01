@@ -27,5 +27,13 @@ class PodRepository {
     await _box.delete(id);
   }
 
+  /// Replace every pod preset (used by backup restore).
+  Future<void> replaceAll(List<PodPreset> presets) async {
+    await _box.clear();
+    for (final preset in presets) {
+      await _box.put(preset.id, preset);
+    }
+  }
+
   PodPreset? getById(String id) => _box.get(id);
 }

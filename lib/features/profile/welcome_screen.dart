@@ -50,7 +50,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const BrandLogo(
+                    BrandLogo(
                       layout: BrandLogoLayout.vertical,
                       height: 96,
                     ),

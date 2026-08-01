@@ -137,3 +137,41 @@ class TableToolAnnouncement {
 
 final tableToolAnnouncementProvider =
     StateProvider<TableToolAnnouncement?>((ref) => null);
+
+/// Ephemeral private note from another player (not logged to the table).
+class PlayerWhisperAnnouncement {
+  const PlayerWhisperAnnouncement({
+    required this.id,
+    required this.fromPlayerId,
+    required this.fromUsername,
+    required this.toPlayerId,
+    required this.text,
+  });
+
+  final String id;
+  final String fromPlayerId;
+  final String fromUsername;
+  final String toPlayerId;
+  final String text;
+
+  factory PlayerWhisperAnnouncement.fromPayload(Map<String, dynamic> payload) {
+    return PlayerWhisperAnnouncement(
+      id: payload['id'] as String? ?? '',
+      fromPlayerId: payload['from'] as String? ?? '',
+      fromUsername: payload['fromName'] as String? ?? 'Player',
+      toPlayerId: payload['to'] as String? ?? '',
+      text: (payload['text'] as String? ?? '').trim(),
+    );
+  }
+
+  Map<String, dynamic> toPayload() => {
+        'id': id,
+        'from': fromPlayerId,
+        'fromName': fromUsername,
+        'to': toPlayerId,
+        'text': text,
+      };
+}
+
+final playerWhisperAnnouncementProvider =
+    StateProvider<PlayerWhisperAnnouncement?>((ref) => null);

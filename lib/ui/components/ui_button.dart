@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_color_tokens.dart';
 import '../tokens/font_tokens.dart';
+import '../tokens/layout_tokens.dart';
 import '../tokens/radius_tokens.dart';
 
 enum UiButtonVariant { primary, secondary, ghost }
@@ -25,6 +26,22 @@ class UiButton extends StatelessWidget {
   final bool loading;
   final bool enabled;
 
+  static const double _minHeight = 52;
+
+  bool _useSingleLineLabel(BuildContext context) =>
+      MediaQuery.textScalerOf(context).scale(1) <= 1.15;
+
+  Widget _label(BuildContext context) {
+    final singleLine = _useSingleLineLabel(context);
+    return Text(
+      label,
+      textAlign: TextAlign.center,
+      maxLines: singleLine ? 1 : null,
+      overflow: singleLine ? TextOverflow.ellipsis : TextOverflow.visible,
+      softWrap: true,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
@@ -33,10 +50,13 @@ class UiButton extends StatelessWidget {
       fontSize: FontTokens.bodyLg,
       fontWeight: FontWeight.w600,
     );
+    final buttonPadding = EdgeInsets.symmetric(
+      horizontal: LayoutTokens.gr3,
+      vertical: LayoutTokens.gr2,
+    );
 
     if (variant == UiButtonVariant.primary) {
       return SizedBox(
-        height: 52,
         width: double.infinity,
         child: FilledButton.icon(
           onPressed: effectiveOnPressed,
@@ -50,9 +70,7 @@ class UiButton extends StatelessWidget {
                   ),
                 )
               : (icon ?? const SizedBox.shrink()),
-          label: loading
-              ? const SizedBox.shrink()
-              : Text(label, overflow: TextOverflow.ellipsis, maxLines: 1),
+          label: loading ? const SizedBox.shrink() : _label(context),
           style: FilledButton.styleFrom(
             backgroundColor: colors.primaryAccent,
             foregroundColor: colors.onAccent,
@@ -60,6 +78,8 @@ class UiButton extends StatelessWidget {
             disabledForegroundColor: colors.textMuted,
             elevation: 0,
             shadowColor: Colors.transparent,
+            minimumSize: const Size(double.infinity, _minHeight),
+            padding: buttonPadding,
             shape: RoundedRectangleBorder(
               borderRadius: RadiusTokens.radiusMd,
             ),
@@ -71,7 +91,6 @@ class UiButton extends StatelessWidget {
 
     if (variant == UiButtonVariant.secondary) {
       return SizedBox(
-        height: 52,
         width: double.infinity,
         child: OutlinedButton.icon(
           onPressed: effectiveOnPressed,
@@ -82,12 +101,12 @@ class UiButton extends StatelessWidget {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : (icon ?? const SizedBox.shrink()),
-          label: loading
-              ? const SizedBox.shrink()
-              : Text(label, overflow: TextOverflow.ellipsis, maxLines: 1),
+          label: loading ? const SizedBox.shrink() : _label(context),
           style: OutlinedButton.styleFrom(
             foregroundColor: colors.textPrimary,
             side: BorderSide(color: colors.borderSubtle),
+            minimumSize: const Size(double.infinity, _minHeight),
+            padding: buttonPadding,
             shape: RoundedRectangleBorder(
               borderRadius: RadiusTokens.radiusMd,
             ),
@@ -97,9 +116,7 @@ class UiButton extends StatelessWidget {
       );
     }
 
-    // Ghost
     return SizedBox(
-      height: 52,
       width: double.infinity,
       child: TextButton.icon(
         onPressed: effectiveOnPressed,
@@ -110,11 +127,11 @@ class UiButton extends StatelessWidget {
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
             : (icon ?? const SizedBox.shrink()),
-        label: loading
-            ? const SizedBox.shrink()
-            : Text(label, overflow: TextOverflow.ellipsis, maxLines: 1),
+        label: loading ? const SizedBox.shrink() : _label(context),
         style: TextButton.styleFrom(
           foregroundColor: colors.textPrimary,
+          minimumSize: const Size(double.infinity, _minHeight),
+          padding: buttonPadding,
           textStyle: labelStyle,
         ),
       ),

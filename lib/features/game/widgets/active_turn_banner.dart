@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/game/game_state.dart';
+import '../../../ui/tokens/color_tokens.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
@@ -67,7 +68,7 @@ class ActiveTurnBanner extends StatelessWidget {
                 child: Text(
                   initial,
                   style: TextStyle(
-                    color: colors.onAccent,
+                    color: ColorTokens.onColor(accent),
                     fontWeight: FontWeight.w700,
                     fontSize: FontTokens.hudSm,
                   ),

@@ -211,61 +211,69 @@ class _HubGuideSlideView extends StatelessWidget {
       padding: EdgeInsets.symmetric(
         horizontal: isNarrow ? LayoutTokens.gr4 : LayoutTokens.gr6,
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 110,
-            height: 110,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  accent.withValues(alpha: 0.25),
-                  accent.withValues(alpha: 0.08),
-                ],
+      child: SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.sizeOf(context).height * 0.42,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 110,
+                height: 110,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      accent.withValues(alpha: 0.25),
+                      accent.withValues(alpha: 0.08),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: slide.useCommanderDamageIcon
+                      ? GameIcon.commanderDamage(size: 52, color: accent)
+                      : slide.iconAsset != null
+                          ? Image.asset(
+                              slide.iconAsset!,
+                              width: 52,
+                              height: 52,
+                              color: accent,
+                              colorBlendMode: BlendMode.srcIn,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Icon(
+                                slide.icon,
+                                size: 52,
+                                color: accent,
+                              ),
+                            )
+                          : Icon(slide.icon, size: 52, color: accent),
+                ),
               ),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: slide.useCommanderDamageIcon
-                  ? GameIcon.commanderDamage(size: 52, color: accent)
-                  : slide.iconAsset != null
-                      ? Image.asset(
-                          slide.iconAsset!,
-                          width: 52,
-                          height: 52,
-                          color: accent,
-                          colorBlendMode: BlendMode.srcIn,
-                          errorBuilder: (context, error, stackTrace) => Icon(
-                            slide.icon,
-                            size: 52,
-                            color: accent,
-                          ),
-                        )
-                      : Icon(slide.icon, size: 52, color: accent),
-            ),
+              SizedBox(height: LayoutTokens.gr5),
+              Text(
+                slide.title,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      color: colors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: LayoutTokens.gr3),
+              Text(
+                slide.body,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: colors.textSecondary,
+                      height: 1.55,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
-          SizedBox(height: LayoutTokens.gr5),
-          Text(
-            slide.title,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: colors.textPrimary,
-                  fontWeight: FontWeight.w700,
-                ),
-            textAlign: TextAlign.center,
-          ),
-          SizedBox(height: LayoutTokens.gr3),
-          Text(
-            slide.body,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: colors.textSecondary,
-                  height: 1.55,
-                ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+        ),
       ),
     );
   }

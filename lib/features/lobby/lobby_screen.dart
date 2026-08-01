@@ -461,7 +461,7 @@ class _QrHeader extends StatelessWidget {
           else if (loadState == _QrHostLoadState.ready && qrData != null)
             Container(
               decoration: BoxDecoration(
-                color: colors.onAccent,
+                color: Colors.white,
                 borderRadius: RadiusTokens.radiusSm,
               ),
               padding: EdgeInsets.all(compact ? 10 : 12),

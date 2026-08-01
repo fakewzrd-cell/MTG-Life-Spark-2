@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'color_tokens.dart';
+import '../theme/app_color_tokens.dart';
 import 'font_tokens.dart';
 
 /// Typography helpers. **Lato** — matches [AppTheme] / Material [TextTheme].
@@ -11,17 +11,23 @@ import 'font_tokens.dart';
 class TypographyTokens {
   TypographyTokens._();
 
-  static TextStyle headline(BuildContext context) => GoogleFonts.lato(
-        fontSize: 28,
-        fontWeight: FontWeight.w700,
-        color: ColorTokens.textPrimary,
-      );
+  static TextStyle headline(BuildContext context) {
+    final colors = AppColorTokens.of(context);
+    return GoogleFonts.lato(
+      fontSize: 28,
+      fontWeight: FontWeight.w700,
+      color: colors.textPrimary,
+    );
+  }
 
-  static TextStyle title(BuildContext context) => GoogleFonts.lato(
-        fontSize: 20,
-        fontWeight: FontWeight.w600,
-        color: ColorTokens.textPrimary,
-      );
+  static TextStyle title(BuildContext context) {
+    final colors = AppColorTokens.of(context);
+    return GoogleFonts.lato(
+      fontSize: 20,
+      fontWeight: FontWeight.w600,
+      color: colors.textPrimary,
+    );
+  }
 
   /// Module headers — profile sections, lobby blocks, decks screen.
   static TextStyle sectionTitle(Color primary) => GoogleFonts.lato(
@@ -41,33 +47,48 @@ class TypographyTokens {
         color: primary,
       );
 
-  static TextStyle body(BuildContext context) => GoogleFonts.lato(
-        fontSize: 16,
-        fontWeight: FontWeight.w400,
-        color: ColorTokens.textPrimary,
-      );
+  static TextStyle body(BuildContext context) {
+    final colors = AppColorTokens.of(context);
+    return GoogleFonts.lato(
+      fontSize: 16,
+      fontWeight: FontWeight.w400,
+      color: colors.textPrimary,
+    );
+  }
 
-  static TextStyle bodySecondary(BuildContext context) => GoogleFonts.lato(
-        fontSize: 16,
-        fontWeight: FontWeight.w400,
-        color: ColorTokens.textSecondary,
-      );
+  static TextStyle bodySecondary(BuildContext context) {
+    final colors = AppColorTokens.of(context);
+    return GoogleFonts.lato(
+      fontSize: 16,
+      fontWeight: FontWeight.w400,
+      color: colors.textSecondary,
+    );
+  }
 
-  static TextStyle label(BuildContext context) => GoogleFonts.lato(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: ColorTokens.textPrimary,
-      );
+  static TextStyle label(BuildContext context) {
+    final colors = AppColorTokens.of(context);
+    return GoogleFonts.lato(
+      fontSize: 16,
+      fontWeight: FontWeight.w600,
+      color: colors.textPrimary,
+    );
+  }
 
-  static TextStyle caption(BuildContext context) => GoogleFonts.lato(
-        fontSize: 12,
-        fontWeight: FontWeight.w500,
-        color: ColorTokens.textMuted,
-      );
+  static TextStyle caption(BuildContext context) {
+    final colors = AppColorTokens.of(context);
+    return GoogleFonts.lato(
+      fontSize: 12,
+      fontWeight: FontWeight.w500,
+      color: colors.textMuted,
+    );
+  }
 
-  static TextStyle button(BuildContext context) => GoogleFonts.lato(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: ColorTokens.textPrimary,
-      );
+  static TextStyle button(BuildContext context) {
+    final colors = AppColorTokens.of(context);
+    return GoogleFonts.lato(
+      fontSize: 16,
+      fontWeight: FontWeight.w600,
+      color: colors.textPrimary,
+    );
+  }
 }

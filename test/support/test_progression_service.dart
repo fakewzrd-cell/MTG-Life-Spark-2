@@ -2,7 +2,6 @@ import 'package:mgt_life_spark/core/game/game_state.dart';
 import 'package:mgt_life_spark/core/game/lobby_state.dart';
 import 'package:mgt_life_spark/core/game/progression_service.dart';
 import 'package:mgt_life_spark/core/models/game_feedback.dart';
-import 'package:mgt_life_spark/core/persistence/achievement_repository.dart';
 import 'package:mgt_life_spark/core/persistence/deck_repository.dart';
 import 'package:mgt_life_spark/core/persistence/feedback_repository.dart';
 import 'package:mgt_life_spark/core/persistence/match_repository.dart';
@@ -17,7 +16,6 @@ class TestProgressionService extends ProgressionService {
           profileRepo: TestProfileRepository(
             profile: PlayerProfile(username: 'tester'),
           ),
-          achievementRepo: AchievementRepository(),
           matchRepo: MatchRepository(),
           feedbackRepo: FeedbackRepository(),
           deckRepo: DeckRepository(),
@@ -38,7 +36,6 @@ class TestProgressionService extends ProgressionService {
       xpGained: 50,
       oldLevel: 1,
       newLevel: 1,
-      newAchievementIds: [],
     );
   }
 
