@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:file_saver/file_saver.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:intl/intl.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../debug/app_log.dart';
 import '../models/match_record.dart';
@@ -154,28 +154,21 @@ class BackupService {
     }
   }
 
-  /// Shares a backup file. Returns `true` only when the user completed a share.
-  Future<bool> exportAndShare() async {
+  /// Opens the system Save dialog and writes a `.lifespark` file.
+  /// Returns `true` when the user picked a location; `false` if canceled.
+  Future<bool> exportToFile() async {
     final backup = buildBackup();
     final json = encodeBackup(backup);
     final stamp = DateFormat('yyyyMMdd').format(DateTime.now());
-    final filename = 'life-spark-backup-$stamp.lifespark';
     final bytes = Uint8List.fromList(utf8.encode(json));
 
-    final result = await SharePlus.instance.share(
-      ShareParams(
-        files: [
-          XFile.fromData(
-            bytes,
-            mimeType: 'application/json',
-            name: filename,
-          ),
-        ],
-        subject: 'Life Spark backup',
-        text: 'Life Spark profile backup',
-      ),
+    final path = await FileSaver.instance.saveAs(
+      name: 'life-spark-backup-$stamp',
+      bytes: bytes,
+      fileExtension: 'lifespark',
+      mimeType: MimeType.json,
     );
-    return result.status == ShareResultStatus.success;
+    return path != null && path.isNotEmpty;
   }
 
   /// Picks and decodes a backup without writing Hive. Null if canceled.

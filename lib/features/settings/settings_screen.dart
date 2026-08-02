@@ -170,9 +170,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             isDestructive: true,
           ),
           _SettingTile(
-            title: 'Export backup',
+            title: 'Save backup',
             subtitle:
-                'Save profile, decks, pods, and settings to a shareable file',
+                'Write profile, decks, pods, and settings to a file on this phone',
             onTap: _exportBackup,
           ),
           _SettingTile(
@@ -323,16 +323,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Future<void> _exportBackup() async {
     try {
-      final shared = await ref.read(backupServiceProvider).exportAndShare();
+      final saved = await ref.read(backupServiceProvider).exportToFile();
       if (!mounted) return;
-      // Only celebrate a completed share — cancel / unknown stay quiet.
-      if (shared) {
-        showUiSnackBar(context, 'Backup shared.');
+      if (saved) {
+        showUiSnackBar(context, 'Backup saved.');
       }
     } catch (e, st) {
       appLog('Settings: export backup failed', error: e, stackTrace: st);
       if (!mounted) return;
-      showUiSnackBar(context, 'Could not export backup.', isError: true);
+      showUiSnackBar(context, 'Could not save backup.', isError: true);
     }
   }
 

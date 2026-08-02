@@ -78,15 +78,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Future<void> _exportBackup() async {
     try {
-      final shared = await ref.read(backupServiceProvider).exportAndShare();
+      final saved = await ref.read(backupServiceProvider).exportToFile();
       if (!mounted) return;
-      if (shared) {
-        showUiSnackBar(context, 'Backup shared.');
+      if (saved) {
+        showUiSnackBar(context, 'Backup saved.');
       }
     } catch (e, st) {
       appLog('Profile: export backup failed', error: e, stackTrace: st);
       if (!mounted) return;
-      showUiSnackBar(context, 'Could not export backup.', isError: true);
+      showUiSnackBar(context, 'Could not save backup.', isError: true);
     }
   }
 
@@ -364,7 +364,7 @@ class _ProfileHeroActionPill extends StatelessWidget {
                             ),
                           )
                         : Icon(
-                            Icons.more_horiz_rounded,
+                            Icons.more_vert_rounded,
                             size: 20,
                             color: colors.textPrimary.withValues(
                               alpha: OpacityTokens.nearOpaque,

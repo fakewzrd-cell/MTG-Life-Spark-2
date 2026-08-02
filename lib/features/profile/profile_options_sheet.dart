@@ -53,7 +53,7 @@ class _ProfileOptionsSheet extends StatelessWidget {
             colors: colors,
             icon: Icons.ios_share_rounded,
             title: 'Back up profile',
-            subtitle: 'Save decks and progress to a file',
+            subtitle: 'Save a backup file on this phone',
             onTap: () => _pick(context, ProfileSheetAction.backupProfile),
           ),
         ],
