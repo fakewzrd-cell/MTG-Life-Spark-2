@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/persistence/providers.dart';
@@ -6,6 +7,7 @@ import '../../../shared/constants/app_icons.dart';
 import '../../../shared/widgets/game_icon.dart';
 import '../../../ui/components/ui_button.dart';
 import '../../../ui/theme/app_color_tokens.dart';
+import '../../../ui/theme/app_system_ui.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/motion_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
@@ -16,6 +18,9 @@ Future<void> showHubGuideSheet(BuildContext context) {
     context: context,
     useRootNavigator: true,
     barrierDismissible: false,
+    // Must be false: default SafeArea leaves a top gap that shows the barrier
+    // (black band above Quick tour). The dialog paints edge-to-edge itself.
+    useSafeArea: false,
     barrierColor: Colors.black.withValues(alpha: 0.72),
     builder: (ctx) => const _HubGuideDialog(),
   );
@@ -95,15 +100,19 @@ class _HubGuideDialogState extends ConsumerState<_HubGuideDialog> {
     final accent = colors.primaryAccent;
 
     final topInset = MediaQuery.paddingOf(context).top;
+    final overlay = AppSystemUi.overlayStyle(context).copyWith(
+      statusBarColor: Colors.transparent,
+    );
 
-    // Paint edge-to-edge so the status-bar band matches the tour background
-    // (SafeArea alone left a black gap above the chrome).
-    return Dialog.fullscreen(
-      backgroundColor: colors.backgroundPrimary,
-      child: ColoredBox(
-        color: colors.backgroundPrimary,
-        child: Column(
-          children: [
+    // Paint edge-to-edge under the status bar (showDialog useSafeArea: false).
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: overlay,
+      child: Dialog.fullscreen(
+        backgroundColor: colors.backgroundPrimary,
+        child: ColoredBox(
+          color: colors.backgroundPrimary,
+          child: Column(
+            children: [
             Padding(
               padding: EdgeInsets.fromLTRB(
                 LayoutTokens.gr4,
@@ -187,6 +196,7 @@ class _HubGuideDialogState extends ConsumerState<_HubGuideDialog> {
               ),
             ),
           ],
+          ),
         ),
       ),
     );
