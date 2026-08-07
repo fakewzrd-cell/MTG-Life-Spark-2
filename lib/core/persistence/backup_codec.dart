@@ -2,7 +2,6 @@ import '../models/app_settings.dart';
 import '../models/commander_stats.dart';
 import '../models/player_deck.dart';
 import '../models/player_profile.dart';
-import '../models/pod_preset.dart';
 
 /// Marker + schema version for `.lifespark` backup files.
 const kLifeSparkBackupFormat = 'life-spark-backup';
@@ -15,7 +14,6 @@ class LifeSparkBackup {
     required this.profile,
     required this.settings,
     required this.decks,
-    required this.pods,
     required this.commanderStats,
   });
 
@@ -24,7 +22,6 @@ class LifeSparkBackup {
   final PlayerProfile profile;
   final AppSettings settings;
   final List<PlayerDeck> decks;
-  final List<PodPreset> pods;
   final List<CommanderStats> commanderStats;
 
   Map<String, dynamic> toJson() => {
@@ -34,7 +31,8 @@ class LifeSparkBackup {
         'profile': profileToJson(profile),
         'settings': settingsToJson(settings),
         'decks': decks.map(deckToJson).toList(),
-        'pods': pods.map(podToJson).toList(),
+        // Legacy key kept empty so older app builds can still parse exports.
+        'pods': const <Map<String, dynamic>>[],
         'commanderStats': commanderStats.map(commanderStatsToJson).toList(),
       };
 
@@ -62,7 +60,7 @@ class LifeSparkBackup {
       profile: profileFromJson(Map<String, dynamic>.from(profileJson)),
       settings: settingsFromJson(Map<String, dynamic>.from(settingsJson)),
       decks: _listOfMaps(json['decks']).map(deckFromJson).toList(),
-      pods: _listOfMaps(json['pods']).map(podFromJson).toList(),
+      // Older backups may still include pods; they are ignored.
       commanderStats:
           _listOfMaps(json['commanderStats']).map(commanderStatsFromJson).toList(),
     );
@@ -235,29 +233,6 @@ PlayerDeck deckFromJson(Map<String, dynamic> json) {
     format: (json['format'] as String?) ?? 'commander',
     deckStyleId: (json['deckStyleId'] as String?) ?? '',
     isPinned: json['isPinned'] as bool? ?? false,
-  );
-}
-
-Map<String, dynamic> podToJson(PodPreset p) => {
-      'id': p.id,
-      'name': p.name,
-      'defaultLocationLabel': p.defaultLocationLabel,
-      'note': p.note,
-      'memberPlayerIds': p.memberPlayerIds,
-    };
-
-PodPreset podFromJson(Map<String, dynamic> json) {
-  final id = (json['id'] as String?)?.trim();
-  final name = (json['name'] as String?)?.trim();
-  if (id == null || id.isEmpty || name == null || name.isEmpty) {
-    throw const FormatException('Pod entry is missing required fields.');
-  }
-  return PodPreset(
-    id: id,
-    name: name,
-    defaultLocationLabel: _stringOrNull(json['defaultLocationLabel']),
-    note: _stringOrNull(json['note']),
-    memberPlayerIds: _stringList(json['memberPlayerIds']),
   );
 }
 

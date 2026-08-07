@@ -9,7 +9,6 @@ import 'core/models/commander_stats.dart';
 import 'core/models/player_profile.dart';
 import 'core/models/match_record.dart';
 import 'core/models/app_settings.dart';
-import 'core/models/pod_preset.dart';
 import 'core/game/game_format.dart';
 import 'core/models/player_deck.dart';
 import 'core/persistence/deck_repository.dart';
@@ -195,7 +194,6 @@ Future<void> _initHive() async {
   Hive.registerAdapter(MatchRecordAdapter());
   Hive.registerAdapter(CommanderStatsAdapter());
   Hive.registerAdapter(AppSettingsAdapter());
-  Hive.registerAdapter(PodPresetAdapter());
   Hive.registerAdapter(PlayerDeckAdapter());
 
   // Web IndexedDB can hang when opening many Hive boxes in parallel.
@@ -221,7 +219,6 @@ Future<void> _openHiveBoxes() async {
     Hive.openBox<CommanderStats>('commanderStats'),
     Hive.openBox<AppSettings>('appSettings'),
     Hive.openBox<String>('matchFeedback'),
-    Hive.openBox<PodPreset>('podPresets'),
     Hive.openBox<PlayerDeck>('playerDecks'),
   ];
   if (kIsWeb) {

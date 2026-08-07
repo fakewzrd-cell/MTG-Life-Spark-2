@@ -1,6 +1,6 @@
 # Life Spark
 
-Commander-focused multiplayer life tracker for Magic: The Gathering pods. Host a LAN session from your phone, share a QR code, and keep life totals, counters, stack order, alliances, and match history in sync across the table.
+Multiplayer life tracker for Magic: The Gathering. Host a LAN session from your phone, share a QR code, and keep life totals, counters, stack order, alliances, and match history in sync across the table.
 
 ## Features
 
@@ -75,7 +75,7 @@ CI runs tests, analysis, and a web build (see `.github/workflows/flutter_ci.yml`
 - The **host** runs a WebSocket server on the local network and displays a QR payload clients scan to join.
 - QR codes include a short-lived **join token** (`?token=...`); clients must scan the current code (legacy codes without a token are rejected).
 - Clients apply state from the host; life-loss elimination and several table actions are **host-authoritative**.
-- **Solo games** start with only the players in your lobby (no auto-filled demo pod).
+- **Solo games** start with only the players in your lobby (no auto-filled demo seats).
 - **Table politics** (Monarch, Initiative, Day/Night) are on the in-game **Overview** screen; the lobby host can assign them even in a solo practice session on web.
 
 ## License

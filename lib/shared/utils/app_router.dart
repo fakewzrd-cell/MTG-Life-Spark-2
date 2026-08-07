@@ -11,7 +11,6 @@ import '../../features/profile/welcome_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/profile/profile_picture_picker_screen.dart';
-import '../../features/profile/pods_manage_screen.dart';
 import '../../features/profile/decks_manage_screen.dart';
 import '../../features/settings/settings_screen.dart';
 import '../../features/feedback/feedback_screen.dart';
@@ -35,7 +34,6 @@ class AppRoutes {
   /// Primary route for deck library (shell tab).
   static const decks = '/decks';
   static const profileAvatar = '/home/avatar';
-  static const profilePods = '/home/pods';
   static const feedback = '/settings/feedback';
   static const commanderSelect = '/commander-select';
   static const game = '/game';
@@ -120,11 +118,6 @@ final routerProvider = Provider<GoRouter>((ref) {
                     parentNavigatorKey: _rootNavigatorKey,
                     builder: (context, state) =>
                         const ProfilePicturePickerScreen(),
-                  ),
-                  GoRoute(
-                    path: 'pods',
-                    parentNavigatorKey: _rootNavigatorKey,
-                    builder: (context, state) => const PodsManageScreen(),
                   ),
                 ],
               ),

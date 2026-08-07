@@ -172,8 +172,7 @@ class ProgressionService {
       playerCount: finalState.players.length,
       durationSeconds: durationSeconds,
       participantsJson: participantsJson,
-      podNameSnapshot: lobbyState.podNameSnapshot,
-      locationSnapshot: lobbyState.locationLabelSnapshot,
+      labelSnapshot: lobbyState.matchLabel,
       localDeckIdSnapshot: local.selectedDeckId,
     ));
 

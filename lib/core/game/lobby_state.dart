@@ -6,9 +6,9 @@ import '../bluetooth/ble_message.dart';
 import '../bluetooth/ble_protocol.dart';
 import '../network/session_providers.dart';
 import '../bluetooth/ble_service.dart';
+import '../models/match_record.dart';
 import '../models/player_slot.dart';
 import '../models/player_deck.dart';
-import '../models/pod_preset.dart';
 import '../persistence/providers.dart';
 import '../../shared/theme/app_theme.dart';
 import '../../shared/utils/commander_image_resolver.dart';
@@ -161,21 +161,15 @@ class LobbyState {
   final bool isHost;
   final bool isGameStarted; // set true when host broadcasts gameStart
 
-  /// Selected pod preset id (host), optional.
-  final String? selectedPodPresetId;
-
-  /// Snapshotted labels for match history (set when host picks a preset or edits).
-  final String? podNameSnapshot;
-  final String? locationLabelSnapshot;
+  /// Optional host-set label saved with match history.
+  final String? matchLabel;
 
   const LobbyState({
     this.players = const [],
     this.config = const LobbyConfig(),
     this.isHost = false,
     this.isGameStarted = false,
-    this.selectedPodPresetId,
-    this.podNameSnapshot,
-    this.locationLabelSnapshot,
+    this.matchLabel,
   });
 
   LobbyState copyWith({
@@ -183,27 +177,19 @@ class LobbyState {
     LobbyConfig? config,
     bool? isHost,
     bool? isGameStarted,
-    Object? selectedPodPresetId = _sentinelPod,
-    Object? podNameSnapshot = _sentinelPod,
-    Object? locationLabelSnapshot = _sentinelPod,
+    Object? matchLabel = _sentinelMatchLabel,
   }) =>
       LobbyState(
         players: players ?? this.players,
         config: config ?? this.config,
         isHost: isHost ?? this.isHost,
         isGameStarted: isGameStarted ?? this.isGameStarted,
-        selectedPodPresetId: identical(selectedPodPresetId, _sentinelPod)
-            ? this.selectedPodPresetId
-            : selectedPodPresetId as String?,
-        podNameSnapshot: identical(podNameSnapshot, _sentinelPod)
-            ? this.podNameSnapshot
-            : podNameSnapshot as String?,
-        locationLabelSnapshot: identical(locationLabelSnapshot, _sentinelPod)
-            ? this.locationLabelSnapshot
-            : locationLabelSnapshot as String?,
+        matchLabel: identical(matchLabel, _sentinelMatchLabel)
+            ? this.matchLabel
+            : matchLabel as String?,
       );
 
-  static const Object _sentinelPod = Object();
+  static const Object _sentinelMatchLabel = Object();
 
   /// Host can start when at least 1 player is present and everyone (including
   /// host) has clicked ready.
@@ -321,22 +307,10 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
     _broadcastLobbyUpdate();
   }
 
-  /// Host selects a saved pod preset for match history labels (optional).
-  void setMatchPodFromPreset(PodPreset? preset) {
+  /// Host sets an optional label shown in match history.
+  void setMatchLabel(String? label) {
     if (!state.isHost) return;
-    if (preset == null) {
-      state = state.copyWith(
-        selectedPodPresetId: null,
-        podNameSnapshot: null,
-        locationLabelSnapshot: null,
-      );
-    } else {
-      state = state.copyWith(
-        selectedPodPresetId: preset.id,
-        podNameSnapshot: preset.name,
-        locationLabelSnapshot: null,
-      );
-    }
+    state = state.copyWith(matchLabel: MatchRecord.normalizeLabel(label));
     _broadcastLobbyUpdate();
   }
 
@@ -447,9 +421,7 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
       payload: {
         'config': state.config.toJson(),
         'players': state.players.map((p) => p.toJson()).toList(),
-        'selectedPodPresetId': state.selectedPodPresetId,
-        'podNameSnapshot': state.podNameSnapshot,
-        'locationLabelSnapshot': state.locationLabelSnapshot,
+        'matchLabel': state.matchLabel,
       },
       seqNum: _nextSeq(),
     ));
@@ -519,9 +491,7 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
               .map((e) => PlayerSlot.fromJson(e as Map<String, dynamic>))
               .toList()
           : state.players,
-      selectedPodPresetId: payload['selectedPodPresetId'] as String?,
-      podNameSnapshot: payload['podNameSnapshot'] as String?,
-      locationLabelSnapshot: payload['locationLabelSnapshot'] as String?,
+      matchLabel: MatchRecord.normalizeLabel(payload['matchLabel'] as String?),
     );
   }
 
@@ -584,9 +554,7 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
       config: config ?? state.config,
       players: players ?? state.players,
       isGameStarted: true,
-      selectedPodPresetId: payload['selectedPodPresetId'] as String?,
-      podNameSnapshot: payload['podNameSnapshot'] as String?,
-      locationLabelSnapshot: payload['locationLabelSnapshot'] as String?,
+      matchLabel: MatchRecord.normalizeLabel(payload['matchLabel'] as String?),
     );
   }
 
@@ -649,9 +617,7 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
       payload: {
         'config': state.config.toJson(),
         'players': state.players.map((p) => p.toJson()).toList(),
-        'selectedPodPresetId': state.selectedPodPresetId,
-        'podNameSnapshot': state.podNameSnapshot,
-        'locationLabelSnapshot': state.locationLabelSnapshot,
+        'matchLabel': state.matchLabel,
       },
       seqNum: _nextSeq(),
     ));

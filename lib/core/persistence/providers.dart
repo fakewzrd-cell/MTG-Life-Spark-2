@@ -1,10 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/player_profile.dart';
-import '../models/pod_preset.dart';
 import 'profile_repository.dart';
 import 'match_repository.dart';
 import 'feedback_repository.dart';
-import 'pod_repository.dart';
 import 'deck_repository.dart';
 import 'settings_repository.dart';
 import 'backup_service.dart';
@@ -46,23 +44,6 @@ final feedbackRepositoryProvider = Provider<FeedbackRepository>((ref) {
   return FeedbackRepository();
 });
 
-final podRepositoryProvider = Provider<PodRepository>((ref) {
-  return PodRepository();
-});
-
-/// Bumped when pod presets in Hive change so UI (e.g. lobby dropdown) rebuilds.
-final podPresetsRevisionProvider = StateProvider<int>((ref) => 0);
-
-/// Sorted pod list; watches [podPresetsRevisionProvider] so saves invalidate the cache.
-final podPresetsListProvider = Provider<List<PodPreset>>((ref) {
-  ref.watch(podPresetsRevisionProvider);
-  return ref.watch(podRepositoryProvider).getAll();
-});
-
-void bumpPodPresetsRevision(WidgetRef ref) {
-  ref.read(podPresetsRevisionProvider.notifier).state++;
-}
-
 final deckRepositoryProvider = Provider<DeckRepository>((ref) {
   return DeckRepository();
 });
@@ -83,7 +64,6 @@ final backupServiceProvider = Provider<BackupService>((ref) {
     profileRepo: ref.read(profileRepositoryProvider),
     settingsRepo: ref.read(settingsRepositoryProvider),
     deckRepo: ref.read(deckRepositoryProvider),
-    podRepo: ref.read(podRepositoryProvider),
     matchRepo: ref.read(matchRepositoryProvider),
     feedbackRepo: ref.read(feedbackRepositoryProvider),
   );

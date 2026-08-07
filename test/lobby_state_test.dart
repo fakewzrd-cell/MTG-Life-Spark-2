@@ -290,6 +290,30 @@ void main() {
       });
     });
 
+    test('setMatchLabel normalizes and broadcasts', () {
+      final ble = FakeBleService();
+      final container = _lobbyContainer(ble: ble);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(lobbyProvider.notifier);
+      notifier.initAsHost();
+      ble.sentMessages.clear();
+
+      notifier.setMatchLabel('  Friday EDH  ');
+      expect(container.read(lobbyProvider).matchLabel, 'Friday EDH');
+      expect(
+        ble.sentMessages.where((m) => m.type == BleMessageType.stateSnapshot),
+        isNotEmpty,
+      );
+      expect(
+        ble.sentMessages.last.payload['matchLabel'],
+        'Friday EDH',
+      );
+
+      notifier.setMatchLabel('   ');
+      expect(container.read(lobbyProvider).matchLabel, isNull);
+    });
+
     test('reset clears players and stops listening', () {
       final ble = FakeBleService();
       final container = _lobbyContainer(ble: ble);

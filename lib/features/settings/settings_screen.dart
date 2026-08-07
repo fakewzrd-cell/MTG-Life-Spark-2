@@ -172,7 +172,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SettingTile(
             title: 'Save backup',
             subtitle:
-                'Write profile, decks, pods, and settings to a file on this phone',
+                'Write profile, decks, and settings to a file on this phone',
             onTap: _exportBackup,
           ),
           _SettingTile(
@@ -345,7 +345,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         context: context,
         title: 'Restore ${pending.profile.username}?',
         message:
-            'This replaces your profile, decks, pods, and settings on this device with the selected backup. Local match history on this phone will be cleared (it is not part of backups).',
+            'This replaces your profile, decks, and settings on this device with the selected backup. Local match history on this phone will be cleared (it is not part of backups).',
         confirmLabel: 'Restore',
         cancelLabel: 'Cancel',
       );
@@ -362,7 +362,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       bumpSettingsRevision(ref);
       bumpProfileRevision(ref);
       bumpDeckListRevision(ref);
-      bumpPodPresetsRevision(ref);
       setState(() {});
       showUiSnackBar(
         context,

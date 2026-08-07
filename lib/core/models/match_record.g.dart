@@ -30,7 +30,7 @@ class MatchRecordAdapter extends TypeAdapter<MatchRecord> {
       playerCount: fields[10] as int,
       durationSeconds: fields[11] as int?,
       participantsJson: fields[12] as String?,
-      podNameSnapshot: fields[13] as String?,
+      labelSnapshot: fields[13] as String?,
       locationSnapshot: fields[14] as String?,
       localDeckIdSnapshot: fields[15] as String?,
     );
@@ -67,7 +67,7 @@ class MatchRecordAdapter extends TypeAdapter<MatchRecord> {
       ..writeByte(12)
       ..write(obj.participantsJson)
       ..writeByte(13)
-      ..write(obj.podNameSnapshot)
+      ..write(obj.labelSnapshot)
       ..writeByte(14)
       ..write(obj.locationSnapshot)
       ..writeByte(15)

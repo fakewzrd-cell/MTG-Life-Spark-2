@@ -42,7 +42,7 @@ MatchRecord _matchWithLongNames() {
     startingLifeTotal: 40,
     playerCount: 2,
     participantsJson: jsonEncode(snaps.map((s) => s.toJson()).toList()),
-    podNameSnapshot: 'Friday Night',
+    labelSnapshot: 'Friday EDH',
   );
 }
 
@@ -118,7 +118,7 @@ void main() {
     expect(find.text('Standings'), findsOneWidget);
     expect(find.textContaining('1:12:15'), findsOneWidget);
     expect(find.textContaining('2 players'), findsWidgets);
-    expect(find.textContaining('Friday Night'), findsOneWidget);
+    expect(find.textContaining('Friday EDH'), findsOneWidget);
 
     // Life is its own widget — must remain findable even with long titles.
     expect(find.text('24'), findsOneWidget);

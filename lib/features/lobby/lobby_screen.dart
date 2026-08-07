@@ -10,8 +10,8 @@ import '../../ui/theme/app_color_tokens.dart';
 import '../../core/network/session_providers.dart';
 import '../../core/game/game_format.dart';
 import '../../core/game/lobby_state.dart';
+import '../../core/models/match_record.dart';
 import '../../core/models/player_slot.dart';
-import '../../core/models/pod_preset.dart';
 import '../../core/network/local_ip.dart';
 import '../../core/network/session_join_uri.dart';
 import '../../core/network/ws_host_service.dart';
@@ -216,7 +216,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
               remaining: lobby.config.maxPlayers - lobby.players.length,
             ),
           SizedBox(height: LayoutTokens.shellSectionGap),
-          const _PodSection(),
+          const _MatchLabelSection(),
           SizedBox(height: LayoutTokens.shellSectionGap),
           _ConfigSection(config: lobby.config),
           SizedBox(height: LayoutTokens.shellSectionGap),
@@ -238,27 +238,50 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
   }
 }
 
-// ── Match pod (presets) ─────────────────────────────────────────────────
+// ── Optional match label ──────────────────────────────────────────────────
 
-class _PodSection extends ConsumerWidget {
-  const _PodSection();
+class _MatchLabelSection extends ConsumerStatefulWidget {
+  const _MatchLabelSection();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final lobby = ref.watch(lobbyProvider);
-    final pods = ref.watch(podPresetsListProvider);
-    final repo = ref.read(podRepositoryProvider);
-    final notifier = ref.read(lobbyProvider.notifier);
+  ConsumerState<_MatchLabelSection> createState() => _MatchLabelSectionState();
+}
+
+class _MatchLabelSectionState extends ConsumerState<_MatchLabelSection> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(
+      text: ref.read(lobbyProvider).matchLabel ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _applyLabel(String? value) {
+    ref.read(lobbyProvider.notifier).setMatchLabel(value);
+    final normalized = MatchRecord.normalizeLabel(value) ?? '';
+    if (_controller.text != normalized) {
+      _controller.value = TextEditingValue(
+        text: normalized,
+        selection: TextSelection.collapsed(offset: normalized.length),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
     final compact = MediaQuery.sizeOf(context).width < 360;
-
-    String? effectiveId;
-    PodPreset? selectedPreset;
-    if (lobby.selectedPodPresetId != null &&
-        pods.any((p) => p.id == lobby.selectedPodPresetId)) {
-      effectiveId = lobby.selectedPodPresetId;
-      selectedPreset = repo.getById(effectiveId!);
-    }
+    final recentLabels =
+        ref.watch(matchRepositoryProvider).recentLabels(limit: 6);
+    final current = ref.watch(lobbyProvider).matchLabel;
 
     return Container(
       padding: EdgeInsets.all(compact ? LayoutTokens.gr3 : LayoutTokens.gr4),
@@ -270,90 +293,62 @@ class _PodSection extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Match pod',
+            'Label',
             style: TypographyTokens.sectionTitle(colors.textPrimary),
           ),
           SizedBox(height: LayoutTokens.gr1),
           Text(
-            'Optional. Pod name is saved with match history. Players listed on the pod are shown below so you know who is in this group.',
-            style: TextStyle(color: colors.textSecondary, fontSize: FontTokens.caption),
+            'Optional. Helps you find this game in Recent games.',
+            style: TextStyle(
+              color: colors.textSecondary,
+              fontSize: FontTokens.caption,
+            ),
           ),
           SizedBox(height: LayoutTokens.gr2),
-          DropdownButtonFormField<String?>(
-            key: ValueKey<String?>(effectiveId),
-            isExpanded: true,
-            initialValue: effectiveId,
-            decoration: _lobbyDropdownDecoration(context).copyWith(
-              hintText: 'None',
-              hintStyle: TextStyle(color: colors.textSecondary),
-            ),
-            dropdownColor: colors.surface,
+          TextField(
+            controller: _controller,
+            maxLength: 40,
+            textInputAction: TextInputAction.done,
             style: TextStyle(
               color: colors.textPrimary,
               fontSize: FontTokens.body,
             ),
-            items: [
-              DropdownMenuItem<String?>(
-                value: null,
-                child: Text(
-                  'None',
-                  style: TextStyle(color: colors.textPrimary),
-                ),
-              ),
-              ...pods.map(
-                (p) => DropdownMenuItem(
-                  value: p.id,
-                  child: Text(
-                    p.name,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: colors.textPrimary),
-                  ),
-                ),
-              ),
-            ],
-            onChanged: (id) {
-              if (id == null) {
-                notifier.setMatchPodFromPreset(null);
-              } else {
-                final preset = repo.getById(id);
-                if (preset != null) notifier.setMatchPodFromPreset(preset);
-              }
-            },
-          ),
-          if (selectedPreset != null &&
-              selectedPreset.memberPlayerIds.isNotEmpty) ...[
-            SizedBox(height: LayoutTokens.gr2),
-            Text(
-              'Players in this pod',
-              style: TextStyle(
-                color: colors.textSecondary,
-                fontWeight: FontWeight.w600,
-                fontSize: FontTokens.hudXs,
-              ),
+            decoration: _lobbyDropdownDecoration(context).copyWith(
+              hintText: 'e.g. Friday EDH',
+              hintStyle: TextStyle(color: colors.textSecondary),
+              counterText: '',
             ),
-            SizedBox(height: LayoutTokens.gr1),
+            onChanged: _applyLabel,
+            onSubmitted: _applyLabel,
+          ),
+          if (recentLabels.isNotEmpty) ...[
+            SizedBox(height: LayoutTokens.gr2),
             Wrap(
               spacing: 6,
               runSpacing: 6,
-              children: selectedPreset.memberPlayerIds.map((id) {
-                return Chip(
-                  label: Text(
-                    id,
-                    style: TextStyle(color: colors.textPrimary, fontSize: FontTokens.caption),
+              children: [
+                for (final label in recentLabels)
+                  ActionChip(
+                    label: Text(
+                      label,
+                      style: TextStyle(
+                        color: label == current
+                            ? colors.primaryAccent
+                            : colors.textPrimary,
+                        fontSize: FontTokens.caption,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    backgroundColor: label == current
+                        ? colors.primaryAccent
+                            .withValues(alpha: OpacityTokens.soft)
+                        : colors.backgroundSecondary,
+                    side: BorderSide.none,
+                    onPressed: () => _applyLabel(label),
                   ),
-                  backgroundColor: colors.backgroundSecondary,
-                  side: BorderSide.none,
-                );
-              }).toList(),
+              ],
             ),
           ],
-          SizedBox(height: LayoutTokens.gr2),
-          UiButton(
-            label: 'Manage pods',
-            variant: UiButtonVariant.secondary,
-            icon: Icon(Icons.groups_outlined, color: colors.textPrimary),
-            onPressed: () => context.push(AppRoutes.profilePods),
-          ),
         ],
       ),
     );
