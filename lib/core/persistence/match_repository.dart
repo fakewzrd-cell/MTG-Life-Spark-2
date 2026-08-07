@@ -39,6 +39,20 @@ class MatchRepository {
       ..sort((a, b) => b.date.compareTo(a.date));
   }
 
+  /// Distinct recent labels from match history (newest first).
+  List<String> recentLabels({int limit = 6}) {
+    final seen = <String>{};
+    final out = <String>[];
+    for (final match in getAllMatches()) {
+      final label = MatchRecord.normalizeLabel(match.labelSnapshot);
+      if (label == null) continue;
+      if (!seen.add(label.toLowerCase())) continue;
+      out.add(label);
+      if (out.length >= limit) break;
+    }
+    return out;
+  }
+
   /// Call on app startup — removes detailed entries older than 30 days.
   /// Stats should already be rolled into PlayerProfile lifetime totals.
   Future<void> purgeOldMatches() async {
@@ -91,7 +105,7 @@ MatchRecord _cloneRecord(MatchRecord m) => MatchRecord(
       playerCount: m.playerCount,
       durationSeconds: m.durationSeconds,
       participantsJson: m.participantsJson,
-      podNameSnapshot: m.podNameSnapshot,
+      labelSnapshot: m.labelSnapshot,
       locationSnapshot: m.locationSnapshot,
       localDeckIdSnapshot: m.localDeckIdSnapshot,
     );

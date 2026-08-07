@@ -6,6 +6,7 @@ import '../bluetooth/ble_message.dart';
 import '../bluetooth/ble_protocol.dart';
 import '../network/session_providers.dart';
 import '../bluetooth/ble_service.dart';
+import '../models/match_record.dart';
 import '../models/player_slot.dart';
 import '../models/player_deck.dart';
 import '../persistence/providers.dart';
@@ -160,11 +161,15 @@ class LobbyState {
   final bool isHost;
   final bool isGameStarted; // set true when host broadcasts gameStart
 
+  /// Optional host-set label saved with match history.
+  final String? matchLabel;
+
   const LobbyState({
     this.players = const [],
     this.config = const LobbyConfig(),
     this.isHost = false,
     this.isGameStarted = false,
+    this.matchLabel,
   });
 
   LobbyState copyWith({
@@ -172,13 +177,19 @@ class LobbyState {
     LobbyConfig? config,
     bool? isHost,
     bool? isGameStarted,
+    Object? matchLabel = _sentinelMatchLabel,
   }) =>
       LobbyState(
         players: players ?? this.players,
         config: config ?? this.config,
         isHost: isHost ?? this.isHost,
         isGameStarted: isGameStarted ?? this.isGameStarted,
+        matchLabel: identical(matchLabel, _sentinelMatchLabel)
+            ? this.matchLabel
+            : matchLabel as String?,
       );
+
+  static const Object _sentinelMatchLabel = Object();
 
   /// Host can start when at least 1 player is present and everyone (including
   /// host) has clicked ready.
@@ -296,6 +307,13 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
     _broadcastLobbyUpdate();
   }
 
+  /// Host sets an optional label shown in match history.
+  void setMatchLabel(String? label) {
+    if (!state.isHost) return;
+    state = state.copyWith(matchLabel: MatchRecord.normalizeLabel(label));
+    _broadcastLobbyUpdate();
+  }
+
   void setCommander({
     required String playerId,
     required String commanderName,
@@ -403,6 +421,7 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
       payload: {
         'config': state.config.toJson(),
         'players': state.players.map((p) => p.toJson()).toList(),
+        'matchLabel': state.matchLabel,
       },
       seqNum: _nextSeq(),
     ));
@@ -472,6 +491,7 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
               .map((e) => PlayerSlot.fromJson(e as Map<String, dynamic>))
               .toList()
           : state.players,
+      matchLabel: MatchRecord.normalizeLabel(payload['matchLabel'] as String?),
     );
   }
 
@@ -534,6 +554,7 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
       config: config ?? state.config,
       players: players ?? state.players,
       isGameStarted: true,
+      matchLabel: MatchRecord.normalizeLabel(payload['matchLabel'] as String?),
     );
   }
 
@@ -596,6 +617,7 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
       payload: {
         'config': state.config.toJson(),
         'players': state.players.map((p) => p.toJson()).toList(),
+        'matchLabel': state.matchLabel,
       },
       seqNum: _nextSeq(),
     ));

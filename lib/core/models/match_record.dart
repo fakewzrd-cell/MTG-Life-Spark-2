@@ -96,11 +96,11 @@ class MatchRecord extends HiveObject {
   @HiveField(12)
   String? participantsJson;
 
-  /// Legacy playgroup label from removed pods feature. Kept for Hive compat.
+  /// Optional host-set match label (Hive field reused from retired pod name).
   @HiveField(13)
-  String? podNameSnapshot;
+  String? labelSnapshot;
 
-  /// Legacy location label from removed pods feature. Kept for Hive compat.
+  /// Legacy location field from retired pods feature. Kept for Hive compat.
   @HiveField(14)
   String? locationSnapshot;
 
@@ -122,10 +122,18 @@ class MatchRecord extends HiveObject {
     required this.playerCount,
     this.durationSeconds,
     this.participantsJson,
-    this.podNameSnapshot,
+    this.labelSnapshot,
     this.locationSnapshot,
     this.localDeckIdSnapshot,
   });
+
+  /// Trims and caps an optional match label. Empty input becomes null.
+  static String? normalizeLabel(String? raw, {int maxLength = 40}) {
+    final trimmed = raw?.trim() ?? '';
+    if (trimmed.isEmpty) return null;
+    if (trimmed.length <= maxLength) return trimmed;
+    return trimmed.substring(0, maxLength);
+  }
 
   List<MatchParticipantSnapshot> get participantSnapshots {
     final raw = participantsJson;

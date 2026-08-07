@@ -1035,6 +1035,7 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
     );
 
     Widget summaryForeground() {
+      final matchLabel = MatchRecord.normalizeLabel(m.labelSnapshot);
       final overlayFormatStyle = formatStyle!.copyWith(
         color: Colors.white,
         fontSize: 18,
@@ -1055,6 +1056,10 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
         fontWeight: FontWeight.w500,
         height: 1.35,
       );
+      final overlayLabelStyle = overlayMetaStyle.copyWith(
+        color: Colors.white.withValues(alpha: 0.92),
+        fontWeight: FontWeight.w600,
+      );
 
       return Padding(
         padding: EdgeInsets.all(LayoutTokens.gr3),
@@ -1072,6 +1077,15 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
+            if (matchLabel != null) ...[
+              SizedBox(height: LayoutTokens.gr1),
+              Text(
+                matchLabel,
+                style: overlayLabelStyle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
             SizedBox(height: LayoutTokens.gr1),
             Text(
               '$playerLine · $dateStr · $timeStr',
@@ -1126,6 +1140,7 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
           ? (_deckByIdOrNull(ref, m.localDeckIdSnapshot!)?.displayName ??
               m.localDeckIdSnapshot!)
           : null;
+      final matchLabel = MatchRecord.normalizeLabel(m.labelSnapshot);
 
       final metaStripStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
             color: colors.textSecondary,
@@ -1142,6 +1157,7 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
 
       final metaBits = <String>[durationLabel, playerLine];
       final metaExtras = <String>[
+        if (matchLabel != null) matchLabel,
         if (deckName != null) deckName,
       ];
 

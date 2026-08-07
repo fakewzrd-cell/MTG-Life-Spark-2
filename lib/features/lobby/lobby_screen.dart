@@ -10,6 +10,7 @@ import '../../ui/theme/app_color_tokens.dart';
 import '../../core/network/session_providers.dart';
 import '../../core/game/game_format.dart';
 import '../../core/game/lobby_state.dart';
+import '../../core/models/match_record.dart';
 import '../../core/models/player_slot.dart';
 import '../../core/network/local_ip.dart';
 import '../../core/network/session_join_uri.dart';
@@ -215,6 +216,8 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
               remaining: lobby.config.maxPlayers - lobby.players.length,
             ),
           SizedBox(height: LayoutTokens.shellSectionGap),
+          const _MatchLabelSection(),
+          SizedBox(height: LayoutTokens.shellSectionGap),
           _ConfigSection(config: lobby.config),
           SizedBox(height: LayoutTokens.shellSectionGap),
           _StartGameButton(
@@ -230,6 +233,123 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
           },
         ),
         ),
+      ),
+    );
+  }
+}
+
+// ── Optional match label ──────────────────────────────────────────────────
+
+class _MatchLabelSection extends ConsumerStatefulWidget {
+  const _MatchLabelSection();
+
+  @override
+  ConsumerState<_MatchLabelSection> createState() => _MatchLabelSectionState();
+}
+
+class _MatchLabelSectionState extends ConsumerState<_MatchLabelSection> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(
+      text: ref.read(lobbyProvider).matchLabel ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _applyLabel(String? value) {
+    ref.read(lobbyProvider.notifier).setMatchLabel(value);
+    final normalized = MatchRecord.normalizeLabel(value) ?? '';
+    if (_controller.text != normalized) {
+      _controller.value = TextEditingValue(
+        text: normalized,
+        selection: TextSelection.collapsed(offset: normalized.length),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColorTokens.of(context);
+    final compact = MediaQuery.sizeOf(context).width < 360;
+    final recentLabels =
+        ref.watch(matchRepositoryProvider).recentLabels(limit: 6);
+    final current = ref.watch(lobbyProvider).matchLabel;
+
+    return Container(
+      padding: EdgeInsets.all(compact ? LayoutTokens.gr3 : LayoutTokens.gr4),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: RadiusTokens.radiusMd,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Label',
+            style: TypographyTokens.sectionTitle(colors.textPrimary),
+          ),
+          SizedBox(height: LayoutTokens.gr1),
+          Text(
+            'Optional. Helps you find this game in Recent games.',
+            style: TextStyle(
+              color: colors.textSecondary,
+              fontSize: FontTokens.caption,
+            ),
+          ),
+          SizedBox(height: LayoutTokens.gr2),
+          TextField(
+            controller: _controller,
+            maxLength: 40,
+            textInputAction: TextInputAction.done,
+            style: TextStyle(
+              color: colors.textPrimary,
+              fontSize: FontTokens.body,
+            ),
+            decoration: _lobbyDropdownDecoration(context).copyWith(
+              hintText: 'e.g. Friday EDH',
+              hintStyle: TextStyle(color: colors.textSecondary),
+              counterText: '',
+            ),
+            onChanged: _applyLabel,
+            onSubmitted: _applyLabel,
+          ),
+          if (recentLabels.isNotEmpty) ...[
+            SizedBox(height: LayoutTokens.gr2),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final label in recentLabels)
+                  ActionChip(
+                    label: Text(
+                      label,
+                      style: TextStyle(
+                        color: label == current
+                            ? colors.primaryAccent
+                            : colors.textPrimary,
+                        fontSize: FontTokens.caption,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    backgroundColor: label == current
+                        ? colors.primaryAccent
+                            .withValues(alpha: OpacityTokens.soft)
+                        : colors.backgroundSecondary,
+                    side: BorderSide.none,
+                    onPressed: () => _applyLabel(label),
+                  ),
+              ],
+            ),
+          ],
+        ],
       ),
     );
   }
