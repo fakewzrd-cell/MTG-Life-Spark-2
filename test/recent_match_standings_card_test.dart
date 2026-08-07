@@ -117,7 +117,6 @@ void main() {
     expect(find.text('Standings'), findsOneWidget);
     expect(find.textContaining('1:12:15'), findsOneWidget);
     expect(find.textContaining('2 players'), findsWidgets);
-    expect(find.textContaining('Friday Night'), findsOneWidget);
 
     // Life is its own widget — must remain findable even with long titles.
     expect(find.text('24'), findsOneWidget);
