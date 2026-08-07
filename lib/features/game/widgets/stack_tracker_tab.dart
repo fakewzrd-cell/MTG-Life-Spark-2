@@ -7,6 +7,7 @@ import '../../../core/game/game_state_notifier.dart';
 import '../../../core/game/stack_display.dart';
 import '../../../core/game/scryfall_service.dart';
 import '../../../core/game/stack_item.dart';
+import '../../../shared/utils/game_haptics.dart';
 import '../../../ui/theme/app_color_tokens.dart';
 import 'game_colors.dart';
 import '../../../ui/tokens/font_tokens.dart';
@@ -135,8 +136,10 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
                           Icons.add_circle_outline_rounded,
                           color: colors.primaryAccent,
                         ),
-                        onPressed: () =>
-                            _showAddDialog(context, parentId: null),
+                        onPressed: () {
+                          context.gameHapticLight();
+                          _showAddDialog(context, parentId: null);
+                        },
                       ),
                     ),
                     Semantics(
@@ -1440,7 +1443,8 @@ class _StackItemActions extends StatelessWidget {
     required this.onRespond,
   });
 
-  void _toggleFizzle() {
+  void _toggleFizzle(BuildContext context) {
+    context.gameHapticSelection();
     notifier.setStackItemStatus(
       itemId,
       isFizzled ? StackItemStatus.active : StackItemStatus.fizzled,
@@ -1455,10 +1459,13 @@ class _StackItemActions extends StatelessWidget {
         Expanded(
           child: _StackPillButton(
             label: 'Resolve',
-            onPressed: () => notifier.setStackItemStatus(
-              itemId,
-              StackItemStatus.resolved,
-            ),
+            onPressed: () {
+              context.gameHapticMedium();
+              notifier.setStackItemStatus(
+                itemId,
+                StackItemStatus.resolved,
+              );
+            },
             foreground: colors.success,
             background: colors.success,
           ),
@@ -1469,7 +1476,10 @@ class _StackItemActions extends StatelessWidget {
         Expanded(
           child: _StackPillButton(
             label: 'Respond',
-            onPressed: onRespond,
+            onPressed: () {
+              context.gameHapticSelection();
+              onRespond();
+            },
             foreground: colors.primaryAccent,
             background: colors.primaryAccent,
             border: colors.primaryAccent.withValues(alpha: 0.55),
@@ -1481,7 +1491,7 @@ class _StackItemActions extends StatelessWidget {
         Expanded(
           child: _StackPillButton(
             label: isFizzled ? 'Fizzled' : 'Fizzle',
-            onPressed: _toggleFizzle,
+            onPressed: () => _toggleFizzle(context),
             foreground: colors.warning,
             background: colors.warning,
             filled: isFizzled,

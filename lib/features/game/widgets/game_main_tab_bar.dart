@@ -47,7 +47,11 @@ class GameMainTabBarStrip extends StatelessWidget {
             iconAsset: segment.iconAsset,
             selected: selectedIndex == segment.index,
             accentColor: resolvedAccent,
-            onTap: () => onSelected(segment.index),
+            onTap: () {
+              if (selectedIndex == segment.index) return;
+              context.gameHapticSelection();
+              onSelected(segment.index);
+            },
           ),
         );
 

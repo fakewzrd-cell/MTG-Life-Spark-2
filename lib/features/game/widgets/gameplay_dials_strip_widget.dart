@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -288,6 +289,7 @@ class GameplayDialsStripWidget extends StatelessWidget {
       _showStripLimitSnack(context);
       return;
     }
+    context.gameHapticLight();
     final visible = getPlayer().visibleGameplayDials.toSet();
     final coreOrdered = ['poison', 'energy', 'experience', 'rad'];
 
@@ -295,6 +297,7 @@ class GameplayDialsStripWidget extends StatelessWidget {
       context: context,
       builder: (sheetCtx) {
         void pick(String field) {
+          context.gameHapticSelection();
           final added = onAddDialToStrip(field);
           Navigator.pop(sheetCtx);
           if (!added && context.mounted) {
@@ -312,20 +315,10 @@ class GameplayDialsStripWidget extends StatelessWidget {
     );
   }
 
-  Future<void> _confirmRemove(BuildContext context, String field) async {
+  void _remove(BuildContext context, String field) {
     if (isEliminated) return;
-    final label = _labelFor(player, field);
-    final ok = await showGameConfirmDialog(
-      context: context,
-      title: 'Remove $label?',
-      message:
-          'The counter stays at its current value; it only disappears from your strip.',
-      confirmLabel: 'Remove',
-      destructive: true,
-    );
-    if (ok == true && context.mounted) {
-      onRemoveDialFromStrip(field);
-    }
+    context.gameHapticSelection();
+    onRemoveDialFromStrip(field);
   }
 
   @override
@@ -415,7 +408,7 @@ class GameplayDialsStripWidget extends StatelessWidget {
                                 onHeaderLongPress:
                                     isEliminated
                                         ? null
-                                        : () => _confirmRemove(context, field),
+                                        : () => _remove(context, field),
                                 onStep: (d) => onAdjustCounter(field, d),
                                 onSetAbsolute:
                                     (v) => onSetCounterAbsolute(
@@ -429,8 +422,7 @@ class GameplayDialsStripWidget extends StatelessWidget {
                                 top: -_kDialRemoveBadgeOverlap,
                                 right: -_kDialRemoveBadgeOverlap,
                                 child: _DialStripRemoveButton(
-                                  onPressed: () =>
-                                      _confirmRemove(context, field),
+                                  onPressed: () => _remove(context, field),
                                 ),
                               ),
                           ],
@@ -886,12 +878,26 @@ class _GameplayDialPill extends StatefulWidget {
 class _GameplayDialPillState extends State<_GameplayDialPill> {
   late FixedExtentScrollController _ctrl;
   bool _dragging = false;
+  Timer? _holdTimer;
+  bool _holding = false;
+  DateTime? _lastHapticAt;
 
   int get _clampedValue => widget.value.clamp(0, _kDialWheelMax);
 
   int _wheelIndexForValue(int value) => _kDialWheelMax - value;
 
   int _valueFromWheelIndex(int index) => _kDialWheelMax - index;
+
+  /// Same light pulse + throttle as [LifeCounterWidget] while the wheel ticks.
+  void _pulseHaptic() {
+    final now = DateTime.now();
+    if (_lastHapticAt != null &&
+        now.difference(_lastHapticAt!) < const Duration(milliseconds: 45)) {
+      return;
+    }
+    _lastHapticAt = now;
+    context.gameHapticLight();
+  }
 
   @override
   void initState() {
@@ -914,14 +920,41 @@ class _GameplayDialPillState extends State<_GameplayDialPill> {
 
   @override
   void dispose() {
+    _holdTimer?.cancel();
     _ctrl.dispose();
     super.dispose();
+  }
+
+  /// Match life counter: after 500ms hold, step ±5 every 150ms.
+  void _startHold(int direction) {
+    if (widget.isEliminated) return;
+    _holding = true;
+    _holdTimer = Timer(MotionTokens.hero, () {
+      if (!_holding || !mounted) return;
+      context.gameHapticLight();
+      widget.onStep(direction * 5);
+      _holdTimer = Timer.periodic(MotionTokens.fast, (_) {
+        if (!_holding || !mounted) {
+          _holdTimer?.cancel();
+          return;
+        }
+        context.gameHapticLight();
+        widget.onStep(direction * 5);
+      });
+    });
+  }
+
+  void _stopHold() {
+    _holding = false;
+    _holdTimer?.cancel();
+    _holdTimer = null;
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
     final dim = widget.isEliminated;
+    final dialColor = colors.surface.withValues(alpha: dim ? 0.55 : 0.92);
 
     return Material(
       color: Colors.transparent,
@@ -935,7 +968,7 @@ class _GameplayDialPillState extends State<_GameplayDialPill> {
           width: widget.width,
           height: widget.metrics.tileStackHeight,
           decoration: BoxDecoration(
-            color: colors.surface.withValues(alpha: dim ? 0.55 : 0.92),
+            color: dialColor,
             borderRadius: BorderRadius.circular(_kDialPillCornerRadius),
           ),
           child: ClipRRect(
@@ -974,108 +1007,121 @@ class _GameplayDialPillState extends State<_GameplayDialPill> {
                         constraints.maxHeight - 2 * hStep,
                       );
 
-                      return Column(
-                        children: [
-                          _stepButton(
-                            colors: colors,
-                            dim: dim,
-                            icon: Icons.add_rounded,
-                            onTap:
-                                widget.isEliminated
-                                    ? null
-                                    : () {
-                                      context.gameHapticLight();
-                                      widget.onStep(1);
+                      return ColoredBox(
+                        color: dialColor,
+                        child: Column(
+                          children: [
+                            _stepButton(
+                              colors: colors,
+                              dialColor: dialColor,
+                              dim: dim,
+                              icon: Icons.add_rounded,
+                              onTap:
+                                  widget.isEliminated
+                                      ? null
+                                      : () {
+                                        context.gameHapticLight();
+                                        widget.onStep(1);
+                                      },
+                              onLongPressStart:
+                                  widget.isEliminated
+                                      ? null
+                                      : () => _startHold(1),
+                              onLongPressEnd: _stopHold,
+                              onLongPressCancel: _stopHold,
+                            ),
+                            SizedBox(
+                              height: wheelH,
+                              width: double.infinity,
+                              child: ColoredBox(
+                                color: dialColor,
+                                child: IgnorePointer(
+                                  ignoring: widget.isEliminated,
+                                  child: NotificationListener<ScrollNotification>(
+                                    onNotification: (n) {
+                                      if (widget.isEliminated) return false;
+                                      if (n is ScrollStartNotification) {
+                                        _dragging = true;
+                                      } else if (n is ScrollEndNotification) {
+                                        _dragging = false;
+                                        WidgetsBinding.instance
+                                            .addPostFrameCallback((_) {
+                                          if (!mounted || !_ctrl.hasClients) {
+                                            return;
+                                          }
+                                          final t = _valueFromWheelIndex(
+                                            _ctrl.selectedItem,
+                                          );
+                                          if (t != _clampedValue) {
+                                            widget.onSetAbsolute(t);
+                                          }
+                                        });
+                                      }
+                                      return false;
                                     },
-                          ),
-                          SizedBox(
-                            height: wheelH,
-                            width: double.infinity,
-                            child: Stack(
-                              fit: StackFit.expand,
-                              children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: colors.backgroundPrimary.withValues(alpha: 0.12),
-                                  ),
-                                  child: IgnorePointer(
-                                    ignoring: widget.isEliminated,
-                                    child: NotificationListener<ScrollNotification>(
-                                  onNotification: (n) {
-                                    if (widget.isEliminated) return false;
-                                    if (n is ScrollStartNotification) {
-                                      _dragging = true;
-                                    } else if (n is ScrollEndNotification) {
-                                      _dragging = false;
-                                      WidgetsBinding.instance
-                                          .addPostFrameCallback((_) {
-                                        if (!mounted || !_ctrl.hasClients) {
+                                    child: ListWheelScrollView.useDelegate(
+                                      controller: _ctrl,
+                                      itemExtent: widget.metrics.itemExtent,
+                                      physics: const FixedExtentScrollPhysics(),
+                                      perspective: 0.003,
+                                      diameterRatio: 1.45,
+                                      useMagnifier: true,
+                                      magnification: 1.14,
+                                      overAndUnderCenterOpacity: 0,
+                                      onSelectedItemChanged: (_) {
+                                        if (!_dragging || widget.isEliminated) {
                                           return;
                                         }
-                                        final t = _valueFromWheelIndex(
-                                          _ctrl.selectedItem,
-                                        );
-                                        if (t != _clampedValue) {
-                                          context.gameHapticSelection();
-                                          widget.onSetAbsolute(t);
-                                        }
-                                      });
-                                    }
-                                    return false;
-                                  },
-                                  child: ListWheelScrollView.useDelegate(
-                                    controller: _ctrl,
-                                    itemExtent: widget.metrics.itemExtent,
-                                    physics: const FixedExtentScrollPhysics(),
-                                    perspective: 0.003,
-                                    diameterRatio: 1.45,
-                                    useMagnifier: true,
-                                    magnification: 1.14,
-                                    overAndUnderCenterOpacity: 0,
-                                    onSelectedItemChanged: (_) {},
-                                    childDelegate:
-                                        ListWheelChildBuilderDelegate(
-                                      childCount: _kDialWheelMax + 1,
-                                      builder: (c, i) {
-                                        return Center(
-                                          child: Text(
-                                            '${_valueFromWheelIndex(i)}',
-                                            style: TextStyle(
-                                              fontSize:
-                                                  widget.metrics.wheelFontSize,
-                                              fontWeight: FontWeight.w700,
-                                              color:
-                                                  dim
-                                                      ? colors.textSecondary
-                                                      : colors.textPrimary
-                                                          .withValues(
-                                                        alpha: 0.88,
-                                                      ),
-                                            ),
-                                          ),
-                                        );
+                                        _pulseHaptic();
                                       },
+                                      childDelegate:
+                                          ListWheelChildBuilderDelegate(
+                                        childCount: _kDialWheelMax + 1,
+                                        builder: (c, i) {
+                                          return Center(
+                                            child: Text(
+                                              '${_valueFromWheelIndex(i)}',
+                                              style: TextStyle(
+                                                fontSize: widget
+                                                    .metrics.wheelFontSize,
+                                                fontWeight: FontWeight.w700,
+                                                color: dim
+                                                    ? colors.textSecondary
+                                                    : colors.textPrimary
+                                                        .withValues(
+                                                      alpha: 0.88,
+                                                    ),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
                             ),
-                              ],
+                            _stepButton(
+                              colors: colors,
+                              dialColor: dialColor,
+                              dim: dim,
+                              icon: Icons.remove_rounded,
+                              onTap:
+                                  widget.isEliminated
+                                      ? null
+                                      : () {
+                                        context.gameHapticLight();
+                                        widget.onStep(-1);
+                                      },
+                              onLongPressStart:
+                                  widget.isEliminated
+                                      ? null
+                                      : () => _startHold(-1),
+                              onLongPressEnd: _stopHold,
+                              onLongPressCancel: _stopHold,
                             ),
-                          ),
-                          _stepButton(
-                            colors: colors,
-                            dim: dim,
-                            icon: Icons.remove_rounded,
-                            onTap:
-                                widget.isEliminated
-                                    ? null
-                                    : () {
-                                      context.gameHapticLight();
-                                      widget.onStep(-1);
-                                    },
-                          ),
-                        ],
+                          ],
+                        ),
                       );
                     },
                   ),
@@ -1091,14 +1137,23 @@ class _GameplayDialPillState extends State<_GameplayDialPill> {
 
   Widget _stepButton({
     required AppColorTokens colors,
+    required Color dialColor,
     required bool dim,
     required IconData icon,
     required VoidCallback? onTap,
+    VoidCallback? onLongPressStart,
+    VoidCallback? onLongPressEnd,
+    VoidCallback? onLongPressCancel,
   }) {
     return Material(
-      color: Colors.transparent,
-      child: InkWell(
+      color: dialColor,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: onTap,
+        onLongPressStart:
+            onLongPressStart == null ? null : (_) => onLongPressStart(),
+        onLongPressEnd: onLongPressEnd == null ? null : (_) => onLongPressEnd(),
+        onLongPressCancel: onLongPressCancel,
         child: SizedBox(
           height: widget.metrics.stepTapHeight,
           width: double.infinity,

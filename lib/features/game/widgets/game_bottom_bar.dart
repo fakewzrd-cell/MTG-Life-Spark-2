@@ -285,6 +285,7 @@ class _GameConcedeDialogState extends State<_GameConcedeDialog> {
   String? _starPlayerId;
 
   void _submit(WidgetRef ref) {
+    context.gameHapticMedium();
     final pending = PendingFeedbackData(
       likePlayerIds: _likePlayerIds.toList(),
       dislikePlayerIds: _dislikePlayerIds.toList(),

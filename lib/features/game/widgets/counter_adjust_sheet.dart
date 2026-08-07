@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../shared/utils/game_haptics.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import 'game_modal_chrome.dart';
@@ -54,6 +55,7 @@ class _CounterAdjustSheetState extends State<CounterAdjustSheet> {
   void _adjust(int delta) {
     final newVal = (_value + delta).clamp(0, 9999);
     if (newVal == _value) return;
+    context.gameHapticLight();
     widget.onChanged(newVal - _value);
     setState(() => _value = newVal);
   }
@@ -70,6 +72,7 @@ class _CounterAdjustSheetState extends State<CounterAdjustSheet> {
       );
       if (ok != true || !mounted) return;
     }
+    context.gameHapticMedium();
     widget.onChanged(-_value);
     setState(() => _value = 0);
   }

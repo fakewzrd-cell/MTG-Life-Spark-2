@@ -6,6 +6,7 @@ import '../../../ui/tokens/motion_tokens.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/game/commander_identity_colors.dart';
+import '../../../shared/utils/game_haptics.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
@@ -400,16 +401,19 @@ class _LifeInputDialogState extends State<_LifeInputDialog> {
 
   void _press(String digit) {
     if (_input.length >= 4) return;
+    context.gameHapticLight();
     setState(() => _input += digit);
   }
 
   void _delete() {
     if (_input.isEmpty) return;
+    context.gameHapticLight();
     setState(() => _input = _input.substring(0, _input.length - 1));
   }
 
   void _confirm() {
     final val = int.tryParse(_input);
+    if (val != null) context.gameHapticMedium();
     Navigator.pop(context, val);
   }
 

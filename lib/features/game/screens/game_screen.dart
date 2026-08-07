@@ -416,6 +416,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         ),
         child: Scaffold(
           backgroundColor: Colors.transparent,
+          // In-game text fields live in modal sheets that pad for the
+          // keyboard themselves — don't shove the HUD/life counter up.
+          resizeToAvoidBottomInset: false,
           body: Stack(
             children: [
               if (_showOverview)

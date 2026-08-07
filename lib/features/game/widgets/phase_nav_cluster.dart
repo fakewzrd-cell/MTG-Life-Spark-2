@@ -339,13 +339,15 @@ class _PhaseNavCenter extends StatelessWidget {
       child: Material(
         color: colors.backgroundPrimary.withValues(alpha: 0.08),
         child: InkWell(
-          onTap:
-              () => showPhasePickerSheet(
-                context,
-                currentPhase: game.currentPhase,
-                accentColor: accentColor,
-                onSelected: onPickPhase!,
-              ),
+          onTap: () {
+            context.gameHapticSelection();
+            showPhasePickerSheet(
+              context,
+              currentPhase: game.currentPhase,
+              accentColor: accentColor,
+              onSelected: onPickPhase!,
+            );
+          },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: LayoutTokens.gr1),
             child: LayoutBuilder(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/game/player_game_state.dart';
+import '../../../shared/utils/game_haptics.dart';
 import 'game_colors.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
@@ -189,7 +190,12 @@ class _CastableCommanderAvatar extends StatelessWidget {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: enabled ? onCast : null,
+            onTap: enabled
+                ? () {
+                    context.gameHapticMedium();
+                    onCast();
+                  }
+                : null,
             borderRadius: RadiusTokens.radiusControlMd,
             child: SizedBox(
               width: size,
@@ -282,7 +288,12 @@ class _CommanderTaxBadge extends StatelessWidget {
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: canUncast ? onUncast : null,
+                onTap: canUncast
+                    ? () {
+                        context.gameHapticLight();
+                        onUncast();
+                      }
+                    : null,
                 borderRadius: RadiusTokens.radiusControlMd,
                 child: Container(
                   padding: EdgeInsets.symmetric(
