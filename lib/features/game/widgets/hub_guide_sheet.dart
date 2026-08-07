@@ -94,15 +94,20 @@ class _HubGuideDialogState extends ConsumerState<_HubGuideDialog> {
     final colors = AppColorTokens.of(context);
     final accent = colors.primaryAccent;
 
+    final topInset = MediaQuery.paddingOf(context).top;
+
+    // Paint edge-to-edge so the status-bar band matches the tour background
+    // (SafeArea alone left a black gap above the chrome).
     return Dialog.fullscreen(
       backgroundColor: colors.backgroundPrimary,
-      child: SafeArea(
+      child: ColoredBox(
+        color: colors.backgroundPrimary,
         child: Column(
           children: [
             Padding(
               padding: EdgeInsets.fromLTRB(
                 LayoutTokens.gr4,
-                LayoutTokens.gr2,
+                topInset + LayoutTokens.gr2,
                 LayoutTokens.gr2,
                 0,
               ),
@@ -141,35 +146,46 @@ class _HubGuideDialogState extends ConsumerState<_HubGuideDialog> {
                 ),
               ),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(_slides.length, (i) {
-                final selected = _currentPage == i;
-                return AnimatedContainer(
-                  duration: MotionTokens.standard,
-                  margin: EdgeInsets.symmetric(horizontal: LayoutTokens.gr0),
-                  width: selected ? 24 : 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? accent
-                        : colors.textSecondary.withValues(alpha: 0.4),
-                    borderRadius: RadiusTokens.radiusControlMd,
+            SafeArea(
+              top: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(_slides.length, (i) {
+                      final selected = _currentPage == i;
+                      return AnimatedContainer(
+                        duration: MotionTokens.standard,
+                        margin:
+                            EdgeInsets.symmetric(horizontal: LayoutTokens.gr0),
+                        width: selected ? 24 : 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? accent
+                              : colors.textSecondary.withValues(alpha: 0.4),
+                          borderRadius: RadiusTokens.radiusControlMd,
+                        ),
+                      );
+                    }),
                   ),
-                );
-              }),
-            ),
-            SizedBox(height: LayoutTokens.gr4),
-            Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: LayoutTokens.ctaHorizontal,
+                  SizedBox(height: LayoutTokens.gr4),
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: LayoutTokens.ctaHorizontal,
+                    ),
+                    child: UiButton(
+                      label: _currentPage == _slides.length - 1
+                          ? 'Got it'
+                          : 'Next',
+                      onPressed: _next,
+                    ),
+                  ),
+                  SizedBox(height: LayoutTokens.gr4),
+                ],
               ),
-              child: UiButton(
-                label: _currentPage == _slides.length - 1 ? 'Got it' : 'Next',
-                onPressed: _next,
-              ),
             ),
-            SizedBox(height: LayoutTokens.gr4),
           ],
         ),
       ),

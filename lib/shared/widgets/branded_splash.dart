@@ -45,8 +45,14 @@ class BrandedSplash extends StatefulWidget {
       logoAnimationSourceDuration.inMilliseconds /
       logoAnimationDuration.inMilliseconds;
 
-  /// Display size for the intro video.
-  static const double introSize = 240;
+  /// Max display size for the intro video (scaled down on narrow screens).
+  static const double introSize = 340;
+
+  /// Fraction of the shortest screen side used for the intro box.
+  static const double introViewportFraction = 0.72;
+
+  /// Tagline under the logo animation (native / APK intro).
+  static const String tagline = 'Your MTG Companion';
 
   /// How long init may take before we show a loading cue under the intro.
   static const slowLoadThreshold = Duration(milliseconds: 1000);
@@ -195,10 +201,17 @@ class _BrandedSplashState extends State<BrandedSplash> {
     super.dispose();
   }
 
+  double _introBoxSize(BuildContext context) {
+    final shortest = MediaQuery.sizeOf(context).shortestSide;
+    return (shortest * BrandedSplash.introViewportFraction)
+        .clamp(220.0, BrandedSplash.introSize);
+  }
+
   @override
   Widget build(BuildContext context) {
     const splashBlack = Color(0xFF000000);
     final showLoading = _showLoadingCue && !_finishing;
+    final introSize = _introBoxSize(context);
 
     return Scaffold(
       backgroundColor: splashBlack,
@@ -209,10 +222,24 @@ class _BrandedSplashState extends State<BrandedSplash> {
             mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(
-                width: BrandedSplash.introSize,
-                height: BrandedSplash.introSize,
+                width: introSize,
+                height: introSize,
                 child: _buildIntro(),
               ),
+              // Web HTML owns the tagline; show it here for the native video intro.
+              if (_playVideo) ...[
+                SizedBox(height: LayoutTokens.gr3),
+                Text(
+                  BrandedSplash.tagline,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.82),
+                    fontSize: FontTokens.sm,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 1.6,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
               if (showLoading) ...[
                 SizedBox(height: LayoutTokens.gr4),
                 Text(

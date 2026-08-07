@@ -51,8 +51,8 @@
       inset: 0;
     }
     #app-loading .splash-video {
-      width: min(240px, 56vw);
-      height: min(240px, 56vw);
+      width: min(340px, 72vw);
+      height: min(340px, 72vw);
       object-fit: contain;
       background: #000000;
     }
@@ -65,6 +65,15 @@
       line-height: 1.4;
       letter-spacing: 0.02em;
       font-family: system-ui, -apple-system, sans-serif;
+    }
+    #app-loading .splash-tagline {
+      margin-top: -8px;
+      font-size: 15px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      opacity: 0.82;
+      color: #ffffff;
     }
     #app-loading-text {
       visibility: hidden;
@@ -91,6 +100,7 @@
     >
       <source src="animations/logo_splash.mp4" type="video/mp4"/>
     </video>
+    <p class="splash-tagline">Your MTG Companion</p>
     <p id="app-loading-text">Loading Life Spark…</p>
     <p id="app-loading-hint" class="hint" hidden></p>
   </div>

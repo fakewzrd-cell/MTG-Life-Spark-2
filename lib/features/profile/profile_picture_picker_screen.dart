@@ -130,6 +130,24 @@ class _ProfilePicturePickerScreenState
     await _applyAndReturn(null);
   }
 
+  bool get _searchFieldFocused {
+    final focus = FocusManager.instance.primaryFocus;
+    return focus != null && focus.context != null && focus.hasFocus;
+  }
+
+  bool get _keyboardVisible =>
+      MediaQuery.viewInsetsOf(context).bottom > 0;
+
+  /// System back / IME hide should not leave the picker while search is open.
+  void _onSystemPop(bool didPop) {
+    if (didPop) return;
+    if (_keyboardVisible || _searchFieldFocused) {
+      FocusManager.instance.primaryFocus?.unfocus();
+      return;
+    }
+    _returnToProfile();
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
@@ -137,73 +155,80 @@ class _ProfilePicturePickerScreenState
     final commanderUrl = profile?.selectedCommanderImageUrl;
     final canUseCommander = commanderUrl != null && commanderUrl.isNotEmpty;
 
-    return Scaffold(
-      appBar: UiAppBar(
-        title: 'Profile picture',
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: _returnToProfile,
-        ),
-        actions: [
-          if (canUseCommander && !widget.selectionMode)
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) => _onSystemPop(didPop),
+      child: Scaffold(
+        appBar: UiAppBar(
+          title: 'Profile picture',
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: _returnToProfile,
+          ),
+          actions: [
+            if (canUseCommander && !widget.selectionMode)
+              TextButton(
+                onPressed: _useCommanderPortrait,
+                child: Text(
+                  'Commander',
+                  style: TextStyle(
+                    color: colors.primaryAccent,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
             TextButton(
-              onPressed: _useCommanderPortrait,
+              onPressed: _clearImage,
               child: Text(
-                'Commander',
+                widget.selectionMode ? 'Default' : 'Remove',
                 style: TextStyle(
-                  color: colors.primaryAccent,
+                  color: colors.error,
                   fontWeight: FontWeight.w700,
                 ),
               ),
             ),
-          TextButton(
-            onPressed: _clearImage,
-            child: Text(
-              widget.selectionMode ? 'Default' : 'Remove',
-              style: TextStyle(
-                color: colors.error,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-      backgroundColor: colors.backgroundPrimary,
-      body: Column(
-        children: [
-          Padding(
-            padding: EdgeInsets.all(LayoutTokens.gr3),
-            child: TextField(
-              controller: _searchController,
-              autofocus: true,
-              decoration: InputDecoration(
-                hintText: 'Search MTG cards for profile picture…',
-                prefixIcon: Icon(
-                  Icons.search,
-                  color: colors.textSecondary,
+          ],
+        ),
+        backgroundColor: colors.backgroundPrimary,
+        body: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.all(LayoutTokens.gr3),
+              child: TextField(
+                controller: _searchController,
+                autofocus: true,
+                textInputAction: TextInputAction.search,
+                onTapOutside: (_) =>
+                    FocusManager.instance.primaryFocus?.unfocus(),
+                decoration: InputDecoration(
+                  hintText: 'Search MTG cards for profile picture…',
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: colors.textSecondary,
+                  ),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(
+                            Icons.clear,
+                            color: colors.textSecondary,
+                          ),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() {
+                              _results = [];
+                              _error = null;
+                            });
+                          },
+                        )
+                      : null,
                 ),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: Icon(
-                          Icons.clear,
-                          color: colors.textSecondary,
-                        ),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() {
-                            _results = [];
-                            _error = null;
-                          });
-                        },
-                      )
-                    : null,
+                style: TextStyle(color: colors.textPrimary),
+                onChanged: _onSearchChanged,
               ),
-              style: TextStyle(color: colors.textPrimary),
-              onChanged: _onSearchChanged,
             ),
-          ),
-          Expanded(child: _buildResults(context)),
-        ],
+            Expanded(child: _buildResults(context)),
+          ],
+        ),
       ),
     );
   }
