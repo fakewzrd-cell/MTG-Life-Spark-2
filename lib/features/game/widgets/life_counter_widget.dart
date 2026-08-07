@@ -374,7 +374,8 @@ class _LifeEdgeStepStrip extends StatelessWidget {
               child: Icon(
                 icon,
                 size: 28,
-                color: colors.textSecondary,
+                // Match gameplay dial ± step color.
+                color: colors.primaryAccent,
               ),
             ),
           ),

@@ -72,8 +72,12 @@
       font-weight: 500;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      opacity: 0.82;
+      opacity: 0;
       color: #ffffff;
+      transition: opacity 280ms ease;
+    }
+    #app-loading .splash-tagline.visible {
+      opacity: 0.82;
     }
     #app-loading-text {
       visibility: hidden;
@@ -146,18 +150,29 @@
         if (text) text.style.visibility = 'visible';
       }
 
+      function revealTagline() {
+        var tag = document.querySelector('#app-loading .splash-tagline');
+        if (tag) tag.classList.add('visible');
+      }
+
       function markVideoDone() {
         if (videoDone) return;
-        videoDone = true;
-        var el = document.getElementById('app-loading');
-        if (el) el.setAttribute('data-video-ended', '1');
-        window.dispatchEvent(new Event('lifespark-splash-done'));
-        maybeDismiss();
-        // Only show "Loading…" if the clip finished and the app is still booting.
-        setTimeout(showLoadingCue, 350);
+        revealTagline();
+        // Tagline already fading in during the late clip — short beat, then hand off.
+        setTimeout(function () {
+          if (videoDone) return;
+          videoDone = true;
+          var el = document.getElementById('app-loading');
+          if (el) el.setAttribute('data-video-ended', '1');
+          window.dispatchEvent(new Event('lifespark-splash-done'));
+          maybeDismiss();
+          setTimeout(showLoadingCue, 350);
+        }, 220);
       }
 
       var TARGET_INTRO_SECONDS = 2.5; // matches BrandedSplash.logoAnimationDuration
+      // Source-media time when "LIFE SPARK" appears in logo_splash.mp4.
+      var TAGLINE_AT_SOURCE_SECONDS = 1.25; // matches BrandedSplash.taglineAtSource
       var video = document.querySelector('#app-loading .splash-video');
       if (video) {
         function applyPlaybackRate() {
@@ -174,6 +189,15 @@
         if (playPromise && playPromise.catch) {
           playPromise.catch(function () { markVideoDone(); });
         }
+        // Wall-clock backup (source time / playback rate ≈ 1.04s at 1.2×).
+        setTimeout(
+          revealTagline,
+          (TAGLINE_AT_SOURCE_SECONDS * TARGET_INTRO_SECONDS / 3) * 1000
+        );
+        video.addEventListener('timeupdate', function () {
+          // Media currentTime is source time — sync to the wordmark beat.
+          if (video.currentTime >= TAGLINE_AT_SOURCE_SECONDS) revealTagline();
+        });
         video.addEventListener('ended', function () {
           freezeLastFrame(video);
           markVideoDone();

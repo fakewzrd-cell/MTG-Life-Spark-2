@@ -61,6 +61,57 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('hub guide slide content is vertically centered in page area',
+      (tester) async {
+    tester.view.physicalSize = const Size(390 * 3, 844 * 3);
+    tester.view.devicePixelRatio = 3.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          settingsRepositoryProvider.overrideWithValue(
+            TestSettingsRepository(),
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.dark(),
+          home: Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () => showHubGuideSheet(context),
+                child: const Text('Open'),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+
+    final pageRect = tester.getRect(find.byType(PageView));
+    final titleCenter = tester.getCenter(find.text('Play'));
+    final bodyRect =
+        tester.getRect(find.textContaining('Track life and counters here'));
+
+    // Content block midpoint should sit near the PageView vertical center,
+    // not pinned under the Quick tour header with empty space below.
+    final contentMidY = (titleCenter.dy + bodyRect.center.dy) / 2;
+    final pageMidY = pageRect.center.dy;
+    expect(
+      (contentMidY - pageMidY).abs(),
+      lessThan(pageRect.height * 0.12),
+      reason:
+          'slide content mid=$contentMidY page mid=$pageMidY (page=$pageRect)',
+    );
+
+    // And not stuck in the top quarter of the page area.
+    expect(titleCenter.dy, greaterThan(pageRect.top + pageRect.height * 0.28));
+    expect(tester.takeException(), isNull);
+  });
+
   test('theme mode follows useDarkTheme setting', () {
     final container = ProviderContainer(
       overrides: [

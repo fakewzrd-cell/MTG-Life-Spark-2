@@ -91,16 +91,15 @@ class _DialMetrics {
   }
 }
 
-/// Modular preset + custom counters with vertical wheel scrolling per dial.
+/// Modular preset counters with vertical wheel scrolling per dial.
 ///
 /// Only dials listed on [PlayerGameState.visibleGameplayDials] render on the
-/// strip; use **Add** to pick core/preset/custom trackers as needed.
+/// strip; use **Add** to pick core/preset trackers as needed.
 class GameplayDialsStripWidget extends StatelessWidget {
   final PlayerGameState Function() getPlayer;
   final bool isEliminated;
   final void Function(String field, int delta) onAdjustCounter;
   final void Function(String field, int absoluteValue) onSetCounterAbsolute;
-  final bool Function(String dialKey, String label) onRegisterCustomDial;
   final bool Function(String field) onAddDialToStrip;
   final void Function(String field) onRemoveDialFromStrip;
 
@@ -110,7 +109,6 @@ class GameplayDialsStripWidget extends StatelessWidget {
     required this.isEliminated,
     required this.onAdjustCounter,
     required this.onSetCounterAbsolute,
-    required this.onRegisterCustomDial,
     required this.onAddDialToStrip,
     required this.onRemoveDialFromStrip,
     this.compactVertical = false,
@@ -177,15 +175,11 @@ class GameplayDialsStripWidget extends StatelessWidget {
 
   PlayerGameState get player => getPlayer();
 
-  static void _showStripLimitSnack(BuildContext context, {bool custom = false}) {
+  static void _showStripLimitSnack(BuildContext context) {
     showUiSnackBar(
       context,
-      custom
-          ? 'You can have up to ${GameplayDialIds.maxCustomDials} custom counters '
-              'and ${GameplayDialIds.maxStripDials} counters total on your strip. '
-              'Remove one to add another.'
-          : 'Your strip holds up to ${GameplayDialIds.maxStripDials} counters. '
-              'Remove one to add another.',
+      'Your strip holds up to ${GameplayDialIds.maxStripDials} counters. '
+      'Remove one to add another.',
     );
   }
 
@@ -288,52 +282,6 @@ class GameplayDialsStripWidget extends StatelessWidget {
     );
   }
 
-  Future<void> _promptCustomDial(BuildContext context) async {
-    if (isEliminated) return;
-    if (!GameplayDialLimits.canAddCustomDial(getPlayer())) {
-      _showStripLimitSnack(context, custom: true);
-      return;
-    }
-    final keyCtl = TextEditingController();
-    final labelCtl = TextEditingController();
-    final dialogColors = context.gameColors;
-    final ok = await showGameChoiceDialog(
-      context: context,
-      title: 'Custom dial',
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: keyCtl,
-            style: TextStyle(color: dialogColors.textPrimary),
-            decoration: InputDecoration(
-              labelText: 'Id (letters/numbers)',
-              labelStyle: TextStyle(color: dialogColors.textSecondary),
-            ),
-          ),
-          SizedBox(height: LayoutTokens.gr2),
-          TextField(
-            controller: labelCtl,
-            style: TextStyle(color: dialogColors.textPrimary),
-            decoration: InputDecoration(
-              labelText: 'Label',
-              labelStyle: TextStyle(color: dialogColors.textSecondary),
-            ),
-          ),
-        ],
-      ),
-      primaryLabel: 'Add',
-    );
-    if (ok == true && context.mounted) {
-      final added = onRegisterCustomDial(keyCtl.text, labelCtl.text);
-      if (!added && context.mounted) {
-        _showStripLimitSnack(context, custom: true);
-      }
-    }
-    keyCtl.dispose();
-    labelCtl.dispose();
-  }
-
   Future<void> _showAddChooser(BuildContext context) async {
     if (isEliminated) return;
     if (!GameplayDialLimits.canAddDialToStrip(getPlayer())) {
@@ -354,20 +302,11 @@ class GameplayDialsStripWidget extends StatelessWidget {
           }
         }
 
-        final livePlayer = getPlayer();
-        final canAddCustom = GameplayDialLimits.canAddCustomDial(livePlayer);
-
         return _AddCounterSheetScaffold(
-          player: livePlayer,
+          player: getPlayer(),
           visible: visible,
           coreOrdered: coreOrdered,
           onPick: pick,
-          onCustomDial: canAddCustom
-              ? () async {
-                  Navigator.pop(sheetCtx);
-                  await _promptCustomDial(context);
-                }
-              : null,
         );
       },
     );
@@ -538,14 +477,12 @@ class _AddCounterSheetScaffold extends StatelessWidget {
     required this.visible,
     required this.coreOrdered,
     required this.onPick,
-    this.onCustomDial,
   });
 
   final PlayerGameState player;
   final Set<String> visible;
   final List<String> coreOrdered;
   final void Function(String field) onPick;
-  final Future<void> Function()? onCustomDial;
 
   @override
   Widget build(BuildContext context) {
@@ -557,7 +494,6 @@ class _AddCounterSheetScaffold extends StatelessWidget {
         visible: visible,
         coreOrdered: coreOrdered,
         onPick: onPick,
-        onCustomDial: onCustomDial,
         maxHeight: maxH,
       ),
     );
@@ -572,14 +508,12 @@ class _AddCounterChooserSheet extends StatefulWidget {
     required this.coreOrdered,
     required this.onPick,
     required this.maxHeight,
-    this.onCustomDial,
   });
 
   final PlayerGameState player;
   final Set<String> visible;
   final List<String> coreOrdered;
   final void Function(String field) onPick;
-  final Future<void> Function()? onCustomDial;
   final double maxHeight;
 
   @override
@@ -680,7 +614,6 @@ class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
   Widget build(BuildContext context) {
     final colors = context.gameColors;
     final bottomPad = MediaQuery.paddingOf(context).bottom;
-    final canAddCustom = widget.onCustomDial != null;
     final addableBuiltIn =
         [
           ...widget.coreOrdered,
@@ -757,63 +690,12 @@ class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
                         'Tokens & zones',
                         [...GameplayDialIds.presets],
                       ),
-                      Padding(
-                        padding: EdgeInsets.fromLTRB(
-                          LayoutTokens.gr3,
-                          LayoutTokens.gr2,
-                          LayoutTokens.gr3,
-                          0,
-                        ),
-                        child: OutlinedButton.icon(
-                          onPressed: widget.onCustomDial,
-                          icon: Icon(
-                            Icons.edit_note_rounded,
-                            color:
-                                canAddCustom
-                                    ? colors.primaryAccent
-                                    : colors.textSecondary,
-                          ),
-                          label: Text(
-                            canAddCustom
-                                ? 'Custom dial…'
-                                : 'Custom dial (max ${GameplayDialIds.maxCustomDials})',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              color:
-                                  canAddCustom
-                                      ? colors.primaryAccent
-                                      : colors.textSecondary,
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (!canAddCustom)
-                        Padding(
-                          padding: EdgeInsets.fromLTRB(
-                            LayoutTokens.gr3,
-                            LayoutTokens.gr1,
-                            LayoutTokens.gr3,
-                            0,
-                          ),
-                          child: Text(
-                            'You already have ${GameplayDialIds.maxCustomDials} custom counters '
-                            'or your strip is full (${GameplayDialIds.maxStripDials} max). '
-                            'Remove one from your strip before adding another.',
-                            style: TextStyle(
-                              fontSize: FontTokens.hudSm,
-                              height: 1.35,
-                              color: colors.textSecondary.withValues(
-                                alpha: 0.88,
-                              ),
-                            ),
-                          ),
-                        ),
                       if (addableBuiltIn == 0)
                         Padding(
                           padding: EdgeInsets.all(LayoutTokens.gr3),
                           child: Text(
                             'Every built-in counter is already on your strip. '
-                            'Use Custom dial for anything else.',
+                            'Remove one to free a slot.',
                             style: TextStyle(
                               fontSize: 12,
                               color: colors.textSecondary.withValues(
@@ -1178,9 +1060,6 @@ class _GameplayDialPillState extends State<_GameplayDialPill> {
                                 ),
                               ),
                             ),
-                                // Groove shadow — reads as a channel the wheel
-                                // is set into, rather than floating flat on the pill.
-                                const IgnorePointer(child: _WheelGrooveShadow()),
                               ],
                             ),
                           ),
@@ -1236,36 +1115,3 @@ class _GameplayDialPillState extends State<_GameplayDialPill> {
   }
 }
 
-/// Soft inward-fading edges on the counter wheel — reads as a shallow
-/// carved channel the wheel sits inside (a soft-UI "inset shadow" fake,
-/// since [BoxShadow] has no inset support). Purely decorative, ignored
-/// for hit testing by the caller.
-class _WheelGrooveShadow extends StatelessWidget {
-  const _WheelGrooveShadow();
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = AppColorTokens.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final grooveColor = Color.lerp(
-      colors.backgroundPrimary,
-      colors.textPrimary,
-      isDark ? 0.55 : 0.14,
-    )!;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            grooveColor.withValues(alpha: 0.4),
-            Colors.transparent,
-            Colors.transparent,
-            grooveColor.withValues(alpha: 0.4),
-          ],
-          stops: const [0.0, 0.22, 0.78, 1.0],
-        ),
-      ),
-    );
-  }
-}

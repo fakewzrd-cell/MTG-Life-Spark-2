@@ -54,6 +54,15 @@ class BrandedSplash extends StatefulWidget {
   /// Tagline under the logo animation (native / APK intro).
   static const String tagline = 'Your MTG Companion';
 
+  /// Fade-in for [tagline] — timed to the LIFE SPARK wordmark in the clip.
+  static const taglineFade = Duration(milliseconds: 320);
+
+  /// Source-media time when "LIFE SPARK" appears in [logoAnimationAsset] (~1.25s).
+  static const taglineAtSource = Duration(milliseconds: 1250);
+
+  /// Brief hold after the clip ends before entering the app.
+  static const taglineHold = Duration(milliseconds: 160);
+
   /// How long init may take before we show a loading cue under the intro.
   static const slowLoadThreshold = Duration(milliseconds: 1000);
 
@@ -75,6 +84,7 @@ class _BrandedSplashState extends State<BrandedSplash> {
   var _showLoadingCue = false;
   var _finishing = false;
   var _introFinished = false;
+  var _taglineVisible = false;
   var _videoReady = false;
 
   bool get _playVideo =>
@@ -147,10 +157,25 @@ class _BrandedSplashState extends State<BrandedSplash> {
     await c.dispose();
   }
 
+  void _showTagline() {
+    if (_taglineVisible) return;
+    _taglineVisible = true;
+    if (mounted) setState(() {});
+  }
+
   void _markIntroFinished() {
     if (_introFinished) return;
     _introFinished = true;
+    _showTagline();
     if (mounted) setState(() {});
+    // Tagline is already fading in mid-clip — short hold after the end.
+    if (_playVideo) {
+      Future<void>.delayed(BrandedSplash.taglineHold, () {
+        if (!mounted) return;
+        _tryFinish();
+      });
+      return;
+    }
     _tryFinish();
   }
 
@@ -160,6 +185,11 @@ class _BrandedSplashState extends State<BrandedSplash> {
     final value = c.value;
     final duration = value.duration;
     if (duration <= Duration.zero) return;
+
+    // Match HTML splash: reveal when the LIFE SPARK title appears in-frame.
+    if (value.position >= BrandedSplash.taglineAtSource) {
+      _showTagline();
+    }
 
     final atEnd = value.isCompleted || value.position >= duration;
     if (!atEnd) return;
@@ -226,18 +256,23 @@ class _BrandedSplashState extends State<BrandedSplash> {
                 height: introSize,
                 child: _buildIntro(),
               ),
-              // Web HTML owns the tagline; show it here for the native video intro.
+              // Web HTML owns the tagline; native fades it in after the clip.
               if (_playVideo) ...[
                 SizedBox(height: LayoutTokens.gr3),
-                Text(
-                  BrandedSplash.tagline,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.82),
-                    fontSize: FontTokens.sm,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 1.6,
+                AnimatedOpacity(
+                  opacity: _taglineVisible ? 1 : 0,
+                  duration: BrandedSplash.taglineFade,
+                  curve: Curves.easeOut,
+                  child: Text(
+                    BrandedSplash.tagline,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.82),
+                      fontSize: FontTokens.sm,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 1.6,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
                 ),
               ],
               if (showLoading) ...[

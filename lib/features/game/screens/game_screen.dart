@@ -755,9 +755,6 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
                         notifier.adjustCounter(local.playerId, field, delta),
                     onSetCounterAbsolute: (field, v) => notifier
                         .setGameplayDialAbsolute(local.playerId, field, v),
-                    onRegisterCustomDial: (key, label) => notifier
-                        .registerCustomGameplayDial(
-                            local.playerId, key, label),
                     onAddDialToStrip: (field) =>
                         notifier.addGameplayDialToStrip(
                             local.playerId, field),

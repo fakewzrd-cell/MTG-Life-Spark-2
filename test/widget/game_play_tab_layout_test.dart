@@ -57,7 +57,6 @@ Widget _playTabHarness({required bool hasExtraRows}) {
           compactVertical: dialCompact,
           onAdjustCounter: (_, __) {},
           onSetCounterAbsolute: (_, __) {},
-          onRegisterCustomDial: (_, __) => true,
           onAddDialToStrip: (_) => true,
           onRemoveDialFromStrip: (_) {},
         );
