@@ -96,11 +96,11 @@ class MatchRecord extends HiveObject {
   @HiveField(12)
   String? participantsJson;
 
-  /// Pod / playgroup name at time of match.
+  /// Legacy playgroup label from removed pods feature. Kept for Hive compat.
   @HiveField(13)
   String? podNameSnapshot;
 
-  /// Location label (e.g. office) at time of match.
+  /// Legacy location label from removed pods feature. Kept for Hive compat.
   @HiveField(14)
   String? locationSnapshot;
 

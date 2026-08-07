@@ -1126,10 +1126,6 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
           ? (_deckByIdOrNull(ref, m.localDeckIdSnapshot!)?.displayName ??
               m.localDeckIdSnapshot!)
           : null;
-      final podName =
-          (m.podNameSnapshot != null && m.podNameSnapshot!.isNotEmpty)
-              ? m.podNameSnapshot
-              : null;
 
       final metaStripStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
             color: colors.textSecondary,
@@ -1146,7 +1142,6 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
 
       final metaBits = <String>[durationLabel, playerLine];
       final metaExtras = <String>[
-        if (podName != null) podName,
         if (deckName != null) deckName,
       ];
 

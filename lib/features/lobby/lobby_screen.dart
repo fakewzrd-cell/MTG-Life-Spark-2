@@ -11,7 +11,6 @@ import '../../core/network/session_providers.dart';
 import '../../core/game/game_format.dart';
 import '../../core/game/lobby_state.dart';
 import '../../core/models/player_slot.dart';
-import '../../core/models/pod_preset.dart';
 import '../../core/network/local_ip.dart';
 import '../../core/network/session_join_uri.dart';
 import '../../core/network/ws_host_service.dart';
@@ -216,8 +215,6 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
               remaining: lobby.config.maxPlayers - lobby.players.length,
             ),
           SizedBox(height: LayoutTokens.shellSectionGap),
-          const _PodSection(),
-          SizedBox(height: LayoutTokens.shellSectionGap),
           _ConfigSection(config: lobby.config),
           SizedBox(height: LayoutTokens.shellSectionGap),
           _StartGameButton(
@@ -233,128 +230,6 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
           },
         ),
         ),
-      ),
-    );
-  }
-}
-
-// ── Match pod (presets) ─────────────────────────────────────────────────
-
-class _PodSection extends ConsumerWidget {
-  const _PodSection();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final lobby = ref.watch(lobbyProvider);
-    final pods = ref.watch(podPresetsListProvider);
-    final repo = ref.read(podRepositoryProvider);
-    final notifier = ref.read(lobbyProvider.notifier);
-    final colors = AppColorTokens.of(context);
-    final compact = MediaQuery.sizeOf(context).width < 360;
-
-    String? effectiveId;
-    PodPreset? selectedPreset;
-    if (lobby.selectedPodPresetId != null &&
-        pods.any((p) => p.id == lobby.selectedPodPresetId)) {
-      effectiveId = lobby.selectedPodPresetId;
-      selectedPreset = repo.getById(effectiveId!);
-    }
-
-    return Container(
-      padding: EdgeInsets.all(compact ? LayoutTokens.gr3 : LayoutTokens.gr4),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: RadiusTokens.radiusMd,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Match pod',
-            style: TypographyTokens.sectionTitle(colors.textPrimary),
-          ),
-          SizedBox(height: LayoutTokens.gr1),
-          Text(
-            'Optional. Pod name is saved with match history. Players listed on the pod are shown below so you know who is in this group.',
-            style: TextStyle(color: colors.textSecondary, fontSize: FontTokens.caption),
-          ),
-          SizedBox(height: LayoutTokens.gr2),
-          DropdownButtonFormField<String?>(
-            key: ValueKey<String?>(effectiveId),
-            isExpanded: true,
-            initialValue: effectiveId,
-            decoration: _lobbyDropdownDecoration(context).copyWith(
-              hintText: 'None',
-              hintStyle: TextStyle(color: colors.textSecondary),
-            ),
-            dropdownColor: colors.surface,
-            style: TextStyle(
-              color: colors.textPrimary,
-              fontSize: FontTokens.body,
-            ),
-            items: [
-              DropdownMenuItem<String?>(
-                value: null,
-                child: Text(
-                  'None',
-                  style: TextStyle(color: colors.textPrimary),
-                ),
-              ),
-              ...pods.map(
-                (p) => DropdownMenuItem(
-                  value: p.id,
-                  child: Text(
-                    p.name,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: colors.textPrimary),
-                  ),
-                ),
-              ),
-            ],
-            onChanged: (id) {
-              if (id == null) {
-                notifier.setMatchPodFromPreset(null);
-              } else {
-                final preset = repo.getById(id);
-                if (preset != null) notifier.setMatchPodFromPreset(preset);
-              }
-            },
-          ),
-          if (selectedPreset != null &&
-              selectedPreset.memberPlayerIds.isNotEmpty) ...[
-            SizedBox(height: LayoutTokens.gr2),
-            Text(
-              'Players in this pod',
-              style: TextStyle(
-                color: colors.textSecondary,
-                fontWeight: FontWeight.w600,
-                fontSize: FontTokens.hudXs,
-              ),
-            ),
-            SizedBox(height: LayoutTokens.gr1),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: selectedPreset.memberPlayerIds.map((id) {
-                return Chip(
-                  label: Text(
-                    id,
-                    style: TextStyle(color: colors.textPrimary, fontSize: FontTokens.caption),
-                  ),
-                  backgroundColor: colors.backgroundSecondary,
-                  side: BorderSide.none,
-                );
-              }).toList(),
-            ),
-          ],
-          SizedBox(height: LayoutTokens.gr2),
-          UiButton(
-            label: 'Manage pods',
-            variant: UiButtonVariant.secondary,
-            icon: Icon(Icons.groups_outlined, color: colors.textPrimary),
-            onPressed: () => context.push(AppRoutes.profilePods),
-          ),
-        ],
       ),
     );
   }

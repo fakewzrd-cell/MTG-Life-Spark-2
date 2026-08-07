@@ -42,7 +42,6 @@ MatchRecord _matchWithLongNames() {
     startingLifeTotal: 40,
     playerCount: 2,
     participantsJson: jsonEncode(snaps.map((s) => s.toJson()).toList()),
-    podNameSnapshot: 'Friday Night',
   );
 }
 

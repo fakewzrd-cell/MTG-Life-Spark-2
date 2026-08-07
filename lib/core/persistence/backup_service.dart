@@ -12,7 +12,6 @@ import 'backup_codec.dart';
 import 'deck_repository.dart';
 import 'feedback_repository.dart';
 import 'match_repository.dart';
-import 'pod_repository.dart';
 import 'profile_repository.dart';
 import 'settings_repository.dart';
 
@@ -34,20 +33,17 @@ class BackupService {
     required ProfileRepository profileRepo,
     required SettingsRepository settingsRepo,
     required DeckRepository deckRepo,
-    required PodRepository podRepo,
     required MatchRepository matchRepo,
     required FeedbackRepository feedbackRepo,
   })  : _profileRepo = profileRepo,
         _settingsRepo = settingsRepo,
         _deckRepo = deckRepo,
-        _podRepo = podRepo,
         _matchRepo = matchRepo,
         _feedbackRepo = feedbackRepo;
 
   final ProfileRepository _profileRepo;
   final SettingsRepository _settingsRepo;
   final DeckRepository _deckRepo;
-  final PodRepository _podRepo;
   final MatchRepository _matchRepo;
   final FeedbackRepository _feedbackRepo;
 
@@ -68,7 +64,6 @@ class BackupService {
       profile: profile,
       settings: _settingsRepo.settings,
       decks: _deckRepo.getAll(),
-      pods: _podRepo.getAll(),
       commanderStats: _profileRepo.getAllCommanderStats(),
     );
   }
@@ -106,7 +101,6 @@ class BackupService {
     await _profileRepo.replaceAllCommanderStats(backup.commanderStats);
     await _settingsRepo.update(backup.settings);
     await _deckRepo.replaceAll(backup.decks);
-    await _podRepo.replaceAll(backup.pods);
   }
 
   Future<void> _commitSnapshot(_DeviceSnapshot snapshot) async {

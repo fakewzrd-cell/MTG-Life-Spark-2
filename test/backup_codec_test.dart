@@ -5,12 +5,11 @@ import 'package:mgt_life_spark/core/models/app_settings.dart';
 import 'package:mgt_life_spark/core/models/commander_stats.dart';
 import 'package:mgt_life_spark/core/models/player_deck.dart';
 import 'package:mgt_life_spark/core/models/player_profile.dart';
-import 'package:mgt_life_spark/core/models/pod_preset.dart';
 import 'package:mgt_life_spark/core/persistence/backup_codec.dart';
 
 void main() {
   group('LifeSparkBackup codec', () {
-    test('round-trips profile, decks, pods, settings, and commander stats', () {
+    test('round-trips profile, decks, settings, and commander stats', () {
       final original = LifeSparkBackup(
         version: kLifeSparkBackupVersion,
         exportedAt: DateTime.utc(2026, 7, 31, 12),
@@ -45,14 +44,6 @@ void main() {
             isPinned: true,
           ),
         ],
-        pods: [
-          PodPreset(
-            id: 'pod-1',
-            name: 'Friday Night',
-            defaultLocationLabel: 'LGS',
-            memberPlayerIds: const ['pid-123', 'pid-456'],
-          ),
-        ],
         commanderStats: [
           CommanderStats(
             commanderName: 'Atraxa',
@@ -77,8 +68,35 @@ void main() {
       expect(restored.decks, hasLength(1));
       expect(restored.decks.first.displayName, 'Atraxa Infect');
       expect(restored.decks.first.isPinned, isTrue);
-      expect(restored.pods.single.name, 'Friday Night');
       expect(restored.commanderStats.single.wins, 3);
+      expect(original.toJson()['pods'], isEmpty);
+    });
+
+    test('ignores legacy pods entries in older backups', () {
+      final restored = LifeSparkBackup.fromJson({
+        'format': kLifeSparkBackupFormat,
+        'version': 1,
+        'exportedAt': '2026-07-31T12:00:00.000Z',
+        'profile': {
+          'username': 'Federick',
+          'playerId': 'pid-123',
+        },
+        'settings': {
+          'onboardingCompleted': true,
+        },
+        'decks': <Map<String, dynamic>>[],
+        'pods': [
+          {
+            'id': 'pod-1',
+            'name': 'Friday Night',
+            'memberPlayerIds': ['pid-123'],
+          },
+        ],
+        'commanderStats': <Map<String, dynamic>>[],
+      });
+
+      expect(restored.profile.username, 'Federick');
+      expect(restored.decks, isEmpty);
     });
 
     test('rejects unknown format marker', () {
