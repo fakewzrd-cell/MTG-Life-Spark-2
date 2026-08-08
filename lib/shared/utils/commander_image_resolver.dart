@@ -1,6 +1,14 @@
+import '../../core/models/match_record.dart';
 import '../../core/models/player_deck.dart';
 import '../../core/models/player_profile.dart';
 import '../../core/persistence/deck_repository.dart';
+
+bool _namesMatch(String? a, String? b) {
+  final left = a?.trim() ?? '';
+  final right = b?.trim() ?? '';
+  if (left.isEmpty || right.isEmpty) return false;
+  return left.toLowerCase() == right.toLowerCase();
+}
 
 /// Immediate commander art URL for a saved deck (no network).
 String? resolveDeckCommanderImageUrl({
@@ -21,6 +29,54 @@ String? resolveDeckCommanderImageUrl({
     }
   }
   return null;
+}
+
+/// Art for a commander by name: matching deck → matching profile selection →
+/// newest match snapshot with that commander (local seat preferred).
+///
+/// Never returns another commander's profile art when names do not match.
+String? resolveCommanderArtByName({
+  required String commanderName,
+  required Iterable<PlayerDeck> decks,
+  PlayerProfile? profile,
+  Iterable<MatchRecord>? matches,
+  String? localPlayerId,
+}) {
+  final name = commanderName.trim();
+  if (name.isEmpty) return null;
+
+  for (final d in decks) {
+    if (isPreviewPlaceholderDeck(d)) continue;
+    if (!_namesMatch(d.commanderName, name)) continue;
+    final url = resolveDeckCommanderImageUrl(deck: d, profile: profile);
+    if (url != null && url.isNotEmpty) return url;
+  }
+
+  if (profile != null &&
+      _namesMatch(profile.selectedCommanderName, name)) {
+    final url = profile.selectedCommanderImageUrl?.trim();
+    if (url != null && url.isNotEmpty) return url;
+  }
+
+  if (matches == null) return null;
+
+  final ordered = List<MatchRecord>.from(matches)
+    ..sort((a, b) => b.date.compareTo(a.date));
+
+  String? anyMatchUrl;
+  for (final m in ordered) {
+    if (isPreviewPlaceholderMatchId(m.matchId)) continue;
+    for (final p in m.participantSnapshots) {
+      if (!_namesMatch(p.commanderName, name)) continue;
+      final url = p.commanderImageUrl?.trim();
+      if (url == null || url.isEmpty) continue;
+      if (localPlayerId != null && p.playerId == localPlayerId) {
+        return url;
+      }
+      anyMatchUrl ??= url;
+    }
+  }
+  return anyMatchUrl;
 }
 
 /// Immediate partner art URL for a saved deck (no network).

@@ -172,12 +172,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SettingTile(
             title: 'Save backup',
             subtitle:
-                'Write profile, decks, and settings to a file on this phone',
+                'Write profile, decks, settings, recent games, and feedback to a file',
             onTap: _exportBackup,
           ),
           _SettingTile(
             title: 'Restore backup',
-            subtitle: 'Replace data on this device from a .lifespark file',
+            subtitle: 'Replace all local data from a .lifespark file',
             onTap: _restoreBackup,
           ),
           SizedBox(height: LayoutTokens.shellSectionGap),
@@ -345,7 +345,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         context: context,
         title: 'Restore ${pending.profile.username}?',
         message:
-            'This replaces your profile, decks, and settings on this device with the selected backup. Local match history on this phone will be cleared (it is not part of backups).',
+            'This replaces your profile, decks, settings, recent games, sparks, and behaviour on this device with the selected backup.',
         confirmLabel: 'Restore',
         cancelLabel: 'Cancel',
       );

@@ -28,6 +28,7 @@ class DeckCommanderAvatarCluster extends StatelessWidget {
     required this.colors,
     this.size = 56,
     this.portraitStyle = CommanderPortraitStyle.circle,
+    this.imageFit = BoxFit.cover,
     this.primaryImageUrl,
     this.partnerImageUrl,
   });
@@ -36,6 +37,8 @@ class DeckCommanderAvatarCluster extends StatelessWidget {
   final AppColorTokens colors;
   final double size;
   final CommanderPortraitStyle portraitStyle;
+  /// How card/circle art is scaled inside its frame.
+  final BoxFit imageFit;
   /// Resolved art URL; falls back to [PlayerDeck.commanderImageUrl].
   final String? primaryImageUrl;
   /// Resolved partner art URL; falls back to [PlayerDeck.partnerCommanderImageUrl].
@@ -52,7 +55,11 @@ class DeckCommanderAvatarCluster extends StatelessWidget {
 
     if (portraitStyle == CommanderPortraitStyle.card) {
       if (!hasPartner) {
-        return _cardPortraitTile(url: primaryUrl, height: size);
+        return _cardPortraitTile(
+          url: primaryUrl,
+          height: size,
+          fit: imageFit,
+        );
       }
       final small = size * 0.58;
       final bigW = size * _cardAspectWidthOverHeight;
@@ -66,7 +73,11 @@ class DeckCommanderAvatarCluster extends StatelessWidget {
             Positioned(
               left: 0,
               top: 0,
-              child: _cardPortraitTile(url: primaryUrl, height: size),
+              child: _cardPortraitTile(
+                url: primaryUrl,
+                height: size,
+                fit: imageFit,
+              ),
             ),
             Positioned(
               right: 0,
@@ -92,6 +103,7 @@ class DeckCommanderAvatarCluster extends StatelessWidget {
                         ? partnerUrl
                         : null,
                     height: small - 4,
+                    fit: imageFit,
                     showSurround: true,
                   ),
                 ),
@@ -109,7 +121,7 @@ class DeckCommanderAvatarCluster extends StatelessWidget {
                 imageUrl: url,
                 width: diameter,
                 height: diameter,
-                fit: BoxFit.cover,
+                fit: imageFit,
                 placeholder: (_, __) => Container(
                   width: diameter,
                   height: diameter,
@@ -186,6 +198,7 @@ class DeckCommanderAvatarCluster extends StatelessWidget {
   Widget _cardPortraitTile({
     required String? url,
     required double height,
+    required BoxFit fit,
     bool showSurround = true,
   }) {
     final width = height * _cardAspectWidthOverHeight;
@@ -198,7 +211,7 @@ class DeckCommanderAvatarCluster extends StatelessWidget {
           imageUrl: url,
           width: width,
           height: height,
-          fit: BoxFit.cover,
+          fit: fit,
           placeholder: (_, __) => Container(
             width: width,
             height: height,
@@ -228,25 +241,42 @@ class DeckCommanderAvatarCluster extends StatelessWidget {
       return SizedBox(width: width, height: height, child: core);
     }
 
-    return SizedBox(
+    // Shadow on the outer box; border drawn above the art so the rim stays
+    // visible (a sibling border under a full-bleed child gets covered).
+    return Container(
       width: width,
       height: height,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: innerR,
-          border: Border.all(
-            color: colors.borderSubtle.withValues(alpha: OpacityTokens.strong),
-            width: 1,
+      decoration: BoxDecoration(
+        borderRadius: innerR,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.28),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.18),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: innerR,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            content(),
+            Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: innerR,
+                    border: Border.all(
+                      color: colors.textPrimary.withValues(alpha: 0.22),
+                      width: 1,
+                    ),
+                  ),
+                ),
+              ),
             ),
           ],
         ),
-        child: core,
       ),
     );
   }
@@ -275,12 +305,14 @@ class ResolvedDeckCommanderAvatarCluster extends ConsumerStatefulWidget {
     required this.colors,
     this.size = 56,
     this.portraitStyle = CommanderPortraitStyle.circle,
+    this.imageFit = BoxFit.cover,
   });
 
   final PlayerDeck deck;
   final AppColorTokens colors;
   final double size;
   final CommanderPortraitStyle portraitStyle;
+  final BoxFit imageFit;
 
   @override
   ConsumerState<ResolvedDeckCommanderAvatarCluster> createState() =>
@@ -396,6 +428,7 @@ class _ResolvedDeckCommanderAvatarClusterState
       colors: widget.colors,
       size: widget.size,
       portraitStyle: widget.portraitStyle,
+      imageFit: widget.imageFit,
       primaryImageUrl: _primaryUrl,
       partnerImageUrl: _partnerUrl,
     );

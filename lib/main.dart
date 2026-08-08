@@ -267,7 +267,7 @@ Future<void> _deferredProfileMaintenance() async {
     if (prof == null) return;
     await profileRepo.recomputeSocialStatsFromFeedback(
       feedbackRepo,
-      prof.username,
+      prof.playerId,
     );
   } catch (e, st) {
     if (kDebugMode) {

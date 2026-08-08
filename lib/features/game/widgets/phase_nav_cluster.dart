@@ -130,7 +130,8 @@ class PhaseNavClusterStrip extends StatelessWidget {
               width: _endTurnMinWidth,
               child: _PhaseNavEndTurnButton(
                 enabled: endTurnEnabled && !game.timeoutActive,
-                accentColor: accentColor,
+                // Theme accent (settings color scheme), not commander tint.
+                accentColor: colors.primaryAccent,
                 onPressed: onEndTurn,
               ),
             ),
@@ -156,10 +157,10 @@ class _PhaseNavEndTurnButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.gameColors;
     final bg = enabled
-        ? accentColor.withValues(alpha: OpacityTokens.soft)
+        ? accentColor
         : colors.backgroundSecondary.withValues(alpha: 0.35);
     final fg = enabled
-        ? accentColor
+        ? (accentColor.computeLuminance() > 0.55 ? Colors.black : Colors.white)
         : colors.textSecondary.withValues(alpha: OpacityTokens.disabled);
 
     return Semantics(

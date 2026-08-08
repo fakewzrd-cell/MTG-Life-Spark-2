@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,7 +6,7 @@ import '../../core/models/player_identity.dart';
 import '../../core/models/player_profile.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/utils/app_router.dart';
-import '../../shared/widgets/default_profile_avatar.dart';
+import '../../shared/widgets/profile_avatar_image.dart';
 import '../../ui/components/ui_button.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
@@ -40,7 +39,10 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     final result = await Navigator.of(context, rootNavigator: true).push<String?>(
       MaterialPageRoute(
         fullscreenDialog: true,
-        builder: (_) => const ProfilePicturePickerScreen(selectionMode: true),
+        builder: (_) => ProfilePicturePickerScreen(
+          selectionMode: true,
+          initialImageRef: _avatarUrl,
+        ),
       ),
     );
     if (!mounted || result == null) return;
@@ -201,20 +203,7 @@ class _SetupAvatarPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasImage = avatarUrl != null && avatarUrl!.isNotEmpty;
-    Widget face;
-    if (hasImage) {
-      face = CachedNetworkImage(
-        imageUrl: avatarUrl!,
-        width: size,
-        height: size,
-        fit: BoxFit.cover,
-        placeholder: (_, __) => DefaultProfileAvatarFill(size: size),
-        errorWidget: (_, __, ___) => DefaultProfileAvatarFill(size: size),
-      );
-    } else {
-      face = DefaultProfileAvatarFill(size: size);
-    }
+    final face = ProfileAvatarImage(imageRef: avatarUrl, size: size);
 
     return Semantics(
       button: true,

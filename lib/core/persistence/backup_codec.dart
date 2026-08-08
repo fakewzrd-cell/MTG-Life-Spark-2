@@ -1,11 +1,14 @@
 import '../models/app_settings.dart';
 import '../models/commander_stats.dart';
+import '../models/match_record.dart';
 import '../models/player_deck.dart';
 import '../models/player_profile.dart';
 
 /// Marker + schema version for `.lifespark` backup files.
 const kLifeSparkBackupFormat = 'life-spark-backup';
-const kLifeSparkBackupVersion = 1;
+/// v1: profile, settings, decks, commanderStats.
+/// v2: + match history + feedback ballots (sparks / behaviour source).
+const kLifeSparkBackupVersion = 2;
 
 class LifeSparkBackup {
   const LifeSparkBackup({
@@ -15,6 +18,10 @@ class LifeSparkBackup {
     required this.settings,
     required this.decks,
     required this.commanderStats,
+    this.matches = const [],
+    this.feedbackByKey = const {},
+    this.profileAvatarImageBase64,
+    this.profileAvatarImageMime,
   });
 
   final int version;
@@ -23,6 +30,12 @@ class LifeSparkBackup {
   final AppSettings settings;
   final List<PlayerDeck> decks;
   final List<CommanderStats> commanderStats;
+  final List<MatchRecord> matches;
+  /// Hive key → encoded [GameFeedback] JSON (preserves legacy keys).
+  final Map<String, String> feedbackByKey;
+  /// Local uploaded avatar bytes (when [profile.profileAvatarImageUrl] is a file).
+  final String? profileAvatarImageBase64;
+  final String? profileAvatarImageMime;
 
   Map<String, dynamic> toJson() => {
         'format': kLifeSparkBackupFormat,
@@ -34,6 +47,14 @@ class LifeSparkBackup {
         // Legacy key kept empty so older app builds can still parse exports.
         'pods': const <Map<String, dynamic>>[],
         'commanderStats': commanderStats.map(commanderStatsToJson).toList(),
+        'matches': matches.map(matchToJson).toList(),
+        'feedbackByKey': feedbackByKey,
+        if (profileAvatarImageBase64 != null &&
+            profileAvatarImageBase64!.isNotEmpty)
+          'profileAvatarImageBase64': profileAvatarImageBase64,
+        if (profileAvatarImageMime != null &&
+            profileAvatarImageMime!.isNotEmpty)
+          'profileAvatarImageMime': profileAvatarImageMime,
       };
 
   static LifeSparkBackup fromJson(Map<String, dynamic> json) {
@@ -63,6 +84,10 @@ class LifeSparkBackup {
       // Older backups may still include pods; they are ignored.
       commanderStats:
           _listOfMaps(json['commanderStats']).map(commanderStatsFromJson).toList(),
+      matches: _listOfMaps(json['matches']).map(matchFromJson).toList(),
+      feedbackByKey: _stringMap(json['feedbackByKey']),
+      profileAvatarImageBase64: _stringOrNull(json['profileAvatarImageBase64']),
+      profileAvatarImageMime: _stringOrNull(json['profileAvatarImageMime']),
     );
   }
 }
@@ -76,6 +101,14 @@ List<Map<String, dynamic>> _listOfMaps(Object? raw) {
       .whereType<Map>()
       .map((e) => Map<String, dynamic>.from(e))
       .toList();
+}
+
+Map<String, String> _stringMap(Object? raw) {
+  if (raw == null) return const {};
+  if (raw is! Map) {
+    throw const FormatException('Expected a JSON object.');
+  }
+  return raw.map((key, value) => MapEntry(key.toString(), value.toString()));
 }
 
 String? _stringOrNull(Object? v) {
@@ -253,5 +286,53 @@ CommanderStats commanderStatsFromJson(Map<String, dynamic> json) {
     wins: (json['wins'] as num?)?.toInt() ?? 0,
     losses: (json['losses'] as num?)?.toInt() ?? 0,
     gamesPlayed: (json['gamesPlayed'] as num?)?.toInt() ?? 0,
+  );
+}
+
+Map<String, dynamic> matchToJson(MatchRecord m) => {
+      'matchId': m.matchId,
+      'date': m.date.toUtc().toIso8601String(),
+      'commanderName': m.commanderName,
+      'partnerCommanderName': m.partnerCommanderName,
+      'opponentNames': m.opponentNames,
+      'result': m.result,
+      'eliminationReason': m.eliminationReason,
+      'format': m.format,
+      'durationMinutes': m.durationMinutes,
+      'startingLifeTotal': m.startingLifeTotal,
+      'playerCount': m.playerCount,
+      'durationSeconds': m.durationSeconds,
+      'participantsJson': m.participantsJson,
+      'labelSnapshot': m.labelSnapshot,
+      'locationSnapshot': m.locationSnapshot,
+      'localDeckIdSnapshot': m.localDeckIdSnapshot,
+    };
+
+MatchRecord matchFromJson(Map<String, dynamic> json) {
+  final matchId = (json['matchId'] as String?)?.trim();
+  if (matchId == null || matchId.isEmpty) {
+    throw const FormatException('Match entry is missing matchId.');
+  }
+  final dateRaw = json['date'] as String?;
+  final date = dateRaw != null
+      ? DateTime.tryParse(dateRaw)?.toUtc() ?? DateTime.now().toUtc()
+      : DateTime.now().toUtc();
+  return MatchRecord(
+    matchId: matchId,
+    date: date,
+    commanderName: (json['commanderName'] as String?) ?? '',
+    partnerCommanderName: _stringOrNull(json['partnerCommanderName']),
+    opponentNames: _stringList(json['opponentNames']),
+    result: (json['result'] as String?) ?? 'loss',
+    eliminationReason: (json['eliminationReason'] as String?) ?? 'survived',
+    format: (json['format'] as String?) ?? 'Commander',
+    durationMinutes: (json['durationMinutes'] as num?)?.toInt() ?? 0,
+    startingLifeTotal: (json['startingLifeTotal'] as num?)?.toInt() ?? 40,
+    playerCount: (json['playerCount'] as num?)?.toInt() ?? 0,
+    durationSeconds: (json['durationSeconds'] as num?)?.toInt(),
+    participantsJson: _stringOrNull(json['participantsJson']),
+    labelSnapshot: _stringOrNull(json['labelSnapshot']),
+    locationSnapshot: _stringOrNull(json['locationSnapshot']),
+    localDeckIdSnapshot: _stringOrNull(json['localDeckIdSnapshot']),
   );
 }

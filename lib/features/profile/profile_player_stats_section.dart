@@ -4,7 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/models/commander_stats.dart';
+import '../../core/game/game_format.dart';
 import '../../core/models/match_record.dart';
 import '../../core/models/player_deck.dart';
 import '../../core/models/player_profile.dart';
@@ -151,60 +151,59 @@ class _PlayerStatsCarouselTile extends StatelessWidget {
     required this.width,
     required this.height,
     required this.child,
+    this.edgeToEdge = false,
   });
 
   final double width;
   final double height;
   final Widget child;
 
+  /// When true, content paints full-bleed (recent-games style).
+  final bool edgeToEdge;
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: width,
       height: height,
-      child: ProfileCarouselCard(child: child),
+      child: ProfileCarouselCard(
+        padding: edgeToEdge ? EdgeInsets.zero : null,
+        child: child,
+      ),
     );
   }
 }
 
-Widget _mostPlayedTile({
-  required bool hasPlayedGames,
-  required PlayerProfile profile,
-  required AppColorTokens colors,
-  required CommanderStats? top,
-}) {
-  if (!hasPlayedGames) {
-    return _PlayerStatsEmptyCard(
-      title: 'Most played',
-      colors: colors,
-    );
-  }
-  if (top != null) {
-    return _MostPlayedCard(
-      profile: profile,
-      colors: colors,
-      top: top,
-    );
-  }
-  return _PlayerStatsEmptyCard(
-    title: 'Most played',
-    colors: colors,
-    message: 'No commander stats yet.',
-  );
-}
-
-/// Deck with the lowest win rate among decks with at least one recorded game.
-PlayerDeck? _pickWorstDeck(Iterable<PlayerDeck> decks) {
+/// Saved deck with the most recorded games (tie-break: more wins).
+@visibleForTesting
+PlayerDeck? pickMostPlayedDeck(Iterable<PlayerDeck> decks) {
   final played = decks.where((d) => d.gamesPlayed > 0).toList();
   if (played.isEmpty) return null;
   played.sort((a, b) {
+    final g = b.gamesPlayed.compareTo(a.gamesPlayed);
+    if (g != 0) return g;
+    return b.wins.compareTo(a.wins);
+  });
+  return played.first;
+}
+
+/// Deck with the lowest win rate among decks that have actually lost a game.
+///
+/// Undefeated decks are excluded so "Tough record" never highlights a winner.
+@visibleForTesting
+PlayerDeck? pickWorstDeck(Iterable<PlayerDeck> decks) {
+  final beaten = decks
+      .where((d) => d.gamesPlayed > 0 && d.losses > 0)
+      .toList();
+  if (beaten.isEmpty) return null;
+  beaten.sort((a, b) {
     final wr = a.winRate.compareTo(b.winRate);
     if (wr != 0) return wr;
     final lossCmp = b.losses.compareTo(a.losses);
     if (lossCmp != 0) return lossCmp;
     return a.wins.compareTo(b.wins);
   });
-  return played.first;
+  return beaten.first;
 }
 
 class ProfilePlayerStatsSection extends ConsumerWidget {
@@ -233,21 +232,9 @@ class ProfilePlayerStatsSection extends ConsumerWidget {
     final xpProgress =
         (xpNeeded > 0) ? (xpInLevel / xpNeeded).clamp(0.0, 1.0) : 0.0;
 
-    final stats =
-        List<CommanderStats>.from(
-          ref.watch(profileRepositoryProvider).getAllCommanderStats(),
-        )..sort((a, b) {
-          final g = b.gamesPlayed.compareTo(a.gamesPlayed);
-          if (g != 0) return g;
-          return b.wins.compareTo(a.wins);
-        });
-    CommanderStats? top;
-    if (hasPlayedGames &&
-        stats.isNotEmpty &&
-        stats.first.gamesPlayed > 0) {
-      top = stats.first;
-    }
-    final worst = hasPlayedGames ? _pickWorstDeck(repoDecks) : null;
+    final mostPlayed =
+        hasPlayedGames ? pickMostPlayedDeck(repoDecks) : null;
+    final worst = hasPlayedGames ? pickWorstDeck(repoDecks) : null;
 
     final matches = ref
         .watch(matchRepositoryProvider)
@@ -322,27 +309,38 @@ class ProfilePlayerStatsSection extends ConsumerWidget {
           _PlayerStatsCarouselTile(
             width: cardWidth,
             height: cardHeight,
-            child: _mostPlayedTile(
-              hasPlayedGames: hasPlayedGames,
-              profile: profile,
-              colors: colors,
-              top: top,
-            ),
+            edgeToEdge: hasPlayedGames && mostPlayed != null,
+            child: hasPlayedGames && mostPlayed != null
+                ? _DeckHighlightCard(
+                    title: 'Most played',
+                    profile: profile,
+                    deck: mostPlayed,
+                    statKind: _DeckHighlightStat.wins,
+                  )
+                : _PlayerStatsEmptyCard(
+                    title: 'Most played',
+                    colors: colors,
+                    message: hasPlayedGames
+                        ? 'No deck stats yet.'
+                        : kProfileUntilFirstGameMessage,
+                  ),
           ),
           _PlayerStatsCarouselTile(
             width: cardWidth,
             height: cardHeight,
+            edgeToEdge: hasPlayedGames && worst != null,
             child: hasPlayedGames && worst != null
-                ? _WorstDeckCard(
+                ? _DeckHighlightCard(
+                    title: 'Tough record',
                     profile: profile,
-                    colors: colors,
                     deck: worst,
+                    statKind: _DeckHighlightStat.losses,
                   )
                 : _PlayerStatsEmptyCard(
                     title: 'Tough record',
                     colors: colors,
                     message: hasPlayedGames
-                        ? 'No deck stats yet.'
+                        ? 'No losses on a saved deck yet.'
                         : kProfileUntilFirstGameMessage,
                   ),
           ),
@@ -422,232 +420,127 @@ class _PlayerStatsEmptyCard extends StatelessWidget {
   }
 }
 
-/// Compact "62% WR · 8W–5L" line — mirrors [ProfileDeckCard]'s record line
-/// so win rate leads consistently across every profile stat card, and
-/// "Tough record" actually shows the number that justifies its name.
-Widget _profileRecordLine({
-  required int wins,
-  required int losses,
-  required int gamesPlayed,
-  required AppColorTokens colors,
-}) {
-  final wr = gamesPlayed == 0 ? null : ((wins / gamesPlayed) * 100).round();
-  final base = TextStyle(
-    fontSize: FontTokens.sm,
-    fontWeight: FontWeight.w600,
-    height: 1.2,
-  );
-  return Text.rich(
-    TextSpan(
-      style: base,
-      children: [
-        TextSpan(
-          text: wr == null ? '— WR' : '$wr% WR',
-          style: base.copyWith(
-            color: colors.primaryAccent,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        TextSpan(
-          text: '  ·  ${wins}W–${losses}L',
-          style: base.copyWith(color: colors.textSecondary),
-        ),
-      ],
-    ),
-    textAlign: TextAlign.center,
-    maxLines: 1,
-    overflow: TextOverflow.ellipsis,
-  );
-}
+enum _DeckHighlightStat { wins, losses }
 
-Widget _profileRecordPlaceholder(String message, AppColorTokens colors) {
-  return Text(
-    message,
-    textAlign: TextAlign.center,
-    maxLines: 1,
-    overflow: TextOverflow.ellipsis,
-    style: TextStyle(
-      fontSize: FontTokens.sm,
-      color: colors.textSecondary,
-      fontWeight: FontWeight.w600,
-      height: 1.2,
-    ),
-  );
-}
-
-/// Shared layout for Most played / Worst deck player-stats tiles.
-class _PlayerStatsHighlightCard extends StatelessWidget {
-  const _PlayerStatsHighlightCard({
+/// Full-bleed deck highlight (Most played / Tough record), recent-games style.
+class _DeckHighlightCard extends ConsumerWidget {
+  const _DeckHighlightCard({
     required this.title,
-    required this.colors,
-    required this.primaryLabel,
-    required this.statsLine,
-    required this.imageUrl,
+    required this.profile,
+    required this.deck,
+    required this.statKind,
   });
 
   final String title;
-  final AppColorTokens colors;
-  final String primaryLabel;
-  final Widget statsLine;
-  final String? imageUrl;
+  final PlayerProfile profile;
+  final PlayerDeck deck;
+  final _DeckHighlightStat statKind;
 
   @override
-  Widget build(BuildContext context) {
-    final innerRadius = RadiusTokens.carouselCard - kProfileCarouselCardPaddingPx;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final matches = ref
+        .watch(matchRepositoryProvider)
+        .getAllMatches()
+        .where((m) => !isPreviewPlaceholderMatchId(m.matchId));
+    final imageUrl = resolveDeckCommanderImageUrl(
+          deck: deck,
+          profile: profile,
+        ) ??
+        resolveCommanderArtByName(
+          commanderName: deck.commanderName,
+          decks: [deck],
+          profile: profile,
+          matches: matches,
+          localPlayerId: profile.playerId,
+        );
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    final count = switch (statKind) {
+      _DeckHighlightStat.wins => deck.wins,
+      _DeckHighlightStat.losses => deck.losses,
+    };
+    final statLabel = switch (statKind) {
+      _DeckHighlightStat.wins => count == 1 ? '1 Win' : '$count Wins',
+      _DeckHighlightStat.losses => count == 1 ? '1 Loss' : '$count Losses',
+    };
+
+    return Stack(
+      fit: StackFit.expand,
       children: [
-        _CarouselSectionHeader(title: title, colors: colors),
-        SizedBox(height: LayoutTokens.gr2),
-        Expanded(
+        if (imageUrl != null && imageUrl.isNotEmpty)
+          CachedNetworkImage(
+            imageUrl: imageUrl,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+            placeholder: (_, __) => defaultBannerFill(context),
+            errorWidget: (_, __, ___) => defaultBannerFill(context),
+          )
+        else
+          defaultProfileBannerArt(context),
+        profileArtCardVignette(),
+        Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: LayoutTokens.gr3,
+            vertical: LayoutTokens.gr3,
+          ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Expanded(
-                flex: 5,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(innerRadius),
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      if (imageUrl != null && imageUrl!.isNotEmpty)
-                        CachedNetworkImage(
-                          imageUrl: imageUrl!,
-                          fit: BoxFit.cover,
-                          placeholder: (_, __) =>
-                              defaultBannerFill(context),
-                          errorWidget: (_, __, ___) =>
-                              defaultBannerFill(context),
-                        )
-                      else
-                        defaultProfileBannerArt(context),
-                      DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.black.withValues(alpha: 0.04),
-                              Colors.black.withValues(alpha: 0.38),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.78),
+                  fontSize: FontTokens.caption,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.2,
                 ),
               ),
               SizedBox(height: LayoutTokens.gr2),
               Text(
-                primaryLabel,
+                deck.displayName,
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: FontTokens.hudSm + 1,
-                  fontWeight: FontWeight.w600,
-                  color: colors.textPrimary,
-                  height: 1.2,
-                  letterSpacing: -0.1,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: FontTokens.body,
+                  fontWeight: FontWeight.w700,
+                  height: 1.15,
+                  letterSpacing: -0.2,
                 ),
               ),
-              SizedBox(height: LayoutTokens.gr0),
-              statsLine,
+              SizedBox(height: LayoutTokens.gr1),
+              Text(
+                deck.gameFormat.displayName,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.72),
+                  fontSize: FontTokens.caption,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              SizedBox(height: LayoutTokens.gr2),
+              Text(
+                statLabel,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: FontTokens.headline,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.3,
+                ),
+              ),
             ],
           ),
         ),
       ],
-    );
-  }
-}
-
-class _MostPlayedCard extends ConsumerWidget {
-  const _MostPlayedCard({
-    required this.profile,
-    required this.colors,
-    required this.top,
-  });
-
-  final PlayerProfile profile;
-  final AppColorTokens colors;
-  final CommanderStats? top;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final commander = top;
-
-    String? imageUrl;
-    if (commander != null) {
-      final decks =
-          ref
-              .watch(deckRepositoryProvider)
-              .getAll()
-              .where((d) => !isPreviewPlaceholderDeck(d));
-      for (final d in decks) {
-        if (d.commanderName.toLowerCase() ==
-            commander.commanderName.toLowerCase()) {
-          imageUrl = resolveDeckCommanderImageUrl(deck: d, profile: profile);
-          break;
-        }
-      }
-      imageUrl ??= profile.selectedCommanderImageUrl;
-    }
-
-    final commanderName = commander?.commanderName ?? 'No data yet';
-    final statsLine = commander != null
-        ? _profileRecordLine(
-            wins: commander.wins,
-            losses: commander.losses,
-            gamesPlayed: commander.gamesPlayed,
-            colors: colors,
-          )
-        : _profileRecordPlaceholder('Play games to see stats', colors);
-
-    return _PlayerStatsHighlightCard(
-      title: 'Most played',
-      colors: colors,
-      primaryLabel: commanderName,
-      statsLine: statsLine,
-      imageUrl: imageUrl,
-    );
-  }
-}
-
-class _WorstDeckCard extends ConsumerWidget {
-  const _WorstDeckCard({
-    required this.profile,
-    required this.colors,
-    required this.deck,
-  });
-
-  final PlayerProfile profile;
-  final AppColorTokens colors;
-  final PlayerDeck? deck;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final d = deck;
-    final String? imageUrl =
-        d == null
-            ? null
-            : resolveDeckCommanderImageUrl(deck: d, profile: profile);
-    final primaryLabel = d?.displayName ?? 'No data yet';
-    final statsLine = d != null
-        ? _profileRecordLine(
-            wins: d.wins,
-            losses: d.losses,
-            gamesPlayed: d.gamesPlayed,
-            colors: colors,
-          )
-        : _profileRecordPlaceholder('Add a deck and play matches', colors);
-
-    return _PlayerStatsHighlightCard(
-      title: 'Tough record',
-      colors: colors,
-      primaryLabel: primaryLabel,
-      statsLine: statsLine,
-      imageUrl: imageUrl,
     );
   }
 }
@@ -696,10 +589,9 @@ Color _behaviourSmileyColor(double salt, AppColorTokens colors) {
 
 /// Sentiment icon for the behaviour card (centered separately from the track).
 Widget _behaviourSmileyMark({
-  required PlayerProfile profile,
+  required double salt,
   required AppColorTokens colors,
 }) {
-  final salt = _saltFraction(profile);
   const double dp = 44.0;
   return Icon(
     _behaviourSmileyIcon(salt),
@@ -716,11 +608,10 @@ Widget _behaviourSmileyMark({
 
 /// Gradient spectrum track + thumb only; [width] must be finite and positive.
 Widget _behaviourSpectrumTrack({
-  required PlayerProfile profile,
+  required double salt,
   required AppColorTokens colors,
   required double width,
 }) {
-  final salt = _saltFraction(profile);
   final w =
       width.isFinite && width > 0 ? width : 280.0;
   const double sideInset = 16.0;
@@ -821,7 +712,7 @@ class _CarouselSectionHeader extends StatelessWidget {
 }
 
 /// Career W–L with win rate as the hero metric.
-class _RecordCard extends StatelessWidget {
+class _RecordCard extends StatefulWidget {
   const _RecordCard({
     required this.profile,
     required this.colors,
@@ -835,22 +726,76 @@ class _RecordCard extends StatelessWidget {
   final bool fillHeight;
 
   @override
+  State<_RecordCard> createState() => _RecordCardState();
+}
+
+class _RecordCardState extends State<_RecordCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late Animation<double> _wrAnim;
+
+  int get _targetWr {
+    final wins = widget.profile.totalWins;
+    final losses = widget.profile.totalLosses;
+    final games = widget.profile.totalGamesPlayed > 0
+        ? widget.profile.totalGamesPlayed
+        : wins + losses;
+    return games == 0 ? 0 : ((wins / games) * 100).round().clamp(0, 100);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: MotionTokens.emphasis,
+    );
+    _wrAnim = Tween<double>(begin: 0, end: _targetWr.toDouble()).animate(
+      CurvedAnimation(parent: _controller, curve: MotionTokens.easeOut),
+    );
+    if (widget.hasPlayedGames && widget.profile.totalGamesPlayed > 0) {
+      _controller.forward();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _RecordCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final next = _targetWr.toDouble();
+    if (oldWidget.profile.totalWins != widget.profile.totalWins ||
+        oldWidget.profile.totalLosses != widget.profile.totalLosses ||
+        oldWidget.profile.totalGamesPlayed !=
+            widget.profile.totalGamesPlayed) {
+      _wrAnim = Tween<double>(begin: _wrAnim.value, end: next).animate(
+        CurvedAnimation(parent: _controller, curve: MotionTokens.easeOut),
+      );
+      _controller.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (!hasPlayedGames || profile.totalGamesPlayed <= 0) {
+    if (!widget.hasPlayedGames || widget.profile.totalGamesPlayed <= 0) {
       return _PlayerStatsEmptyCard(
         title: 'Record',
-        colors: colors,
+        colors: widget.colors,
       );
     }
 
-    final wins = profile.totalWins;
-    final losses = profile.totalLosses;
-    final games = profile.totalGamesPlayed > 0
-        ? profile.totalGamesPlayed
+    final wins = widget.profile.totalWins;
+    final losses = widget.profile.totalLosses;
+    final games = widget.profile.totalGamesPlayed > 0
+        ? widget.profile.totalGamesPlayed
         : wins + losses;
-    final wr = games == 0 ? 0 : ((wins / games) * 100).round().clamp(0, 100);
+    final colors = widget.colors;
 
-    Widget hero() {
+    Widget hero(int wr) {
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -888,32 +833,38 @@ class _RecordCard extends StatelessWidget {
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _CarouselSectionHeader(title: 'Record', colors: colors),
-        SizedBox(height: LayoutTokens.gr2),
-        if (fillHeight)
-          Expanded(
-            child: Column(
-              children: [
-                Expanded(child: Center(child: hero())),
-                footer(),
-              ],
-            ),
-          )
-        else ...[
-          Center(child: hero()),
-          SizedBox(height: LayoutTokens.gr2),
-          footer(),
-        ],
-      ],
+    return AnimatedBuilder(
+      animation: _wrAnim,
+      builder: (context, _) {
+        final wr = _wrAnim.value.round().clamp(0, 100);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _CarouselSectionHeader(title: 'Record', colors: colors),
+            SizedBox(height: LayoutTokens.gr2),
+            if (widget.fillHeight)
+              Expanded(
+                child: Column(
+                  children: [
+                    Expanded(child: Center(child: hero(wr))),
+                    footer(),
+                  ],
+                ),
+              )
+            else ...[
+              Center(child: hero(wr)),
+              SizedBox(height: LayoutTokens.gr2),
+              footer(),
+            ],
+          ],
+        );
+      },
     );
   }
 }
 
 /// Current win streak with best-from-history as supporting context.
-class _WinStreakCard extends StatelessWidget {
+class _WinStreakCard extends StatefulWidget {
   const _WinStreakCard({
     required this.colors,
     required this.hasPlayedGames,
@@ -929,54 +880,73 @@ class _WinStreakCard extends StatelessWidget {
   final bool fillHeight;
 
   @override
+  State<_WinStreakCard> createState() => _WinStreakCardState();
+}
+
+class _WinStreakCardState extends State<_WinStreakCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late Animation<double> _countAnim;
+  late Animation<double> _flameScale;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: MotionTokens.emphasis,
+    );
+    _countAnim = Tween<double>(
+      begin: 0,
+      end: widget.currentStreak.toDouble(),
+    ).animate(CurvedAnimation(parent: _controller, curve: MotionTokens.easeOut));
+    _flameScale = Tween<double>(begin: 0.55, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: MotionTokens.enter),
+    );
+    if (widget.hasPlayedGames) {
+      _controller.forward();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _WinStreakCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.currentStreak != widget.currentStreak) {
+      _countAnim = Tween<double>(
+        begin: _countAnim.value,
+        end: widget.currentStreak.toDouble(),
+      ).animate(
+        CurvedAnimation(parent: _controller, curve: MotionTokens.easeOut),
+      );
+      _controller.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (!hasPlayedGames) {
+    if (!widget.hasPlayedGames) {
       return _PlayerStatsEmptyCard(
         title: 'Win streak',
-        colors: colors,
+        colors: widget.colors,
       );
     }
 
-    final flame = currentStreak > 0;
-    Widget hero() {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            flame
-                ? Icons.local_fire_department_rounded
-                : Icons.local_fire_department_outlined,
-            size: 28,
-            color: flame ? colors.primaryAccent : colors.textMuted,
-          ),
-          SizedBox(height: LayoutTokens.gr1),
-          Text(
-            '$currentStreak',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: colors.textPrimary,
-              fontFeatures: const [FontFeature.tabularFigures()],
-              letterSpacing: -0.5,
-            ),
-          ),
-          SizedBox(height: LayoutTokens.gr0),
-          Text(
-            currentStreak == 0 ? 'No active streak' : 'Current',
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: colors.textSecondary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      );
-    }
+    final colors = widget.colors;
+    final flame = widget.currentStreak > 0;
 
     Widget footer() {
-      final bestLabel = bestStreak <= 0
+      final bestLabel = widget.bestStreak <= 0
           ? 'Win to start a streak'
-          : bestStreak == currentStreak && currentStreak > 0
+          : widget.bestStreak == widget.currentStreak &&
+                  widget.currentStreak > 0
               ? 'Personal best'
-              : 'Best: $bestStreak';
+              : 'Best: ${widget.bestStreak}';
       return Text(
         bestLabel,
         textAlign: TextAlign.center,
@@ -989,26 +959,68 @@ class _WinStreakCard extends StatelessWidget {
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _CarouselSectionHeader(title: 'Win streak', colors: colors),
-        SizedBox(height: LayoutTokens.gr2),
-        if (fillHeight)
-          Expanded(
-            child: Column(
-              children: [
-                Expanded(child: Center(child: hero())),
-                footer(),
-              ],
-            ),
-          )
-        else ...[
-          Center(child: hero()),
-          SizedBox(height: LayoutTokens.gr2),
-          footer(),
-        ],
-      ],
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        final shown = _countAnim.value.round().clamp(0, 999);
+        Widget hero() {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ScaleTransition(
+                scale: _flameScale,
+                child: Icon(
+                  flame
+                      ? Icons.local_fire_department_rounded
+                      : Icons.local_fire_department_outlined,
+                  size: 28,
+                  color: flame ? colors.primaryAccent : colors.textMuted,
+                ),
+              ),
+              SizedBox(height: LayoutTokens.gr1),
+              Text(
+                '$shown',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: colors.textPrimary,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                  letterSpacing: -0.5,
+                ),
+              ),
+              SizedBox(height: LayoutTokens.gr0),
+              Text(
+                widget.currentStreak == 0 ? 'No active streak' : 'Current',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: colors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _CarouselSectionHeader(title: 'Win streak', colors: colors),
+            SizedBox(height: LayoutTokens.gr2),
+            if (widget.fillHeight)
+              Expanded(
+                child: Column(
+                  children: [
+                    Expanded(child: Center(child: hero())),
+                    footer(),
+                  ],
+                ),
+              )
+            else ...[
+              Center(child: hero()),
+              SizedBox(height: LayoutTokens.gr2),
+              footer(),
+            ],
+          ],
+        );
+      },
     );
   }
 }
@@ -1180,7 +1192,7 @@ class _LevelDonutCard extends StatelessWidget {
   }
 }
 
-class _BehaviourBarCard extends StatelessWidget {
+class _BehaviourBarCard extends StatefulWidget {
   const _BehaviourBarCard({
     required this.profile,
     required this.colors,
@@ -1192,9 +1204,20 @@ class _BehaviourBarCard extends StatelessWidget {
   /// When true (wide row), spectrum block expands so the card matches level progress height.
   final bool fillHeight;
 
+  @override
+  State<_BehaviourBarCard> createState() => _BehaviourBarCardState();
+}
+
+class _BehaviourBarCardState extends State<_BehaviourBarCard>
+    with SingleTickerProviderStateMixin {
   /// Smiley (44) + spectrum track (20) + axis row + reaction line — remainder split evenly.
   static const double _kFillBehaviourCoreH = 100.0;
   static const int _kFillBehaviourBandGaps = 4;
+
+  late final AnimationController _controller;
+  late Animation<double> _saltAnim;
+
+  double get _targetSalt => _saltFraction(widget.profile);
 
   static double _fillBehaviourBandGap(double maxHeight, double layoutTextScale) {
     final core = _kFillBehaviourCoreH * layoutTextScale;
@@ -1205,7 +1228,45 @@ class _BehaviourBarCard extends StatelessWidget {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: MotionTokens.emphasis,
+    );
+    // Start neutral, then ease to the real position when the card builds
+    // (typically as the carousel scrolls it into view).
+    _saltAnim = Tween<double>(begin: 0.5, end: _targetSalt).animate(
+      CurvedAnimation(parent: _controller, curve: MotionTokens.easeOut),
+    );
+    _controller.forward();
+  }
+
+  @override
+  void didUpdateWidget(covariant _BehaviourBarCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.profile.likesReceived != widget.profile.likesReceived ||
+        oldWidget.profile.dislikesReceived !=
+            widget.profile.dislikesReceived) {
+      _saltAnim = Tween<double>(begin: _saltAnim.value, end: _targetSalt)
+          .animate(
+        CurvedAnimation(parent: _controller, curve: MotionTokens.easeOut),
+      );
+      _controller.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final colors = widget.colors;
+    final profile = widget.profile;
+
     Widget axisRow() {
       return Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1251,74 +1312,82 @@ class _BehaviourBarCard extends StatelessWidget {
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _CarouselSectionHeader(
-          title: 'Player behaviour',
-          colors: colors,
-        ),
-        SizedBox(height: LayoutTokens.gr2),
-        if (fillHeight)
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, c) {
-                final w =
-                    c.maxWidth.isFinite && c.maxWidth > 0 ? c.maxWidth : 280.0;
-                final bandGap = _fillBehaviourBandGap(
-                  c.maxHeight,
-                  _profileLayoutTextScale(context),
-                );
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    SizedBox(height: bandGap),
-                    Center(
-                      child: _behaviourSmileyMark(
-                        profile: profile,
-                        colors: colors,
-                      ),
-                    ),
-                    SizedBox(height: bandGap),
-                    _behaviourSpectrumTrack(
-                      profile: profile,
-                      colors: colors,
-                      width: w,
-                    ),
-                    SizedBox(height: bandGap),
-                    axisRow(),
-                    SizedBox(height: bandGap),
-                    reactionsLine(),
-                  ],
-                );
-              },
-            ),
-          )
-        else ...[
-          Center(
-            child: _behaviourSmileyMark(
-              profile: profile,
+    return AnimatedBuilder(
+      animation: _saltAnim,
+      builder: (context, _) {
+        final salt = _saltAnim.value.clamp(0.0, 1.0);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _CarouselSectionHeader(
+              title: 'Player behaviour',
               colors: colors,
             ),
-          ),
-          SizedBox(height: LayoutTokens.gr1),
-          LayoutBuilder(
-            builder: (context, c) {
-              final w =
-                  c.maxWidth.isFinite && c.maxWidth > 0 ? c.maxWidth : 280.0;
-              return _behaviourSpectrumTrack(
-                profile: profile,
-                colors: colors,
-                width: w,
-              );
-            },
-          ),
-          SizedBox(height: LayoutTokens.gr1),
-          axisRow(),
-          SizedBox(height: LayoutTokens.gr1),
-          reactionsLine(),
-        ],
-      ],
+            SizedBox(height: LayoutTokens.gr2),
+            if (widget.fillHeight)
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, c) {
+                    final w = c.maxWidth.isFinite && c.maxWidth > 0
+                        ? c.maxWidth
+                        : 280.0;
+                    final bandGap = _fillBehaviourBandGap(
+                      c.maxHeight,
+                      _profileLayoutTextScale(context),
+                    );
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        SizedBox(height: bandGap),
+                        Center(
+                          child: _behaviourSmileyMark(
+                            salt: salt,
+                            colors: colors,
+                          ),
+                        ),
+                        SizedBox(height: bandGap),
+                        _behaviourSpectrumTrack(
+                          salt: salt,
+                          colors: colors,
+                          width: w,
+                        ),
+                        SizedBox(height: bandGap),
+                        axisRow(),
+                        SizedBox(height: bandGap),
+                        reactionsLine(),
+                      ],
+                    );
+                  },
+                ),
+              )
+            else ...[
+              Center(
+                child: _behaviourSmileyMark(
+                  salt: salt,
+                  colors: colors,
+                ),
+              ),
+              SizedBox(height: LayoutTokens.gr1),
+              LayoutBuilder(
+                builder: (context, c) {
+                  final w = c.maxWidth.isFinite && c.maxWidth > 0
+                      ? c.maxWidth
+                      : 280.0;
+                  return _behaviourSpectrumTrack(
+                    salt: salt,
+                    colors: colors,
+                    width: w,
+                  );
+                },
+              ),
+              SizedBox(height: LayoutTokens.gr1),
+              axisRow(),
+              SizedBox(height: LayoutTokens.gr1),
+              reactionsLine(),
+            ],
+          ],
+        );
+      },
     );
   }
 }

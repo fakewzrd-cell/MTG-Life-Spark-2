@@ -14,7 +14,9 @@
 			<string>_lifespark._tcp</string>
 		</array>
 		<key>NSCameraUsageDescription</key>
-		<string>Life Spark uses the camera to scan the host QR code when joining a game.</string>
+		<string>Life Spark uses the camera to scan the host QR code when joining a game, and to take a profile picture.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>Life Spark uses your photo library so you can choose a profile picture.</string>
 		<key>CFBundleExecutable</key>
 		<string>$(EXECUTABLE_NAME)</string>
 		<key>CFBundleIdentifier</key>

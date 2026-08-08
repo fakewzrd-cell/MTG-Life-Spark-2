@@ -27,11 +27,12 @@ class EndTurnBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    // Solid theme accent fill so the control stays visible on light surfaces.
     final bg = enabled
-        ? accentColor.withValues(alpha: OpacityTokens.soft)
+        ? accentColor
         : colors.backgroundSecondary.withValues(alpha: OpacityTokens.moderate);
     final fg = enabled
-        ? accentColor
+        ? (accentColor.computeLuminance() > 0.55 ? Colors.black : Colors.white)
         : colors.textSecondary.withValues(alpha: OpacityTokens.disabled);
     final subtitle = !enabled && waitingForName != null && waitingForName!.isNotEmpty
         ? 'Waiting for $waitingForName…'
@@ -81,7 +82,7 @@ class EndTurnBar extends StatelessWidget {
                           style: TextStyle(
                             fontSize: FontTokens.hudXs,
                             fontWeight: FontWeight.w500,
-                            color: colors.textSecondary,
+                            color: fg.withValues(alpha: 0.85),
                           ),
                         ),
                       ],

@@ -53,7 +53,7 @@ class PlayerProfile extends HiveObject {
   int totalGamesPlayed;
 
   @HiveField(16)
-  /// Circular profile picture URL (Scryfall card art), chosen in the avatar picker.
+  /// Circular profile picture: Scryfall URL or local uploaded file path.
   String? profileAvatarImageUrl;
 
   /// Community: likes received from other players' feedback (aggregated).

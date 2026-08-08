@@ -1,19 +1,23 @@
 import 'dart:async';
 
-import '../../ui/theme/app_color_tokens.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../core/game/scryfall_service.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/utils/app_router.dart';
+import '../../shared/utils/profile_avatar_storage.dart';
 import '../../ui/components/ui_app_bar.dart';
+import '../../ui/theme/app_color_tokens.dart';
+import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
+import '../../ui/components/ui_snack_bar.dart';
 
-/// Pick MTG card art for the circular profile picture.
+/// Pick MTG card art or an uploaded photo for the circular profile picture.
 ///
 /// The hero banner uses [profileBannerImageUrl] when set, otherwise the bundled
 /// default banner art with a dark scrim for readable overlay text.
@@ -24,10 +28,14 @@ class ProfilePicturePickerScreen extends ConsumerStatefulWidget {
   const ProfilePicturePickerScreen({
     super.key,
     this.selectionMode = false,
+    this.initialImageRef,
   });
 
   /// If true, return the chosen URL via [Navigator.pop] (empty string = clear).
   final bool selectionMode;
+
+  /// Current avatar ref when opening (used to clean up replaced local files).
+  final String? initialImageRef;
 
   @override
   ConsumerState<ProfilePicturePickerScreen> createState() =>
@@ -37,11 +45,28 @@ class ProfilePicturePickerScreen extends ConsumerStatefulWidget {
 class _ProfilePicturePickerScreenState
     extends ConsumerState<ProfilePicturePickerScreen> {
   final _searchController = TextEditingController();
+  final _picker = ImagePicker();
   Timer? _debounce;
 
   List<ScryfallCard> _results = [];
   bool _loading = false;
+  bool _pickingPhoto = false;
   String? _error;
+
+  /// Current avatar ref while on this screen (for cleaning up replaced locals).
+  String? _currentAvatarRef;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentAvatarRef = widget.initialImageRef ??
+        (widget.selectionMode
+            ? null
+            : ref
+                .read(profileRepositoryProvider)
+                .getProfile()
+                ?.profileAvatarImageUrl);
+  }
 
   @override
   void dispose() {
@@ -98,6 +123,12 @@ class _ProfilePicturePickerScreenState
   }
 
   Future<void> _applyAndReturn(String? imageUrl) async {
+    final previous = _currentAvatarRef;
+    if (isLocalAvatarRef(previous) && previous != imageUrl) {
+      await deleteAvatarFile(previous);
+    }
+    _currentAvatarRef = imageUrl;
+
     if (widget.selectionMode) {
       if (!mounted) return;
       // Empty string means "cleared"; null pop is cancel (back).
@@ -112,6 +143,32 @@ class _ProfilePicturePickerScreenState
     // Navigate home before refreshing router listeners (avoids stack glitch).
     context.go(AppRoutes.home);
     bumpProfileRevision(ref);
+  }
+
+  Future<void> _pickFrom(ImageSource source) async {
+    if (_pickingPhoto) return;
+    setState(() => _pickingPhoto = true);
+    try {
+      final picked = await _picker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 88,
+      );
+      if (picked == null) return;
+      final path = await savePickedAvatar(picked);
+      if (!mounted) return;
+      await _applyAndReturn(path);
+    } catch (e) {
+      if (!mounted) return;
+      showUiSnackBar(
+        context,
+        'Could not use that photo. Try another image.',
+        isError: true,
+      );
+    } finally {
+      if (mounted) setState(() => _pickingPhoto = false);
+    }
   }
 
   Future<void> _useCommanderPortrait() async {
@@ -168,7 +225,7 @@ class _ProfilePicturePickerScreenState
           actions: [
             if (canUseCommander && !widget.selectionMode)
               TextButton(
-                onPressed: _useCommanderPortrait,
+                onPressed: _pickingPhoto ? null : _useCommanderPortrait,
                 child: Text(
                   'Commander',
                   style: TextStyle(
@@ -178,7 +235,7 @@ class _ProfilePicturePickerScreenState
                 ),
               ),
             TextButton(
-              onPressed: _clearImage,
+              onPressed: _pickingPhoto ? null : _clearImage,
               child: Text(
                 widget.selectionMode ? 'Default' : 'Remove',
                 style: TextStyle(
@@ -193,10 +250,63 @@ class _ProfilePicturePickerScreenState
         body: Column(
           children: [
             Padding(
+              padding: EdgeInsets.fromLTRB(
+                LayoutTokens.gr3,
+                LayoutTokens.gr2,
+                LayoutTokens.gr3,
+                LayoutTokens.gr1,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _pickingPhoto
+                          ? null
+                          : () => _pickFrom(ImageSource.gallery),
+                      icon: const Icon(Icons.photo_library_outlined, size: 18),
+                      label: const Text('Upload photo'),
+                    ),
+                  ),
+                  SizedBox(width: LayoutTokens.gr2),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _pickingPhoto
+                          ? null
+                          : () => _pickFrom(ImageSource.camera),
+                      icon: const Icon(Icons.photo_camera_outlined, size: 18),
+                      label: const Text('Take photo'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (_pickingPhoto)
+              Padding(
+                padding: EdgeInsets.only(bottom: LayoutTokens.gr1),
+                child: LinearProgressIndicator(
+                  color: colors.primaryAccent,
+                  backgroundColor: colors.backgroundSecondary,
+                ),
+              ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr3),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Or search MTG card art',
+                  style: TextStyle(
+                    color: colors.textSecondary,
+                    fontSize: FontTokens.caption,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            Padding(
               padding: EdgeInsets.all(LayoutTokens.gr3),
               child: TextField(
                 controller: _searchController,
-                autofocus: true,
+                autofocus: false,
                 textInputAction: TextInputAction.search,
                 onTapOutside: (_) =>
                     FocusManager.instance.primaryFocus?.unfocus(),
@@ -257,7 +367,7 @@ class _ProfilePicturePickerScreenState
         child: Padding(
           padding: EdgeInsets.all(LayoutTokens.gr4),
           child: Text(
-            'Search for a card—its art becomes your profile picture.',
+            'Upload a photo, take one, or search for a card—its art becomes your profile picture.',
             style: TextStyle(color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
@@ -333,7 +443,8 @@ class _CardArtTile extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.all(MediaQuery.sizeOf(context).width < 360 ? 6 : 8),
+                padding: EdgeInsets.all(
+                    MediaQuery.sizeOf(context).width < 360 ? 6 : 8),
                 child: Text(
                   card.name,
                   style: TextStyle(

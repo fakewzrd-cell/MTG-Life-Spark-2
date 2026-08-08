@@ -104,18 +104,25 @@ class ProfileRepository {
 
   /// Recompute likes/honors **received** by scanning all stored match feedback.
   /// Local player is matched by stable [localPlayerId] (profile.playerId).
+  ///
+  /// When no ballots exist, persisted profile totals are left alone so a
+  /// restored backup (or v1 file without feedback) keeps its sparks / behaviour.
   Future<void> recomputeSocialStatsFromFeedback(
     FeedbackRepository feedbackRepo,
     String localPlayerId,
   ) async {
     final profile = getProfile();
     if (profile == null) return;
+    if (localPlayerId.trim().isEmpty) return;
+
+    final ballots = feedbackRepo.allFeedback().toList(growable: false);
+    if (ballots.isEmpty) return;
 
     var likes = 0;
     var dislikes = 0;
     var stars = 0;
 
-    for (final f in feedbackRepo.allFeedback()) {
+    for (final f in ballots) {
       if (f.likePlayerIds.contains(localPlayerId)) likes++;
       if (f.dislikePlayerIds.contains(localPlayerId)) dislikes++;
       if (f.starPlayerId == localPlayerId) stars++;

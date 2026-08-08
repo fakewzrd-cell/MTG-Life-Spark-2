@@ -5,8 +5,8 @@ import 'package:file_saver/file_saver.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:intl/intl.dart';
 
+import '../../shared/utils/profile_avatar_storage.dart';
 import '../debug/app_log.dart';
-import '../models/match_record.dart';
 import '../models/player_identity.dart';
 import 'backup_codec.dart';
 import 'deck_repository.dart';
@@ -14,18 +14,6 @@ import 'feedback_repository.dart';
 import 'match_repository.dart';
 import 'profile_repository.dart';
 import 'settings_repository.dart';
-
-class _DeviceSnapshot {
-  const _DeviceSnapshot({
-    required this.core,
-    required this.matches,
-    required this.feedbackByKey,
-  });
-
-  final LifeSparkBackup core;
-  final List<MatchRecord> matches;
-  final Map<String, String> feedbackByKey;
-}
 
 /// Builds, shares, and restores local Life Spark backups (`.lifespark`).
 class BackupService {
@@ -53,11 +41,13 @@ class BackupService {
     mimeTypes: <String>['application/json', 'application/octet-stream'],
   );
 
-  LifeSparkBackup buildBackup({DateTime? exportedAt}) {
+  Future<LifeSparkBackup> buildBackup({DateTime? exportedAt}) async {
     final profile = _profileRepo.getProfile();
     if (profile == null) {
       throw StateError('No profile to export.');
     }
+    final avatarBytes =
+        await encodeLocalAvatarForBackup(profile.profileAvatarImageUrl);
     return LifeSparkBackup(
       version: kLifeSparkBackupVersion,
       exportedAt: exportedAt ?? DateTime.now().toUtc(),
@@ -65,12 +55,16 @@ class BackupService {
       settings: _settingsRepo.settings,
       decks: _deckRepo.getAll(),
       commanderStats: _profileRepo.getAllCommanderStats(),
+      matches: _matchRepo.snapshotAll(),
+      feedbackByKey: _feedbackRepo.snapshotRaw(),
+      profileAvatarImageBase64: avatarBytes?.base64,
+      profileAvatarImageMime: avatarBytes?.mime,
     );
   }
 
   /// Detached copy of current device data (safe to re-apply after failed restore).
-  LifeSparkBackup captureDetachedBackup({DateTime? exportedAt}) {
-    final live = buildBackup(exportedAt: exportedAt);
+  Future<LifeSparkBackup> captureDetachedBackup({DateTime? exportedAt}) async {
+    final live = await buildBackup(exportedAt: exportedAt);
     return LifeSparkBackup.fromJson(
       Map<String, dynamic>.from(live.toJson()),
     );
@@ -90,23 +84,48 @@ class BackupService {
   LifeSparkBackup decodeBackupBytes(Uint8List bytes) =>
       decodeBackup(utf8.decode(bytes));
 
-  _DeviceSnapshot _captureDeviceSnapshot() => _DeviceSnapshot(
-        core: captureDetachedBackup(),
-        matches: _matchRepo.snapshotAll(),
-        feedbackByKey: _feedbackRepo.snapshotRaw(),
-      );
-
-  Future<void> _commitCore(LifeSparkBackup backup) async {
+  Future<void> _commitAll(LifeSparkBackup backup) async {
     await _profileRepo.saveProfile(backup.profile);
     await _profileRepo.replaceAllCommanderStats(backup.commanderStats);
     await _settingsRepo.update(backup.settings);
     await _deckRepo.replaceAll(backup.decks);
+    await _matchRepo.replaceAll(backup.matches);
+    await _feedbackRepo.replaceRaw(backup.feedbackByKey);
   }
 
-  Future<void> _commitSnapshot(_DeviceSnapshot snapshot) async {
-    await _commitCore(snapshot.core);
-    await _matchRepo.replaceAll(snapshot.matches);
-    await _feedbackRepo.replaceRaw(snapshot.feedbackByKey);
+  /// Materialize embedded avatar bytes / clear stale local paths before commit.
+  Future<LifeSparkBackup> _prepareIncomingAvatar(LifeSparkBackup backup) async {
+    final json = Map<String, dynamic>.from(backup.toJson());
+    final prepared = LifeSparkBackup.fromJson(json);
+    final profile = prepared.profile;
+    final embedded = prepared.profileAvatarImageBase64;
+
+    if (embedded != null && embedded.isNotEmpty) {
+      final path = await restoreAvatarFromBackupBase64(
+        embedded,
+        mime: prepared.profileAvatarImageMime,
+      );
+      profile.profileAvatarImageUrl = path;
+      return LifeSparkBackup(
+        version: prepared.version,
+        exportedAt: prepared.exportedAt,
+        profile: profile,
+        settings: prepared.settings,
+        decks: prepared.decks,
+        commanderStats: prepared.commanderStats,
+        matches: prepared.matches,
+        feedbackByKey: prepared.feedbackByKey,
+        profileAvatarImageBase64: prepared.profileAvatarImageBase64,
+        profileAvatarImageMime: prepared.profileAvatarImageMime,
+      );
+    }
+
+    // Stale absolute path from another device — drop rather than broken image.
+    final ref = profile.profileAvatarImageUrl;
+    if (isLocalAvatarRef(ref) && localFileFromRef(ref) == null) {
+      profile.profileAvatarImageUrl = null;
+    }
+    return prepared;
   }
 
   /// Writes backup data into Hive. On failure, rolls device data back.
@@ -118,28 +137,21 @@ class BackupService {
     // Restored installs should not re-show onboarding.
     backup.settings.onboardingCompleted = true;
 
-    // Detach so rollback cannot accidentally share mutated Hive instances.
-    final incoming = LifeSparkBackup.fromJson(
-      Map<String, dynamic>.from(backup.toJson()),
-    );
+    var incoming = await _prepareIncomingAvatar(backup);
     incoming.settings.onboardingCompleted = true;
     if (incoming.profile.playerId.trim().isEmpty) {
       incoming.profile.playerId = profile.playerId;
     }
 
-    final rollback = _captureDeviceSnapshot();
+    final rollback = await captureDetachedBackup();
     try {
-      await _commitCore(incoming);
-      // History is not in the backup file — drop stale local rows so they
-      // don't linger under a previous playerId after restore.
-      await _matchRepo.clearAll();
-      await _feedbackRepo.clearAll();
+      await _commitAll(incoming);
       return incoming;
     } catch (e, st) {
       appLog('BackupService: restore failed; rolling back',
           error: e, stackTrace: st);
       try {
-        await _commitSnapshot(rollback);
+        await _commitAll(rollback);
       } catch (rollbackError, rollbackSt) {
         appLog('BackupService: rollback failed',
             error: rollbackError, stackTrace: rollbackSt);
@@ -151,7 +163,7 @@ class BackupService {
   /// Opens the system Save dialog and writes a `.lifespark` file.
   /// Returns `true` when the user picked a location; `false` if canceled.
   Future<bool> exportToFile() async {
-    final backup = buildBackup();
+    final backup = await buildBackup();
     final json = encodeBackup(backup);
     final stamp = DateFormat('yyyyMMdd').format(DateTime.now());
     final bytes = Uint8List.fromList(utf8.encode(json));

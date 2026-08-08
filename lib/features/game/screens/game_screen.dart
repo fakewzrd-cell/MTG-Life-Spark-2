@@ -463,48 +463,53 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                     label: label,
                     child: SafeArea(
                       child: Align(
-                        alignment: Alignment.topCenter,
-                        child: Material(
-                          color: colors.warning.withValues(
-                            alpha: OpacityTokens.soft,
+                        alignment: Alignment.center,
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: LayoutTokens.gr4,
                           ),
-                          borderRadius:
-                              BorderRadius.circular(LayoutTokens.gr2),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: LayoutTokens.gr4,
-                              vertical: LayoutTokens.gr2,
+                          child: Material(
+                            color: colors.warning.withValues(
+                              alpha: OpacityTokens.soft,
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    label,
-                                    style: TextStyle(
-                                      color: colors.textPrimary,
-                                      fontSize: FontTokens.body,
-                                      fontWeight: FontWeight.w600,
+                            borderRadius:
+                                BorderRadius.circular(LayoutTokens.gr2),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: LayoutTokens.gr4,
+                                vertical: LayoutTokens.gr2,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      label,
+                                      style: TextStyle(
+                                        color: colors.textPrimary,
+                                        fontSize: FontTokens.body,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                if (showOwnLink) ...[
-                                  SizedBox(width: LayoutTokens.gr3),
-                                  TextButton(
-                                    onPressed: () => ref
-                                        .read(gameProvider.notifier)
-                                        .retryHostLink(),
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: colors.textPrimary,
-                                      padding: EdgeInsets.zero,
-                                      minimumSize: Size.zero,
-                                      tapTargetSize:
-                                          MaterialTapTargetSize.shrinkWrap,
+                                  if (showOwnLink) ...[
+                                    SizedBox(width: LayoutTokens.gr3),
+                                    TextButton(
+                                      onPressed: () => ref
+                                          .read(gameProvider.notifier)
+                                          .retryHostLink(),
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: colors.textPrimary,
+                                        padding: EdgeInsets.zero,
+                                        minimumSize: Size.zero,
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                      child: const Text('Try again'),
                                     ),
-                                    child: const Text('Try again'),
-                                  ),
+                                  ],
                                 ],
-                              ],
+                              ),
                             ),
                           ),
                         ),
@@ -738,7 +743,7 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
                           endTurnEnabled: endTurnEnabled,
                         )
                       : EndTurnBar(
-                          accentColor: chromeAccent,
+                          accentColor: colors.primaryAccent,
                           enabled: endTurnEnabled,
                           onEndTurn: notifier.endTurn,
                           waitingForName:

@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,7 +8,7 @@ import '../../core/debug/app_log.dart';
 import '../../core/models/player_profile.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/utils/app_router.dart';
-import '../../shared/widgets/default_profile_avatar.dart';
+import '../../shared/widgets/profile_avatar_image.dart';
 import '../../shared/widgets/profile_default_banner.dart';
 import '../../shared/widgets/tier_badge.dart';
 import '../../ui/components/ui_button.dart';
@@ -586,22 +585,9 @@ class _ProfileHeroAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final imageUrl = _profileAvatarImageUrl(profile);
 
-    Widget avatarChild;
-    if (imageUrl != null) {
-      avatarChild = ClipOval(
-        child: CachedNetworkImage(
-          imageUrl: imageUrl,
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-          placeholder: (context, url) => DefaultProfileAvatarFill(size: size),
-          errorWidget: (context, url, error) =>
-              DefaultProfileAvatarFill(size: size),
-        ),
-      );
-    } else {
-      avatarChild = DefaultProfileAvatarFill(size: size);
-    }
+    final avatarChild = ClipOval(
+      child: ProfileAvatarImage(imageRef: imageUrl, size: size),
+    );
 
     const ringWidth = 3.0;
     final ringRadius = size / 2 - ringWidth / 2;

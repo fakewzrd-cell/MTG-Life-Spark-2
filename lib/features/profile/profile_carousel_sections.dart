@@ -51,25 +51,20 @@ Widget _recentMatchCommanderArt(BuildContext context, String? imageUrl) {
   return defaultProfileBannerArt(context);
 }
 
-Widget _recentMatchCardVignette({bool expanded = false}) {
-  // Bottom-weighted scrim: art stays visible up top; text/CTA sit on darker band.
-  return DecoratedBox(
+/// Shared dark scrim for full-bleed commander art cards (Recent games,
+/// Most played, Tough record) so text stays readable without drifting styles.
+Widget profileArtCardVignette() {
+  return const DecoratedBox(
     decoration: BoxDecoration(
       gradient: LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: expanded
-            ? [
-                Colors.black.withValues(alpha: 0.55),
-                Colors.black.withValues(alpha: 0.78),
-                Colors.black.withValues(alpha: 0.92),
-              ]
-            : [
-                Colors.black.withValues(alpha: 0.08),
-                Colors.black.withValues(alpha: 0.22),
-                Colors.black.withValues(alpha: 0.62),
-              ],
-        stops: expanded ? const [0.0, 0.35, 1.0] : const [0.0, 0.42, 1.0],
+        colors: [
+          Color(0x66000000),
+          Color(0x99000000),
+          Color(0xCC000000),
+        ],
+        stops: [0.0, 0.45, 1.0],
       ),
     ),
   );
@@ -380,9 +375,6 @@ const double kProfileCarouselCardWidth = LayoutTokens.profileCarouselCardWidth;
 /// Fixed height for every carousel card (same on all pages).
 const double kProfileCarouselCardHeight = LayoutTokens.profileCarouselCardCanonicalHeight;
 
-/// MTG card art proportion (63×88) for commander portraits in deck cards.
-const double _kDeckPortraitWidthOverHeight = 63 / 88;
-
 const double _kProfileDeckCardPortraitMin = 72;
 const double _kProfileDeckCardPortraitMax = 200;
 
@@ -423,22 +415,23 @@ double profileDeckCardMinHeight({double textScale = 1.0}) {
   return footer + _kProfileDeckCardPortraitMin + 2 * kProfileCarouselCardPaddingPx;
 }
 
-/// Commander art band height inside a deck card (fits remaining space).
+/// Commander art band height inside a deck card (fills remaining vertical space).
+///
+/// Height-driven on purpose: width no longer caps the portrait so the art
+/// always uses the available band height (sides may inset or clip).
 double profileDeckCardArtHeight(
   double cardWidth,
   double cardHeight, {
   required PlayerDeck deck,
   required bool hasPartner,
 }) {
-  final innerW = cardWidth - 2 * kProfileCarouselCardPaddingPx;
+  // [cardWidth] / [hasPartner] kept for call-site compatibility; sizing is
+  // vertical-only so partner width never shrinks the portrait.
+  assert(cardWidth > 0);
   final innerH = cardHeight - 2 * kProfileCarouselCardPaddingPx;
   final footer = profileDeckCardFooterReserveHeight(deck);
   final maxByFooter = math.max(_kProfileDeckCardPortraitMin, innerH - footer);
-  final wRatio = hasPartner
-      ? _kDeckPortraitWidthOverHeight * (1 + 0.35 * 0.58)
-      : _kDeckPortraitWidthOverHeight;
-  final byCardRatio = innerW / wRatio;
-  return math.min(byCardRatio, maxByFooter).clamp(
+  return maxByFooter.clamp(
     _kProfileDeckCardPortraitMin,
     math.min(_kProfileDeckCardPortraitMax, maxByFooter),
   );
@@ -529,11 +522,15 @@ class _RecentMatchStandingRow extends StatelessWidget {
     required this.participant,
     required this.colors,
     this.imageUrl,
+    this.onDarkOverlay = false,
   });
 
   final MatchParticipantSnapshot participant;
   final AppColorTokens colors;
   final String? imageUrl;
+
+  /// When true, force light text for readability on the dark card vignette.
+  final bool onDarkOverlay;
 
   @override
   Widget build(BuildContext context) {
@@ -548,13 +545,21 @@ class _RecentMatchStandingRow extends StatelessWidget {
         p.username.trim().toLowerCase() != p.commanderName!.trim().toLowerCase();
     final initials = _recentMatchPlayerInitials(title);
     final lifeLabel = p.finalLife != null ? '${p.finalLife}' : '—';
+    final primary = onDarkOverlay ? Colors.white : colors.textPrimary;
+    final secondary = onDarkOverlay
+        ? Colors.white.withValues(alpha: 0.78)
+        : colors.textSecondary;
+    final winnerAccent =
+        onDarkOverlay ? const Color(0xFFFFD54F) : colors.emphasis;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         CircleAvatar(
           radius: 14,
-          backgroundColor: colors.primaryAccent.withValues(alpha: 0.28),
+          backgroundColor: onDarkOverlay
+              ? Colors.white.withValues(alpha: 0.22)
+              : colors.primaryAccent.withValues(alpha: 0.28),
           backgroundImage: imageUrl != null && imageUrl!.isNotEmpty
               ? CachedNetworkImageProvider(imageUrl!)
               : null,
@@ -564,7 +569,7 @@ class _RecentMatchStandingRow extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
-                    color: colors.textPrimary,
+                    color: primary,
                   ),
                 )
               : null,
@@ -580,7 +585,7 @@ class _RecentMatchStandingRow extends StatelessWidget {
                   if (p.isWinner) ...[
                     GameIcon.monarch(
                       size: 13,
-                      color: colors.emphasis,
+                      color: winnerAccent,
                     ),
                     const SizedBox(width: 4),
                   ],
@@ -588,7 +593,7 @@ class _RecentMatchStandingRow extends StatelessWidget {
                     child: Text(
                       title,
                       style: TextStyle(
-                        color: colors.textPrimary,
+                        color: primary,
                         fontSize: FontTokens.hudSm,
                         fontWeight:
                             p.isWinner ? FontWeight.w700 : FontWeight.w600,
@@ -604,7 +609,7 @@ class _RecentMatchStandingRow extends StatelessWidget {
                 Text(
                   p.username,
                   style: TextStyle(
-                    color: colors.textSecondary,
+                    color: secondary,
                     fontSize: FontTokens.caption,
                     fontWeight: FontWeight.w500,
                     height: 1.2,
@@ -622,7 +627,7 @@ class _RecentMatchStandingRow extends StatelessWidget {
             lifeLabel,
             textAlign: TextAlign.right,
             style: TextStyle(
-              color: p.isWinner ? colors.emphasis : colors.textPrimary,
+              color: p.isWinner ? winnerAccent : primary,
               fontSize: FontTokens.hudSm,
               fontWeight: FontWeight.w700,
               fontFeatures: const [FontFeature.tabularFigures()],
@@ -936,8 +941,17 @@ String? _resolveCommanderImageForRecentCard(
       final url = _deckByIdOrNull(ref, deckId)?.commanderImageUrl?.trim();
       if (url != null && url.isNotEmpty) return url;
     }
+    final selectedName = profile?.selectedCommanderName?.trim();
     final selected = profile?.selectedCommanderImageUrl?.trim();
-    if (selected != null && selected.isNotEmpty) return selected;
+    if (commander != null &&
+        commander.isNotEmpty &&
+        selected != null &&
+        selected.isNotEmpty &&
+        selectedName != null &&
+        selectedName.isNotEmpty &&
+        selectedName.toLowerCase() == commander.toLowerCase()) {
+      return selected;
+    }
   }
 
   return null;
@@ -1142,14 +1156,29 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
           : null;
       final matchLabel = MatchRecord.normalizeLabel(m.labelSnapshot);
 
+      // Expanded panel sits on the dark vignette — always use light type so
+      // light-theme tokens (dark text) never paint onto the scrim.
+      const overlayPrimary = Colors.white;
+      final overlaySecondary = Colors.white.withValues(alpha: 0.78);
+      final overlayMuted = Colors.white.withValues(alpha: 0.62);
+
+      final structureOverlayStyle = structureStyle?.copyWith(
+            color: overlaySecondary,
+          ) ??
+          TextStyle(
+            color: overlaySecondary,
+            fontWeight: FontWeight.w600,
+            fontSize: FontTokens.caption,
+            height: 1.35,
+          );
       final metaStripStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: colors.textSecondary,
+            color: overlaySecondary,
             fontWeight: FontWeight.w600,
             fontSize: FontTokens.caption,
             height: 1.35,
           );
       final metaExtraStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: colors.textSecondary.withValues(alpha: 0.9),
+            color: overlayMuted,
             fontWeight: FontWeight.w500,
             fontSize: FontTokens.caption,
             height: 1.3,
@@ -1171,7 +1200,7 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
             Text(
               'Standings',
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: colors.textSecondary,
+                    color: overlaySecondary,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.2,
                     fontSize: FontTokens.caption,
@@ -1183,6 +1212,7 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
               _RecentMatchStandingRow(
                 participant: ordered[i],
                 colors: colors,
+                onDarkOverlay: true,
                 imageUrl: _resolveCommanderImageForRecentCard(
                   ref,
                   ordered[i],
@@ -1203,15 +1233,15 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
             Align(
               alignment: Alignment.centerRight,
               child: Material(
-                color: colors.backgroundSecondary.withValues(alpha: 0.92),
+                color: Colors.black.withValues(alpha: 0.45),
                 shape: const CircleBorder(),
                 clipBehavior: Clip.antiAlias,
                 child: IconButton(
                   onPressed: () => setState(() => _expanded = false),
-                  icon: Icon(
+                  icon: const Icon(
                     Icons.close_rounded,
                     size: 18,
-                    color: colors.textPrimary,
+                    color: overlayPrimary,
                   ),
                   tooltip: 'Close',
                   padding: EdgeInsets.zero,
@@ -1226,7 +1256,7 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
             SizedBox(height: LayoutTokens.gr0),
             Text(
               structureLine,
-              style: structureStyle,
+              style: structureOverlayStyle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -1250,7 +1280,7 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
             Divider(
               height: 1,
               thickness: 1,
-              color: colors.textSecondary.withValues(alpha: 0.18),
+              color: Colors.white.withValues(alpha: 0.22),
             ),
             SizedBox(height: LayoutTokens.gr2),
             Expanded(
@@ -1302,7 +1332,7 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
                             key: const ValueKey('recent_match_expanded'),
                             fit: StackFit.expand,
                             children: [
-                              _recentMatchCardVignette(expanded: true),
+                              profileArtCardVignette(),
                               Padding(
                                 padding: EdgeInsets.all(innerPad),
                                 child: SizedBox(
@@ -1319,7 +1349,7 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
                             key: const ValueKey('recent_match_summary'),
                             fit: StackFit.expand,
                             children: [
-                              _recentMatchCardVignette(expanded: false),
+                              profileArtCardVignette(),
                               summaryForeground(),
                             ],
                           ),
@@ -1584,11 +1614,6 @@ class ProfileDeckCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final innerW = width - 2 * kProfileCarouselCardPaddingPx;
-    final wRatio = deck.hasPartner
-        ? _kDeckPortraitWidthOverHeight * (1 + 0.35 * 0.58)
-        : _kDeckPortraitWidthOverHeight;
-
     return SizedBox(
       width: width,
       height: height,
@@ -1608,19 +1633,25 @@ class ProfileDeckCard extends StatelessWidget {
                   final maxH = constraints.maxHeight.isFinite
                       ? constraints.maxHeight
                       : artH;
-                  final bandH = math.min(artH, maxH);
-                  final portraitSize = math
-                      .min(bandH, innerW / wRatio)
+                  // Inset so the card rim shadow isn't clipped by the
+                  // carousel Material; still fill nearly the full band height.
+                  const shadowInset = 6.0;
+                  final portraitSize = (math.min(artH, maxH) - shadowInset)
                       .clamp(
                         _kProfileDeckCardPortraitMin,
                         _kProfileDeckCardPortraitMax,
                       );
-                  return Center(
-                    child: ResolvedDeckCommanderAvatarCluster(
-                      deck: deck,
-                      colors: colors,
-                      size: portraitSize,
-                      portraitStyle: CommanderPortraitStyle.card,
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(4, 2, 4, 4),
+                    child: Center(
+                      child: ResolvedDeckCommanderAvatarCluster(
+                        deck: deck,
+                        colors: colors,
+                        size: portraitSize,
+                        portraitStyle: CommanderPortraitStyle.card,
+                        // Show full card face (avoid cover crop / zoomed look).
+                        imageFit: BoxFit.contain,
+                      ),
                     ),
                   );
                 },

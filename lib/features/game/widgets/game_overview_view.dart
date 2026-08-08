@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/game/commander_identity_colors.dart';
@@ -9,6 +10,7 @@ import '../../../core/game/game_providers.dart';
 import '../../../core/game/game_state.dart';
 import '../../../core/game/player_game_state.dart';
 import '../../../ui/theme/app_color_tokens.dart';
+import '../../../ui/theme/app_system_ui.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/motion_tokens.dart';
@@ -137,19 +139,23 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
       colors,
       identity,
     );
-    final chromeAccent = CommanderIdentityColors.gameChromeAccent(
-      colors,
-      identity,
-    );
     final endTurnEnabled =
         !game.timeoutActive && (game.isLocalPlayersTurn || game.isHost);
     final waitingForName = endTurnEnabled
         ? null
         : (activePlayer?.username);
 
+    // Keep status / nav bar styling aligned with the rest of the app so Table
+    // does not flash a white system bar (SliverAppBar default overlay).
+    final overlay = AppSystemUi.overlayStyle(context).copyWith(
+      statusBarColor: Colors.transparent,
+    );
+
     // Transparent top chrome so the identity gradient reads edge-to-edge;
     // [SliverAppBar] (primary) still owns status-bar inset without a dark band.
-    return Container(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: overlay,
+      child: Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -169,6 +175,7 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
                 SliverAppBar(
                   pinned: true,
                   primary: true,
+                  systemOverlayStyle: overlay,
                   backgroundColor: Colors.transparent,
                   surfaceTintColor: Colors.transparent,
                   shadowColor: Colors.transparent,
@@ -390,7 +397,7 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   EndTurnBar(
-                    accentColor: chromeAccent,
+                    accentColor: colors.primaryAccent,
                     enabled: endTurnEnabled,
                     onEndTurn: () => notifier.endTurn(),
                     waitingForName: waitingForName,
@@ -443,6 +450,7 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
             ),
           ),
         ],
+      ),
       ),
     );
   }
