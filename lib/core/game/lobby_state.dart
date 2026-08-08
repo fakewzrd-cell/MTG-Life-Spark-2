@@ -223,14 +223,16 @@ class LobbyNotifier extends StateNotifier<LobbyState> {
     );
 
     // Seed format/life from Settings on a fresh lobby only so Retry / mid-session
-    // re-init keeps any host edits already made this session.
+    // re-init keeps any host edits already made this session (including label).
     final config =
         state.players.isEmpty ? _configFromAppSettings() : state.config;
+    final matchLabel = state.players.isEmpty ? null : state.matchLabel;
 
     state = LobbyState(
       isHost: true,
       players: [hostSlot],
       config: config,
+      matchLabel: matchLabel,
     );
 
     _listenToSession();

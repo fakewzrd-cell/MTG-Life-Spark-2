@@ -282,6 +282,18 @@ class _MatchLabelSectionState extends ConsumerState<_MatchLabelSection> {
     final recentLabels =
         ref.watch(matchRepositoryProvider).recentLabels(limit: 6);
     final current = ref.watch(lobbyProvider).matchLabel;
+    // Keep the field in sync if lobby state changes outside this TextField
+    // (e.g. host QR Retry re-init preserving or clearing the label).
+    final currentText = current ?? '';
+    if (_controller.text != currentText && !_controller.value.isComposingRangeValid) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _controller.text == currentText) return;
+        _controller.value = TextEditingValue(
+          text: currentText,
+          selection: TextSelection.collapsed(offset: currentText.length),
+        );
+      });
+    }
 
     return Container(
       padding: EdgeInsets.all(compact ? LayoutTokens.gr3 : LayoutTokens.gr4),

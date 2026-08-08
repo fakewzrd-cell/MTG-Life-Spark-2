@@ -168,6 +168,21 @@ void main() {
       expect(lobby.config.startingLife, 25);
     });
 
+    test('initAsHost keeps matchLabel on re-init when players already present',
+        () {
+      final ble = FakeBleService();
+      final container = _lobbyContainer(ble: ble);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(lobbyProvider.notifier);
+      notifier.initAsHost();
+      notifier.setMatchLabel('Friday EDH');
+      expect(container.read(lobbyProvider).matchLabel, 'Friday EDH');
+
+      notifier.initAsHost();
+      expect(container.read(lobbyProvider).matchLabel, 'Friday EDH');
+    });
+
     test('setReady toggles slot and host rebroadcasts lobby update', () {
       final ble = FakeBleService();
       final container = _lobbyContainer(ble: ble);
