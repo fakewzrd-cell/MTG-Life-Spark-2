@@ -339,18 +339,13 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
         title: 'Decks',
         actions: [
           if (!isEmpty)
-            TextButton.icon(
-              onPressed: _promptNewDeckName,
-              icon: Icon(
-                Icons.add_rounded,
-                size: 20,
-                color: colors.primaryAccent,
-              ),
-              label: Text(
-                'Add',
-                style: TextStyle(
-                  color: colors.primaryAccent,
-                  fontWeight: FontWeight.w700,
+            Padding(
+              padding: EdgeInsets.only(right: LayoutTokens.gr2),
+              child: Center(
+                child: ProfileHeaderPillButton(
+                  label: 'Add',
+                  colors: colors,
+                  onPressed: _promptNewDeckName,
                 ),
               ),
             ),

@@ -369,6 +369,106 @@ class ProfileSectionCountPill extends StatelessWidget {
   }
 }
 
+/// Filled circular icon control for profile section headers (+, filter).
+class ProfileHeaderCircleButton extends StatelessWidget {
+  const ProfileHeaderCircleButton({
+    super.key,
+    required this.icon,
+    required this.colors,
+    required this.tooltip,
+    this.onPressed,
+    this.size = 36,
+    this.iconSize = 20,
+  });
+
+  final IconData icon;
+  final AppColorTokens colors;
+  final String tooltip;
+  final VoidCallback? onPressed;
+  final double size;
+  final double iconSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final face = SizedBox(
+      width: size,
+      height: size,
+      child: Icon(
+        icon,
+        size: iconSize,
+        color: colors.primaryAccent,
+      ),
+    );
+    // When [onPressed] is null (e.g. PopupMenuButton child), skip InkWell so
+    // the parent owns the tap target.
+    final button = onPressed == null
+        ? Material(
+            color: colors.primaryAccent.withValues(alpha: OpacityTokens.soft),
+            shape: const CircleBorder(),
+            child: face,
+          )
+        : Material(
+            color: colors.primaryAccent.withValues(alpha: OpacityTokens.soft),
+            shape: const CircleBorder(),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: onPressed,
+              child: face,
+            ),
+          );
+    return Tooltip(message: tooltip, child: button);
+  }
+}
+
+/// Compact accent pill for header actions (e.g. Decks "+ Add").
+class ProfileHeaderPillButton extends StatelessWidget {
+  const ProfileHeaderPillButton({
+    super.key,
+    required this.label,
+    required this.colors,
+    required this.onPressed,
+    this.icon = Icons.add_rounded,
+  });
+
+  final String label;
+  final AppColorTokens colors;
+  final VoidCallback onPressed;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: colors.primaryAccent.withValues(alpha: OpacityTokens.soft),
+      borderRadius: BorderRadius.circular(RadiusTokens.pill),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(RadiusTokens.pill),
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: LayoutTokens.gr3,
+            vertical: LayoutTokens.gr1,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 18, color: colors.primaryAccent),
+              SizedBox(width: LayoutTokens.gr1),
+              Text(
+                label,
+                style: TextStyle(
+                  color: colors.primaryAccent,
+                  fontSize: FontTokens.body,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Shared width for profile/My Decks horizontal carousel cards.
 const double kProfileCarouselCardWidth = LayoutTokens.profileCarouselCardWidth;
 
@@ -376,7 +476,6 @@ const double kProfileCarouselCardWidth = LayoutTokens.profileCarouselCardWidth;
 const double kProfileCarouselCardHeight = LayoutTokens.profileCarouselCardCanonicalHeight;
 
 const double _kProfileDeckCardPortraitMin = 72;
-const double _kProfileDeckCardPortraitMax = 200;
 
 /// Line heights for deck card footer (matches [ProfileDeckCard] text styles).
 const double _kDeckCardTitleLine = 18;
@@ -431,10 +530,7 @@ double profileDeckCardArtHeight(
   final innerH = cardHeight - 2 * kProfileCarouselCardPaddingPx;
   final footer = profileDeckCardFooterReserveHeight(deck);
   final maxByFooter = math.max(_kProfileDeckCardPortraitMin, innerH - footer);
-  return maxByFooter.clamp(
-    _kProfileDeckCardPortraitMin,
-    math.min(_kProfileDeckCardPortraitMax, maxByFooter),
-  );
+  return math.max(_kProfileDeckCardPortraitMin, maxByFooter);
 }
 
 /// Fixed 2:3 height for every carousel card (240×360 at default width).
@@ -693,15 +789,12 @@ class _ProfileRecentGamesModuleState extends State<ProfileRecentGamesModule> {
             ? PopupMenuButton<_RecentGamesTimeFilter>(
                 tooltip: 'Filter: ${_filter.menuLabel}',
                 padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(
-                  minWidth: kMinInteractiveDimension,
-                  minHeight: kMinInteractiveDimension,
-                ),
+                offset: const Offset(0, 8),
                 onSelected: (v) => setState(() => _filter = v),
-                icon: Icon(
-                  Icons.filter_list_rounded,
-                  size: 22,
-                  color: c.primaryAccent,
+                child: ProfileHeaderCircleButton(
+                  icon: Icons.filter_list_rounded,
+                  colors: c,
+                  tooltip: 'Filter: ${_filter.menuLabel}',
                 ),
                 itemBuilder: (context) => [
                   for (final f in _RecentGamesTimeFilter.values)
@@ -1436,19 +1529,11 @@ class _ProfileDeckPerformanceSectionState
         pluralUnit: 'decks',
         // Empty CTA lives on the fused card; header + only when decks are listed.
         trailing: !needsAddPrompt
-            ? IconButton(
+            ? ProfileHeaderCircleButton(
+                icon: Icons.add_rounded,
+                colors: colors,
                 tooltip: 'Add deck',
                 onPressed: openDecks,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(
-                  minWidth: kMinInteractiveDimension,
-                  minHeight: kMinInteractiveDimension,
-                ),
-                icon: Icon(
-                  Icons.add_rounded,
-                  size: 22,
-                  color: colors.primaryAccent,
-                ),
               )
             : null,
       );
@@ -1636,11 +1721,10 @@ class ProfileDeckCard extends StatelessWidget {
                   // Inset so the card rim shadow isn't clipped by the
                   // carousel Material; still fill nearly the full band height.
                   const shadowInset = 6.0;
-                  final portraitSize = (math.min(artH, maxH) - shadowInset)
-                      .clamp(
-                        _kProfileDeckCardPortraitMin,
-                        _kProfileDeckCardPortraitMax,
-                      );
+                  final portraitSize = math.max(
+                    _kProfileDeckCardPortraitMin,
+                    math.min(artH, maxH) - shadowInset,
+                  );
                   return Padding(
                     padding: const EdgeInsets.fromLTRB(4, 2, 4, 4),
                     child: Center(
@@ -1649,8 +1733,8 @@ class ProfileDeckCard extends StatelessWidget {
                         colors: colors,
                         size: portraitSize,
                         portraitStyle: CommanderPortraitStyle.card,
-                        // Show full card face (avoid cover crop / zoomed look).
-                        imageFit: BoxFit.contain,
+                        // Fill the portrait frame height; crop sides if needed.
+                        imageFit: BoxFit.cover,
                       ),
                     ),
                   );
