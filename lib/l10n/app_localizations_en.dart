@@ -2595,4 +2595,197 @@ class AppLocalizationsEn extends AppLocalizations {
   String networkCannotReachHost(String error) {
     return 'Cannot reach host: $error';
   }
+
+  @override
+  String get backupFileTypeLabel => 'Life Spark backup';
+
+  @override
+  String get backupNotValidFile => 'Not a Life Spark backup file.';
+
+  @override
+  String get backupNotValidJson => 'Backup file is not valid JSON.';
+
+  @override
+  String get backupCouldNotRead => 'Could not read the selected backup file.';
+
+  @override
+  String logLifeChange(String name, String delta) {
+    return '$name: Life $delta';
+  }
+
+  @override
+  String logCounterChange(
+    String name,
+    String counter,
+    String delta,
+    String value,
+  ) {
+    return '$name: $counter $delta (→ $value)';
+  }
+
+  @override
+  String logCounterChangeSimple(String name, String counter, String delta) {
+    return '$name: $counter $delta';
+  }
+
+  @override
+  String logLifeChangedYours(String name, String delta) {
+    return '$name changed your life $delta';
+  }
+
+  @override
+  String logCounterChangedYours(String name, String counter, String delta) {
+    return '$name changed your $counter $delta';
+  }
+
+  @override
+  String logEndsTurn(String name) {
+    return '$name ends turn';
+  }
+
+  @override
+  String logCmdDmgDealtYou(String name, String delta) {
+    return '$name dealt you $delta commander damage';
+  }
+
+  @override
+  String logCmdDmgYouDealt(String name, String delta) {
+    return 'You dealt $name $delta commander damage';
+  }
+
+  @override
+  String logCmdDmgOther(String from, String to, String delta) {
+    return '$from → $to: Commander damage $delta';
+  }
+
+  @override
+  String get logTurnOrderUpdated => 'Turn order updated by host';
+
+  @override
+  String get logProliferate => 'Proliferate: all players';
+
+  @override
+  String logAllianceRevealed(String a, String b) {
+    return 'Alliance revealed: $a & $b';
+  }
+
+  @override
+  String logAllianceBetrayal(String a, String b) {
+    return 'Alliance broken — betrayal: $a & $b';
+  }
+
+  @override
+  String get logAllianceBroken => 'Alliance broken';
+
+  @override
+  String logAllianceFormed(String a, String b, String duration) {
+    return 'Secret alliance formed: $a & $b ($duration)';
+  }
+
+  @override
+  String logPlayerLeft(String name) {
+    return '$name left the game';
+  }
+
+  @override
+  String logRolled(String name, String result) {
+    return '$name rolled a $result';
+  }
+
+  @override
+  String logFlipped(String name, String result) {
+    return '$name flipped $result';
+  }
+
+  @override
+  String logStackAdded(String name, String item) {
+    return '$name added “$item”';
+  }
+
+  @override
+  String logStackAddedResponse(String name, String item) {
+    return '$name added “$item” (response)';
+  }
+
+  @override
+  String logStackRenamed(String name, String item) {
+    return '$name renamed stack item to “$item”';
+  }
+
+  @override
+  String logStackStatus(String name, String item, String status) {
+    return '$name’s “$item” $status';
+  }
+
+  @override
+  String get logClearedStack => 'Cleared stack';
+
+  @override
+  String get logCounterPoison => 'Poison';
+
+  @override
+  String get logCounterEnergy => 'Energy';
+
+  @override
+  String get logCounterExperience => 'Experience';
+
+  @override
+  String get logCounterRad => 'Rad';
+
+  @override
+  String get logCounterBlood => 'Blood';
+
+  @override
+  String get logCounterClue => 'Clue';
+
+  @override
+  String get logCounterMap => 'Map';
+
+  @override
+  String get logCounterTreasure => 'Treasure';
+
+  @override
+  String get logCounterDevotion => 'Devotion';
+
+  @override
+  String get logCounterCreatures => 'Creatures';
+
+  @override
+  String get logCounterEnchantments => 'Enchantments';
+
+  @override
+  String get logCounterArtifacts => 'Artifacts';
+
+  @override
+  String get logCounterGyCreatures => 'GY creatures';
+
+  @override
+  String get logCounterExile => 'Exile';
+
+  @override
+  String get logStackStatusFizzled => 'fizzled';
+
+  @override
+  String get logStackStatusCountered => 'countered';
+
+  @override
+  String get logStackStatusResolved => 'resolved';
+
+  @override
+  String get logStackStatusReactivated => 'reactivated';
+
+  @override
+  String get logDurationEndOfTurn => 'Until end of turn';
+
+  @override
+  String get logDurationEndOfRound => 'Until end of round';
+
+  @override
+  String get logDurationUntilBroken => 'Until broken';
+
+  @override
+  String get logHeads => 'Heads';
+
+  @override
+  String get logTails => 'Tails';
 }

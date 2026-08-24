@@ -1482,5 +1482,260 @@
         "type": "String"
       }
     }
-  }
+  },
+  "backupFileTypeLabel": "Life Spark backup",
+  "backupNotValidFile": "Not a Life Spark backup file.",
+  "backupNotValidJson": "Backup file is not valid JSON.",
+  "backupCouldNotRead": "Could not read the selected backup file.",
+  "logLifeChange": "{name}: Life {delta}",
+  "@logLifeChange": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "delta": {
+        "type": "String"
+      }
+    }
+  },
+  "logCounterChange": "{name}: {counter} {delta} (→ {value})",
+  "@logCounterChange": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "counter": {
+        "type": "String"
+      },
+      "delta": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "logCounterChangeSimple": "{name}: {counter} {delta}",
+  "@logCounterChangeSimple": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "counter": {
+        "type": "String"
+      },
+      "delta": {
+        "type": "String"
+      }
+    }
+  },
+  "logLifeChangedYours": "{name} changed your life {delta}",
+  "@logLifeChangedYours": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "delta": {
+        "type": "String"
+      }
+    }
+  },
+  "logCounterChangedYours": "{name} changed your {counter} {delta}",
+  "@logCounterChangedYours": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "counter": {
+        "type": "String"
+      },
+      "delta": {
+        "type": "String"
+      }
+    }
+  },
+  "logEndsTurn": "{name} ends turn",
+  "@logEndsTurn": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "logCmdDmgDealtYou": "{name} dealt you {delta} commander damage",
+  "@logCmdDmgDealtYou": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "delta": {
+        "type": "String"
+      }
+    }
+  },
+  "logCmdDmgYouDealt": "You dealt {name} {delta} commander damage",
+  "@logCmdDmgYouDealt": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "delta": {
+        "type": "String"
+      }
+    }
+  },
+  "logCmdDmgOther": "{from} → {to}: Commander damage {delta}",
+  "@logCmdDmgOther": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      },
+      "delta": {
+        "type": "String"
+      }
+    }
+  },
+  "logTurnOrderUpdated": "Turn order updated by host",
+  "logProliferate": "Proliferate: all players",
+  "logAllianceRevealed": "Alliance revealed: {a} & {b}",
+  "@logAllianceRevealed": {
+    "placeholders": {
+      "a": {
+        "type": "String"
+      },
+      "b": {
+        "type": "String"
+      }
+    }
+  },
+  "logAllianceBetrayal": "Alliance broken — betrayal: {a} & {b}",
+  "@logAllianceBetrayal": {
+    "placeholders": {
+      "a": {
+        "type": "String"
+      },
+      "b": {
+        "type": "String"
+      }
+    }
+  },
+  "logAllianceBroken": "Alliance broken",
+  "logAllianceFormed": "Secret alliance formed: {a} & {b} ({duration})",
+  "@logAllianceFormed": {
+    "placeholders": {
+      "a": {
+        "type": "String"
+      },
+      "b": {
+        "type": "String"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "logPlayerLeft": "{name} left the game",
+  "@logPlayerLeft": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "logRolled": "{name} rolled a {result}",
+  "@logRolled": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "result": {
+        "type": "String"
+      }
+    }
+  },
+  "logFlipped": "{name} flipped {result}",
+  "@logFlipped": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "result": {
+        "type": "String"
+      }
+    }
+  },
+  "logStackAdded": "{name} added “{item}”",
+  "@logStackAdded": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "logStackAddedResponse": "{name} added “{item}” (response)",
+  "@logStackAddedResponse": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "logStackRenamed": "{name} renamed stack item to “{item}”",
+  "@logStackRenamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "logStackStatus": "{name}’s “{item}” {status}",
+  "@logStackStatus": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "item": {
+        "type": "String"
+      },
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "logClearedStack": "Cleared stack",
+  "logCounterPoison": "Poison",
+  "logCounterEnergy": "Energy",
+  "logCounterExperience": "Experience",
+  "logCounterRad": "Rad",
+  "logCounterBlood": "Blood",
+  "logCounterClue": "Clue",
+  "logCounterMap": "Map",
+  "logCounterTreasure": "Treasure",
+  "logCounterDevotion": "Devotion",
+  "logCounterCreatures": "Creatures",
+  "logCounterEnchantments": "Enchantments",
+  "logCounterArtifacts": "Artifacts",
+  "logCounterGyCreatures": "GY creatures",
+  "logCounterExile": "Exile",
+  "logStackStatusFizzled": "fizzled",
+  "logStackStatusCountered": "countered",
+  "logStackStatusResolved": "resolved",
+  "logStackStatusReactivated": "reactivated",
+  "logDurationEndOfTurn": "Until end of turn",
+  "logDurationEndOfRound": "Until end of round",
+  "logDurationUntilBroken": "Until broken",
+  "logHeads": "Heads",
+  "logTails": "Tails"
 }

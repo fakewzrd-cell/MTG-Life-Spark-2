@@ -2607,6 +2607,200 @@ class AppLocalizationsPt extends AppLocalizations {
   String networkCannotReachHost(String error) {
     return 'Não foi possível alcançar o host: $error';
   }
+
+  @override
+  String get backupFileTypeLabel => 'Backup do Life Spark';
+
+  @override
+  String get backupNotValidFile => 'Não é um arquivo de backup do Life Spark.';
+
+  @override
+  String get backupNotValidJson => 'O arquivo de backup não é um JSON válido.';
+
+  @override
+  String get backupCouldNotRead =>
+      'Não foi possível ler o arquivo de backup selecionado.';
+
+  @override
+  String logLifeChange(String name, String delta) {
+    return '$name: Vida $delta';
+  }
+
+  @override
+  String logCounterChange(
+    String name,
+    String counter,
+    String delta,
+    String value,
+  ) {
+    return '$name: $counter $delta (→ $value)';
+  }
+
+  @override
+  String logCounterChangeSimple(String name, String counter, String delta) {
+    return '$name: $counter $delta';
+  }
+
+  @override
+  String logLifeChangedYours(String name, String delta) {
+    return '$name alterou sua vida $delta';
+  }
+
+  @override
+  String logCounterChangedYours(String name, String counter, String delta) {
+    return '$name alterou seu $counter $delta';
+  }
+
+  @override
+  String logEndsTurn(String name) {
+    return '$name encerra o turno';
+  }
+
+  @override
+  String logCmdDmgDealtYou(String name, String delta) {
+    return '$name causou a você $delta de dano de comandante';
+  }
+
+  @override
+  String logCmdDmgYouDealt(String name, String delta) {
+    return 'Você causou a $name $delta de dano de comandante';
+  }
+
+  @override
+  String logCmdDmgOther(String from, String to, String delta) {
+    return '$from → $to: Dano de comandante $delta';
+  }
+
+  @override
+  String get logTurnOrderUpdated => 'Ordem de turnos atualizada pelo host';
+
+  @override
+  String get logProliferate => 'Proliferar: todos os jogadores';
+
+  @override
+  String logAllianceRevealed(String a, String b) {
+    return 'Aliança revelada: $a e $b';
+  }
+
+  @override
+  String logAllianceBetrayal(String a, String b) {
+    return 'Aliança quebrada — traição: $a e $b';
+  }
+
+  @override
+  String get logAllianceBroken => 'Aliança quebrada';
+
+  @override
+  String logAllianceFormed(String a, String b, String duration) {
+    return 'Aliança secreta formada: $a e $b ($duration)';
+  }
+
+  @override
+  String logPlayerLeft(String name) {
+    return '$name saiu da partida';
+  }
+
+  @override
+  String logRolled(String name, String result) {
+    return '$name rolou um $result';
+  }
+
+  @override
+  String logFlipped(String name, String result) {
+    return '$name tirou $result';
+  }
+
+  @override
+  String logStackAdded(String name, String item) {
+    return '$name adicionou “$item”';
+  }
+
+  @override
+  String logStackAddedResponse(String name, String item) {
+    return '$name adicionou “$item” (resposta)';
+  }
+
+  @override
+  String logStackRenamed(String name, String item) {
+    return '$name renomeou item da pilha para “$item”';
+  }
+
+  @override
+  String logStackStatus(String name, String item, String status) {
+    return '“$item” de $name $status';
+  }
+
+  @override
+  String get logClearedStack => 'Pilha limpa';
+
+  @override
+  String get logCounterPoison => 'Veneno';
+
+  @override
+  String get logCounterEnergy => 'Energia';
+
+  @override
+  String get logCounterExperience => 'Experiência';
+
+  @override
+  String get logCounterRad => 'Rad';
+
+  @override
+  String get logCounterBlood => 'Sangue';
+
+  @override
+  String get logCounterClue => 'Pista';
+
+  @override
+  String get logCounterMap => 'Mapa';
+
+  @override
+  String get logCounterTreasure => 'Tesouro';
+
+  @override
+  String get logCounterDevotion => 'Devoção';
+
+  @override
+  String get logCounterCreatures => 'Criaturas';
+
+  @override
+  String get logCounterEnchantments => 'Encantamentos';
+
+  @override
+  String get logCounterArtifacts => 'Artefatos';
+
+  @override
+  String get logCounterGyCreatures => 'Criaturas do cemitério';
+
+  @override
+  String get logCounterExile => 'Exílio';
+
+  @override
+  String get logStackStatusFizzled => 'falhou';
+
+  @override
+  String get logStackStatusCountered => 'anulado';
+
+  @override
+  String get logStackStatusResolved => 'resolvido';
+
+  @override
+  String get logStackStatusReactivated => 'reativado';
+
+  @override
+  String get logDurationEndOfTurn => 'Até o fim do turno';
+
+  @override
+  String get logDurationEndOfRound => 'Até o fim da rodada';
+
+  @override
+  String get logDurationUntilBroken => 'Até ser quebrada';
+
+  @override
+  String get logHeads => 'Cara';
+
+  @override
+  String get logTails => 'Coroa';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -5212,4 +5406,198 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String networkCannotReachHost(String error) {
     return 'Não foi possível alcançar o host: $error';
   }
+
+  @override
+  String get backupFileTypeLabel => 'Backup do Life Spark';
+
+  @override
+  String get backupNotValidFile => 'Não é um arquivo de backup do Life Spark.';
+
+  @override
+  String get backupNotValidJson => 'O arquivo de backup não é um JSON válido.';
+
+  @override
+  String get backupCouldNotRead =>
+      'Não foi possível ler o arquivo de backup selecionado.';
+
+  @override
+  String logLifeChange(String name, String delta) {
+    return '$name: Vida $delta';
+  }
+
+  @override
+  String logCounterChange(
+    String name,
+    String counter,
+    String delta,
+    String value,
+  ) {
+    return '$name: $counter $delta (→ $value)';
+  }
+
+  @override
+  String logCounterChangeSimple(String name, String counter, String delta) {
+    return '$name: $counter $delta';
+  }
+
+  @override
+  String logLifeChangedYours(String name, String delta) {
+    return '$name alterou sua vida $delta';
+  }
+
+  @override
+  String logCounterChangedYours(String name, String counter, String delta) {
+    return '$name alterou seu $counter $delta';
+  }
+
+  @override
+  String logEndsTurn(String name) {
+    return '$name encerra o turno';
+  }
+
+  @override
+  String logCmdDmgDealtYou(String name, String delta) {
+    return '$name causou a você $delta de dano de comandante';
+  }
+
+  @override
+  String logCmdDmgYouDealt(String name, String delta) {
+    return 'Você causou a $name $delta de dano de comandante';
+  }
+
+  @override
+  String logCmdDmgOther(String from, String to, String delta) {
+    return '$from → $to: Dano de comandante $delta';
+  }
+
+  @override
+  String get logTurnOrderUpdated => 'Ordem de turnos atualizada pelo host';
+
+  @override
+  String get logProliferate => 'Proliferar: todos os jogadores';
+
+  @override
+  String logAllianceRevealed(String a, String b) {
+    return 'Aliança revelada: $a e $b';
+  }
+
+  @override
+  String logAllianceBetrayal(String a, String b) {
+    return 'Aliança quebrada — traição: $a e $b';
+  }
+
+  @override
+  String get logAllianceBroken => 'Aliança quebrada';
+
+  @override
+  String logAllianceFormed(String a, String b, String duration) {
+    return 'Aliança secreta formada: $a e $b ($duration)';
+  }
+
+  @override
+  String logPlayerLeft(String name) {
+    return '$name saiu da partida';
+  }
+
+  @override
+  String logRolled(String name, String result) {
+    return '$name rolou um $result';
+  }
+
+  @override
+  String logFlipped(String name, String result) {
+    return '$name tirou $result';
+  }
+
+  @override
+  String logStackAdded(String name, String item) {
+    return '$name adicionou “$item”';
+  }
+
+  @override
+  String logStackAddedResponse(String name, String item) {
+    return '$name adicionou “$item” (resposta)';
+  }
+
+  @override
+  String logStackRenamed(String name, String item) {
+    return '$name renomeou item da pilha para “$item”';
+  }
+
+  @override
+  String logStackStatus(String name, String item, String status) {
+    return '“$item” de $name $status';
+  }
+
+  @override
+  String get logClearedStack => 'Pilha limpa';
+
+  @override
+  String get logCounterPoison => 'Veneno';
+
+  @override
+  String get logCounterEnergy => 'Energia';
+
+  @override
+  String get logCounterExperience => 'Experiência';
+
+  @override
+  String get logCounterRad => 'Rad';
+
+  @override
+  String get logCounterBlood => 'Sangue';
+
+  @override
+  String get logCounterClue => 'Pista';
+
+  @override
+  String get logCounterMap => 'Mapa';
+
+  @override
+  String get logCounterTreasure => 'Tesouro';
+
+  @override
+  String get logCounterDevotion => 'Devoção';
+
+  @override
+  String get logCounterCreatures => 'Criaturas';
+
+  @override
+  String get logCounterEnchantments => 'Encantamentos';
+
+  @override
+  String get logCounterArtifacts => 'Artefatos';
+
+  @override
+  String get logCounterGyCreatures => 'Criaturas do cemitério';
+
+  @override
+  String get logCounterExile => 'Exílio';
+
+  @override
+  String get logStackStatusFizzled => 'falhou';
+
+  @override
+  String get logStackStatusCountered => 'anulado';
+
+  @override
+  String get logStackStatusResolved => 'resolvido';
+
+  @override
+  String get logStackStatusReactivated => 'reativado';
+
+  @override
+  String get logDurationEndOfTurn => 'Até o fim do turno';
+
+  @override
+  String get logDurationEndOfRound => 'Até o fim da rodada';
+
+  @override
+  String get logDurationUntilBroken => 'Até ser quebrada';
+
+  @override
+  String get logHeads => 'Cara';
+
+  @override
+  String get logTails => 'Coroa';
 }

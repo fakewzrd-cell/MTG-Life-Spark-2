@@ -2607,4 +2607,199 @@ class AppLocalizationsEs extends AppLocalizations {
   String networkCannotReachHost(String error) {
     return 'No se puede alcanzar al anfitrión: $error';
   }
+
+  @override
+  String get backupFileTypeLabel => 'Copia de Life Spark';
+
+  @override
+  String get backupNotValidFile => 'No es un archivo de copia de Life Spark.';
+
+  @override
+  String get backupNotValidJson => 'El archivo de copia no es JSON válido.';
+
+  @override
+  String get backupCouldNotRead =>
+      'No se pudo leer el archivo de copia seleccionado.';
+
+  @override
+  String logLifeChange(String name, String delta) {
+    return '$name: Vida $delta';
+  }
+
+  @override
+  String logCounterChange(
+    String name,
+    String counter,
+    String delta,
+    String value,
+  ) {
+    return '$name: $counter $delta (→ $value)';
+  }
+
+  @override
+  String logCounterChangeSimple(String name, String counter, String delta) {
+    return '$name: $counter $delta';
+  }
+
+  @override
+  String logLifeChangedYours(String name, String delta) {
+    return '$name cambió tu vida $delta';
+  }
+
+  @override
+  String logCounterChangedYours(String name, String counter, String delta) {
+    return '$name cambió tu $counter $delta';
+  }
+
+  @override
+  String logEndsTurn(String name) {
+    return '$name termina el turno';
+  }
+
+  @override
+  String logCmdDmgDealtYou(String name, String delta) {
+    return '$name te hizo $delta de daño de comandante';
+  }
+
+  @override
+  String logCmdDmgYouDealt(String name, String delta) {
+    return 'Le hiciste a $name $delta de daño de comandante';
+  }
+
+  @override
+  String logCmdDmgOther(String from, String to, String delta) {
+    return '$from → $to: Daño de comandante $delta';
+  }
+
+  @override
+  String get logTurnOrderUpdated =>
+      'Orden de turnos actualizado por el anfitrión';
+
+  @override
+  String get logProliferate => 'Proliferar: todos los jugadores';
+
+  @override
+  String logAllianceRevealed(String a, String b) {
+    return 'Alianza revelada: $a y $b';
+  }
+
+  @override
+  String logAllianceBetrayal(String a, String b) {
+    return 'Alianza rota — traición: $a y $b';
+  }
+
+  @override
+  String get logAllianceBroken => 'Alianza rota';
+
+  @override
+  String logAllianceFormed(String a, String b, String duration) {
+    return 'Alianza secreta formada: $a y $b ($duration)';
+  }
+
+  @override
+  String logPlayerLeft(String name) {
+    return '$name dejó la partida';
+  }
+
+  @override
+  String logRolled(String name, String result) {
+    return '$name sacó un $result';
+  }
+
+  @override
+  String logFlipped(String name, String result) {
+    return '$name sacó $result';
+  }
+
+  @override
+  String logStackAdded(String name, String item) {
+    return '$name añadió “$item”';
+  }
+
+  @override
+  String logStackAddedResponse(String name, String item) {
+    return '$name añadió “$item” (respuesta)';
+  }
+
+  @override
+  String logStackRenamed(String name, String item) {
+    return '$name renombró un ítem de la pila a “$item”';
+  }
+
+  @override
+  String logStackStatus(String name, String item, String status) {
+    return '“$item” de $name $status';
+  }
+
+  @override
+  String get logClearedStack => 'Pila vaciada';
+
+  @override
+  String get logCounterPoison => 'Veneno';
+
+  @override
+  String get logCounterEnergy => 'Energía';
+
+  @override
+  String get logCounterExperience => 'Experiencia';
+
+  @override
+  String get logCounterRad => 'Rad';
+
+  @override
+  String get logCounterBlood => 'Sangre';
+
+  @override
+  String get logCounterClue => 'Pista';
+
+  @override
+  String get logCounterMap => 'Mapa';
+
+  @override
+  String get logCounterTreasure => 'Tesoro';
+
+  @override
+  String get logCounterDevotion => 'Devoción';
+
+  @override
+  String get logCounterCreatures => 'Criaturas';
+
+  @override
+  String get logCounterEnchantments => 'Encantamientos';
+
+  @override
+  String get logCounterArtifacts => 'Artefactos';
+
+  @override
+  String get logCounterGyCreatures => 'Criaturas del cementerio';
+
+  @override
+  String get logCounterExile => 'Exilio';
+
+  @override
+  String get logStackStatusFizzled => 'falló';
+
+  @override
+  String get logStackStatusCountered => 'contrarrestado';
+
+  @override
+  String get logStackStatusResolved => 'resuelto';
+
+  @override
+  String get logStackStatusReactivated => 'reactivado';
+
+  @override
+  String get logDurationEndOfTurn => 'Hasta fin de turno';
+
+  @override
+  String get logDurationEndOfRound => 'Hasta fin de ronda';
+
+  @override
+  String get logDurationUntilBroken => 'Hasta romperla';
+
+  @override
+  String get logHeads => 'Cara';
+
+  @override
+  String get logTails => 'Cruz';
 }

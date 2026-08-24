@@ -391,7 +391,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<void> _restoreBackup() async {
     final l10n = AppLocalizations.of(context);
     try {
-      final pending = await ref.read(backupServiceProvider).pickBackupFile();
+      final pending = await ref.read(backupServiceProvider).pickBackupFile(
+            fileTypeLabel: l10n.backupFileTypeLabel,
+          );
       if (!mounted) return;
       if (pending == null) return;
 
@@ -425,11 +427,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (!mounted) return;
       showUiSnackBar(
         context,
-        l10n.backupRestoreFailed,
+        _localizeBackupError(l10n, e),
         isError: true,
       );
     }
   }
+}
+
+String _localizeBackupError(AppLocalizations l10n, Object error) {
+  if (error is FormatException) {
+    switch (error.message) {
+      case 'Not a Life Spark backup file.':
+        return l10n.backupNotValidFile;
+      case 'Backup file is not valid JSON.':
+        return l10n.backupNotValidJson;
+      case 'Could not read the selected backup file.':
+        return l10n.backupCouldNotRead;
+    }
+  }
+  return l10n.backupRestoreFailed;
 }
 
 class _SectionHeader extends StatelessWidget {

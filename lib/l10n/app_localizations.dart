@@ -4726,6 +4726,311 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cannot reach host: {error}'**
   String networkCannotReachHost(String error);
+
+  /// No description provided for @backupFileTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Life Spark backup'**
+  String get backupFileTypeLabel;
+
+  /// No description provided for @backupNotValidFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a Life Spark backup file.'**
+  String get backupNotValidFile;
+
+  /// No description provided for @backupNotValidJson.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup file is not valid JSON.'**
+  String get backupNotValidJson;
+
+  /// No description provided for @backupCouldNotRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read the selected backup file.'**
+  String get backupCouldNotRead;
+
+  /// No description provided for @logLifeChange.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: Life {delta}'**
+  String logLifeChange(String name, String delta);
+
+  /// No description provided for @logCounterChange.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: {counter} {delta} (→ {value})'**
+  String logCounterChange(
+    String name,
+    String counter,
+    String delta,
+    String value,
+  );
+
+  /// No description provided for @logCounterChangeSimple.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}: {counter} {delta}'**
+  String logCounterChangeSimple(String name, String counter, String delta);
+
+  /// No description provided for @logLifeChangedYours.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} changed your life {delta}'**
+  String logLifeChangedYours(String name, String delta);
+
+  /// No description provided for @logCounterChangedYours.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} changed your {counter} {delta}'**
+  String logCounterChangedYours(String name, String counter, String delta);
+
+  /// No description provided for @logEndsTurn.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} ends turn'**
+  String logEndsTurn(String name);
+
+  /// No description provided for @logCmdDmgDealtYou.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} dealt you {delta} commander damage'**
+  String logCmdDmgDealtYou(String name, String delta);
+
+  /// No description provided for @logCmdDmgYouDealt.
+  ///
+  /// In en, this message translates to:
+  /// **'You dealt {name} {delta} commander damage'**
+  String logCmdDmgYouDealt(String name, String delta);
+
+  /// No description provided for @logCmdDmgOther.
+  ///
+  /// In en, this message translates to:
+  /// **'{from} → {to}: Commander damage {delta}'**
+  String logCmdDmgOther(String from, String to, String delta);
+
+  /// No description provided for @logTurnOrderUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn order updated by host'**
+  String get logTurnOrderUpdated;
+
+  /// No description provided for @logProliferate.
+  ///
+  /// In en, this message translates to:
+  /// **'Proliferate: all players'**
+  String get logProliferate;
+
+  /// No description provided for @logAllianceRevealed.
+  ///
+  /// In en, this message translates to:
+  /// **'Alliance revealed: {a} & {b}'**
+  String logAllianceRevealed(String a, String b);
+
+  /// No description provided for @logAllianceBetrayal.
+  ///
+  /// In en, this message translates to:
+  /// **'Alliance broken — betrayal: {a} & {b}'**
+  String logAllianceBetrayal(String a, String b);
+
+  /// No description provided for @logAllianceBroken.
+  ///
+  /// In en, this message translates to:
+  /// **'Alliance broken'**
+  String get logAllianceBroken;
+
+  /// No description provided for @logAllianceFormed.
+  ///
+  /// In en, this message translates to:
+  /// **'Secret alliance formed: {a} & {b} ({duration})'**
+  String logAllianceFormed(String a, String b, String duration);
+
+  /// No description provided for @logPlayerLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} left the game'**
+  String logPlayerLeft(String name);
+
+  /// No description provided for @logRolled.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} rolled a {result}'**
+  String logRolled(String name, String result);
+
+  /// No description provided for @logFlipped.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} flipped {result}'**
+  String logFlipped(String name, String result);
+
+  /// No description provided for @logStackAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} added “{item}”'**
+  String logStackAdded(String name, String item);
+
+  /// No description provided for @logStackAddedResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} added “{item}” (response)'**
+  String logStackAddedResponse(String name, String item);
+
+  /// No description provided for @logStackRenamed.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} renamed stack item to “{item}”'**
+  String logStackRenamed(String name, String item);
+
+  /// No description provided for @logStackStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}’s “{item}” {status}'**
+  String logStackStatus(String name, String item, String status);
+
+  /// No description provided for @logClearedStack.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleared stack'**
+  String get logClearedStack;
+
+  /// No description provided for @logCounterPoison.
+  ///
+  /// In en, this message translates to:
+  /// **'Poison'**
+  String get logCounterPoison;
+
+  /// No description provided for @logCounterEnergy.
+  ///
+  /// In en, this message translates to:
+  /// **'Energy'**
+  String get logCounterEnergy;
+
+  /// No description provided for @logCounterExperience.
+  ///
+  /// In en, this message translates to:
+  /// **'Experience'**
+  String get logCounterExperience;
+
+  /// No description provided for @logCounterRad.
+  ///
+  /// In en, this message translates to:
+  /// **'Rad'**
+  String get logCounterRad;
+
+  /// No description provided for @logCounterBlood.
+  ///
+  /// In en, this message translates to:
+  /// **'Blood'**
+  String get logCounterBlood;
+
+  /// No description provided for @logCounterClue.
+  ///
+  /// In en, this message translates to:
+  /// **'Clue'**
+  String get logCounterClue;
+
+  /// No description provided for @logCounterMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Map'**
+  String get logCounterMap;
+
+  /// No description provided for @logCounterTreasure.
+  ///
+  /// In en, this message translates to:
+  /// **'Treasure'**
+  String get logCounterTreasure;
+
+  /// No description provided for @logCounterDevotion.
+  ///
+  /// In en, this message translates to:
+  /// **'Devotion'**
+  String get logCounterDevotion;
+
+  /// No description provided for @logCounterCreatures.
+  ///
+  /// In en, this message translates to:
+  /// **'Creatures'**
+  String get logCounterCreatures;
+
+  /// No description provided for @logCounterEnchantments.
+  ///
+  /// In en, this message translates to:
+  /// **'Enchantments'**
+  String get logCounterEnchantments;
+
+  /// No description provided for @logCounterArtifacts.
+  ///
+  /// In en, this message translates to:
+  /// **'Artifacts'**
+  String get logCounterArtifacts;
+
+  /// No description provided for @logCounterGyCreatures.
+  ///
+  /// In en, this message translates to:
+  /// **'GY creatures'**
+  String get logCounterGyCreatures;
+
+  /// No description provided for @logCounterExile.
+  ///
+  /// In en, this message translates to:
+  /// **'Exile'**
+  String get logCounterExile;
+
+  /// No description provided for @logStackStatusFizzled.
+  ///
+  /// In en, this message translates to:
+  /// **'fizzled'**
+  String get logStackStatusFizzled;
+
+  /// No description provided for @logStackStatusCountered.
+  ///
+  /// In en, this message translates to:
+  /// **'countered'**
+  String get logStackStatusCountered;
+
+  /// No description provided for @logStackStatusResolved.
+  ///
+  /// In en, this message translates to:
+  /// **'resolved'**
+  String get logStackStatusResolved;
+
+  /// No description provided for @logStackStatusReactivated.
+  ///
+  /// In en, this message translates to:
+  /// **'reactivated'**
+  String get logStackStatusReactivated;
+
+  /// No description provided for @logDurationEndOfTurn.
+  ///
+  /// In en, this message translates to:
+  /// **'Until end of turn'**
+  String get logDurationEndOfTurn;
+
+  /// No description provided for @logDurationEndOfRound.
+  ///
+  /// In en, this message translates to:
+  /// **'Until end of round'**
+  String get logDurationEndOfRound;
+
+  /// No description provided for @logDurationUntilBroken.
+  ///
+  /// In en, this message translates to:
+  /// **'Until broken'**
+  String get logDurationUntilBroken;
+
+  /// No description provided for @logHeads.
+  ///
+  /// In en, this message translates to:
+  /// **'Heads'**
+  String get logHeads;
+
+  /// No description provided for @logTails.
+  ///
+  /// In en, this message translates to:
+  /// **'Tails'**
+  String get logTails;
 }
 
 class _AppLocalizationsDelegate

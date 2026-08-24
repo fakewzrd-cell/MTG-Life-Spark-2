@@ -2534,4 +2534,197 @@ class AppLocalizationsJa extends AppLocalizations {
   String networkCannotReachHost(String error) {
     return 'ホストに接続できません: $error';
   }
+
+  @override
+  String get backupFileTypeLabel => 'Life Sparkバックアップ';
+
+  @override
+  String get backupNotValidFile => 'Life Sparkのバックアップファイルではありません。';
+
+  @override
+  String get backupNotValidJson => 'バックアップファイルが有効なJSONではありません。';
+
+  @override
+  String get backupCouldNotRead => '選択したバックアップファイルを読み取れませんでした。';
+
+  @override
+  String logLifeChange(String name, String delta) {
+    return '$name: ライフ $delta';
+  }
+
+  @override
+  String logCounterChange(
+    String name,
+    String counter,
+    String delta,
+    String value,
+  ) {
+    return '$name: $counter $delta (→ $value)';
+  }
+
+  @override
+  String logCounterChangeSimple(String name, String counter, String delta) {
+    return '$name: $counter $delta';
+  }
+
+  @override
+  String logLifeChangedYours(String name, String delta) {
+    return '$name があなたのライフを変更 $delta';
+  }
+
+  @override
+  String logCounterChangedYours(String name, String counter, String delta) {
+    return '$name があなたの$counterを変更 $delta';
+  }
+
+  @override
+  String logEndsTurn(String name) {
+    return '$name がターン終了';
+  }
+
+  @override
+  String logCmdDmgDealtYou(String name, String delta) {
+    return '$name があなたに統率者ダメージ $delta';
+  }
+
+  @override
+  String logCmdDmgYouDealt(String name, String delta) {
+    return 'あなたが $name に統率者ダメージ $delta';
+  }
+
+  @override
+  String logCmdDmgOther(String from, String to, String delta) {
+    return '$from → $to: 統率者ダメージ $delta';
+  }
+
+  @override
+  String get logTurnOrderUpdated => 'ホストがターン順を更新';
+
+  @override
+  String get logProliferate => '増殖: 全プレイヤー';
+
+  @override
+  String logAllianceRevealed(String a, String b) {
+    return '同盟を公開: $a と $b';
+  }
+
+  @override
+  String logAllianceBetrayal(String a, String b) {
+    return '同盟決裂 — 裏切り: $a と $b';
+  }
+
+  @override
+  String get logAllianceBroken => '同盟決裂';
+
+  @override
+  String logAllianceFormed(String a, String b, String duration) {
+    return '秘密同盟成立: $a と $b（$duration）';
+  }
+
+  @override
+  String logPlayerLeft(String name) {
+    return '$name がゲームを退出';
+  }
+
+  @override
+  String logRolled(String name, String result) {
+    return '$name が $result を出した';
+  }
+
+  @override
+  String logFlipped(String name, String result) {
+    return '$name が $result';
+  }
+
+  @override
+  String logStackAdded(String name, String item) {
+    return '$name が「$item」を追加';
+  }
+
+  @override
+  String logStackAddedResponse(String name, String item) {
+    return '$name が「$item」を追加（対応）';
+  }
+
+  @override
+  String logStackRenamed(String name, String item) {
+    return '$name がスタック項目を「$item」に改名';
+  }
+
+  @override
+  String logStackStatus(String name, String item, String status) {
+    return '$name の「$item」が$status';
+  }
+
+  @override
+  String get logClearedStack => 'スタックをクリア';
+
+  @override
+  String get logCounterPoison => '毒';
+
+  @override
+  String get logCounterEnergy => 'エネルギー';
+
+  @override
+  String get logCounterExperience => '経験';
+
+  @override
+  String get logCounterRad => '放射線';
+
+  @override
+  String get logCounterBlood => '血';
+
+  @override
+  String get logCounterClue => '手がかり';
+
+  @override
+  String get logCounterMap => '地図';
+
+  @override
+  String get logCounterTreasure => '宝物';
+
+  @override
+  String get logCounterDevotion => '信心';
+
+  @override
+  String get logCounterCreatures => 'クリーチャー';
+
+  @override
+  String get logCounterEnchantments => 'エンチャント';
+
+  @override
+  String get logCounterArtifacts => 'アーティファクト';
+
+  @override
+  String get logCounterGyCreatures => '墓地のクリーチャー';
+
+  @override
+  String get logCounterExile => '追放';
+
+  @override
+  String get logStackStatusFizzled => '不発';
+
+  @override
+  String get logStackStatusCountered => '打ち消し';
+
+  @override
+  String get logStackStatusResolved => '解決';
+
+  @override
+  String get logStackStatusReactivated => '再稼働';
+
+  @override
+  String get logDurationEndOfTurn => 'ターン終了まで';
+
+  @override
+  String get logDurationEndOfRound => 'ラウンド終了まで';
+
+  @override
+  String get logDurationUntilBroken => '破棄まで';
+
+  @override
+  String get logHeads => '表';
+
+  @override
+  String get logTails => '裏';
 }

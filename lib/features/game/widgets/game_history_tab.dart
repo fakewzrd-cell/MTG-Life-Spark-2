@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/game/game_log_entry.dart';
 import '../../../core/game/game_providers.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../shared/utils/game_log_l10n.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
@@ -187,7 +188,7 @@ class GameHistoryList extends StatelessWidget {
                           SizedBox(width: LayoutTokens.gr2),
                           Expanded(
                             child: Text(
-                              e.message,
+                              localizeGameLogMessage(l10n, e.message),
                               style: TextStyle(
                                 color: affectsYou
                                     ? colors.emphasis

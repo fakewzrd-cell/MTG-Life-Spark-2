@@ -35,11 +35,17 @@ class BackupService {
   final MatchRepository _matchRepo;
   final FeedbackRepository _feedbackRepo;
 
-  static const _backupTypeGroup = XTypeGroup(
-    label: 'Life Spark backup',
-    extensions: <String>['lifespark', 'json'],
-    mimeTypes: <String>['application/json', 'application/octet-stream'],
-  );
+  static const _backupExtensions = <String>['lifespark', 'json'];
+  static const _backupMimes = <String>[
+    'application/json',
+    'application/octet-stream',
+  ];
+
+  XTypeGroup _backupTypeGroup(String label) => XTypeGroup(
+        label: label,
+        extensions: _backupExtensions,
+        mimeTypes: _backupMimes,
+      );
 
   Future<LifeSparkBackup> buildBackup({DateTime? exportedAt}) async {
     final profile = _profileRepo.getProfile();
@@ -178,9 +184,13 @@ class BackupService {
   }
 
   /// Picks and decodes a backup without writing Hive. Null if canceled.
-  Future<LifeSparkBackup?> pickBackupFile() async {
+  ///
+  /// [fileTypeLabel] is shown in the system file picker (localized by caller).
+  Future<LifeSparkBackup?> pickBackupFile({
+    String fileTypeLabel = 'Life Spark backup',
+  }) async {
     final file = await openFile(
-      acceptedTypeGroups: const [_backupTypeGroup],
+      acceptedTypeGroups: <XTypeGroup>[_backupTypeGroup(fileTypeLabel)],
     );
     if (file == null) return null;
 
