@@ -12,10 +12,11 @@ import '../../core/models/player_deck.dart';
 import '../../core/models/player_profile.dart';
 import '../../core/persistence/providers.dart';
 import '../../l10n/app_localizations.dart';
-import '../../shared/widgets/game_icon.dart';
 import '../../shared/utils/app_router.dart';
 import '../../shared/utils/commander_image_resolver.dart';
+import '../../shared/utils/deck_style_l10n.dart';
 import '../../shared/widgets/deck_tile_visual.dart';
+import '../../shared/widgets/game_icon.dart';
 import '../../shared/widgets/profile_default_banner.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
@@ -1659,7 +1660,7 @@ class _ProfileDeckFormatStyleLine extends StatelessWidget {
           ),
           const TextSpan(text: ' · '),
           TextSpan(
-            text: deck.deckStyleDisplayName,
+            text: localizedDeckStyleLabel(AppLocalizations.of(context), deck.deckStyle),
             style: base.copyWith(color: styleColor),
           ),
         ],

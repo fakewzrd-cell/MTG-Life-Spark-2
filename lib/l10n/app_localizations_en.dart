@@ -2187,6 +2187,167 @@ class AppLocalizationsEn extends AppLocalizations {
   String get stylePickerFieldLabel => 'Deck style';
 
   @override
+  String get deckStyleBattlecruiser => 'Battlecruiser';
+
+  @override
+  String get deckStyleBattlecruiserDesc =>
+      'Large creatures and face damage; light interaction, often newer-player tables.';
+
+  @override
+  String get deckStyleStax => 'Stax';
+
+  @override
+  String get deckStyleStaxDesc =>
+      'Slows or stops opponents, then wins while others cannot respond.';
+
+  @override
+  String get deckStyleSpellslinger => 'Spellslinger';
+
+  @override
+  String get deckStyleSpellslingerDesc =>
+      'Mostly instants and sorceries; storm-style copy effects for burst wins.';
+
+  @override
+  String get deckStyleControl => 'Control';
+
+  @override
+  String get deckStyleControlDesc =>
+      'Answers and board management until the game is fully under control.';
+
+  @override
+  String get deckStylePillowfort => 'Pillowfort';
+
+  @override
+  String get deckStylePillowfortDesc =>
+      'Taxes and deterrents that make attacking you costly; alt win conditions.';
+
+  @override
+  String get deckStyleVoltron => 'Voltron';
+
+  @override
+  String get deckStyleVoltronDesc =>
+      'Stacks equipment and auras on one protected commander threat.';
+
+  @override
+  String get deckStyleGroupHug => 'Group Hug';
+
+  @override
+  String get deckStyleGroupHugDesc =>
+      'Table-wide small bonuses that still set up a hidden win line.';
+
+  @override
+  String get deckStyleGroupSlug => 'Group Slug';
+
+  @override
+  String get deckStyleGroupSlugDesc =>
+      'Equal life loss or discard for everyone until the table is drained.';
+
+  @override
+  String get deckStyleReanimator => 'Reanimator';
+
+  @override
+  String get deckStyleReanimatorDesc =>
+      'Fills the graveyard, then cheats huge creatures back cheaply.';
+
+  @override
+  String get deckStyleMill => 'Mill';
+
+  @override
+  String get deckStyleMillDesc =>
+      'Empties libraries into exile or graveyard for the draw-loss win.';
+
+  @override
+  String get deckStyleStealTheft => 'Steal / Theft';
+
+  @override
+  String get deckStyleStealTheftDesc =>
+      'Takes opponents\' permanents and rides the strongest thing at the table.';
+
+  @override
+  String get deckStyleTribal => 'Tribal';
+
+  @override
+  String get deckStyleTribalDesc =>
+      'Creature type synergy with lords and shared tribal payoffs.';
+
+  @override
+  String get deckStyleSliver => 'Sliver';
+
+  @override
+  String get deckStyleSliverDesc =>
+      'Sliver hive that buffs every other sliver on the board.';
+
+  @override
+  String get deckStyleTokens => 'Tokens';
+
+  @override
+  String get deckStyleTokensDesc =>
+      'Mass token generation plus anthems for sudden combat kills.';
+
+  @override
+  String get deckStyleAristocrats => 'Aristocrats';
+
+  @override
+  String get deckStyleAristocratsDesc =>
+      'Sacrifice loops with death and ETB triggers plus recursion.';
+
+  @override
+  String get deckStyleWeenie => 'Weenie';
+
+  @override
+  String get deckStyleWeenieDesc =>
+      'Many small creatures that buff each other for wide attacks.';
+
+  @override
+  String get deckStyleLands => 'Lands';
+
+  @override
+  String get deckStyleLandsDesc =>
+      'Landfall and land-centric engines; hard to interact with.';
+
+  @override
+  String get deckStyleSuperfriends => 'Superfriends';
+
+  @override
+  String get deckStyleSuperfriendsDesc =>
+      'Planeswalker chains with extra loyalty and activations.';
+
+  @override
+  String get deckStyleArtifact => 'Artifact';
+
+  @override
+  String get deckStyleArtifactDesc =>
+      'Artifact synergies and machines, often with blue support.';
+
+  @override
+  String get deckStyleInfect => 'Infect';
+
+  @override
+  String get deckStyleInfectDesc =>
+      'Poison counters instead of life; strong in small pods.';
+
+  @override
+  String get deckStyleCounters => 'Counters';
+
+  @override
+  String get deckStyleCountersDesc =>
+      '+1/+1 counter payoffs and counter-matters abilities.';
+
+  @override
+  String get deckStyleChaos => 'Chaos';
+
+  @override
+  String get deckStyleChaosDesc =>
+      'Random or disruptive effects that warp normal game plans.';
+
+  @override
+  String get deckStylePolitical => 'Political';
+
+  @override
+  String get deckStylePoliticalDesc =>
+      'Votes, deals, and table politics to steer outcomes.';
+
+  @override
   String get profileOptionsTitle => 'Profile';
 
   @override

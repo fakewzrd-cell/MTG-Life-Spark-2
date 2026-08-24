@@ -2133,6 +2133,144 @@ class AppLocalizationsJa extends AppLocalizations {
   String get stylePickerFieldLabel => 'デッキスタイル';
 
   @override
+  String get deckStyleBattlecruiser => 'バトルクルーザー';
+
+  @override
+  String get deckStyleBattlecruiserDesc => '大型クリーチャーと対面ダメージ中心。干渉は少なめの初心者向け卓向き。';
+
+  @override
+  String get deckStyleStax => 'スタックス';
+
+  @override
+  String get deckStyleStaxDesc => '相手を遅らせたり止めたりし、応答できない間に勝つ。';
+
+  @override
+  String get deckStyleSpellslinger => 'スペルズリンガー';
+
+  @override
+  String get deckStyleSpellslingerDesc => 'インスタントとソーサリー中心。ストーム系のコピーで一気に勝つ。';
+
+  @override
+  String get deckStyleControl => 'コントロール';
+
+  @override
+  String get deckStyleControlDesc => '除去と盤面管理でゲームを完全に掌握するまで耐える。';
+
+  @override
+  String get deckStylePillowfort => 'ピローフォート';
+
+  @override
+  String get deckStylePillowfortDesc => '攻撃コストを上げる税・抑止。別勝利条件も多い。';
+
+  @override
+  String get deckStyleVoltron => 'ヴォルトロン';
+
+  @override
+  String get deckStyleVoltronDesc => '装備とオーラを1体の守られた統率者に重ねる。';
+
+  @override
+  String get deckStyleGroupHug => 'グループハグ';
+
+  @override
+  String get deckStyleGroupHugDesc => '卓全体に小さなボーナスを配りつつ隠れた勝ち筋を仕込む。';
+
+  @override
+  String get deckStyleGroupSlug => 'グループスラッグ';
+
+  @override
+  String get deckStyleGroupSlugDesc => '全員に均等なライフ減少や捨て札を課して卓を削る。';
+
+  @override
+  String get deckStyleReanimator => 'リアニメイト';
+
+  @override
+  String get deckStyleReanimatorDesc => '墓地を溜めて巨大クリーチャーを安く戦場に出す。';
+
+  @override
+  String get deckStyleMill => 'ミル';
+
+  @override
+  String get deckStyleMillDesc => 'ライブラリーを追放や墓地に送り、ドロー負けで勝つ。';
+
+  @override
+  String get deckStyleStealTheft => '奪取';
+
+  @override
+  String get deckStyleStealTheftDesc => '相手のパーマネントを奪い、卓で最も強いものを使う。';
+
+  @override
+  String get deckStyleTribal => '部族';
+
+  @override
+  String get deckStyleTribalDesc => 'クリーチャータイプの連携とロード系の強化。';
+
+  @override
+  String get deckStyleSliver => 'スリヴァー';
+
+  @override
+  String get deckStyleSliverDesc => '他のスリヴァーを強化する巣のようなデッキ。';
+
+  @override
+  String get deckStyleTokens => 'トークン';
+
+  @override
+  String get deckStyleTokensDesc => '大量トークン生成とアンセムで一気に戦闘キル。';
+
+  @override
+  String get deckStyleAristocrats => 'アリストクラット';
+
+  @override
+  String get deckStyleAristocratsDesc => '生け贄ループと死亡・登場誘発、再帰で勝つ。';
+
+  @override
+  String get deckStyleWeenie => 'ウィーニー';
+
+  @override
+  String get deckStyleWeenieDesc => '小さなクリーチャーを多数展開し、互いに強化して広域攻撃。';
+
+  @override
+  String get deckStyleLands => '土地';
+
+  @override
+  String get deckStyleLandsDesc => 'ランドフォールなど土地中心のエンジン。干渉しにくい。';
+
+  @override
+  String get deckStyleSuperfriends => 'スーパーフレンズ';
+
+  @override
+  String get deckStyleSuperfriendsDesc => 'プレインズウォーカーを連鎖させ、忠誠度と起動を増やす。';
+
+  @override
+  String get deckStyleArtifact => 'アーティファクト';
+
+  @override
+  String get deckStyleArtifactDesc => 'アーティファクト連携と機械戦。青のサポートが多い。';
+
+  @override
+  String get deckStyleInfect => '感染';
+
+  @override
+  String get deckStyleInfectDesc => 'ライフの代わりに毒カウンター。少人数卓で強い。';
+
+  @override
+  String get deckStyleCounters => 'カウンター';
+
+  @override
+  String get deckStyleCountersDesc => '+1/+1カウンターの報酬とカウンター関連能力。';
+
+  @override
+  String get deckStyleChaos => 'カオス';
+
+  @override
+  String get deckStyleChaosDesc => 'ランダムや妨害効果で通常のプランをねじ曲げる。';
+
+  @override
+  String get deckStylePolitical => '政治';
+
+  @override
+  String get deckStylePoliticalDesc => '投票・交渉・卓政治で結果を誘導する。';
+
+  @override
   String get profileOptionsTitle => 'プロフィール';
 
   @override

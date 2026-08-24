@@ -6,9 +6,8 @@ import '../game/widgets/game_modal_chrome.dart';
 /// Shared layout for Format / Deck style searchable pickers.
 ///
 /// - Sheet hugs short lists (no forced empty band under the last row)
-/// - Caps tall lists with a real [ConstrainedBox] so they scroll inside
-/// - Uses [ConstrainedBox], not [LimitedBox] — LimitedBox is a no-op when the
-///   parent already passes a finite max height (as bottom sheets do)
+/// - Caps tall lists with [Flexible] + [FlexFit.loose] so chrome growth
+///   (large text / long titles) cannot overflow the sheet
 class DeckPickerSheetScaffold extends StatelessWidget {
   const DeckPickerSheetScaffold({
     super.key,
@@ -28,15 +27,10 @@ class DeckPickerSheetScaffold extends StatelessWidget {
   /// Max fraction of screen height for the whole sheet.
   static const double maxSheetFraction = 0.72;
 
-  /// Approx chrome above the list (handle, title, search, gaps, padding).
-  static const double _chromeReserve = 188;
-
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context);
     final maxSheetH = media.size.height * maxSheetFraction;
-    final maxListH =
-        (maxSheetH - _chromeReserve).clamp(140.0, maxSheetH * 0.68);
     final keyboardInset = media.viewInsets.bottom;
 
     return Padding(
@@ -52,8 +46,8 @@ class DeckPickerSheetScaffold extends StatelessWidget {
               SizedBox(height: LayoutTokens.gr2),
               searchField,
               SizedBox(height: LayoutTokens.gr2),
-              ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: maxListH),
+              Flexible(
+                fit: FlexFit.loose,
                 child: ListView.separated(
                   shrinkWrap: true,
                   physics: const ClampingScrollPhysics(),

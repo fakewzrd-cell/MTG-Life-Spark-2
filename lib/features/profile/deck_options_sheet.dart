@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import '../../core/game/game_format.dart';
 import '../../core/models/player_deck.dart';
 import '../../l10n/app_localizations.dart';
+import '../../shared/utils/deck_style_l10n.dart';
 import '../../shared/widgets/deck_tile_visual.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
@@ -67,7 +68,7 @@ String _deckDetailSubtitle(AppLocalizations l10n, PlayerDeck deck) {
   final parts = <String>[
     deck.gameFormat.displayName,
     deck.hasDeckStyle
-        ? deck.deckStyleDisplayName
+        ? localizedDeckStyleName(l10n, deck.deckStyle!)
         : l10n.deckOptionsStyleNotSet,
   ];
   if (deck.commanderName.isNotEmpty) {
@@ -178,7 +179,7 @@ class _DeckDetailSheet extends StatelessWidget {
               icon: Icons.palette_outlined,
               title: l10n.deckOptionsChangeStyle,
               subtitle: deck.hasDeckStyle
-                  ? deck.deckStyleDisplayName
+                  ? localizedDeckStyleName(l10n, deck.deckStyle!)
                   : l10n.deckOptionsStyleRequired,
               titleColor:
                   deck.hasDeckStyle ? colors.textPrimary : colors.warning,

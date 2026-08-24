@@ -2201,6 +2201,167 @@ class AppLocalizationsFr extends AppLocalizations {
   String get stylePickerFieldLabel => 'Style de deck';
 
   @override
+  String get deckStyleBattlecruiser => 'Battlecruiser';
+
+  @override
+  String get deckStyleBattlecruiserDesc =>
+      'Grosses créatures et dégâts au visage ; peu d’interaction, tables de débutants.';
+
+  @override
+  String get deckStyleStax => 'Stax';
+
+  @override
+  String get deckStyleStaxDesc =>
+      'Ralentit ou bloque les adversaires, puis gagne pendant qu’ils ne peuvent pas répondre.';
+
+  @override
+  String get deckStyleSpellslinger => 'Spellslinger';
+
+  @override
+  String get deckStyleSpellslingerDesc =>
+      'Surtout des éphémères et des rituels ; copies style storm pour des bursts.';
+
+  @override
+  String get deckStyleControl => 'Contrôle';
+
+  @override
+  String get deckStyleControlDesc =>
+      'Réponses et gestion du plateau jusqu’à maîtriser complètement la partie.';
+
+  @override
+  String get deckStylePillowfort => 'Pillowfort';
+
+  @override
+  String get deckStylePillowfortDesc =>
+      'Taxes et dissuasions qui rendent l’attaque coûteuse ; conditions de victoire alternatives.';
+
+  @override
+  String get deckStyleVoltron => 'Voltron';
+
+  @override
+  String get deckStyleVoltronDesc =>
+      'Empile équipements et auras sur un commandant protégé.';
+
+  @override
+  String get deckStyleGroupHug => 'Group Hug';
+
+  @override
+  String get deckStyleGroupHugDesc =>
+      'Petits bonus pour toute la table qui préparent une ligne de victoire cachée.';
+
+  @override
+  String get deckStyleGroupSlug => 'Group Slug';
+
+  @override
+  String get deckStyleGroupSlugDesc =>
+      'Perte de points de vie ou défausse égale pour tous jusqu’à vider la table.';
+
+  @override
+  String get deckStyleReanimator => 'Réanimateur';
+
+  @override
+  String get deckStyleReanimatorDesc =>
+      'Remplit le cimetière puis ramène d’énormes créatures à bas coût.';
+
+  @override
+  String get deckStyleMill => 'Mill';
+
+  @override
+  String get deckStyleMillDesc =>
+      'Vide les bibliothèques en exil ou cimetière pour gagner par pioche impossible.';
+
+  @override
+  String get deckStyleStealTheft => 'Vol';
+
+  @override
+  String get deckStyleStealTheftDesc =>
+      'Prend les permanents adverses et exploite la plus forte menace de la table.';
+
+  @override
+  String get deckStyleTribal => 'Tribal';
+
+  @override
+  String get deckStyleTribalDesc =>
+      'Synergie de type de créature avec seigneurs et récompenses tribales.';
+
+  @override
+  String get deckStyleSliver => 'Slivoïde';
+
+  @override
+  String get deckStyleSliverDesc =>
+      'Ruche de Slivoïdes qui renforce chaque autre Slivoïde sur le plateau.';
+
+  @override
+  String get deckStyleTokens => 'Jetons';
+
+  @override
+  String get deckStyleTokensDesc =>
+      'Génération massive de jetons plus hymnes pour des kills de combat soudains.';
+
+  @override
+  String get deckStyleAristocrats => 'Aristocrates';
+
+  @override
+  String get deckStyleAristocratsDesc =>
+      'Boucles de sacrifice avec déclencheurs de mort et d’arrivée, plus récursion.';
+
+  @override
+  String get deckStyleWeenie => 'Weenie';
+
+  @override
+  String get deckStyleWeenieDesc =>
+      'Beaucoup de petites créatures qui se buffent pour des attaques larges.';
+
+  @override
+  String get deckStyleLands => 'Terrains';
+
+  @override
+  String get deckStyleLandsDesc =>
+      'Moteurs landfall et centrés sur les terrains ; difficiles à interagir.';
+
+  @override
+  String get deckStyleSuperfriends => 'Superfriends';
+
+  @override
+  String get deckStyleSuperfriendsDesc =>
+      'Chaînes de planeswalkers avec loyauté extra et plus d’activations.';
+
+  @override
+  String get deckStyleArtifact => 'Artefact';
+
+  @override
+  String get deckStyleArtifactDesc =>
+      'Synergies d’artefacts et machines, souvent avec du bleu.';
+
+  @override
+  String get deckStyleInfect => 'Infect';
+
+  @override
+  String get deckStyleInfectDesc =>
+      'Marqueurs poison au lieu de points de vie ; fort en petits pods.';
+
+  @override
+  String get deckStyleCounters => 'Marqueurs';
+
+  @override
+  String get deckStyleCountersDesc =>
+      'Récompenses de marqueurs +1/+1 et capacités liées aux marqueurs.';
+
+  @override
+  String get deckStyleChaos => 'Chaos';
+
+  @override
+  String get deckStyleChaosDesc =>
+      'Effets aléatoires ou disruptifs qui faussent les plans de jeu.';
+
+  @override
+  String get deckStylePolitical => 'Politique';
+
+  @override
+  String get deckStylePoliticalDesc =>
+      'Votes, deals et politique de table pour orienter le résultat.';
+
+  @override
   String get profileOptionsTitle => 'Profil';
 
   @override

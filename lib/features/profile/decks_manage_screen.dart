@@ -9,6 +9,7 @@ import '../../core/persistence/deck_repository.dart';
 import '../../core/persistence/providers.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/utils/app_router.dart';
+import '../../shared/utils/deck_style_l10n.dart';
 import '../../ui/components/ui_app_bar.dart';
 import '../../ui/components/ui_button.dart';
 import '../../ui/theme/app_color_tokens.dart';
@@ -43,13 +44,22 @@ Map<GameFormat, List<PlayerDeck>> _groupDecksByFormat(List<PlayerDeck> decks) {
   return grouped;
 }
 
-bool _deckMatchesQuery(PlayerDeck deck, String query) {
+bool _deckMatchesQuery(
+  PlayerDeck deck,
+  String query,
+  AppLocalizations l10n,
+) {
   if (query.isEmpty) return true;
   final q = query.toLowerCase();
+  final style = deck.deckStyle;
+  final styleHit = style != null &&
+      (localizedDeckStyleName(l10n, style).toLowerCase().contains(q) ||
+          style.displayName.toLowerCase().contains(q) ||
+          style.id.contains(q));
   return deck.displayName.toLowerCase().contains(q) ||
       deck.commanderName.toLowerCase().contains(q) ||
       (deck.partnerCommanderName?.toLowerCase().contains(q) ?? false) ||
-      deck.deckStyleDisplayName.toLowerCase().contains(q) ||
+      styleHit ||
       deck.gameFormat.displayName.toLowerCase().contains(q);
 }
 
@@ -219,7 +229,7 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
     final bottomBarPad = LayoutTokens.shellBottomInset(context);
 
     final filtered =
-        _decks.where((d) => _deckMatchesQuery(d, _query)).toList();
+        _decks.where((d) => _deckMatchesQuery(d, _query, l10n)).toList();
     final grouped = _groupDecksByFormat(filtered);
 
     final isEmpty = _decks.isEmpty;
@@ -420,7 +430,10 @@ class _DeckLibraryTile extends StatelessWidget {
         ? '${deck.commanderName} // ${deck.partnerCommanderName}'
         : deck.commanderName;
     final styleLine = deck.hasDeckStyle
-        ? deck.deckStyleDisplayName
+        ? localizedDeckStyleName(
+            AppLocalizations.of(context),
+            deck.deckStyle!,
+          )
         : AppLocalizations.of(context).decksStyleNotSet;
     final wr = deck.gamesPlayed == 0
         ? null

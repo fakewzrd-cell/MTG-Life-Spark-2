@@ -8,6 +8,7 @@ import '../../core/persistence/providers.dart';
 import '../../features/game/widgets/game_modal_chrome.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/utils/app_router.dart';
+import '../../shared/utils/deck_style_l10n.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
@@ -107,7 +108,7 @@ Future<void> showDeckPickerSheet(
                   ),
                   subtitle: Text(
                     [
-                      d.deckStyleDisplayName,
+                      localizedDeckStyleName(l10n, d.deckStyle!),
                       d.hasPartner
                           ? '${d.commanderName} // ${d.partnerCommanderName}'
                           : d.commanderName,

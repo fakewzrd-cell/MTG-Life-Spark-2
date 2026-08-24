@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../core/models/deck_style.dart';
 import '../../l10n/app_localizations.dart';
+import '../../shared/utils/deck_style_l10n.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
@@ -41,11 +42,15 @@ class _DeckStylePickerSheetState extends State<_DeckStylePickerSheet> {
     super.dispose();
   }
 
-  List<DeckStyle> get _filtered {
+  List<DeckStyle> _filtered(AppLocalizations l10n) {
     final q = _query.trim().toLowerCase();
     if (q.isEmpty) return DeckStyle.values;
     return DeckStyle.values.where((s) {
-      return s.displayName.toLowerCase().contains(q) ||
+      final name = localizedDeckStyleName(l10n, s).toLowerCase();
+      final desc = localizedDeckStyleDescription(l10n, s).toLowerCase();
+      return name.contains(q) ||
+          desc.contains(q) ||
+          s.displayName.toLowerCase().contains(q) ||
           s.description.toLowerCase().contains(q) ||
           s.id.contains(q);
     }).toList();
@@ -61,6 +66,7 @@ class _DeckStylePickerSheetState extends State<_DeckStylePickerSheet> {
     final colors = AppColorTokens.of(context);
     final l10n = AppLocalizations.of(context);
 
+    final filtered = _filtered(l10n);
     return DeckPickerSheetScaffold(
       title: l10n.stylePickerTitle,
       searchField: TextField(
@@ -74,9 +80,9 @@ class _DeckStylePickerSheetState extends State<_DeckStylePickerSheet> {
         style: TextStyle(color: colors.textPrimary),
         onChanged: (v) => setState(() => _query = v),
       ),
-      itemCount: _filtered.length,
+      itemCount: filtered.length,
       itemBuilder: (context, i) {
-        final style = _filtered[i];
+        final style = filtered[i];
         final isSelected = widget.initial == style;
         return Material(
           color: Colors.transparent,
@@ -104,7 +110,9 @@ class _DeckStylePickerSheetState extends State<_DeckStylePickerSheet> {
                       children: [
                         Expanded(
                           child: Text(
-                            style.displayName,
+                            localizedDeckStyleName(l10n, style),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: colors.textPrimary,
                               fontWeight: FontWeight.w700,
@@ -122,9 +130,8 @@ class _DeckStylePickerSheetState extends State<_DeckStylePickerSheet> {
                     ),
                     SizedBox(height: LayoutTokens.gr0),
                     Text(
-                      style.description,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
+                      localizedDeckStyleDescription(l10n, style),
+                      // Scrollable list — allow full copy; avoid silent clipping.
                       style: TextStyle(
                         color: colors.textSecondary,
                         fontSize: FontTokens.sm,
@@ -158,7 +165,9 @@ class DeckStylePickerField extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
     final l10n = AppLocalizations.of(context);
-    final label = selected?.displayName ?? l10n.stylePickerChoose;
+    final label = selected != null
+        ? localizedDeckStyleName(l10n, selected!)
+        : l10n.stylePickerChoose;
     final hasError = errorText != null && errorText!.isNotEmpty;
 
     return Column(
@@ -179,6 +188,8 @@ class DeckStylePickerField extends StatelessWidget {
             ),
             child: Text(
               label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: selected != null
                     ? colors.textPrimary

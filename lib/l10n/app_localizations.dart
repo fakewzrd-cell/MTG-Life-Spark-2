@@ -3983,6 +3983,282 @@ abstract class AppLocalizations {
   /// **'Deck style'**
   String get stylePickerFieldLabel;
 
+  /// No description provided for @deckStyleBattlecruiser.
+  ///
+  /// In en, this message translates to:
+  /// **'Battlecruiser'**
+  String get deckStyleBattlecruiser;
+
+  /// No description provided for @deckStyleBattlecruiserDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Large creatures and face damage; light interaction, often newer-player tables.'**
+  String get deckStyleBattlecruiserDesc;
+
+  /// No description provided for @deckStyleStax.
+  ///
+  /// In en, this message translates to:
+  /// **'Stax'**
+  String get deckStyleStax;
+
+  /// No description provided for @deckStyleStaxDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Slows or stops opponents, then wins while others cannot respond.'**
+  String get deckStyleStaxDesc;
+
+  /// No description provided for @deckStyleSpellslinger.
+  ///
+  /// In en, this message translates to:
+  /// **'Spellslinger'**
+  String get deckStyleSpellslinger;
+
+  /// No description provided for @deckStyleSpellslingerDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Mostly instants and sorceries; storm-style copy effects for burst wins.'**
+  String get deckStyleSpellslingerDesc;
+
+  /// No description provided for @deckStyleControl.
+  ///
+  /// In en, this message translates to:
+  /// **'Control'**
+  String get deckStyleControl;
+
+  /// No description provided for @deckStyleControlDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Answers and board management until the game is fully under control.'**
+  String get deckStyleControlDesc;
+
+  /// No description provided for @deckStylePillowfort.
+  ///
+  /// In en, this message translates to:
+  /// **'Pillowfort'**
+  String get deckStylePillowfort;
+
+  /// No description provided for @deckStylePillowfortDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Taxes and deterrents that make attacking you costly; alt win conditions.'**
+  String get deckStylePillowfortDesc;
+
+  /// No description provided for @deckStyleVoltron.
+  ///
+  /// In en, this message translates to:
+  /// **'Voltron'**
+  String get deckStyleVoltron;
+
+  /// No description provided for @deckStyleVoltronDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Stacks equipment and auras on one protected commander threat.'**
+  String get deckStyleVoltronDesc;
+
+  /// No description provided for @deckStyleGroupHug.
+  ///
+  /// In en, this message translates to:
+  /// **'Group Hug'**
+  String get deckStyleGroupHug;
+
+  /// No description provided for @deckStyleGroupHugDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Table-wide small bonuses that still set up a hidden win line.'**
+  String get deckStyleGroupHugDesc;
+
+  /// No description provided for @deckStyleGroupSlug.
+  ///
+  /// In en, this message translates to:
+  /// **'Group Slug'**
+  String get deckStyleGroupSlug;
+
+  /// No description provided for @deckStyleGroupSlugDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Equal life loss or discard for everyone until the table is drained.'**
+  String get deckStyleGroupSlugDesc;
+
+  /// No description provided for @deckStyleReanimator.
+  ///
+  /// In en, this message translates to:
+  /// **'Reanimator'**
+  String get deckStyleReanimator;
+
+  /// No description provided for @deckStyleReanimatorDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Fills the graveyard, then cheats huge creatures back cheaply.'**
+  String get deckStyleReanimatorDesc;
+
+  /// No description provided for @deckStyleMill.
+  ///
+  /// In en, this message translates to:
+  /// **'Mill'**
+  String get deckStyleMill;
+
+  /// No description provided for @deckStyleMillDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Empties libraries into exile or graveyard for the draw-loss win.'**
+  String get deckStyleMillDesc;
+
+  /// No description provided for @deckStyleStealTheft.
+  ///
+  /// In en, this message translates to:
+  /// **'Steal / Theft'**
+  String get deckStyleStealTheft;
+
+  /// No description provided for @deckStyleStealTheftDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Takes opponents\' permanents and rides the strongest thing at the table.'**
+  String get deckStyleStealTheftDesc;
+
+  /// No description provided for @deckStyleTribal.
+  ///
+  /// In en, this message translates to:
+  /// **'Tribal'**
+  String get deckStyleTribal;
+
+  /// No description provided for @deckStyleTribalDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Creature type synergy with lords and shared tribal payoffs.'**
+  String get deckStyleTribalDesc;
+
+  /// No description provided for @deckStyleSliver.
+  ///
+  /// In en, this message translates to:
+  /// **'Sliver'**
+  String get deckStyleSliver;
+
+  /// No description provided for @deckStyleSliverDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Sliver hive that buffs every other sliver on the board.'**
+  String get deckStyleSliverDesc;
+
+  /// No description provided for @deckStyleTokens.
+  ///
+  /// In en, this message translates to:
+  /// **'Tokens'**
+  String get deckStyleTokens;
+
+  /// No description provided for @deckStyleTokensDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Mass token generation plus anthems for sudden combat kills.'**
+  String get deckStyleTokensDesc;
+
+  /// No description provided for @deckStyleAristocrats.
+  ///
+  /// In en, this message translates to:
+  /// **'Aristocrats'**
+  String get deckStyleAristocrats;
+
+  /// No description provided for @deckStyleAristocratsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Sacrifice loops with death and ETB triggers plus recursion.'**
+  String get deckStyleAristocratsDesc;
+
+  /// No description provided for @deckStyleWeenie.
+  ///
+  /// In en, this message translates to:
+  /// **'Weenie'**
+  String get deckStyleWeenie;
+
+  /// No description provided for @deckStyleWeenieDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Many small creatures that buff each other for wide attacks.'**
+  String get deckStyleWeenieDesc;
+
+  /// No description provided for @deckStyleLands.
+  ///
+  /// In en, this message translates to:
+  /// **'Lands'**
+  String get deckStyleLands;
+
+  /// No description provided for @deckStyleLandsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Landfall and land-centric engines; hard to interact with.'**
+  String get deckStyleLandsDesc;
+
+  /// No description provided for @deckStyleSuperfriends.
+  ///
+  /// In en, this message translates to:
+  /// **'Superfriends'**
+  String get deckStyleSuperfriends;
+
+  /// No description provided for @deckStyleSuperfriendsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Planeswalker chains with extra loyalty and activations.'**
+  String get deckStyleSuperfriendsDesc;
+
+  /// No description provided for @deckStyleArtifact.
+  ///
+  /// In en, this message translates to:
+  /// **'Artifact'**
+  String get deckStyleArtifact;
+
+  /// No description provided for @deckStyleArtifactDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Artifact synergies and machines, often with blue support.'**
+  String get deckStyleArtifactDesc;
+
+  /// No description provided for @deckStyleInfect.
+  ///
+  /// In en, this message translates to:
+  /// **'Infect'**
+  String get deckStyleInfect;
+
+  /// No description provided for @deckStyleInfectDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Poison counters instead of life; strong in small pods.'**
+  String get deckStyleInfectDesc;
+
+  /// No description provided for @deckStyleCounters.
+  ///
+  /// In en, this message translates to:
+  /// **'Counters'**
+  String get deckStyleCounters;
+
+  /// No description provided for @deckStyleCountersDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'+1/+1 counter payoffs and counter-matters abilities.'**
+  String get deckStyleCountersDesc;
+
+  /// No description provided for @deckStyleChaos.
+  ///
+  /// In en, this message translates to:
+  /// **'Chaos'**
+  String get deckStyleChaos;
+
+  /// No description provided for @deckStyleChaosDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Random or disruptive effects that warp normal game plans.'**
+  String get deckStyleChaosDesc;
+
+  /// No description provided for @deckStylePolitical.
+  ///
+  /// In en, this message translates to:
+  /// **'Political'**
+  String get deckStylePolitical;
+
+  /// No description provided for @deckStylePoliticalDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Votes, deals, and table politics to steer outcomes.'**
+  String get deckStylePoliticalDesc;
+
   /// No description provided for @profileOptionsTitle.
   ///
   /// In en, this message translates to:
