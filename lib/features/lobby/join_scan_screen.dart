@@ -1,31 +1,32 @@
 import 'dart:async';
 
-import '../../ui/theme/app_color_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-import '../../core/network/session_providers.dart';
 import '../../core/bluetooth/ble_service.dart';
 import '../../core/game/game_format.dart';
 import '../../core/game/game_session_events.dart';
 import '../../core/game/lobby_state.dart';
 import '../../core/models/player_slot.dart';
 import '../../core/network/session_join_uri.dart';
+import '../../core/network/session_providers.dart';
 import '../../core/network/ws_client_service.dart';
 import '../../core/persistence/providers.dart';
+import '../../l10n/app_localizations.dart';
 import '../../shared/utils/app_router.dart';
 import '../../shared/widgets/session_leave_dialog.dart';
-import 'deck_picker_sheet.dart';
-import 'lobby_slot_widgets.dart';
+import '../../ui/components/ui_app_bar.dart';
 import '../../ui/components/ui_button.dart';
 import '../../ui/components/ui_snack_bar.dart';
+import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
-import '../../ui/components/ui_app_bar.dart';
+import 'deck_picker_sheet.dart';
+import 'lobby_slot_widgets.dart';
 
 enum _JoinPhase { scanning, connecting, waitingRoom }
 
@@ -156,7 +157,7 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
       ref.read(lobbyProvider.notifier).initAsClient();
     } else {
       _showSnackbar(
-        'Camera permission is required to scan the host QR code.',
+        AppLocalizations.of(context).joinCameraRequiredSnack,
         isError: true,
       );
     }
@@ -170,13 +171,11 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
     final raw = barcode?.rawValue;
     if (raw == null) return;
 
+    final l10n = AppLocalizations.of(context);
     try {
       final parsed = SessionJoinUri.parse(raw);
       if (parsed.token == null || parsed.token!.isEmpty) {
-        _showSnackbar(
-          'This QR code is missing a join token. Ask the host to refresh their QR.',
-          isError: true,
-        );
+        _showSnackbar(l10n.joinMissingToken, isError: true);
         return;
       }
       _scanned = true;
@@ -186,7 +185,7 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
         }
       }));
     } on FormatException {
-      _showSnackbar('Not a valid Life Spark QR code.', isError: true);
+      _showSnackbar(l10n.joinInvalidQr, isError: true);
     }
   }
 
@@ -211,7 +210,7 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
     final client = _client;
     if (client == null) {
       _showSnackbar(
-        'Could not start join session. Finish profile setup and try again.',
+        AppLocalizations.of(context).joinCouldNotStartSession,
         isError: true,
       );
       await _resetToScan();
@@ -237,8 +236,7 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
     if (!mounted || attempt != _connectAttempt) return;
     if (_phase != _JoinPhase.connecting) return;
     _showSnackbar(
-      'Timed out connecting to the host. Make sure you are on the same Wi‑Fi '
-      'and the host lobby is still open, then try again.',
+      AppLocalizations.of(context).joinConnectTimeout,
       isError: true,
     );
     await _resetToScan();
@@ -246,6 +244,7 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
 
   void _onConnectionEvent(BleConnectionEvent event) {
     if (!mounted) return;
+    final l10n = AppLocalizations.of(context);
     switch (event.status) {
       case BleConnectionStatus.connected:
         _connectTimeout?.cancel();
@@ -257,21 +256,24 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
         _connectTimeout?.cancel();
         _connectTimeout = null;
         _showSnackbar(
-          event.errorMessage ?? 'Host rejected connection (version mismatch).',
+          event.errorMessage ?? l10n.joinHostRejected,
           isError: true,
         );
         unawaited(_resetToScan());
 
       case BleConnectionStatus.disconnected:
         if (_phase == _JoinPhase.waitingRoom) {
-          _showSnackbar('Disconnected from host.');
+          _showSnackbar(l10n.joinDisconnected);
           unawaited(_resetToScan());
         }
 
       case BleConnectionStatus.error:
         _connectTimeout?.cancel();
         _connectTimeout = null;
-        _showSnackbar(event.errorMessage ?? 'Connection error.', isError: true);
+        _showSnackbar(
+          _localizeConnectionError(l10n, event.errorMessage),
+          isError: true,
+        );
         unawaited(_resetToScan());
 
       default:
@@ -313,7 +315,7 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
     if (_leaveInProgress) return;
     _leaveInProgress = true;
     try {
-      _showSnackbar('The host ended the session.');
+      _showSnackbar(AppLocalizations.of(context).joinHostEndedSession);
       await _cancelConnectAttempt();
       await _stopScanner();
       await endSession(ref);
@@ -333,6 +335,7 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
 
     ref.listen<bool>(hostEndedSessionUiEventProvider, (prev, next) {
       if (next != true) return;
@@ -351,10 +354,10 @@ class _JoinScanScreenState extends ConsumerState<JoinScanScreen>
       child: Scaffold(
         backgroundColor: colors.backgroundPrimary,
         appBar: UiAppBar(
-          title: 'Join a Game',
+          title: l10n.joinTitle,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
-            tooltip: 'Leave',
+            tooltip: l10n.joinLeaveTooltip,
             onPressed: () => unawaited(_leaveJoinFlow()),
           ),
         ),
@@ -389,6 +392,7 @@ class _QrScanView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -405,7 +409,7 @@ class _QrScanView extends StatelessWidget {
           left: LayoutTokens.gr4,
           right: LayoutTokens.gr4,
           child: Text(
-            'Point the camera at the host\'s QR code',
+            l10n.joinPointCamera,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: colors.textPrimary,
@@ -483,6 +487,7 @@ class _PermissionDeniedView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: EdgeInsets.all(LayoutTokens.gr5),
@@ -493,20 +498,19 @@ class _PermissionDeniedView extends StatelessWidget {
                 size: 64, color: colors.textSecondary),
             SizedBox(height: LayoutTokens.gr4),
             Text(
-              'Camera access is needed to scan the host QR code.\n'
-              'If you already allowed it in Settings, tap Try again.',
+              l10n.joinCameraDeniedBody,
               textAlign: TextAlign.center,
               style:
                   TextStyle(color: colors.textSecondary, fontSize: FontTokens.body),
             ),
             SizedBox(height: LayoutTokens.gr4),
             UiButton(
-              label: 'Try again',
+              label: l10n.commonTryAgain,
               onPressed: () => unawaited(onRetry()),
             ),
             SizedBox(height: LayoutTokens.gr2),
             UiButton(
-              label: 'Open Settings',
+              label: l10n.joinOpenSettings,
               variant: UiButtonVariant.secondary,
               onPressed: () => unawaited(openAppSettings()),
             ),
@@ -525,6 +529,7 @@ class _ConnectingView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -532,7 +537,7 @@ class _ConnectingView extends StatelessWidget {
           CircularProgressIndicator(color: colors.primaryAccent),
           SizedBox(height: LayoutTokens.gr4 + LayoutTokens.gr0),
           Text(
-            'Connecting to host…',
+            l10n.joinConnecting,
             style: TextStyle(color: colors.textSecondary, fontSize: FontTokens.bodyLg),
           ),
         ],
@@ -573,6 +578,7 @@ class _WaitingRoomViewState extends ConsumerState<_WaitingRoomView> {
     }
 
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     final isCommanderLobby = lobby.config.format.isCommanderStyle;
     return Column(
       children: [
@@ -581,7 +587,7 @@ class _WaitingRoomViewState extends ConsumerState<_WaitingRoomView> {
             padding: LayoutTokens.shellListPadding(context),
             children: [
               Text(
-                'Waiting for host to start…',
+                l10n.joinWaitingForHost,
                 style: TextStyle(
                     color: colors.textSecondary, fontSize: FontTokens.label),
                 textAlign: TextAlign.center,
@@ -595,7 +601,7 @@ class _WaitingRoomViewState extends ConsumerState<_WaitingRoomView> {
                     children: [
                       Expanded(
                         child: LobbyActionButton(
-                          label: 'Select deck',
+                          label: l10n.joinSelectDeck,
                           highlighted: mySlot?.selectedDeckId != null,
                           onPressed: () => showDeckPickerSheet(
                             context,
@@ -607,7 +613,7 @@ class _WaitingRoomViewState extends ConsumerState<_WaitingRoomView> {
                       SizedBox(width: LayoutTokens.gr2),
                       Expanded(
                         child: LobbyActionButton(
-                          label: 'Select commander',
+                          label: l10n.joinSelectCommander,
                           highlighted: mySlot?.commanderName != null,
                           filled: true,
                           onPressed: () {
@@ -623,7 +629,7 @@ class _WaitingRoomViewState extends ConsumerState<_WaitingRoomView> {
                   SizedBox(
                     width: double.infinity,
                     child: LobbyActionButton(
-                      label: 'Select deck',
+                      label: l10n.joinSelectDeck,
                       highlighted: mySlot?.selectedDeckId != null,
                       filled: true,
                       onPressed: () => showDeckPickerSheet(
@@ -637,7 +643,9 @@ class _WaitingRoomViewState extends ConsumerState<_WaitingRoomView> {
                 SizedBox(
                   width: double.infinity,
                   child: LobbyActionButton(
-                    label: mySlot?.isReady == true ? 'Ready' : 'Mark ready',
+                    label: mySlot?.isReady == true
+                        ? l10n.joinReady
+                        : l10n.joinMarkReady,
                     highlighted: mySlot?.isReady == true,
                     filled: true,
                     onPressed: () {
@@ -698,4 +706,13 @@ class _WaitingSlotRow extends StatelessWidget {
       ),
     );
   }
+}
+
+String _localizeConnectionError(AppLocalizations l10n, String? message) {
+  if (message == null || message.isEmpty) return l10n.joinConnectionError;
+  const prefix = 'Cannot reach host: ';
+  if (message.startsWith(prefix)) {
+    return l10n.networkCannotReachHost(message.substring(prefix.length));
+  }
+  return message;
 }

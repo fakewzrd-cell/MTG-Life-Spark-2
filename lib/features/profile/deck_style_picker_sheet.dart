@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/models/deck_style.dart';
+import '../../l10n/app_localizations.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
@@ -58,14 +59,15 @@ class _DeckStylePickerSheetState extends State<_DeckStylePickerSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return DeckPickerSheetScaffold(
-      title: 'Deck style',
+      title: l10n.stylePickerTitle,
       searchField: TextField(
         controller: _searchCtrl,
         scrollPadding: const EdgeInsets.only(bottom: 120),
         decoration: InputDecoration(
-          hintText: 'Search styles…',
+          hintText: l10n.stylePickerSearchHint,
           prefixIcon: const Icon(Icons.search_rounded),
           hintStyle: TextStyle(color: colors.textSecondary),
         ),
@@ -155,7 +157,8 @@ class DeckStylePickerField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
-    final label = selected?.displayName ?? 'Choose deck style';
+    final l10n = AppLocalizations.of(context);
+    final label = selected?.displayName ?? l10n.stylePickerChoose;
     final hasError = errorText != null && errorText!.isNotEmpty;
 
     return Column(
@@ -166,7 +169,7 @@ class DeckStylePickerField extends StatelessWidget {
           borderRadius: RadiusTokens.radiusSm,
           child: InputDecorator(
             decoration: InputDecoration(
-              labelText: 'Deck style',
+              labelText: l10n.stylePickerFieldLabel,
               labelStyle: TextStyle(color: colors.textSecondary),
               errorText: hasError ? errorText : null,
               suffixIcon: Icon(

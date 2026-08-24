@@ -6,6 +6,8 @@ import 'package:mgt_life_spark/core/game/player_game_state.dart';
 import 'package:mgt_life_spark/features/game/widgets/phase_nav_cluster.dart';
 import 'package:mgt_life_spark/shared/theme/app_theme.dart';
 
+import '../support/test_l10n.dart';
+
 GameState _minimalGame({bool localTurn = true}) {
   const localId = 'local';
   const otherId = 'other';
@@ -38,6 +40,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark(),
+        localizationsDelegates: testLocalizationDelegates,
+        supportedLocales: testSupportedLocales,
         home: Scaffold(
           body: Center(
             child: SizedBox(
@@ -71,6 +75,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark(),
+        localizationsDelegates: testLocalizationDelegates,
+        supportedLocales: testSupportedLocales,
         home: Scaffold(
           body: Center(
             child: SizedBox(
@@ -101,6 +107,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark(),
+        localizationsDelegates: testLocalizationDelegates,
+        supportedLocales: testSupportedLocales,
         home: Scaffold(
           body: Center(
             child: SizedBox(

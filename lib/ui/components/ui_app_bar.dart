@@ -25,6 +25,8 @@ class UiAppBar extends StatelessWidget implements PreferredSizeWidget {
         (title != null && title!.isNotEmpty
             ? Text(
                 title!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: theme.appBarTheme.titleTextStyle ??
                     theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w700,

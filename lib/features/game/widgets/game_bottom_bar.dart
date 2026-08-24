@@ -8,6 +8,7 @@ import '../../../core/game/player_game_state.dart';
 import '../../../core/models/game_feedback.dart';
 import '../../../core/game/session_exit_helpers.dart';
 import '../../../core/network/session_providers.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/utils/app_router.dart';
 import '../../../shared/widgets/home_nav_bar.dart';
 import '../../../shared/widgets/player_feedback_widgets.dart';
@@ -37,6 +38,7 @@ class GameBottomBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final notifier = ref.read(gameProvider.notifier);
     final compact = this.compact;
     final iconSize = compact ? 22.0 : 24.0;
@@ -68,7 +70,7 @@ class GameBottomBar extends ConsumerWidget {
                 child: Center(
                   child: _GameBarButton(
                     icon: Icons.home_rounded,
-                    label: 'Home',
+                    label: l10n.gameBarHome,
                     iconSize: iconSize,
                     compact: compact,
                     enabled: true,
@@ -80,7 +82,7 @@ class GameBottomBar extends ConsumerWidget {
                 child: Center(
                   child: _GameBarButton(
                     icon: Icons.undo,
-                    label: 'Undo',
+                    label: l10n.gameBarUndo,
                     iconSize: iconSize,
                     compact: compact,
                     enabled: !local.isEliminated,
@@ -94,7 +96,9 @@ class GameBottomBar extends ConsumerWidget {
                     icon: game.timeoutActive
                         ? Icons.timer_off_outlined
                         : Icons.timer,
-                    label: game.timeoutActive ? 'End' : 'Timeout',
+                    label: game.timeoutActive
+                        ? l10n.gameBarEnd
+                        : l10n.gameBarTimeout,
                     iconSize: iconSize,
                     compact: compact,
                     onTap: () {
@@ -111,7 +115,7 @@ class GameBottomBar extends ConsumerWidget {
                 child: Center(
                   child: _GameBarButton(
                     icon: Icons.grid_view,
-                    label: 'Table',
+                    label: l10n.gameBarTable,
                     iconSize: iconSize,
                     compact: compact,
                     enabled: true,
@@ -170,6 +174,7 @@ Future<void> _showPostForfeitFollowUp(
   if (!othersStillPlaying) return;
 
   final colors = context.gameColors;
+  final l10n = AppLocalizations.of(context);
   final inset = GameModalChrome.horizontalInset(context);
   final titleStyle = TextStyle(
     color: colors.textPrimary,
@@ -200,16 +205,14 @@ Future<void> _showPostForfeitFollowUp(
       title: Padding(
         padding: EdgeInsets.fromLTRB(inset, LayoutTokens.gr3, inset, 0),
         child: GameDialogTitleRow(
-          titleWidget: Text('You forfeited', style: titleStyle),
+          titleWidget: Text(l10n.forfeitYouForfeited, style: titleStyle),
           onClose: () => Navigator.pop(dialogContext, false),
         ),
       ),
       content: Padding(
         padding: EdgeInsets.fromLTRB(inset, LayoutTokens.gr2, inset, 0),
         child: Text(
-          'Other players can keep playing. Stay on this device to spectate '
-          'until the table finishes. Returning to your profile hub now saves '
-          'your concede result and disconnects from the live game.',
+          l10n.forfeitStaySpectateBody,
           style: bodyStyle,
         ),
       ),
@@ -233,7 +236,7 @@ Future<void> _showPostForfeitFollowUp(
                     foregroundColor: colors.onAccent,
                     shape: const StadiumBorder(),
                   ),
-                  child: const Text('Stay & spectate'),
+                  child: Text(l10n.forfeitStaySpectate),
                 ),
               ),
               SizedBox(height: LayoutTokens.gr2),
@@ -246,7 +249,7 @@ Future<void> _showPostForfeitFollowUp(
                     side: BorderSide(color: colors.borderSubtle),
                     shape: const StadiumBorder(),
                   ),
-                  child: const Text('Return to profile'),
+                  child: Text(l10n.forfeitReturnToProfile),
                 ),
               ),
             ],
@@ -300,6 +303,7 @@ class _GameConcedeDialogState extends State<_GameConcedeDialog> {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final game = widget.game;
     final inset = GameModalChrome.horizontalInset(context);
     final others = game.players
@@ -335,7 +339,7 @@ class _GameConcedeDialogState extends State<_GameConcedeDialog> {
           title: Padding(
             padding: EdgeInsets.fromLTRB(inset, LayoutTokens.gr3, inset, 0),
             child: GameDialogTitleRow(
-              titleWidget: Text('Forfeit?', style: titleStyle),
+              titleWidget: Text(l10n.forfeitTitle, style: titleStyle),
               onClose: () => Navigator.pop(context),
             ),
           ),
@@ -352,8 +356,8 @@ class _GameConcedeDialogState extends State<_GameConcedeDialog> {
                 children: [
                   Text(
                     others.isEmpty
-                        ? 'Your practice game will end. Optionally note how it went.'
-                        : 'You will leave the game. Optionally rate opponents before you go.',
+                        ? l10n.forfeitBodySolo
+                        : l10n.forfeitBodyMulti,
                     style: bodyStyle,
                   ),
                   if (others.isNotEmpty) ...[
@@ -362,7 +366,7 @@ class _GameConcedeDialogState extends State<_GameConcedeDialog> {
                       opponents: others,
                       likePlayerIds: _likePlayerIds,
                       dislikePlayerIds: _dislikePlayerIds,
-                      rateOpponentsTitle: 'Rate opponents',
+                      rateOpponentsTitle: l10n.forfeitRateOpponents,
                       onLike: (pid) => setState(() {
                         togglePlayerLike(
                           likeIds: _likePlayerIds,
@@ -421,7 +425,7 @@ class _GameConcedeDialogState extends State<_GameConcedeDialog> {
                         foregroundColor: colors.onAccent,
                         shape: const StadiumBorder(),
                       ),
-                      child: const Text('Forfeit'),
+                      child: Text(l10n.forfeitConfirm),
                     ),
                   ),
                   SizedBox(height: LayoutTokens.gr2),
@@ -434,7 +438,7 @@ class _GameConcedeDialogState extends State<_GameConcedeDialog> {
                         side: BorderSide(color: colors.borderSubtle),
                         shape: const StadiumBorder(),
                       ),
-                      child: const Text('Cancel'),
+                      child: Text(l10n.commonCancel),
                     ),
                   ),
                 ],

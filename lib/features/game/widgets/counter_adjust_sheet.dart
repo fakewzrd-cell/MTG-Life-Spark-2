@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/utils/game_haptics.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
@@ -63,11 +64,12 @@ class _CounterAdjustSheetState extends State<CounterAdjustSheet> {
   Future<void> _resetToZero() async {
     if (_value == 0) return;
     if (widget.confirmReset) {
+      final l10n = AppLocalizations.of(context);
       final ok = await showGameConfirmDialog(
         context: context,
-        title: 'Reset to 0?',
-        message: 'Set this counter to zero.',
-        confirmLabel: 'Reset',
+        title: l10n.counterResetConfirmTitle,
+        message: l10n.counterResetConfirmBody,
+        confirmLabel: l10n.counterResetConfirmAction,
         destructive: true,
       );
       if (ok != true || !mounted) return;
@@ -80,6 +82,7 @@ class _CounterAdjustSheetState extends State<CounterAdjustSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     return GameSheetBody(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -120,7 +123,7 @@ class _CounterAdjustSheetState extends State<CounterAdjustSheet> {
           TextButton(
             onPressed: _value == 0 ? null : _resetToZero,
             child: Text(
-              'Reset to 0',
+              l10n.counterResetToZero,
               style: TextStyle(
                 color: _value == 0
                     ? colors.textSecondary.withValues(alpha: 0.45)
@@ -133,7 +136,7 @@ class _CounterAdjustSheetState extends State<CounterAdjustSheet> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             style: GameUiTokens.sheetSecondaryButton(context.gameColors),
-            child: Text('Done'),
+            child: Text(l10n.counterDone),
           ),
         ],
       ),

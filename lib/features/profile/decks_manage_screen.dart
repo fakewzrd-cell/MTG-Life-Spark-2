@@ -7,6 +7,7 @@ import '../../core/game/game_format.dart';
 import '../../core/models/player_deck.dart';
 import '../../core/persistence/deck_repository.dart';
 import '../../core/persistence/providers.dart';
+import '../../l10n/app_localizations.dart';
 import '../../shared/utils/app_router.dart';
 import '../../ui/components/ui_app_bar.dart';
 import '../../ui/components/ui_button.dart';
@@ -213,6 +214,7 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
   Widget build(BuildContext context) {
     ref.listen(deckListRevisionProvider, (_, __) => _reload());
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     final repo = ref.read(deckRepositoryProvider);
     final bottomBarPad = LayoutTokens.shellBottomInset(context);
 
@@ -261,14 +263,13 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
               ),
               SizedBox(height: LayoutTokens.gr4),
               Text(
-                'Build your deck library',
+                l10n.decksEmptyTitle,
                 textAlign: TextAlign.center,
                 style: TypographyTokens.sectionTitle(colors.textPrimary),
               ),
               SizedBox(height: LayoutTokens.gr2),
               Text(
-                'Save a deck with a name, format, and cover card. '
-                'When you host or join a game, pick the right list in the lobby.',
+                l10n.decksEmptyBody,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: colors.textSecondary,
@@ -279,7 +280,7 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
               ),
               SizedBox(height: LayoutTokens.gr5),
               UiButton(
-                label: 'Add deck',
+                label: l10n.decksAddDeck,
                 icon: const Icon(Icons.add_rounded, size: 22),
                 onPressed: _promptNewDeckName,
               ),
@@ -300,13 +301,13 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
               controller: _searchCtrl,
               onChanged: (v) => setState(() => _query = v),
               decoration: InputDecoration(
-                hintText: 'Search decks…',
+                hintText: l10n.decksSearchHint,
                 prefixIcon: const Icon(Icons.search_rounded),
                 hintStyle: TextStyle(color: colors.textSecondary),
                 suffixIcon: _query.isEmpty
                     ? null
                     : IconButton(
-                        tooltip: 'Clear',
+                        tooltip: l10n.decksClearSearchTooltip,
                         onPressed: () {
                           _searchCtrl.clear();
                           setState(() => _query = '');
@@ -321,7 +322,7 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
             Padding(
               padding: EdgeInsets.symmetric(vertical: LayoutTokens.gr6),
               child: Text(
-                'No decks match “$_query”.',
+                l10n.decksNoSearchMatches(_query),
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: colors.textSecondary,
@@ -336,14 +337,14 @@ class _DecksManageScreenState extends ConsumerState<DecksManageScreen> {
 
     return Scaffold(
       appBar: UiAppBar(
-        title: 'Decks',
+        title: AppLocalizations.of(context).decksTitle,
         actions: [
           if (!isEmpty)
             Padding(
               padding: EdgeInsets.only(right: LayoutTokens.gr2),
               child: Center(
                 child: ProfileHeaderPillButton(
-                  label: 'Add',
+                  label: AppLocalizations.of(context).commonAdd,
                   colors: colors,
                   onPressed: _promptNewDeckName,
                 ),
@@ -420,7 +421,7 @@ class _DeckLibraryTile extends StatelessWidget {
         : deck.commanderName;
     final styleLine = deck.hasDeckStyle
         ? deck.deckStyleDisplayName
-        : 'Style not set';
+        : AppLocalizations.of(context).decksStyleNotSet;
     final wr = deck.gamesPlayed == 0
         ? null
         : (deck.winRate * 100).round();
@@ -471,7 +472,9 @@ class _DeckLibraryTile extends StatelessWidget {
                       ),
                       SizedBox(height: LayoutTokens.gr0),
                       Text(
-                        commanderLine.isEmpty ? 'No cover card' : commanderLine,
+                        commanderLine.isEmpty
+                            ? AppLocalizations.of(context).decksNoCoverCard
+                            : commanderLine,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(

@@ -7,6 +7,7 @@ import '../../../core/game/game_state_notifier.dart';
 import '../../../core/game/stack_display.dart';
 import '../../../core/game/scryfall_service.dart';
 import '../../../core/game/stack_item.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/utils/game_haptics.dart';
 import '../../../ui/theme/app_color_tokens.dart';
 import 'game_colors.dart';
@@ -66,6 +67,7 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final colors = context.gameColors;
     final game = widget.game;
     final notifier = ref.read(gameProvider.notifier);
@@ -112,8 +114,8 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
                     Expanded(
                       child: Text(
                         _sortMode == StackSortMode.stackOrder
-                            ? 'Order on stack'
-                            : 'By player',
+                            ? l10n.stackSortOrderOnStack
+                            : l10n.stackSortByPlayer,
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: FontTokens.body,
@@ -123,9 +125,9 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
                     ),
                     Semantics(
                       button: true,
-                      label: 'Add spell or ability',
+                      label: l10n.stackAddSpellOrAbility,
                       child: IconButton(
-                        tooltip: 'Add spell or ability',
+                        tooltip: l10n.stackAddSpellOrAbility,
                         visualDensity: VisualDensity.compact,
                         padding: EdgeInsets.all(LayoutTokens.gr0),
                         constraints: const BoxConstraints(
@@ -144,9 +146,9 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
                     ),
                     Semantics(
                       button: true,
-                      label: 'How the stack works',
+                      label: l10n.stackHowItWorksTooltip,
                       child: IconButton(
-                        tooltip: 'How the stack works',
+                        tooltip: l10n.stackHowItWorksTooltip,
                         visualDensity: VisualDensity.compact,
                         padding: EdgeInsets.all(LayoutTokens.gr0),
                         constraints: const BoxConstraints(
@@ -168,7 +170,7 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
                   runSpacing: LayoutTokens.gr0,
                   children: [
                     FilterChip(
-                      label: Text('By player'),
+                      label: Text(l10n.stackSortByPlayer),
                       selected: _sortMode == StackSortMode.apnap,
                       onSelected: (v) => setState(
                         () => _sortMode = v
@@ -183,7 +185,7 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
                       ),
                     ),
                     FilterChip(
-                      label: Text('Resolved / countered'),
+                      label: Text(l10n.stackFilterResolvedCountered),
                       selected: _showCountered,
                       onSelected: (v) => setState(() => _showCountered = v),
                       visualDensity: VisualDensity.compact,
@@ -209,7 +211,7 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
             ),
             sliver: SliverToBoxAdapter(
               child: Text(
-                'Who added what (active player first)',
+                l10n.stackApnapHint,
                 style: TextStyle(
                   fontSize: FontTokens.caption,
                   color: colors.textSecondary.withValues(alpha: 0.9),
@@ -232,7 +234,7 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
                     TextButton.icon(
                       onPressed: () => _confirmClearAll(context, notifier),
                       icon: Icon(Icons.delete_outline_rounded, size: 18),
-                      label: Text('Clear all'),
+                      label: Text(l10n.stackClearAll),
                     ),
                   ],
                 ),
@@ -297,6 +299,7 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
     AppColorTokens colors,
     Map<String, int> resolveOrderNumbers,
   ) {
+    final l10n = AppLocalizations.of(context);
     final filteredGame = game.copyWith(stackItems: visible);
     final groups = StackDisplay.apnapGroups(filteredGame);
     return [
@@ -320,8 +323,8 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
               SizedBox(width: LayoutTokens.gr2),
               Text(
                 g.isActivePlayer
-                    ? '${g.username} · Active player'
-                    : '${g.username} · Turn order: ${g.turnOrderPosition}',
+                    ? l10n.stackActivePlayerLabel(g.username)
+                    : l10n.stackTurnOrderLabel(g.username, g.turnOrderPosition),
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: g.isActivePlayer
@@ -365,12 +368,12 @@ class _StackTrackerTabState extends ConsumerState<StackTrackerTab> {
     BuildContext context,
     GameStateNotifier notifier,
   ) async {
+    final l10n = AppLocalizations.of(context);
     final ok = await showGameConfirmDialog(
       context: context,
-      title: 'Clear stack?',
-      message:
-          'Remove every spell and ability on the stack. This cannot be undone.',
-      confirmLabel: 'Clear all',
+      title: l10n.stackClearConfirmTitle,
+      message: l10n.stackClearConfirmBody,
+      confirmLabel: l10n.stackClearAll,
       destructive: true,
     );
     if (ok == true) notifier.clearAllStackItems();
@@ -389,9 +392,12 @@ Future<void> openStackAddDialog(
   WidgetRef ref, {
   required String? parentId,
 }) async {
+  final l10n = AppLocalizations.of(context);
   final card = await showStackCardPickerDialog(
     context,
-    title: parentId == null ? 'Put on stack' : 'In response to…',
+    title: parentId == null
+        ? l10n.stackPutOnStack
+        : l10n.stackInResponseToEllipsis,
   );
   if (card == null || !context.mounted) return;
   scheduleStackAddItem(ref, context, card: card, parentId: parentId);
@@ -425,6 +431,7 @@ class _EmptyStackState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final colors = context.gameColors;
     return Center(
       child: Padding(
@@ -439,7 +446,7 @@ class _EmptyStackState extends StatelessWidget {
             ),
             SizedBox(height: LayoutTokens.gr3),
             Text(
-              'Nothing on the stack',
+              l10n.stackEmptyTitle,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: FontTokens.body,
@@ -447,13 +454,13 @@ class _EmptyStackState extends StatelessWidget {
               ),
             ),
             SizedBox(height: LayoutTokens.gr2),
-            _emptyBullet(context, 'Put spells and abilities here before they resolve.'),
-            _emptyBullet(context, 'The last one added resolves first.'),
+            _emptyBullet(context, l10n.stackEmptyBullet1),
+            _emptyBullet(context, l10n.stackEmptyBullet2),
             SizedBox(height: LayoutTokens.gr4),
             FilledButton.icon(
               onPressed: onPutOnStack,
               icon: Icon(Icons.add_rounded),
-              label: Text('Add spell'),
+              label: Text(l10n.stackAddSpell),
               style: FilledButton.styleFrom(
                 shape: RoundedRectangleBorder(
                   borderRadius: RadiusTokens.radiusControlSm,
@@ -799,6 +806,7 @@ class _StackItemCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final colors = context.gameColors;
     final notifier = ref.read(gameProvider.notifier);
     final owner = game.playerById(item.playerId);
@@ -816,9 +824,9 @@ class _StackItemCard extends ConsumerWidget {
         (isFizzled ||
             (item.isActive && (targetInvalid || item.parentId != null)));
     final statusLabel = switch (item.status) {
-      StackItemStatus.resolved => 'Resolved',
-      StackItemStatus.countered => 'Countered',
-      StackItemStatus.fizzled => 'Fizzled',
+      StackItemStatus.resolved => l10n.stackStatusResolved,
+      StackItemStatus.countered => l10n.stackStatusCountered,
+      StackItemStatus.fizzled => l10n.stackStatusFizzled,
       StackItemStatus.active => null,
     };
     final statusColor = switch (item.status) {
@@ -901,7 +909,7 @@ class _StackItemCard extends ConsumerWidget {
                   isResolved: isResolved,
                   parentName: parentName,
                   ownerLabel:
-                      '${owner?.username ?? item.playerId}${isLocal ? ' (you)' : ''}',
+                      '${owner?.username ?? item.playerId}${isLocal ? ' ${l10n.stackYouSuffix}' : ''}',
                   showWaitsHint: showWaitsHint,
                   targetInvalid: targetInvalid,
                   statusLabel: statusLabel,
@@ -974,6 +982,7 @@ class _StackItemCard extends ConsumerWidget {
     WidgetRef ref,
     StackItem item,
   ) async {
+    final l10n = AppLocalizations.of(context);
     final colors = context.gameColors;
     final notifier = ref.read(gameProvider.notifier);
     final action = await showGameBottomSheet<String>(
@@ -987,7 +996,7 @@ class _StackItemCard extends ConsumerWidget {
             if (item.isActive)
               ListTile(
                 leading: Icon(Icons.reply_rounded),
-                title: Text('In response to…'),
+                title: Text(l10n.stackInResponseToEllipsis),
                 onTap: () => Navigator.pop(ctx, 'respond'),
               ),
             if (notifier.canChangeStackItemStatus(item) &&
@@ -999,26 +1008,26 @@ class _StackItemCard extends ConsumerWidget {
                 ),
                 title: Text(
                   item.status == StackItemStatus.fizzled
-                      ? 'Undo fizzle'
-                      : 'Fizzle',
+                      ? l10n.stackUndoFizzle
+                      : l10n.stackFizzle,
                 ),
                 subtitle: Text(
                   item.status == StackItemStatus.fizzled
-                      ? 'Put this spell back on the stack as active'
-                      : 'Target illegal or spell left the stack (rules counter)',
+                      ? l10n.stackUndoFizzleSubtitle
+                      : l10n.stackFizzleSubtitle,
                 ),
                 onTap: () => Navigator.pop(ctx, 'toggle_fizzle'),
               ),
             if (item.isActive && notifier.canChangeStackItemStatus(item))
               ListTile(
                 leading: Icon(Icons.block_rounded),
-                title: Text('Mark countered'),
+                title: Text(l10n.stackMarkCountered),
                 onTap: () => Navigator.pop(ctx, 'countered'),
               ),
             if (notifier.canEditStackItem(item))
               ListTile(
                 leading: Icon(Icons.edit_rounded),
-                title: Text('Rename'),
+                title: Text(l10n.stackRename),
                 onTap: () => Navigator.pop(ctx, 'rename'),
               ),
           ],
@@ -1049,7 +1058,7 @@ class _StackItemCard extends ConsumerWidget {
   ) async {
     final card = await showStackCardPickerDialog(
       context,
-      title: 'Rename',
+      title: AppLocalizations.of(context).stackRename,
       initialQuery: item.name,
     );
     if (card == null || !context.mounted) return;
@@ -1122,6 +1131,7 @@ class _StackOrderNumberBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final colors = context.gameColors;
     return Row(
       children: [
@@ -1147,7 +1157,7 @@ class _StackOrderNumberBadge extends StatelessWidget {
         ),
         SizedBox(width: LayoutTokens.gr1),
         Text(
-          'On stack',
+          l10n.stackOnStack,
           style: TextStyle(
             fontSize: FontTokens.hudXs,
             fontWeight: FontWeight.w600,
@@ -1162,6 +1172,7 @@ class _StackOrderNumberBadge extends StatelessWidget {
 class _ResolvesNextBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final colors = context.gameColors;
     return Row(
       children: [
@@ -1175,7 +1186,7 @@ class _ResolvesNextBadge extends StatelessWidget {
             borderRadius: RadiusTokens.radiusControlSm,
           ),
           child: Text(
-            'Resolves next',
+            l10n.stackResolvesNext,
             style: TextStyle(
               fontSize: FontTokens.hudXs,
               fontWeight: FontWeight.w700,
@@ -1224,11 +1235,12 @@ class _StackCardInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final colors = context.gameColors;
     final metaLines = <Widget>[
       if (showWaitsHint)
         Text(
-          'Resolves after items above',
+          l10n.stackResolvesAfterAbove,
           style: TextStyle(
             fontSize: FontTokens.hudXs,
             height: 1.35,
@@ -1237,7 +1249,7 @@ class _StackCardInfo extends StatelessWidget {
         ),
       if (targetInvalid && item.isActive)
         Text(
-          'Target is no longer on the stack',
+          l10n.stackTargetNoLongerOnStack,
           style: TextStyle(
             fontSize: FontTokens.hudXs,
             height: 1.35,
@@ -1288,7 +1300,7 @@ class _StackCardInfo extends StatelessWidget {
                   minWidth: LayoutTokens.minTapTarget,
                   minHeight: LayoutTokens.minTapTarget,
                 ),
-                tooltip: 'Card rules',
+                tooltip: l10n.stackCardRulesTooltip,
                 icon: Icon(
                   Icons.menu_book_outlined,
                   size: LayoutTokens.gr3,
@@ -1326,7 +1338,7 @@ class _StackCardInfo extends StatelessWidget {
         if (parentName != null) ...[
           SizedBox(height: _StackCardLayout.groupGap),
           Text(
-            'In response to $parentName',
+            l10n.stackInResponseToNamed(parentName!),
             style: TextStyle(
               fontSize: FontTokens.caption,
               height: 1.35,
@@ -1453,12 +1465,13 @@ class _StackItemActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final colors = context.gameColors;
     final slots = <Widget>[
       if (showResolve)
         Expanded(
           child: _StackPillButton(
-            label: 'Resolve',
+            label: l10n.stackResolve,
             onPressed: () {
               context.gameHapticMedium();
               notifier.setStackItemStatus(
@@ -1475,7 +1488,7 @@ class _StackItemActions extends StatelessWidget {
       if (showRespond)
         Expanded(
           child: _StackPillButton(
-            label: 'Respond',
+            label: l10n.stackRespond,
             onPressed: () {
               context.gameHapticSelection();
               onRespond();
@@ -1490,7 +1503,7 @@ class _StackItemActions extends StatelessWidget {
           SizedBox(width: _StackPillMetrics.gap),
         Expanded(
           child: _StackPillButton(
-            label: isFizzled ? 'Fizzled' : 'Fizzle',
+            label: isFizzled ? l10n.stackFizzledButton : l10n.stackFizzle,
             onPressed: () => _toggleFizzle(context),
             foreground: colors.warning,
             background: colors.warning,

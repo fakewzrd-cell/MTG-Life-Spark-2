@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/persistence/providers.dart';
+import '../../l10n/app_localizations.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../shared/utils/app_router.dart';
 import '../../shared/widgets/block_system_app_exit.dart';
@@ -25,45 +26,38 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _controller = PageController();
   int _currentPage = 0;
 
-  static final _slides = [
+  List<_OnboardingSlide> _slidesFor(AppLocalizations l10n) => [
     _OnboardingSlide(
       icon: Icons.auto_awesome,
-      title: 'Welcome to Life Spark',
-      body:
-          'Your Commander battlefield companion — life, counters, politics, '
-          'and the stack, synced at the table.',
+      title: l10n.onboardingSlide1Title,
+      body: l10n.onboardingSlide1Body,
       showBrandLogo: true,
     ),
     _OnboardingSlide(
       icon: Icons.wifi_tethering,
-      title: 'Host or Join',
-      body:
-          'One player hosts a game — others scan a QR code on the same Wi‑Fi network. No internet account needed. Works for 4 to 6 players at the same table.',
+      title: l10n.onboardingSlide2Title,
+      body: l10n.onboardingSlide2Body,
     ),
     _OnboardingSlide(
       icon: Icons.favorite,
-      title: 'Track Your Life',
-      body:
-          'Tap +/- to change life by 1. Hold +/- for ±5. Drag left or right to adjust quickly. Double-tap the life total to set an exact number. Undo is on the bottom bar (or shake, if enabled).',
+      title: l10n.onboardingSlide3Title,
+      body: l10n.onboardingSlide3Body,
     ),
     _OnboardingSlide(
       icon: Icons.timer_outlined,
-      title: 'Phase Bar & Turns',
-      body:
-          'Use the phase bar to step through the turn, or leave Phase tracker off in the lobby. Timeout pauses the whole game.',
+      title: l10n.onboardingSlide4Title,
+      body: l10n.onboardingSlide4Body,
     ),
     _OnboardingSlide(
       icon: Icons.auto_awesome,
-      title: 'Commander & Counters',
-      body:
-          'Commander damage opens as a threat list — how much each opponent has dealt you toward 21. Track poison (10), energy, experience, and rad. Use Proliferate to add 1 to all at once.',
+      title: l10n.onboardingSlide5Title,
+      body: l10n.onboardingSlide5Body,
       useCommanderDamageIcon: true,
     ),
     _OnboardingSlide(
       icon: Icons.handshake_outlined,
-      title: 'Alliances & Politics',
-      body:
-          'Propose secret alliances with other players. They expire automatically or break when you attack each other. Track the Monarch and Initiative with a single tap.',
+      title: l10n.onboardingSlide6Title,
+      body: l10n.onboardingSlide6Body,
     ),
   ];
 
@@ -73,8 +67,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     if (mounted) context.go(AppRoutes.home);
   }
 
-  void _next() {
-    if (_currentPage < _slides.length - 1) {
+  void _next(int slideCount) {
+    if (_currentPage < slideCount - 1) {
       _controller.nextPage(
         duration: MotionTokens.slow,
         curve: Curves.easeInOut,
@@ -93,6 +87,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
+    final slides = _slidesFor(l10n);
     return BlockSystemAppExit(
       child: Scaffold(
       body: SafeArea(
@@ -102,13 +98,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               child: PageView.builder(
                 controller: _controller,
                 onPageChanged: (i) => setState(() => _currentPage = i),
-                itemCount: _slides.length,
-                itemBuilder: (context, i) => _SlideView(slide: _slides[i]),
+                itemCount: slides.length,
+                itemBuilder: (context, i) => _SlideView(slide: slides[i]),
               ),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(_slides.length, (i) {
+              children: List.generate(slides.length, (i) {
                 return AnimatedContainer(
                   duration: MotionTokens.standard,
                   margin: EdgeInsets.symmetric(horizontal: LayoutTokens.gr0),
@@ -130,14 +126,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   UiButton(
-                    label: _currentPage == _slides.length - 1
-                        ? 'Ready to play'
-                        : 'Next',
-                    onPressed: _next,
+                    label: _currentPage == slides.length - 1
+                        ? l10n.onboardingReadyToPlay
+                        : l10n.onboardingNext,
+                    onPressed: () => _next(slides.length),
                   ),
                   SizedBox(height: LayoutTokens.gr2),
                   UiButton(
-                    label: 'Skip',
+                    label: l10n.onboardingSkip,
                     variant: UiButtonVariant.secondary,
                     onPressed: _finish,
                   ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
@@ -32,28 +33,29 @@ class _ProfileOptionsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     return GameSheetBody(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const GameSheetHeader(
-            title: 'Profile',
+          GameSheetHeader(
+            title: l10n.profileOptionsTitle,
             showHandle: false,
           ),
           SizedBox(height: LayoutTokens.gr2),
           _ProfileOptionTile(
             colors: colors,
             icon: Icons.edit_rounded,
-            title: 'Edit profile',
-            subtitle: 'Change your name or avatar',
+            title: l10n.profileOptionsEdit,
+            subtitle: l10n.profileOptionsEditSubtitle,
             onTap: () => _pick(context, ProfileSheetAction.editProfile),
           ),
           _ProfileOptionTile(
             colors: colors,
             icon: Icons.ios_share_rounded,
-            title: 'Back up profile',
-            subtitle: 'Save profile, decks, games, and feedback on this phone',
+            title: l10n.profileOptionsBackup,
+            subtitle: l10n.profileOptionsBackupSubtitle,
             onTap: () => _pick(context, ProfileSheetAction.backupProfile),
           ),
         ],

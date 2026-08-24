@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/debug/app_log.dart';
 import '../../../core/game/scryfall_service.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/mana/mana_symbol_assets.dart';
 import '../../../shared/utils/game_haptics.dart';
 import '../../../shared/widgets/mana_cost_pips.dart';
@@ -97,7 +98,7 @@ class _CardLookupSheetState extends ConsumerState<_CardLookupSheet> {
         _results = cards.take(20).toList();
         _searching = false;
         if (_results.isEmpty) {
-          _error = 'No cards found for “$q”.';
+          _error = AppLocalizations.of(context).lookupNoResults(q);
         }
       });
     } catch (e, st) {
@@ -106,7 +107,7 @@ class _CardLookupSheetState extends ConsumerState<_CardLookupSheet> {
       setState(() {
         _searching = false;
         _results = [];
-        _error = 'Could not reach Scryfall. Check your connection.';
+        _error = AppLocalizations.of(context).lookupNetworkError;
       });
     }
   }
@@ -174,12 +175,13 @@ class _CardLookupSheetState extends ConsumerState<_CardLookupSheet> {
   Widget _buildSearchLayout(AppColorTokens colors, double maxSheetH) {
     final maxListH =
         (maxSheetH - _searchChromeReserve).clamp(120.0, maxSheetH * 0.62);
+    final l10n = AppLocalizations.of(context);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const GameSheetHeader(title: 'Card lookup'),
+        GameSheetHeader(title: l10n.lookupTitle),
         SizedBox(height: LayoutTokens.gr2),
         TextField(
           controller: _searchController,
@@ -188,7 +190,7 @@ class _CardLookupSheetState extends ConsumerState<_CardLookupSheet> {
           textInputAction: TextInputAction.search,
           style: TextStyle(color: colors.textPrimary),
           decoration: InputDecoration(
-            hintText: 'Search any MTG card…',
+            hintText: l10n.lookupHint,
             prefixIcon: Icon(
               Icons.search_rounded,
               color: colors.textSecondary,
@@ -204,7 +206,7 @@ class _CardLookupSheetState extends ConsumerState<_CardLookupSheet> {
                   )
                 : (_searchController.text.isNotEmpty
                     ? IconButton(
-                        tooltip: 'Clear',
+                        tooltip: AppLocalizations.of(context).lookupClearTooltip,
                         onPressed: () {
                           _searchController.clear();
                           setState(() {});
@@ -220,7 +222,7 @@ class _CardLookupSheetState extends ConsumerState<_CardLookupSheet> {
         ),
         SizedBox(height: LayoutTokens.gr1),
         Text(
-          'Oracle text and official rulings from Scryfall.',
+          l10n.lookupHelp,
           style: GameModalChrome.dialogBodyStyle(context),
         ),
         SizedBox(height: LayoutTokens.gr2),
@@ -251,7 +253,7 @@ class _CardLookupSheetState extends ConsumerState<_CardLookupSheet> {
       return Padding(
         padding: EdgeInsets.symmetric(vertical: LayoutTokens.gr3),
         child: Text(
-          'Type a card name to look up rules.',
+          AppLocalizations.of(context).lookupEmptyPrompt,
           textAlign: TextAlign.center,
           style: TextStyle(
             color: colors.textSecondary,
@@ -311,6 +313,7 @@ class _CardLookupSheetState extends ConsumerState<_CardLookupSheet> {
   Widget _buildDetailLayout(AppColorTokens colors, double maxSheetH) {
     final card = _selected!;
     final oracle = card.oracleText?.trim();
+    final l10n = AppLocalizations.of(context);
     // Sticky handle/back/title stay outside the list so the sheet can still
     // be dragged shut while reading oracle text / rulings.
     const chromeReserve = 120.0;
@@ -328,7 +331,7 @@ class _CardLookupSheetState extends ConsumerState<_CardLookupSheet> {
           child: TextButton.icon(
             onPressed: _backToSearch,
             icon: const Icon(Icons.arrow_back_rounded, size: 18),
-            label: const Text('Search'),
+            label: Text(l10n.lookupSearch),
             style: TextButton.styleFrom(
               foregroundColor: colors.primaryAccent,
               padding: EdgeInsets.zero,
@@ -391,7 +394,7 @@ class _CardLookupSheetState extends ConsumerState<_CardLookupSheet> {
               ],
               SizedBox(height: LayoutTokens.gr3),
               Text(
-                'Oracle text',
+                l10n.lookupOracleText,
                 style: TextStyle(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.w800,
@@ -401,7 +404,7 @@ class _CardLookupSheetState extends ConsumerState<_CardLookupSheet> {
               SizedBox(height: LayoutTokens.gr1),
               if (oracle == null || oracle.isEmpty)
                 Text(
-                  'No oracle text available for this card.',
+                  l10n.lookupNoOracle,
                   style: TextStyle(
                     color: colors.textSecondary,
                     fontSize: FontTokens.hudSm,
@@ -419,7 +422,7 @@ class _CardLookupSheetState extends ConsumerState<_CardLookupSheet> {
                 ),
               SizedBox(height: LayoutTokens.gr3),
               Text(
-                'Rulings',
+                l10n.lookupRulings,
                 style: TextStyle(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.w800,
@@ -436,7 +439,7 @@ class _CardLookupSheetState extends ConsumerState<_CardLookupSheet> {
                 )
               else if (_rulings.isEmpty)
                 Text(
-                  'No official rulings listed for this card.',
+                  l10n.lookupNoRulings,
                   style: TextStyle(
                     color: colors.textSecondary,
                     fontSize: FontTokens.hudSm,

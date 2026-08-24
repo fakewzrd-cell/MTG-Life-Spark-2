@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/motion_tokens.dart';
@@ -19,11 +20,12 @@ class YourTurnPromptOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
 
     return Positioned.fill(
       child: Semantics(
         button: true,
-        label: 'Your turn. Double tap to dismiss.',
+        label: l10n.gameYourTurnSemantics,
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: onDismiss,
@@ -54,7 +56,7 @@ class YourTurnPromptOverlay extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                'Your turn',
+                                l10n.gameYourTurn,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: colors.onAccent,
@@ -65,7 +67,7 @@ class YourTurnPromptOverlay extends StatelessWidget {
                               ),
                               SizedBox(height: LayoutTokens.gr2),
                               Text(
-                                'Tap to continue',
+                                l10n.gameYourTurnTapContinue,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: colors.onAccent.withValues(

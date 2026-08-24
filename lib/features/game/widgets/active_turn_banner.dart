@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/game/game_state.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../ui/tokens/color_tokens.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
@@ -18,6 +19,7 @@ class ActiveTurnBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final active = game.playerById(game.activePlayerId);
     final isLocal = game.isLocalPlayersTurn;
     // Seat identity uses player color — brand accent is reserved for CTAs.
@@ -25,7 +27,8 @@ class ActiveTurnBanner extends StatelessWidget {
     final name = isLocal
         ? 'You'
         : overviewShortPlayerName(active?.username ?? '—', maxChars: 14);
-    final turnLabel = isLocal ? 'Your turn' : "$name's turn";
+    final turnLabel =
+        isLocal ? l10n.gameYourTurn : l10n.gamePlayersTurn(name);
     final initial = isLocal
         ? 'Y'
         : (active?.username.isNotEmpty == true
@@ -81,7 +84,7 @@ class ActiveTurnBanner extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      isLocal ? 'NOW PLAYING' : 'ACTIVE TURN',
+                      isLocal ? l10n.gameNowPlaying : l10n.gameActiveTurn,
                       style: TextStyle(
                         color: accent,
                         fontSize: FontTokens.hudXs,

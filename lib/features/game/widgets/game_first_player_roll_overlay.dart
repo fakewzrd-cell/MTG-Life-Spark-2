@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/game/game_state.dart';
 import '../../../core/game/player_game_state.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../ui/theme/app_color_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/motion_tokens.dart';
@@ -124,6 +125,7 @@ class _GameFirstPlayerRollOverlayState extends State<GameFirstPlayerRollOverlay>
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final hasRolled = _myRoll != null;
     final othersRolled = widget.game.firstPlayerRolls.length;
     final totalPlayers = widget.game.players.length;
@@ -143,7 +145,7 @@ class _GameFirstPlayerRollOverlayState extends State<GameFirstPlayerRollOverlay>
               Icon(Icons.casino, size: 44, color: colors.emphasis),
               const SizedBox(height: LayoutTokens.gr3),
               Text(
-                'Roll for First Player',
+                l10n.firstPlayerRollTitle,
                 style: TextStyle(
                   color: colors.textPrimary,
                   fontSize: 22,
@@ -153,7 +155,7 @@ class _GameFirstPlayerRollOverlayState extends State<GameFirstPlayerRollOverlay>
               ),
               const SizedBox(height: LayoutTokens.gr1),
               Text(
-                'Highest roll goes first. Tap the die to roll!',
+                l10n.firstPlayerRollSubtitle,
                 style: TextStyle(color: colors.textSecondary, fontSize: 14),
                 textAlign: TextAlign.center,
               ),
@@ -162,12 +164,12 @@ class _GameFirstPlayerRollOverlayState extends State<GameFirstPlayerRollOverlay>
                 button: true,
                 enabled: !hasRolled && !_rolling,
                 excludeSemantics: true,
-                label: 'Roll die',
+                label: l10n.firstPlayerRollDieA11y,
                 value: _rolling
-                    ? 'Rolling'
+                    ? l10n.firstPlayerRollingA11y
                     : hasRolled
-                        ? 'Rolled $_myRoll'
-                        : 'Not rolled',
+                        ? l10n.firstPlayerRolledA11y('$_myRoll')
+                        : l10n.firstPlayerNotRolledA11y,
                 child: GestureDetector(
                   onTap: hasRolled || _rolling ? null : _doRoll,
                   child: AnimatedBuilder(
@@ -199,10 +201,10 @@ class _GameFirstPlayerRollOverlayState extends State<GameFirstPlayerRollOverlay>
               if (hasRolled)
                 Semantics(
                   liveRegion: true,
-                  label: 'You rolled $_myRoll',
+                  label: l10n.firstPlayerYouRolledA11y('$_myRoll'),
                   excludeSemantics: true,
                   child: Text(
-                    'You rolled $_myRoll!',
+                    l10n.firstPlayerYouRolled('$_myRoll'),
                     style: TextStyle(
                       color: colors.success,
                       fontSize: 18,
@@ -212,7 +214,7 @@ class _GameFirstPlayerRollOverlayState extends State<GameFirstPlayerRollOverlay>
                 )
               else if (_rolling)
                 Text(
-                  'Rolling…',
+                  l10n.firstPlayerRolling,
                   style: TextStyle(
                     color: colors.emphasis,
                     fontSize: 16,
@@ -221,7 +223,7 @@ class _GameFirstPlayerRollOverlayState extends State<GameFirstPlayerRollOverlay>
                 )
               else
                 Text(
-                  'Tap to roll',
+                  l10n.firstPlayerTapToRoll,
                   style: TextStyle(color: colors.textSecondary, fontSize: 16),
                 ),
               const SizedBox(height: LayoutTokens.gr4),
@@ -229,10 +231,13 @@ class _GameFirstPlayerRollOverlayState extends State<GameFirstPlayerRollOverlay>
               const SizedBox(height: LayoutTokens.gr3),
               Semantics(
                 label: widget.game.isHost
-                    ? '$othersRolled of $totalPlayers players have rolled'
+                    ? l10n.firstPlayerHostProgressA11y(
+                        '$othersRolled',
+                        '$totalPlayers',
+                      )
                     : hasRolled
-                        ? 'Waiting for other players to roll'
-                        : 'Roll die to continue',
+                        ? l10n.firstPlayerWaitingOthersA11y
+                        : l10n.firstPlayerRollToContinueA11y,
                 excludeSemantics: true,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
@@ -245,10 +250,13 @@ class _GameFirstPlayerRollOverlayState extends State<GameFirstPlayerRollOverlay>
                   ),
                   child: Text(
                     widget.game.isHost
-                        ? '$othersRolled / $totalPlayers players have rolled'
+                        ? l10n.firstPlayerHostProgress(
+                            '$othersRolled',
+                            '$totalPlayers',
+                          )
                         : hasRolled
-                            ? 'Waiting for others to roll…'
-                            : 'Tap the die above to roll',
+                            ? l10n.firstPlayerWaitingOthers
+                            : l10n.firstPlayerTapDieAbove,
                     style: TextStyle(
                       color: colors.textSecondary,
                       fontSize: 12,
@@ -331,6 +339,7 @@ class _RollProgressList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: game.players.map((p) {
@@ -341,8 +350,8 @@ class _RollProgressList extends StatelessWidget {
           child: Semantics(
             container: true,
             excludeSemantics: true,
-            label: '${isLocal ? '${p.username}, you' : p.username}, '
-                '${roll == null ? 'waiting to roll' : 'rolled $roll'}',
+            label: '${isLocal ? l10n.firstPlayerSlotYou(p.username) : p.username}, '
+                '${roll == null ? l10n.firstPlayerNotRolledA11y : l10n.firstPlayerRolledDetail('$roll')}',
             child: Row(
               children: [
                 Icon(
@@ -353,7 +362,9 @@ class _RollProgressList extends StatelessWidget {
                 const SizedBox(width: LayoutTokens.gr1),
                 Expanded(
                   child: Text(
-                    isLocal ? '${p.username} (you)' : p.username,
+                    isLocal
+                        ? l10n.firstPlayerYouSuffix(p.username)
+                        : p.username,
                     style: TextStyle(
                       color: colors.textPrimary,
                       fontWeight: isLocal ? FontWeight.w700 : FontWeight.w500,
@@ -389,20 +400,22 @@ class TurnOrderRevealOverlay extends StatelessWidget {
     required this.onContinue,
   });
 
-  static const _placeLabels = [
-    '1st',
-    '2nd',
-    '3rd',
-    '4th',
-    '5th',
-    '6th',
-  ];
+  List<String> _placeLabels(AppLocalizations l10n) => [
+        l10n.firstPlayerOrdinal1,
+        l10n.firstPlayerOrdinal2,
+        l10n.firstPlayerOrdinal3,
+        l10n.firstPlayerOrdinal4,
+        l10n.firstPlayerOrdinal5,
+        l10n.firstPlayerOrdinal6,
+      ];
 
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final order = game.turnOrder;
     final firstId = order.isNotEmpty ? order.first : null;
+    final placeLabels = _placeLabels(l10n);
 
     return Center(
       child: SingleChildScrollView(
@@ -419,7 +432,7 @@ class TurnOrderRevealOverlay extends StatelessWidget {
               Icon(Icons.emoji_events, size: 44, color: colors.emphasis),
               const SizedBox(height: LayoutTokens.gr3),
               Text(
-                'Turn Order',
+                l10n.firstPlayerTurnOrderTitle,
                 style: TextStyle(
                   color: colors.textPrimary,
                   fontSize: 24,
@@ -429,7 +442,7 @@ class TurnOrderRevealOverlay extends StatelessWidget {
               ),
               const SizedBox(height: LayoutTokens.gr1),
               Text(
-                'Highest roll leads — play proceeds in this order.',
+                l10n.firstPlayerTurnOrderSubtitle,
                 style: TextStyle(color: colors.textSecondary, fontSize: 14),
                 textAlign: TextAlign.center,
               ),
@@ -437,8 +450,8 @@ class TurnOrderRevealOverlay extends StatelessWidget {
               ...List.generate(order.length, (index) {
                 final playerId = order[index];
                 final player = game.playerById(playerId);
-                final label = index < _placeLabels.length
-                    ? _placeLabels[index]
+                final label = index < placeLabels.length
+                    ? placeLabels[index]
                     : '${index + 1}';
                 final isFirst = playerId == firstId;
                 final isLocal = playerId == game.localPlayerId;
@@ -455,7 +468,7 @@ class TurnOrderRevealOverlay extends StatelessWidget {
               const SizedBox(height: LayoutTokens.gr5),
               FilledButton(
                 onPressed: onContinue,
-                child: const Text('Start game'),
+                child: Text(l10n.firstPlayerStartGame),
               ),
             ],
           ),
@@ -485,13 +498,23 @@ class _TurnOrderSlotCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
-    final semanticName = isLocal ? '$username, you' : username;
-    final semanticRoll = roll == null ? 'roll unavailable' : 'rolled $roll';
+    final l10n = AppLocalizations.of(context);
+    final semanticName =
+        isLocal ? l10n.firstPlayerSlotYou(username) : username;
+    final semanticRoll = roll == null
+        ? l10n.firstPlayerRollUnavailable
+        : l10n.firstPlayerRolledDetail('$roll');
+    final slotLabel = l10n.firstPlayerSlotA11y(
+      placeLabel,
+      semanticName,
+      semanticRoll,
+    );
     return Semantics(
       container: true,
       excludeSemantics: true,
-      label: '$placeLabel, $semanticName, $semanticRoll'
-          '${isFirst ? ', goes first' : ''}',
+      label: isFirst
+          ? '$slotLabel, ${l10n.firstPlayerGoesFirst}'
+          : slotLabel,
       child: Container(
         margin: const EdgeInsets.only(bottom: LayoutTokens.gr2),
         padding: const EdgeInsets.symmetric(
@@ -535,7 +558,9 @@ class _TurnOrderSlotCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    isLocal ? '$username (you)' : username,
+                    isLocal
+                        ? l10n.firstPlayerYouSuffix(username)
+                        : username,
                     style: TextStyle(
                       color: colors.textPrimary,
                       fontWeight: FontWeight.w700,
@@ -544,7 +569,7 @@ class _TurnOrderSlotCard extends StatelessWidget {
                   ),
                   if (isFirst)
                     Text(
-                      'Goes first',
+                      l10n.firstPlayerGoesFirst,
                       style: TextStyle(
                         color: colors.emphasis,
                         fontSize: 12,

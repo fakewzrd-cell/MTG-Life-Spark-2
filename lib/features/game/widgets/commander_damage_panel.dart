@@ -9,6 +9,7 @@ import '../../../core/game/game_constants.dart';
 import '../../../core/game/game_providers.dart';
 import '../../../core/game/game_format.dart';
 import '../../../core/game/player_game_state.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../ui/theme/app_color_tokens.dart';
 import 'game_colors.dart';
 import '../../../ui/tokens/font_tokens.dart';
@@ -126,6 +127,7 @@ Future<void> showCommanderDamageSheet(
               final game = ref.watch(gameProvider);
               final local = game.localPlayer;
               if (local == null) return const SizedBox.shrink();
+              final l10n = AppLocalizations.of(context);
 
               final opponents = game.players
                   .where((p) => p.playerId != local.playerId)
@@ -138,10 +140,9 @@ Future<void> showCommanderDamageSheet(
                 children: [
                   const GameSheetHandle(),
                   SizedBox(height: LayoutTokens.gr2),
-                  const GameSheetHeader(
-                    title: 'Commander damage',
-                    subtitle:
-                        'Threats to you first. Open Dealt to log damage you dealt.',
+                  GameSheetHeader(
+                    title: l10n.cmdDmgSheetTitle,
+                    subtitle: l10n.cmdDmgSheetSubtitle,
                     showHandle: false,
                   ),
                   SizedBox(height: LayoutTokens.gr2),
@@ -197,6 +198,7 @@ class CommanderDamageBarButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final ko = GameConstants.commanderDamageKo;
     final remaining =
         (ko - maxTrackDamage).clamp(0, ko);
@@ -207,9 +209,11 @@ class CommanderDamageBarButton extends StatelessWidget {
     return Semantics(
       button: true,
       enabled: enabled,
-      label:
-          'Commander damage life $remaining of $ko remaining, '
-          '$maxTrackDamage taken on worst track, tap to manage',
+      label: l10n.cmdDmgBarA11y(
+        '$remaining',
+        '$ko',
+        '$maxTrackDamage',
+      ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -256,7 +260,7 @@ class CommanderDamageBarButton extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'left',
+                  l10n.cmdDmgLeft,
                   style: TextStyle(
                     color: enabled
                         ? accent.withValues(alpha: 0.9)
@@ -354,7 +358,7 @@ class _CommanderDamagePanelState extends State<CommanderDamagePanel> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Damage each commander has dealt you — $ko eliminates.',
+          AppLocalizations.of(context).cmdDmgThreatHelp(ko),
           style: TextStyle(
             fontSize: FontTokens.caption,
             color: colors.textSecondary,
@@ -366,7 +370,7 @@ class _CommanderDamagePanelState extends State<CommanderDamagePanel> {
           Padding(
             padding: EdgeInsets.only(bottom: LayoutTokens.gr1),
             child: Text(
-              'Opponents will appear here when others join the pod.',
+              AppLocalizations.of(context).cmdDmgEmptyPod,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: FontTokens.caption,
@@ -423,6 +427,7 @@ class _ThreatOpponentRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final canEditReceived = !localPlayer.isEliminated;
     final canEditDealt = !opponent.isEliminated;
     final primaryDmg = localPlayer.commanderDamageFrom(
@@ -469,7 +474,9 @@ class _ThreatOpponentRow extends StatelessWidget {
                 TextButton(
                   onPressed: onToggleDealt,
                   child: Text(
-                    dealtExpanded ? 'Hide dealt' : 'Dealt $dealtTotal',
+                    dealtExpanded
+                        ? l10n.cmdDmgHideDealt
+                        : l10n.cmdDmgDealtTotal('$dealtTotal'),
                     style: TextStyle(
                       fontSize: FontTokens.hudXs,
                       fontWeight: FontWeight.w600,
@@ -480,7 +487,7 @@ class _ThreatOpponentRow extends StatelessWidget {
             ),
             SizedBox(height: LayoutTokens.gr2),
             _DamageTrack(
-              label: opponent.commanderName ?? 'Commander',
+              label: opponent.commanderName ?? l10n.cmdDmgDefaultCommander,
               damage: primaryDmg,
               showTakenOfKo: true,
               onAdd: canEditReceived
@@ -503,7 +510,7 @@ class _ThreatOpponentRow extends StatelessWidget {
             if (opponent.hasPartner) ...[
               SizedBox(height: LayoutTokens.gr2),
               _DamageTrack(
-                label: opponent.partnerCommanderName ?? 'Partner',
+                label: opponent.partnerCommanderName ?? l10n.cmdDmgDefaultPartner,
                 damage: partnerDmg,
                 showTakenOfKo: true,
                 onAdd: canEditReceived
@@ -527,8 +534,8 @@ class _ThreatOpponentRow extends StatelessWidget {
             if (dealtExpanded) ...[
               SizedBox(height: LayoutTokens.gr3),
               _DirectionSection(
-                title: 'You → $shortName',
-                subtitle: 'Damage you dealt',
+                title: l10n.cmdDmgYouDealtTitle(shortName),
+                subtitle: l10n.cmdDmgYouDealtSubtitle,
                 sourcePlayer: localPlayer,
                 targetPlayer: opponent,
                 canEdit: canEditDealt,
@@ -567,6 +574,7 @@ class _DirectionSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final primaryDmg = targetPlayer.commanderDamageFrom(
       sourcePlayer.playerId,
       partnerIndex: 0,
@@ -610,7 +618,7 @@ class _DirectionSection extends StatelessWidget {
             ),
             SizedBox(height: LayoutTokens.gr2),
             _DamageTrack(
-              label: sourcePlayer.commanderName ?? 'Commander',
+              label: sourcePlayer.commanderName ?? l10n.cmdDmgDefaultCommander,
               damage: primaryDmg,
               onAdd: canEdit
                   ? () => onDamageChange(
@@ -632,7 +640,8 @@ class _DirectionSection extends StatelessWidget {
             if (sourcePlayer.hasPartner) ...[
               SizedBox(height: LayoutTokens.gr2),
               _DamageTrack(
-                label: sourcePlayer.partnerCommanderName ?? 'Partner commander',
+                label: sourcePlayer.partnerCommanderName ??
+                    l10n.cmdDmgDefaultPartnerCommander,
                 damage: partnerDmg,
                 onAdd: canEdit
                     ? () => onDamageChange(
@@ -717,6 +726,7 @@ class _DamageTrack extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final ko = GameConstants.commanderDamageKo;
     final color = commanderDamageColor(colors, damage);
     final progress = (damage / ko).clamp(0.0, 1.0);
@@ -741,7 +751,7 @@ class _DamageTrack extends StatelessWidget {
             ),
             if (damage >= ko)
               Tooltip(
-                message: 'Lethal commander damage!',
+                message: l10n.cmdDmgLethalTooltip,
                 child: Icon(
                   Icons.warning_amber_rounded,
                   size: LayoutTokens.gr2,
@@ -808,6 +818,7 @@ class _DmgStepButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final enabled = onTap != null;
     final fill = isAdd
         ? colors.primaryAccent.withValues(alpha: enabled ? 0.22 : 0.08)
@@ -819,7 +830,7 @@ class _DmgStepButton extends StatelessWidget {
     return Semantics(
       button: true,
       enabled: enabled,
-      label: isAdd ? 'Increase commander damage' : 'Decrease commander damage',
+      label: isAdd ? l10n.cmdDmgIncreaseA11y : l10n.cmdDmgDecreaseA11y,
       child: Material(
         color: Colors.transparent,
         child: InkWell(

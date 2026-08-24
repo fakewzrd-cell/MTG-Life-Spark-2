@@ -47,6 +47,10 @@ class AppSettings extends HiveObject {
   @HiveField(12, defaultValue: false)
   bool hubGuideCompleted;
 
+  /// UI language preference: `system` | `en` | `es` | `pt_BR` | `fr` | `de` | `ja`.
+  @HiveField(13, defaultValue: 'system')
+  String localeCode;
+
   AppSettings({
     this.hapticEnabled = true,
     this.soundEnabled = true,
@@ -61,5 +65,6 @@ class AppSettings extends HiveObject {
     this.colorSchemeId = 'violet',
     this.lifeGestureHintDismissed = false,
     this.hubGuideCompleted = false,
+    this.localeCode = 'system',
   });
 }

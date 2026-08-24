@@ -9,6 +9,8 @@ import 'package:mgt_life_spark/features/game/widgets/game_hud_header.dart';
 import 'package:mgt_life_spark/features/game/widgets/game_life_announcer.dart';
 import 'package:mgt_life_spark/shared/theme/app_theme.dart';
 
+import '../support/test_l10n.dart';
+
 PlayerGameState _player(String id, {String? username}) => PlayerGameState(
       playerId: id,
       username: username ?? id,
@@ -43,6 +45,8 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.dark(),
+          localizationsDelegates: testLocalizationDelegates,
+          supportedLocales: testSupportedLocales,
           home: Scaffold(
             body: GameFirstPlayerRollOverlay(
               game: game,
@@ -64,11 +68,11 @@ void main() {
         ),
       );
       expect(
-        find.bySemanticsLabel('alice, you, waiting to roll'),
+        find.bySemanticsLabel('alice, you, Not rolled'),
         findsOneWidget,
       );
       expect(
-        find.bySemanticsLabel('Bob, waiting to roll'),
+        find.bySemanticsLabel('Bob, Not rolled'),
         findsOneWidget,
       );
       expect(
@@ -86,6 +90,8 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.dark(),
+          localizationsDelegates: testLocalizationDelegates,
+          supportedLocales: testSupportedLocales,
           home: Scaffold(
             body: GameHudHeader(
               selectedTabIndex: 0,

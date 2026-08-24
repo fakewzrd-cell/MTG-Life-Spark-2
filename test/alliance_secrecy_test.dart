@@ -4,6 +4,7 @@ import 'package:mgt_life_spark/core/game/alliance.dart';
 import 'package:mgt_life_spark/core/game/game_state.dart';
 import 'package:mgt_life_spark/core/game/player_game_state.dart';
 import 'package:mgt_life_spark/features/game/widgets/alliance_overview_ui.dart';
+import 'package:mgt_life_spark/l10n/app_localizations_en.dart';
 
 PlayerGameState _player(String id) => PlayerGameState(
       playerId: id,
@@ -74,9 +75,13 @@ void main() {
     ];
     final gameAsProposer = _game(localId: 'a', scheduled: scheduled);
     final gameAsOutsider = _game(localId: 'c', scheduled: scheduled);
+    final l10n = AppLocalizationsEn();
 
-    expect(pendingAllianceLabel(gameAsProposer, 'a'), contains('Whisper pending'));
-    expect(pendingAllianceLabel(gameAsOutsider, 'a'), isNull);
+    expect(
+      pendingAllianceLabel(gameAsProposer, 'a', l10n),
+      contains('Whisper pending'),
+    );
+    expect(pendingAllianceLabel(gameAsOutsider, 'a', l10n), isNull);
   });
 
   test('alliance proposal round-trips through json', () {

@@ -10,6 +10,7 @@ import 'package:mgt_life_spark/core/persistence/providers.dart';
 import 'package:mgt_life_spark/shared/theme/app_theme.dart';
 
 import 'fake_ble_service.dart';
+import 'test_l10n.dart';
 import 'test_profile_repository.dart';
 import 'test_progression_service.dart';
 import 'test_settings_repository.dart';
@@ -85,6 +86,8 @@ Widget wrapGameWidget({
     ],
     child: MaterialApp(
       theme: AppTheme.dark(),
+      localizationsDelegates: testLocalizationDelegates,
+      supportedLocales: testSupportedLocales,
       home: child,
     ),
   );

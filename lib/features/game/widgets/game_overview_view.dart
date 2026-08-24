@@ -9,6 +9,7 @@ import '../../../core/game/game_phase.dart';
 import '../../../core/game/game_providers.dart';
 import '../../../core/game/game_state.dart';
 import '../../../core/game/player_game_state.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../ui/theme/app_color_tokens.dart';
 import '../../../ui/theme/app_system_ui.dart';
 import '../../../ui/tokens/font_tokens.dart';
@@ -32,12 +33,13 @@ import '../../../shared/utils/game_haptics.dart';
 import '../../../shared/widgets/game_icon.dart';
 
 /// Short label for an elimination reason (compact eliminated row).
-String? eliminationReasonShortLabel(String? reason) => switch (reason) {
-      'life' => 'Life loss',
-      'poison' => 'Poison',
-      'commanderDamage' => 'Commander dmg',
-      'concede' => 'Conceded',
-      'disconnect' => 'Disconnected',
+String? eliminationReasonShortLabel(AppLocalizations l10n, String? reason) =>
+    switch (reason) {
+      'life' => l10n.overviewElimReasonLife,
+      'poison' => l10n.overviewElimReasonPoison,
+      'commanderDamage' => l10n.overviewElimReasonCommanderDmg,
+      'concede' => l10n.overviewElimReasonConcede,
+      'disconnect' => l10n.overviewElimReasonDisconnect,
       _ => null,
     };
 
@@ -129,6 +131,7 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final notifier = ref.read(gameProvider.notifier);
     final aliveCount = game.activePlayers.length;
     final activePlayer = game.playerById(game.activePlayerId);
@@ -187,7 +190,7 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
                   leadingWidth: pageInset + LayoutTokens.minTapTarget,
                   centerTitle: true,
                   title: Text(
-                    'Round ${game.roundNumber}',
+                    l10n.overviewRound(game.roundNumber),
                     style: TextStyle(
                       color: colors.textPrimary,
                       fontSize: FontTokens.title,
@@ -204,9 +207,9 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
                         alignment: Alignment.center,
                         child: Semantics(
                           button: true,
-                          label: 'Close overview',
+                          label: l10n.overviewClose,
                           child: IconButton(
-                            tooltip: 'Close overview',
+                            tooltip: l10n.overviewClose,
                             onPressed: widget.onClose,
                             icon: Icon(
                               Icons.close_rounded,
@@ -226,9 +229,9 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
                       alignment: Alignment.center,
                       child: Semantics(
                         button: true,
-                        label: 'Tools',
+                        label: l10n.overviewTools,
                         child: IconButton(
-                          tooltip: 'Tools',
+                          tooltip: l10n.overviewTools,
                           onPressed: () => showTableToolsSheet(context),
                           icon: Icon(
                             Icons.casino_outlined,
@@ -247,9 +250,9 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
                         alignment: Alignment.center,
                         child: Semantics(
                           button: true,
-                          label: 'History',
+                          label: l10n.overviewHistory,
                           child: IconButton(
-                            tooltip: 'History',
+                            tooltip: l10n.overviewHistory,
                             onPressed: () => showGameHistorySheet(context),
                             icon: Icon(
                               Icons.history_rounded,
@@ -305,7 +308,7 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
                     child: Row(
                       children: [
                         Text(
-                          'Players',
+                          l10n.overviewPlayers,
                           style: TextStyle(
                             color: colors.textPrimary,
                             fontSize: FontTokens.caption,
@@ -338,7 +341,7 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
                           SizedBox(width: LayoutTokens.gr2),
                           Expanded(
                             child: Text(
-                              'Hold & drag to reorder turns',
+                              l10n.overviewHoldDragReorder,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -430,7 +433,7 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
                               },
                               child: Center(
                                 child: Text(
-                                  'Forfeit',
+                                  AppLocalizations.of(context).forfeitConfirm,
                                   style: TextStyle(
                                     fontSize: FontTokens.title,
                                     fontWeight: FontWeight.w700,
@@ -468,7 +471,8 @@ class _EliminatedPlayerRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.gameColors;
     final isLocal = p.playerId == game.localPlayerId;
-    final reasonLabel = eliminationReasonShortLabel(p.eliminationReason);
+    final reasonLabel =
+        eliminationReasonShortLabel(AppLocalizations.of(context), p.eliminationReason);
 
     return Container(
       margin: EdgeInsets.only(bottom: LayoutTokens.gr1),
@@ -537,7 +541,7 @@ class _EliminatedPlayerRow extends StatelessWidget {
           ),
           SizedBox(width: LayoutTokens.gr1),
           Text(
-            'OUT',
+            AppLocalizations.of(context).statusOut,
             style: TextStyle(
               color: colors.textSecondary,
               fontWeight: FontWeight.w700,
@@ -594,7 +598,7 @@ class _GameOverviewLifeBadge extends StatelessWidget {
       alignment: Alignment.center,
       child: eliminated
           ? Text(
-              'OUT',
+              AppLocalizations.of(context).statusOut,
               style: TextStyle(
                 color: _textColor(colors),
                 fontWeight: FontWeight.w700,
@@ -680,7 +684,7 @@ class _GameOverviewLifeStepper extends StatelessWidget {
           _LifeStepButton(
             icon: Icons.remove_rounded,
             enabled: enabled,
-            semanticLabel: 'Decrease life',
+            semanticLabel: AppLocalizations.of(context).overviewDecreaseLife,
             onTap: enabled
                 ? () {
                     context.gameHapticLight();
@@ -734,7 +738,7 @@ class _GameOverviewLifeStepper extends StatelessWidget {
           _LifeStepButton(
             icon: Icons.add_rounded,
             enabled: enabled,
-            semanticLabel: 'Increase life',
+            semanticLabel: AppLocalizations.of(context).overviewIncreaseLife,
             onTap: enabled
                 ? () {
                     context.gameHapticLight();
@@ -848,8 +852,9 @@ class _GameOverviewCommanderTaxChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     return Semantics(
-      label: 'Commander tax plus $tax',
+      label: l10n.overviewCommanderTaxPlus(tax),
       child: Container(
         constraints: const BoxConstraints(
         minHeight: LayoutTokens.minTapTarget,
@@ -865,7 +870,7 @@ class _GameOverviewCommanderTaxChip extends StatelessWidget {
         ),
         alignment: Alignment.center,
         child: Text(
-          'Tax +$tax',
+          l10n.overviewTaxPlus(tax),
           style: TextStyle(
             color: colors.textSecondary,
             fontSize: FontTokens.caption,
@@ -891,6 +896,7 @@ class _PlayerPoliticsBadges extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final tone = politicsIconTone(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -899,14 +905,14 @@ class _PlayerPoliticsBadges extends StatelessWidget {
           _badge(
             colors: colors,
             child: GameIcon.monarch(size: 14, color: tone),
-            semanticsLabel: 'Monarch',
+            semanticsLabel: l10n.overviewMonarchA11y,
           ),
         if (isMonarch && hasInitiative) SizedBox(width: LayoutTokens.gr0),
         if (hasInitiative)
           _badge(
             colors: colors,
             child: GameIcon.initiative(size: 14, color: tone),
-            semanticsLabel: 'Initiative',
+            semanticsLabel: l10n.overviewInitiativeA11y,
           ),
       ],
     );
@@ -947,7 +953,11 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
         : 0;
     final local = game.localPlayer;
     final notifier = ref.read(gameProvider.notifier);
-    final pendingLabel = pendingAllianceLabel(game, p.playerId);
+    final pendingLabel = pendingAllianceLabel(
+      game,
+      p.playerId,
+      AppLocalizations.of(context),
+    );
     final isMonarch = game.isMonarch(p.playerId);
     final hasInit = game.hasInitiative(p.playerId);
 
@@ -1034,7 +1044,7 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                           Row(
                             children: [
                               Text(
-                                'NOW PLAYING',
+                                AppLocalizations.of(context).overviewNowPlaying,
                                 style: TextStyle(
                                   color: borderColor,
                                   fontSize: FontTokens.hudXs,
@@ -1204,20 +1214,21 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                             }
                           },
                           itemBuilder: (context) {
+                            final menuL10n = AppLocalizations.of(context);
                             final items = <PopupMenuEntry<String>>[];
                             if (canWhisper) {
                               items.add(
-                                const PopupMenuItem(
+                                PopupMenuItem(
                                   value: 'whisper',
-                                  child: Text('Send whisper'),
+                                  child: Text(menuL10n.overviewSendWhisper),
                                 ),
                               );
                             }
                             if (canAssignTeam) {
                               items.add(
-                                const PopupMenuItem(
+                                PopupMenuItem(
                                   value: 'team',
-                                  child: Text('Assign team color'),
+                                  child: Text(menuL10n.overviewAssignTeamColor),
                                 ),
                               );
                             }
@@ -1226,9 +1237,11 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                                 game.allianceFor(local.playerId) == null &&
                                 game.allianceFor(p.playerId) == null) {
                               items.add(
-                                const PopupMenuItem(
+                                PopupMenuItem(
                                   value: 'propose',
-                                  child: Text('Propose secret alliance'),
+                                  child: Text(
+                                    menuL10n.overviewProposeSecretAlliance,
+                                  ),
                                 ),
                               );
                             }
@@ -1240,9 +1253,9 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                                     menuAlliance.involves(p.playerId)) &&
                                 !menuAlliance.isRevealed) {
                               items.add(
-                                const PopupMenuItem(
+                                PopupMenuItem(
                                   value: 'reveal',
-                                  child: Text('Reveal alliance to table'),
+                                  child: Text(menuL10n.overviewRevealAlliance),
                                 ),
                               );
                             }
@@ -1251,9 +1264,9 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                                 (isLocal ||
                                     menuAlliance.involves(p.playerId))) {
                               items.add(
-                                const PopupMenuItem(
+                                PopupMenuItem(
                                   value: 'break',
-                                  child: Text('Break secret alliance'),
+                                  child: Text(menuL10n.overviewBreakAlliance),
                                 ),
                               );
                             }
@@ -1273,7 +1286,9 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
 
     return Semantics(
       container: true,
-      label: showAsActive ? 'Now playing: ${p.username}' : null,
+      label: showAsActive
+          ? '${AppLocalizations.of(context).gameNowPlaying}: ${p.username}'
+          : null,
       child: card,
     );
   }
@@ -1289,15 +1304,18 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
       context: context,
       builder: (ctx) {
         final colors = ctx.gameColors;
+        final sheetL10n = AppLocalizations.of(ctx);
         return GameSheetBody(
           child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const GameSheetHeader(title: 'Assign team'),
+            GameSheetHeader(title: sheetL10n.overviewAssignTeamTitle),
             SizedBox(height: LayoutTokens.gr2),
             ...[0, 1, 2, 3, 4].map((idx) {
-              final label = idx == 0 ? 'None' : 'Team $idx';
+              final label = idx == 0
+                  ? sheetL10n.overviewTeamNone
+                  : sheetL10n.overviewTeamN('$idx');
               final color =
                   idx == 0 ? colors.textSecondary : teamColor(idx);
               final isSelected = currentTeam == idx;

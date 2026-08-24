@@ -5,6 +5,8 @@ import 'package:mgt_life_spark/ui/theme/app_theme.dart';
 import 'package:mgt_life_spark/ui/tokens/app_color_palettes.dart';
 import 'package:mgt_life_spark/ui/tokens/color_tokens.dart';
 
+import 'support/test_l10n.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -16,6 +18,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark(),
+        localizationsDelegates: testLocalizationDelegates,
+        supportedLocales: testSupportedLocales,
         home: Builder(
           builder: (context) {
             return Scaffold(
@@ -50,6 +54,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark(),
+        localizationsDelegates: testLocalizationDelegates,
+        supportedLocales: testSupportedLocales,
         home: Builder(
           builder: (context) {
             return Scaffold(
@@ -80,6 +86,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark(),
+        localizationsDelegates: testLocalizationDelegates,
+        supportedLocales: testSupportedLocales,
         home: Builder(
           builder: (context) {
             return Scaffold(

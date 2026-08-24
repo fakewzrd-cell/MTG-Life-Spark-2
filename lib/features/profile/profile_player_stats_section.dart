@@ -9,6 +9,7 @@ import '../../core/models/match_record.dart';
 import '../../core/models/player_deck.dart';
 import '../../core/models/player_profile.dart';
 import '../../core/persistence/providers.dart';
+import '../../l10n/app_localizations.dart';
 import '../../shared/utils/commander_image_resolver.dart';
 import '../../shared/utils/wizard_rank_titles.dart';
 import '../../shared/widgets/profile_default_banner.dart';
@@ -256,6 +257,9 @@ class ProfilePlayerStatsSection extends ConsumerWidget {
       builder: (context, _) {
         final cardHeight = profileCarouselCardHeight(context);
         final cardWidth = kProfileCarouselCardWidth;
+        final emptyUntilFirstGame =
+            AppLocalizations.of(context).profileEmptyRecentGames;
+        final l10n = AppLocalizations.of(context);
 
         final tiles = <Widget>[
           _PlayerStatsCarouselTile(
@@ -301,9 +305,9 @@ class ProfilePlayerStatsSection extends ConsumerWidget {
                     fillHeight: true,
                   )
                 : _PlayerStatsEmptyCard(
-                    title: 'Player behaviour',
+                    title: l10n.statsPlayerBehaviour,
                     colors: colors,
-                    message: kProfileUntilFirstGameMessage,
+                    message: emptyUntilFirstGame,
                   ),
           ),
           _PlayerStatsCarouselTile(
@@ -312,17 +316,17 @@ class ProfilePlayerStatsSection extends ConsumerWidget {
             edgeToEdge: hasPlayedGames && mostPlayed != null,
             child: hasPlayedGames && mostPlayed != null
                 ? _DeckHighlightCard(
-                    title: 'Most played',
+                    title: l10n.statsMostPlayed,
                     profile: profile,
                     deck: mostPlayed,
                     statKind: _DeckHighlightStat.wins,
                   )
                 : _PlayerStatsEmptyCard(
-                    title: 'Most played',
+                    title: l10n.statsMostPlayed,
                     colors: colors,
                     message: hasPlayedGames
-                        ? 'No deck stats yet.'
-                        : kProfileUntilFirstGameMessage,
+                        ? l10n.statsNoDeckStatsYet
+                        : emptyUntilFirstGame,
                   ),
           ),
           _PlayerStatsCarouselTile(
@@ -331,17 +335,17 @@ class ProfilePlayerStatsSection extends ConsumerWidget {
             edgeToEdge: hasPlayedGames && worst != null,
             child: hasPlayedGames && worst != null
                 ? _DeckHighlightCard(
-                    title: 'Tough record',
+                    title: l10n.statsToughRecord,
                     profile: profile,
                     deck: worst,
                     statKind: _DeckHighlightStat.losses,
                   )
                 : _PlayerStatsEmptyCard(
-                    title: 'Tough record',
+                    title: l10n.statsToughRecord,
                     colors: colors,
                     message: hasPlayedGames
-                        ? 'No losses on a saved deck yet.'
-                        : kProfileUntilFirstGameMessage,
+                        ? l10n.statsNoLossesOnDeck
+                        : emptyUntilFirstGame,
                   ),
           ),
         ];
@@ -350,12 +354,12 @@ class ProfilePlayerStatsSection extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             ProfileSectionHeader(
-              title: 'Player stats',
+              title: l10n.statsPlayerStats,
               titleStyle: titleStyle,
               colors: colors,
               count: tiles.length,
-              singularUnit: 'stat',
-              pluralUnit: 'stats',
+              singularUnit: l10n.statsSingularUnit,
+              pluralUnit: l10n.statsPluralUnit,
             ),
             SizedBox(height: LayoutTokens.gr2),
             SizedBox(
@@ -384,15 +388,17 @@ class _PlayerStatsEmptyCard extends StatelessWidget {
   const _PlayerStatsEmptyCard({
     required this.title,
     required this.colors,
-    this.message = kProfileUntilFirstGameMessage,
+    this.message,
   });
 
   final String title;
   final AppColorTokens colors;
-  final String message;
+  final String? message;
 
   @override
   Widget build(BuildContext context) {
+    final resolvedMessage =
+        message ?? AppLocalizations.of(context).profileEmptyRecentGames;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -403,7 +409,7 @@ class _PlayerStatsEmptyCard extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: LayoutTokens.gr1),
               child: Text(
-                message,
+                resolvedMessage,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: colors.textSecondary,
@@ -608,6 +614,7 @@ Widget _behaviourSmileyMark({
 
 /// Gradient spectrum track + thumb only; [width] must be finite and positive.
 Widget _behaviourSpectrumTrack({
+  required BuildContext context,
   required double salt,
   required AppColorTokens colors,
   required double width,
@@ -626,14 +633,15 @@ Widget _behaviourSpectrumTrack({
   final double h = thumbSize;
   final double barTop = (thumbSize - barHeight) / 2;
   final saltPct = (salt * 100).round();
+  final l10n = AppLocalizations.of(context);
   final leaning = saltPct < 45
-      ? 'leaning good'
+      ? l10n.statsLeaningGood
       : saltPct > 55
-          ? 'leaning salty'
-          : 'neutral';
+          ? l10n.statsLeaningSalty
+          : l10n.statsLeaningNeutral;
 
   return Semantics(
-    label: 'Behaviour spectrum, $leaning',
+    label: l10n.statsBehaviourA11y(leaning),
     value: '$saltPct% toward salty',
     child: SizedBox(
     width: w,
@@ -781,9 +789,10 @@ class _RecordCardState extends State<_RecordCard>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (!widget.hasPlayedGames || widget.profile.totalGamesPlayed <= 0) {
       return _PlayerStatsEmptyCard(
-        title: 'Record',
+        title: l10n.statsRecord,
         colors: widget.colors,
       );
     }
@@ -810,7 +819,7 @@ class _RecordCardState extends State<_RecordCard>
           ),
           SizedBox(height: LayoutTokens.gr0),
           Text(
-            'Win rate',
+            l10n.statsWinRate,
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
               color: colors.textSecondary,
               fontWeight: FontWeight.w600,
@@ -822,7 +831,7 @@ class _RecordCardState extends State<_RecordCard>
 
     Widget footer() {
       return Text(
-        '${wins}W–${losses}L  ·  $games games',
+        l10n.statsRecordFooter(wins, losses, games),
         textAlign: TextAlign.center,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
@@ -840,7 +849,7 @@ class _RecordCardState extends State<_RecordCard>
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _CarouselSectionHeader(title: 'Record', colors: colors),
+            _CarouselSectionHeader(title: l10n.statsRecord, colors: colors),
             SizedBox(height: LayoutTokens.gr2),
             if (widget.fillHeight)
               Expanded(
@@ -930,9 +939,10 @@ class _WinStreakCardState extends State<_WinStreakCard>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (!widget.hasPlayedGames) {
       return _PlayerStatsEmptyCard(
-        title: 'Win streak',
+        title: l10n.statsWinStreak,
         colors: widget.colors,
       );
     }
@@ -942,11 +952,11 @@ class _WinStreakCardState extends State<_WinStreakCard>
 
     Widget footer() {
       final bestLabel = widget.bestStreak <= 0
-          ? 'Win to start a streak'
+          ? l10n.statsWinToStartStreak
           : widget.bestStreak == widget.currentStreak &&
                   widget.currentStreak > 0
-              ? 'Personal best'
-              : 'Best: ${widget.bestStreak}';
+              ? l10n.statsPersonalBest
+              : l10n.statsBestStreak(widget.bestStreak);
       return Text(
         bestLabel,
         textAlign: TextAlign.center,
@@ -989,7 +999,9 @@ class _WinStreakCardState extends State<_WinStreakCard>
               ),
               SizedBox(height: LayoutTokens.gr0),
               Text(
-                widget.currentStreak == 0 ? 'No active streak' : 'Current',
+                widget.currentStreak == 0
+                    ? l10n.statsNoActiveStreak
+                    : l10n.statsCurrent,
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
                   color: colors.textSecondary,
                   fontWeight: FontWeight.w600,
@@ -1002,7 +1014,7 @@ class _WinStreakCardState extends State<_WinStreakCard>
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _CarouselSectionHeader(title: 'Win streak', colors: colors),
+            _CarouselSectionHeader(title: l10n.statsWinStreak, colors: colors),
             SizedBox(height: LayoutTokens.gr2),
             if (widget.fillHeight)
               Expanded(
@@ -1076,7 +1088,7 @@ class _LevelDonutCard extends StatelessWidget {
                 ),
               ),
               Text(
-                'Lv ${profile.level}',
+                AppLocalizations.of(ctx).statsLevelShort(profile.level),
                 style: Theme.of(ctx).textTheme.labelMedium?.copyWith(
                   color: colors.textSecondary,
                   fontWeight: FontWeight.w600,
@@ -1090,7 +1102,7 @@ class _LevelDonutCard extends StatelessWidget {
   }
 
   Widget _xpNumeralsLine(BuildContext context) {
-    final rank = wizardRankTitle(profile.level);
+    final rank = wizardRankTitle(AppLocalizations.of(context), profile.level);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -1122,11 +1134,12 @@ class _LevelDonutCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final card = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _CarouselSectionHeader(
-          title: 'Level progress',
+          title: l10n.statsLevelProgress,
           colors: colors,
         ),
         SizedBox(height: LayoutTokens.gr2),
@@ -1176,7 +1189,7 @@ class _LevelDonutCard extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: 'Level progress. View all ranks.',
+      label: l10n.statsLevelProgressA11y,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -1266,13 +1279,14 @@ class _BehaviourBarCardState extends State<_BehaviourBarCard>
   Widget build(BuildContext context) {
     final colors = widget.colors;
     final profile = widget.profile;
+    final l10n = AppLocalizations.of(context);
 
     Widget axisRow() {
       return Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'Good',
+            l10n.statsGood,
             style: TextStyle(
               color: colors.textSecondary,
               fontSize: FontTokens.sm,
@@ -1280,7 +1294,7 @@ class _BehaviourBarCardState extends State<_BehaviourBarCard>
             ),
           ),
           Text(
-            'Neutral',
+            l10n.statsNeutral,
             style: TextStyle(
               color: colors.textSecondary,
               fontSize: FontTokens.sm,
@@ -1288,7 +1302,7 @@ class _BehaviourBarCardState extends State<_BehaviourBarCard>
             ),
           ),
           Text(
-            'Salty',
+            l10n.statsSalty,
             style: TextStyle(
               color: colors.textSecondary,
               fontSize: FontTokens.sm,
@@ -1320,7 +1334,7 @@ class _BehaviourBarCardState extends State<_BehaviourBarCard>
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _CarouselSectionHeader(
-              title: 'Player behaviour',
+              title: l10n.statsPlayerBehaviour,
               colors: colors,
             ),
             SizedBox(height: LayoutTokens.gr2),
@@ -1347,6 +1361,7 @@ class _BehaviourBarCardState extends State<_BehaviourBarCard>
                         ),
                         SizedBox(height: bandGap),
                         _behaviourSpectrumTrack(
+                          context: context,
                           salt: salt,
                           colors: colors,
                           width: w,
@@ -1374,6 +1389,7 @@ class _BehaviourBarCardState extends State<_BehaviourBarCard>
                       ? c.maxWidth
                       : 280.0;
                   return _behaviourSpectrumTrack(
+                    context: context,
                     salt: salt,
                     colors: colors,
                     width: w,

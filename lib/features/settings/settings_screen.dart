@@ -11,7 +11,9 @@ import '../../core/debug/app_log.dart';
 import '../../core/game/game_format.dart';
 import '../../core/models/app_settings.dart';
 import '../../core/persistence/providers.dart';
+import '../../l10n/app_localizations.dart';
 import '../../shared/theme/theme_provider.dart';
+import '../../shared/utils/app_locale.dart';
 import '../../shared/utils/app_router.dart';
 import '../../shared/widgets/brand_logo.dart';
 import '../../ui/components/shell_destructive_dialog.dart';
@@ -58,16 +60,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       });
     });
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
+    final languageCode = _settings.localeCode.trim().isEmpty
+        ? kLocaleSystem
+        : _settings.localeCode;
     return Scaffold(
-      appBar: const UiAppBar(title: 'Settings'),
+      appBar: UiAppBar(title: l10n.settingsTitle),
       backgroundColor: colors.backgroundPrimary,
       body: ListView(
         padding: LayoutTokens.shellListPadding(context, top: LayoutTokens.gr4),
         children: [
-          _SectionHeader('Gameplay'),
+          _SectionHeader(l10n.settingsSectionGameplay),
           _SettingTile(
-            title: 'Default Format',
-            subtitle: '${_settings.defaultFormat} · used when you host',
+            title: l10n.settingsDefaultFormat,
+            subtitle: l10n.settingsDefaultFormatSubtitle(_settings.defaultFormat),
             onTap: () async {
               final picked = await _pickFormat(context);
               if (picked != null && mounted) {
@@ -81,9 +87,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             },
           ),
           _SettingTile(
-            title: 'Default Starting Life',
-            subtitle:
-                '${_settings.defaultStartingLife} life · used when you host',
+            title: l10n.settingsDefaultStartingLife,
+            subtitle: l10n.settingsDefaultStartingLifeSubtitle(
+              _settings.defaultStartingLife,
+            ),
             onTap: () async {
               final picked = await _pickStartingLife(context);
               if (picked != null && mounted) {
@@ -93,10 +100,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             },
           ),
           SizedBox(height: LayoutTokens.shellSectionGap),
-          _SectionHeader('Misc'),
+          _SectionHeader(l10n.settingsSectionMisc),
           _SwitchTile(
-            title: 'Keep display awake',
-            subtitle: 'Prevent screen from sleeping during a game',
+            title: l10n.settingsKeepDisplayAwake,
+            subtitle: l10n.settingsKeepDisplayAwakeSubtitle,
             value: _settings.keepDisplayAwake,
             onChanged: (v) {
               _settings.keepDisplayAwake = v;
@@ -105,8 +112,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             icon: Icons.brightness_5_outlined,
           ),
           _SwitchTile(
-            title: 'Hide navigation and status bars',
-            subtitle: 'Fullscreen mode during gameplay',
+            title: l10n.settingsHideSystemBars,
+            subtitle: l10n.settingsHideSystemBarsSubtitle,
             value: _settings.hideSystemBars,
             onChanged: (v) {
               _settings.hideSystemBars = v;
@@ -115,16 +122,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             icon: Icons.fullscreen,
           ),
           SizedBox(height: LayoutTokens.shellSectionGap),
-          _SectionHeader('Appearance'),
+          _SectionHeader(l10n.settingsSectionAppearance),
           _SwitchTile(
-            title: 'Dark appearance',
-            subtitle: 'Light mode uses soft backgrounds — try Fog or Slate',
+            title: l10n.settingsDarkAppearance,
+            subtitle: l10n.settingsDarkAppearanceSubtitle,
             value: _settings.useDarkTheme,
             onChanged: (v) {
               _settings.useDarkTheme = v;
               _save();
             },
             icon: Icons.dark_mode_outlined,
+          ),
+          _SettingTile(
+            title: l10n.settingsLanguage,
+            subtitle: l10n.settingsLanguageSubtitle(
+              languageLabel(l10n, languageCode),
+            ),
+            onTap: () async {
+              final picked = await _pickLanguage(context, languageCode);
+              if (picked != null && mounted) {
+                _settings.localeCode = picked;
+                await _save();
+              }
+            },
           ),
           _ColorSchemePicker(
             selected: ref.watch(colorSchemePreferenceProvider),
@@ -133,10 +153,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             },
           ),
           SizedBox(height: LayoutTokens.shellSectionGap),
-          _SectionHeader('Feel'),
+          _SectionHeader(l10n.settingsSectionFeel),
           _SwitchTile(
-            title: 'Haptic Feedback',
-            subtitle: 'Vibrate on life changes and rank ups',
+            title: l10n.settingsHapticFeedback,
+            subtitle: l10n.settingsHapticFeedbackSubtitle,
             value: _settings.hapticEnabled,
             onChanged: (v) {
               _settings.hapticEnabled = v;
@@ -144,8 +164,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             },
           ),
           _SwitchTile(
-            title: 'Shake to Undo',
-            subtitle: 'Shake phone to undo last life change',
+            title: l10n.settingsShakeToUndo,
+            subtitle: l10n.settingsShakeToUndoSubtitle,
             value: _settings.shakeToUndoEnabled,
             onChanged: (v) {
               _settings.shakeToUndoEnabled = v;
@@ -153,10 +173,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             },
           ),
           SizedBox(height: LayoutTokens.shellSectionGap),
-          _SectionHeader('Data'),
+          _SectionHeader(l10n.settingsSectionData),
           _SwitchTile(
-            title: 'Cache Commander Images',
-            subtitle: 'Store Scryfall images locally for offline use',
+            title: l10n.settingsCacheCommanderImages,
+            subtitle: l10n.settingsCacheCommanderImagesSubtitle,
             value: _settings.scryfallCacheEnabled,
             onChanged: (v) {
               _settings.scryfallCacheEnabled = v;
@@ -164,37 +184,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             },
           ),
           _SettingTile(
-            title: 'Clear Image Cache',
-            subtitle: 'Free up storage from cached card images',
+            title: l10n.settingsClearImageCache,
+            subtitle: l10n.settingsClearImageCacheSubtitle,
             onTap: _clearCache,
             isDestructive: true,
           ),
           _SettingTile(
-            title: 'Save backup',
-            subtitle:
-                'Write profile, decks, settings, recent games, and feedback to a file',
+            title: l10n.settingsSaveBackup,
+            subtitle: l10n.settingsSaveBackupSubtitle,
             onTap: _exportBackup,
           ),
           _SettingTile(
-            title: 'Restore backup',
-            subtitle: 'Replace all local data from a .lifespark file',
+            title: l10n.settingsRestoreBackup,
+            subtitle: l10n.settingsRestoreBackupSubtitle,
             onTap: _restoreBackup,
           ),
           SizedBox(height: LayoutTokens.shellSectionGap),
-          _SectionHeader('Help'),
+          _SectionHeader(l10n.settingsSectionHelp),
           _SettingTile(
-            title: 'Feedback',
-            subtitle: 'Send us your thoughts and suggestions',
+            title: l10n.settingsFeedback,
+            subtitle: l10n.settingsFeedbackSubtitle,
             onTap: () => context.push(AppRoutes.feedback),
           ),
           _SettingTile(
-            title: 'View hub guide',
-            subtitle: 'How Play, Stack, Lookup, and Table work in a match',
+            title: l10n.settingsViewHubGuide,
+            subtitle: l10n.settingsViewHubGuideSubtitle,
             onTap: () => showHubGuideSheet(context),
           ),
           _SettingTile(
-            title: 'View Tutorial Again',
-            subtitle: 'Re-launch the onboarding walkthrough',
+            title: l10n.settingsViewTutorialAgain,
+            subtitle: l10n.settingsViewTutorialAgainSubtitle,
             onTap: () {
               _settings.onboardingCompleted = false;
               _save().then((_) {
@@ -212,7 +231,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           SizedBox(height: LayoutTokens.gr1),
           Center(
             child: Text(
-              'Beta',
+              l10n.settingsBeta,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 color: colors.textMuted,
                 fontWeight: FontWeight.w600,
@@ -225,6 +244,38 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           SizedBox(height: LayoutTokens.gr4),
         ],
       ),
+    );
+  }
+
+  Future<String?> _pickLanguage(BuildContext context, String current) {
+    final l10n = AppLocalizations.of(context);
+    final options = <String>[
+      kLocaleSystem,
+      ...kSupportedLocaleCodes,
+    ];
+    return showModalBottomSheet<String>(
+      context: context,
+      useRootNavigator: true,
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final code in options)
+                ListTile(
+                  title: Text(languageLabel(l10n, code)),
+                  trailing: code == current
+                      ? Icon(
+                          Icons.check_rounded,
+                          color: AppColorTokens.of(ctx).primaryAccent,
+                        )
+                      : null,
+                  onTap: () => Navigator.of(ctx).pop(code),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -242,7 +293,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const GameSheetHeader(title: 'Default format'),
+              GameSheetHeader(title: AppLocalizations.of(sheetContext).settingsDefaultFormatSheetTitle),
               SizedBox(height: LayoutTokens.gr2),
               ...formats.map((f) {
                 final label = f.displayName;
@@ -281,7 +332,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const GameSheetHeader(title: 'Default starting life'),
+              GameSheetHeader(title: AppLocalizations.of(sheetContext).settingsDefaultStartingLifeSheetTitle),
               SizedBox(height: LayoutTokens.gr2),
               ...[20, 25, 30, 40, 60].map((l) {
                 final selected = l == _settings.defaultStartingLife;
@@ -310,32 +361,35 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _clearCache() async {
+    final l10n = AppLocalizations.of(context);
     try {
       await DefaultCacheManager().emptyCache();
       if (!mounted) return;
-      showUiSnackBar(context, 'Image cache cleared.');
+      showUiSnackBar(context, l10n.cacheCleared);
     } catch (e, st) {
       appLog('Settings: clear image cache failed', error: e, stackTrace: st);
       if (!mounted) return;
-      showUiSnackBar(context, 'Could not clear image cache.', isError: true);
+      showUiSnackBar(context, l10n.cacheClearFailed, isError: true);
     }
   }
 
   Future<void> _exportBackup() async {
+    final l10n = AppLocalizations.of(context);
     try {
       final saved = await ref.read(backupServiceProvider).exportToFile();
       if (!mounted) return;
       if (saved) {
-        showUiSnackBar(context, 'Backup saved.');
+        showUiSnackBar(context, l10n.backupSaved);
       }
     } catch (e, st) {
       appLog('Settings: export backup failed', error: e, stackTrace: st);
       if (!mounted) return;
-      showUiSnackBar(context, 'Could not save backup.', isError: true);
+      showUiSnackBar(context, l10n.backupSaveFailed, isError: true);
     }
   }
 
   Future<void> _restoreBackup() async {
+    final l10n = AppLocalizations.of(context);
     try {
       final pending = await ref.read(backupServiceProvider).pickBackupFile();
       if (!mounted) return;
@@ -343,11 +397,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
       final confirmed = await showShellDestructiveConfirm(
         context: context,
-        title: 'Restore ${pending.profile.username}?',
-        message:
-            'This replaces your profile, decks, settings, recent games, sparks, and behaviour on this device with the selected backup.',
-        confirmLabel: 'Restore',
-        cancelLabel: 'Cancel',
+        title: l10n.backupRestoreTitle(pending.profile.username),
+        message: l10n.backupRestoreMessage,
+        confirmLabel: l10n.backupRestoreConfirm,
+        cancelLabel: l10n.commonCancel,
       );
       if (!confirmed || !mounted) return;
 
@@ -365,14 +418,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       setState(() {});
       showUiSnackBar(
         context,
-        'Restored backup for ${backup.profile.username}.',
+        l10n.backupRestored(backup.profile.username),
       );
     } catch (e, st) {
       appLog('Settings: restore backup failed', error: e, stackTrace: st);
       if (!mounted) return;
       showUiSnackBar(
         context,
-        'Could not restore backup. Check the file and try again.',
+        l10n.backupRestoreFailed,
         isError: true,
       );
     }
@@ -471,10 +524,19 @@ class _ColorSwatchButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final label = switch (palette.id) {
+      AppColorSchemeId.violet => l10n.paletteViolet,
+      AppColorSchemeId.crimson => l10n.paletteCrimson,
+      AppColorSchemeId.slate => l10n.paletteSlate,
+      AppColorSchemeId.forest => l10n.paletteForest,
+      AppColorSchemeId.obsidian => l10n.paletteObsidian,
+      AppColorSchemeId.fog => l10n.paletteFog,
+    };
     return Semantics(
       button: true,
       selected: selected,
-      label: palette.label,
+      label: label,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -536,12 +598,13 @@ class _SwitchTile extends StatelessWidget {
       title: Text(
         title,
         style: Theme.of(context).textTheme.bodyLarge,
+        maxLines: 2,
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: Text(
         subtitle,
         style: Theme.of(context).textTheme.bodyMedium,
-        maxLines: 2,
+        maxLines: 3,
         overflow: TextOverflow.ellipsis,
       ),
       value: value,
@@ -577,12 +640,13 @@ class _SettingTile extends StatelessWidget {
         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               color: isDestructive ? colors.error : null,
             ),
+        maxLines: 2,
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: Text(
         subtitle,
         style: Theme.of(context).textTheme.bodyMedium,
-        maxLines: 2,
+        maxLines: 3,
         overflow: TextOverflow.ellipsis,
       ),
       trailing: Icon(Icons.chevron_right_rounded, color: color),
@@ -635,6 +699,7 @@ class _AppCreditsState extends State<_AppCredits> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     final baseStyle = TextStyle(
       color: colors.textMuted,
       fontSize: FontTokens.caption,
@@ -644,7 +709,7 @@ class _AppCreditsState extends State<_AppCredits> {
     return Column(
       children: [
         Text(
-          'Life Spark v$versionLabel · Beta',
+          l10n.settingsAboutVersionBeta(versionLabel),
           textAlign: TextAlign.center,
           style: baseStyle.copyWith(
             color: colors.textSecondary,
@@ -653,7 +718,7 @@ class _AppCreditsState extends State<_AppCredits> {
         ),
         SizedBox(height: LayoutTokens.gr0),
         Text(
-          'by Federick Vidot',
+          l10n.settingsAboutByAuthor,
           textAlign: TextAlign.center,
           style: baseStyle,
         ),
@@ -670,9 +735,9 @@ class _AppCreditsState extends State<_AppCredits> {
               TextSpan(
                 style: baseStyle,
                 children: [
-                  const TextSpan(text: 'Card data powered by '),
+                  TextSpan(text: '${l10n.settingsAboutCardDataPoweredBy} '),
                   TextSpan(
-                    text: 'Scryfall',
+                    text: l10n.settingsAboutScryfall,
                     style: baseStyle.copyWith(
                       color: colors.textSecondary,
                       fontWeight: FontWeight.w600,
@@ -688,10 +753,7 @@ class _AppCreditsState extends State<_AppCredits> {
         ),
         SizedBox(height: LayoutTokens.gr3),
         Text(
-          'Life Spark is unofficial Fan Content permitted under the Fan '
-          'Content Policy. Not approved/endorsed by Wizards. Portions of the '
-          'materials used are property of Wizards of the Coast. '
-          '©Wizards of the Coast LLC.',
+          l10n.settingsAboutDisclaimer,
           textAlign: TextAlign.center,
           style: baseStyle.copyWith(height: 1.45),
         ),

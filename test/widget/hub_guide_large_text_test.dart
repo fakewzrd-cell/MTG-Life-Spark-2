@@ -6,6 +6,7 @@ import 'package:mgt_life_spark/features/game/widgets/hub_guide_sheet.dart';
 import 'package:mgt_life_spark/shared/theme/app_theme.dart';
 import 'package:mgt_life_spark/shared/theme/theme_provider.dart';
 
+import '../support/test_l10n.dart';
 import '../support/test_settings_repository.dart';
 
 void main() {
@@ -24,6 +25,8 @@ void main() {
         ],
         child: MaterialApp(
           theme: AppTheme.dark(),
+          localizationsDelegates: testLocalizationDelegates,
+          supportedLocales: testSupportedLocales,
           builder: (context, child) => MediaQuery(
             data: MediaQuery.of(context)
                 .copyWith(textScaler: const TextScaler.linear(2.0)),
@@ -76,6 +79,8 @@ void main() {
         ],
         child: MaterialApp(
           theme: AppTheme.dark(),
+          localizationsDelegates: testLocalizationDelegates,
+          supportedLocales: testSupportedLocales,
           home: Builder(
             builder: (context) {
               return ElevatedButton(

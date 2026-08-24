@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/game/game_state.dart';
 import '../../../core/game/player_game_state.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
@@ -27,12 +28,13 @@ class OpponentGlanceStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final pod = game.playersInTurnOrderFrom(game.activePlayerId);
     if (pod.isEmpty) return const SizedBox.shrink();
 
     return Semantics(
       button: true,
-      label: 'Open table overview, turn order',
+      label: l10n.glanceOpenTableA11y,
       child: Material(
         color: colors.surface.withValues(alpha: OpacityTokens.nearOpaque),
         borderRadius: RadiusTokens.radiusControlMd,
@@ -95,6 +97,7 @@ class _PodGlanceChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final eliminated = player.isEliminated;
     final lifeTone = eliminated
         ? colors.textSecondary
@@ -104,7 +107,7 @@ class _PodGlanceChip extends StatelessWidget {
                 ? colors.emphasis
                 : colors.textPrimary;
     final name = isLocal
-        ? 'You'
+        ? l10n.glanceYou
         : overviewShortPlayerName(player.username, maxChars: 8);
 
     return Container(
@@ -153,7 +156,7 @@ class _PodGlanceChip extends StatelessWidget {
           ),
           SizedBox(width: LayoutTokens.gr0),
           Text(
-            eliminated ? 'OUT' : '${player.life}',
+            eliminated ? AppLocalizations.of(context).statusOut : '${player.life}',
             style: TextStyle(
               color: lifeTone,
               fontSize: FontTokens.hudSm,

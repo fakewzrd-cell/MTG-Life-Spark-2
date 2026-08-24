@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/game/game_format.dart';
 import '../../core/models/deck_style.dart';
+import '../../l10n/app_localizations.dart';
 import '../../ui/components/ui_button.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
@@ -47,9 +48,9 @@ class _NewDeckSheetState extends State<_NewDeckSheet> {
 
   bool get _canNext => _nameCtrl.text.trim().isNotEmpty && _style != null;
 
-  String? get _styleError {
+  String? _styleError(AppLocalizations l10n) {
     if (!_attemptedSubmit || _style != null) return null;
-    return 'Choose a deck style to continue';
+    return l10n.newDeckChooseStyleError;
   }
 
   void _submit() {
@@ -72,6 +73,7 @@ class _NewDeckSheetState extends State<_NewDeckSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
 
     // Hug content under Next. Keyboard inset lifts the sheet; do not use a
@@ -83,14 +85,13 @@ class _NewDeckSheetState extends State<_NewDeckSheet> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            const GameSheetHeader(
-              title: 'New deck',
-              subtitle: 'Step 1 of 2 — details',
+            GameSheetHeader(
+              title: l10n.newDeckTitle,
+              subtitle: l10n.newDeckSubtitle,
             ),
             SizedBox(height: LayoutTokens.gr2),
             Text(
-              'Name your deck, pick a format and playstyle. Next you’ll choose '
-              'your commander or cover card.',
+              l10n.newDeckIntro,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: colors.textSecondary,
                 fontSize: FontTokens.sm,
@@ -103,8 +104,8 @@ class _NewDeckSheetState extends State<_NewDeckSheet> {
               scrollPadding: const EdgeInsets.only(bottom: 80),
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
-                labelText: 'Deck name',
-                hintText: 'e.g. Raffine Tempo',
+                labelText: l10n.newDeckNameLabel,
+                hintText: l10n.newDeckNameHint,
                 hintStyle: TextStyle(color: colors.textSecondary),
               ),
               style: TextStyle(color: colors.textPrimary),
@@ -124,7 +125,7 @@ class _NewDeckSheetState extends State<_NewDeckSheet> {
             SizedBox(height: LayoutTokens.gr3),
             DeckStylePickerField(
               selected: _style,
-              errorText: _styleError,
+              errorText: _styleError(l10n),
               onPick: () async {
                 final picked = await showDeckStylePickerSheet(
                   context,
@@ -139,7 +140,7 @@ class _NewDeckSheetState extends State<_NewDeckSheet> {
             ),
             SizedBox(height: LayoutTokens.gr3),
             UiButton(
-              label: 'Next',
+              label: l10n.newDeckNext,
               icon: const Icon(Icons.arrow_forward_rounded, size: 22),
               enabled: _nameCtrl.text.trim().isNotEmpty,
               onPressed: _nameCtrl.text.trim().isNotEmpty ? _submit : null,

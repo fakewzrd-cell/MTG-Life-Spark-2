@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
@@ -31,6 +32,7 @@ class _RanksInfoSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     final maxSheetH = MediaQuery.sizeOf(context).height * _maxSheetFraction;
     final maxListH =
         (maxSheetH - _chromeReserve).clamp(160.0, maxSheetH * 0.85);
@@ -43,11 +45,9 @@ class _RanksInfoSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const GameSheetHeader(
-              title: 'Ranks & levels',
-              subtitle:
-                  'Level is your exact progress. Rank is the title for your '
-                  'current level band. Metal tiers group those ranks.',
+            GameSheetHeader(
+              title: l10n.ranksInfoTitle,
+              subtitle: l10n.ranksInfoBody,
             ),
             SizedBox(height: LayoutTokens.gr2),
             LimitedBox(
@@ -57,9 +57,11 @@ class _RanksInfoSheet extends StatelessWidget {
                 children: [
                   for (final tierBand in kWizardTierBands) ...[
                     _TierSectionHeader(
-                      tier: tierBand.tier,
-                      levelsLabel:
-                          'Lv ${tierBand.minLevel}–${tierBand.maxLevel}',
+                      tier: wizardTierTitle(l10n, tierBand.tier),
+                      levelsLabel: l10n.ranksInfoLevelRange(
+                        tierBand.minLevel,
+                        tierBand.maxLevel,
+                      ),
                       color: wizardTierColor(tierBand.tier),
                       colors: colors,
                     ),
@@ -69,8 +71,14 @@ class _RanksInfoSheet extends StatelessWidget {
                           r.maxLevel <= tierBand.maxLevel,
                     ))
                       _RankRow(
-                        title: rank.title,
-                        levelsLabel: 'Lv ${rank.minLevel}–${rank.maxLevel}',
+                        title: wizardRankTitleForBandIndex(
+                          l10n,
+                          kWizardRankBands.indexOf(rank),
+                        ),
+                        levelsLabel: l10n.ranksInfoLevelRange(
+                          rank.minLevel,
+                          rank.maxLevel,
+                        ),
                         isCurrent: level != null &&
                             level >= rank.minLevel &&
                             level <= rank.maxLevel,

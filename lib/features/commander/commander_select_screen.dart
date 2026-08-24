@@ -13,6 +13,7 @@ import '../../core/game/lobby_state.dart';
 import '../../core/game/scryfall_service.dart';
 import '../../core/models/player_deck.dart';
 import '../../core/persistence/providers.dart';
+import '../../l10n/app_localizations.dart';
 import '../../shared/mana/mana_symbol_assets.dart';
 import '../../shared/widgets/block_system_app_exit.dart';
 import '../../ui/theme/app_color_tokens.dart';
@@ -178,13 +179,14 @@ class _CommanderSelectScreenState
           ? await service.searchCommanders(query)
           : await service.searchCards(query);
       if (!mounted || requestId != _searchRequestId) return;
+      final l10n = AppLocalizations.of(context);
       setState(() {
         _results = results;
         _loading = false;
         if (results.isEmpty) {
           _error = _isCommanderPick
-              ? 'No commanders found for "$query"'
-              : 'No cards found for "$query"';
+              ? l10n.commanderSelectNoCommanders(query)
+              : l10n.commanderSelectNoCards(query);
         }
       });
     } catch (e) {
@@ -192,7 +194,7 @@ class _CommanderSelectScreenState
       setState(() {
         _results = [];
         _loading = false;
-        _error = 'Unable to search. Check your internet connection and try again.';
+        _error = AppLocalizations.of(context).commanderSelectSearchFailed;
       });
     }
   }
@@ -292,26 +294,33 @@ class _CommanderSelectScreenState
 
   // ── Build ─────────────────────────────────────────────────────────────────
 
-  String get _title {
+  String _title(AppLocalizations l10n) {
     if (widget._deckMode) {
       if (widget.editDeckId != null) {
-        return _isCommanderPick ? 'Edit commanders' : 'Edit cover card';
+        return _isCommanderPick
+            ? l10n.commanderSelectEditCommanders
+            : l10n.commanderSelectEditCover;
       }
       return _isCommanderPick
-          ? 'Step 2 of 2 — commander'
-          : 'Step 2 of 2 — cover card';
+          ? l10n.commanderSelectStep2Commander
+          : l10n.commanderSelectStep2Cover;
     }
-    return _pickingPartner ? 'Select Partner' : 'Select Commander';
+    return _pickingPartner
+        ? l10n.commanderSelectPartnerTitle
+        : l10n.commanderSelectCommanderTitle;
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     return BlockSystemAppExit(
       child: Scaffold(
       backgroundColor: colors.backgroundPrimary,
       appBar: UiAppBar(
-        title: _pickingPartner ? 'Select Partner' : _title,
+        title: _pickingPartner
+            ? l10n.commanderSelectPartnerTitle
+            : _title(l10n),
       ),
       body: Column(
         children: [
@@ -341,7 +350,7 @@ class _CommanderSelectScreenState
                 0,
               ),
               child: Text(
-                'Pick any card for deck art — not your full deck list.',
+                l10n.commanderSelectCoverHint,
                 style: TextStyle(
                   color: colors.textSecondary,
                   fontSize: FontTokens.sm,
@@ -357,10 +366,10 @@ class _CommanderSelectScreenState
               autofocus: true,
               decoration: InputDecoration(
                 hintText: _pickingPartner
-                    ? 'Search for partner commander…'
+                    ? l10n.commanderSelectSearchPartnerHint
                     : _isCommanderPick
-                        ? 'Search for a commander…'
-                        : 'Search for a card…',
+                        ? l10n.commanderSelectSearchCommanderHint
+                        : l10n.commanderSelectSearchCardHint,
                 prefixIcon:
                     Icon(Icons.search, color: colors.textSecondary),
                 suffixIcon: _searchController.text.isNotEmpty
@@ -395,7 +404,7 @@ class _CommanderSelectScreenState
                   LayoutTokens.gr3,
                 ),
                 child: UiButton(
-                  label: 'Confirm',
+                  label: l10n.commanderSelectConfirm,
                   onPressed: _confirm,
                 ),
               ),
@@ -408,6 +417,7 @@ class _CommanderSelectScreenState
 
   Widget _buildResults() {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     if (_loading) {
       return Center(
           child: CircularProgressIndicator(color: colors.primaryAccent));
@@ -426,8 +436,8 @@ class _CommanderSelectScreenState
       return Center(
         child: Text(
           _isCommanderPick
-              ? 'Type a commander name to search the Scryfall database.'
-              : 'Type a card name to search the Scryfall database.',
+              ? l10n.commanderSelectScryfallCommanderHelp
+              : l10n.commanderSelectScryfallCardHelp,
           style: TextStyle(color: colors.textSecondary),
           textAlign: TextAlign.center,
         ),
@@ -479,6 +489,7 @@ class _SelectionPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: EdgeInsets.fromLTRB(
         LayoutTokens.gr3,
@@ -492,7 +503,11 @@ class _SelectionPreview extends StatelessWidget {
         children: [
           Row(
             children: [
-              if (primary != null) _MiniCard(card: primary!, label: 'Commander'),
+              if (primary != null)
+                _MiniCard(
+                  card: primary!,
+                  label: l10n.commanderSelectLabelCommander,
+                ),
               if (showPartnerSlot) ...[
                 const SizedBox(width: 8),
                 if (partner != null)
@@ -501,7 +516,10 @@ class _SelectionPreview extends StatelessWidget {
                     child: Stack(
                       clipBehavior: Clip.none,
                       children: [
-                        _MiniCard(card: partner!, label: 'Partner'),
+                        _MiniCard(
+                          card: partner!,
+                          label: l10n.commanderSelectLabelPartner,
+                        ),
                         if (onClearPartner != null)
                           Positioned(
                             top: -6,
@@ -550,7 +568,7 @@ class _SelectionPreview extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Partner',
+                            l10n.commanderSelectLabelPartner,
                             style: TextStyle(
                               color: pickingPartner
                                   ? colors.primaryAccent
@@ -559,7 +577,7 @@ class _SelectionPreview extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            'optional',
+                            l10n.commanderSelectOptional,
                             style: TextStyle(
                               color: colors.textSecondary.withValues(alpha: 0.75),
                               fontSize: 9,
@@ -696,7 +714,7 @@ class _CommanderCard extends StatelessWidget {
                   ),
                   if (card.isPartner)
                     Text(
-                      'Partner',
+                      AppLocalizations.of(context).commanderSelectLabelPartner,
                       style: TextStyle(
                           color: colors.emphasis, fontSize: FontTokens.hudXs),
                     ),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/network/session_providers.dart';
+import '../../l10n/app_localizations.dart';
 import '../../ui/components/app_bottom_nav_bar.dart';
 import '../../ui/theme/app_system_ui.dart';
 import 'block_system_app_exit.dart';
@@ -44,6 +45,7 @@ class MainShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     return BlockSystemAppExit(
       child: AppSystemUiScope(
         matchBottomNav: true,
@@ -55,7 +57,7 @@ class MainShell extends ConsumerWidget {
             selectedIndex: navigationShell.currentIndex,
             onDestinationSelected: (index) =>
                 _onDestinationSelected(context, ref, index),
-            destinations: AppBottomNavBar.shellDestinations,
+            destinations: AppBottomNavBar.shellDestinations(l10n),
           ),
         ),
       ),

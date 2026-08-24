@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 
 import '../../core/game/game_format.dart';
 import '../../core/models/player_deck.dart';
+import '../../l10n/app_localizations.dart';
 import '../../shared/widgets/deck_tile_visual.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
@@ -51,22 +52,23 @@ Future<bool> showDeleteDeckConfirm(
   BuildContext context,
   PlayerDeck deck,
 ) async {
+  final l10n = AppLocalizations.of(context);
   final ok = await showGameConfirmDialog(
     context: context,
-    title: 'Delete deck?',
-    message:
-        'Remove “${deck.displayName}” from your library? Match history stays, '
-        'but this deck will no longer appear in the lobby picker.',
-    confirmLabel: 'Delete',
+    title: l10n.deckOptionsDeleteTitle,
+    message: l10n.deckOptionsDeleteBody(deck.displayName),
+    confirmLabel: l10n.deckOptionsDeleteConfirm,
     destructive: true,
   );
   return ok == true;
 }
 
-String _deckDetailSubtitle(PlayerDeck deck) {
+String _deckDetailSubtitle(AppLocalizations l10n, PlayerDeck deck) {
   final parts = <String>[
     deck.gameFormat.displayName,
-    deck.hasDeckStyle ? deck.deckStyleDisplayName : 'Style not set',
+    deck.hasDeckStyle
+        ? deck.deckStyleDisplayName
+        : l10n.deckOptionsStyleNotSet,
   ];
   if (deck.commanderName.isNotEmpty) {
     parts.add(
@@ -91,8 +93,10 @@ class _DeckDetailSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
-    final coverLabel =
-        deck.isCommanderDeck ? 'Edit commanders' : 'Edit cover card';
+    final l10n = AppLocalizations.of(context);
+    final coverLabel = deck.isCommanderDeck
+        ? l10n.deckOptionsEditCommanders
+        : l10n.deckOptionsEditCover;
     final wr = deck.gamesPlayed == 0 ? null : (deck.winRate * 100).round();
 
     return GameSheetBody(
@@ -105,7 +109,7 @@ class _DeckDetailSheet extends StatelessWidget {
           children: [
             GameSheetHeader(
               title: deck.displayName,
-              subtitle: _deckDetailSubtitle(deck),
+              subtitle: _deckDetailSubtitle(l10n, deck),
               showHandle: false,
             ),
             SizedBox(height: LayoutTokens.gr3),
@@ -119,7 +123,9 @@ class _DeckDetailSheet extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        wr == null ? 'No games yet' : '$wr% win rate',
+                        wr == null
+                            ? l10n.deckOptionsNoGamesYet
+                            : l10n.deckOptionsWinRate('$wr'),
                         style: TextStyle(
                           color: colors.textPrimary,
                           fontWeight: FontWeight.w700,
@@ -128,7 +134,11 @@ class _DeckDetailSheet extends StatelessWidget {
                       ),
                       SizedBox(height: LayoutTokens.gr0),
                       Text(
-                        '${deck.wins}W–${deck.losses}L · ${deck.gamesPlayed} games',
+                        l10n.statsRecordFooter(
+                          deck.wins,
+                          deck.losses,
+                          deck.gamesPlayed,
+                        ),
                         style: TextStyle(
                           color: colors.textSecondary,
                           fontSize: FontTokens.sm,
@@ -152,24 +162,24 @@ class _DeckDetailSheet extends StatelessWidget {
                   deck.isPinned
                       ? Icons.push_pin_rounded
                       : Icons.push_pin_outlined,
-              title: deck.isPinned ? 'Unpin from top' : 'Pin to top',
+              title:
+                  deck.isPinned ? l10n.deckOptionsUnpin : l10n.deckOptionsPin,
               onTap: () => _pick(context, DeckSheetAction.togglePin),
             ),
             _DeckOptionTile(
               colors: colors,
               icon: Icons.category_outlined,
-              title: 'Change format',
+              title: l10n.deckOptionsChangeFormat,
               subtitle: deck.gameFormat.displayName,
               onTap: () => _pick(context, DeckSheetAction.changeFormat),
             ),
             _DeckOptionTile(
               colors: colors,
               icon: Icons.palette_outlined,
-              title: 'Change style',
-              subtitle:
-                  deck.hasDeckStyle
-                      ? deck.deckStyleDisplayName
-                      : 'Required — not set',
+              title: l10n.deckOptionsChangeStyle,
+              subtitle: deck.hasDeckStyle
+                  ? deck.deckStyleDisplayName
+                  : l10n.deckOptionsStyleRequired,
               titleColor:
                   deck.hasDeckStyle ? colors.textPrimary : colors.warning,
               onTap: () => _pick(context, DeckSheetAction.changeStyle),
@@ -186,14 +196,14 @@ class _DeckDetailSheet extends StatelessWidget {
             _DeckOptionTile(
               colors: colors,
               icon: Icons.edit_outlined,
-              title: 'Rename',
+              title: l10n.deckOptionsRename,
               iconColor: colors.textPrimary,
               onTap: () => _pick(context, DeckSheetAction.rename),
             ),
             _DeckOptionTile(
               colors: colors,
               icon: Icons.copy_outlined,
-              title: 'Duplicate',
+              title: l10n.deckOptionsDuplicate,
               onTap: () => _pick(context, DeckSheetAction.duplicate),
             ),
             Divider(
@@ -203,7 +213,7 @@ class _DeckDetailSheet extends StatelessWidget {
             _DeckOptionTile(
               colors: colors,
               icon: Icons.delete_outline,
-              title: 'Delete deck',
+              title: l10n.deckOptionsDelete,
               iconColor: colors.error,
               titleColor: colors.error,
               onTap: () => _pick(context, DeckSheetAction.delete),
@@ -345,10 +355,11 @@ class _RenameDeckDialogState extends State<_RenameDeckDialog> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return GameFormDialog(
-      title: 'Rename deck',
-      submitLabel: 'Save',
+      title: l10n.deckOptionsRenameTitle,
+      submitLabel: l10n.commonSave,
       enabled: _canSave,
       onSubmit: _canSave ? _submit : null,
       content: TextField(
@@ -360,8 +371,8 @@ class _RenameDeckDialogState extends State<_RenameDeckDialog> {
           if (_canSave) _submit();
         },
         decoration: InputDecoration(
-          labelText: 'Deck name',
-          hintText: 'e.g. Raffine Tempo',
+          labelText: l10n.deckOptionsNameLabel,
+          hintText: l10n.deckOptionsNameHint,
           hintStyle: TextStyle(color: colors.textSecondary),
         ),
         style: TextStyle(color: colors.textPrimary),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/utils/game_haptics.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
@@ -27,6 +28,7 @@ class EndTurnBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     // Solid theme accent fill so the control stays visible on light surfaces.
     final bg = enabled
         ? accentColor
@@ -35,7 +37,7 @@ class EndTurnBar extends StatelessWidget {
         ? (accentColor.computeLuminance() > 0.55 ? Colors.black : Colors.white)
         : colors.textSecondary.withValues(alpha: OpacityTokens.disabled);
     final subtitle = !enabled && waitingForName != null && waitingForName!.isNotEmpty
-        ? 'Waiting for $waitingForName…'
+        ? l10n.gameWaitingForPlayer(waitingForName!)
         : null;
 
     return DecoratedBox(
@@ -65,7 +67,7 @@ class EndTurnBar extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'End turn',
+                        l10n.gameEndTurn,
                         style: TextStyle(
                           fontSize: FontTokens.title,
                           fontWeight: FontWeight.w700,

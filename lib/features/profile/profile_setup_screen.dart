@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/models/player_identity.dart';
 import '../../core/models/player_profile.dart';
 import '../../core/persistence/providers.dart';
+import '../../l10n/app_localizations.dart';
 import '../../shared/utils/app_router.dart';
 import '../../shared/widgets/block_system_app_exit.dart';
 import '../../shared/widgets/profile_avatar_image.dart';
@@ -80,6 +81,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return BlockSystemAppExit(
       child: Scaffold(
@@ -101,12 +103,12 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                     children: [
                       SizedBox(height: LayoutTokens.gr6),
                       Text(
-                        'Create your profile',
+                        l10n.profileSetupTitle,
                         style: Theme.of(context).textTheme.headlineMedium,
                       ),
                       SizedBox(height: LayoutTokens.gr1),
                       Text(
-                        'Choose a name and picture your table will recognize.',
+                        l10n.profileSetupSubtitle,
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       SizedBox(height: LayoutTokens.gr5),
@@ -116,6 +118,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                           colors: colors,
                           size: _avatarSize,
                           badgeSize: _cameraBadgeSize,
+                          choosePictureLabel: l10n.profileSetupChoosePicture,
                           onTap: _saving ? null : _pickAvatar,
                         ),
                       ),
@@ -125,27 +128,27 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                           onPressed: _saving ? null : _pickAvatar,
                           child: Text(
                             _avatarUrl == null
-                                ? 'Choose profile picture'
-                                : 'Change picture',
+                                ? l10n.profileSetupChoosePicture
+                                : l10n.profileSetupChangePicture,
                           ),
                         ),
                       ),
                       SizedBox(height: LayoutTokens.gr3),
                       TextFormField(
                         controller: _usernameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Username',
-                          hintText: 'e.g. The Archduke',
+                        decoration: InputDecoration(
+                          labelText: l10n.profileSetupUsername,
+                          hintText: l10n.profileSetupUsernameHint,
                         ),
                         autofocus: true,
                         maxLength: 20,
                         textCapitalization: TextCapitalization.words,
                         validator: (v) {
                           if (v == null || v.trim().isEmpty) {
-                            return 'Enter a username';
+                            return l10n.profileSetupUsernameRequired;
                           }
                           if (v.trim().length < 2) {
-                            return 'Must be at least 2 characters';
+                            return l10n.profileSetupUsernameTooShort;
                           }
                           return null;
                         },
@@ -166,13 +169,13 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     UiButton(
-                      label: 'Continue',
+                      label: l10n.profileSetupContinue,
                       loading: _saving,
                       onPressed: _saving ? null : _save,
                     ),
                     SizedBox(height: LayoutTokens.gr2),
                     UiButton(
-                      label: 'Skip',
+                      label: l10n.onboardingSkip,
                       variant: UiButtonVariant.secondary,
                       enabled: !_saving,
                       onPressed: _saving ? null : _skip,
@@ -195,6 +198,7 @@ class _SetupAvatarPicker extends StatelessWidget {
     required this.colors,
     required this.size,
     required this.badgeSize,
+    required this.choosePictureLabel,
     this.onTap,
   });
 
@@ -202,6 +206,7 @@ class _SetupAvatarPicker extends StatelessWidget {
   final AppColorTokens colors;
   final double size;
   final double badgeSize;
+  final String choosePictureLabel;
   final VoidCallback? onTap;
 
   @override
@@ -210,7 +215,7 @@ class _SetupAvatarPicker extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: 'Choose profile picture',
+      label: choosePictureLabel,
       child: InkWell(
         onTap: onTap,
         customBorder: const CircleBorder(),

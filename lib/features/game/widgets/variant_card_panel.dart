@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/game/game_providers.dart';
 import '../../../core/game/game_state.dart';
 import '../../../core/game/scryfall_service.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/utils/game_haptics.dart';
 import 'game_colors.dart';
 import '../../../shared/widgets/game_icon.dart';
@@ -25,6 +26,7 @@ class VariantQuickAccessChip extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final variantFlags = ref.watch(
       gameProvider.select(
         (g) => (g.planechaseEnabled, g.archenemyEnabled, g.bountyEnabled),
@@ -37,12 +39,13 @@ class VariantQuickAccessChip extends ConsumerWidget {
 
     if (activeCount == 0) return const SizedBox.shrink();
 
-    final label = activeCount == 1 ? 'Variant deck' : 'Variant decks';
+    final label =
+        activeCount == 1 ? l10n.variantDeckSingular : l10n.variantDeckPlural;
 
     return Center(
       child: Semantics(
         button: true,
-        label: '$label, tap to view',
+        label: l10n.variantDeckA11y(label),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
@@ -98,6 +101,7 @@ class VariantQuickAccessChip extends ConsumerWidget {
   }
 
   void _showVariantSheet(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     showGameBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -107,10 +111,10 @@ class VariantQuickAccessChip extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
-          children: const [
-            GameSheetHeader(title: 'Variant decks'),
+          children: [
+            GameSheetHeader(title: l10n.variantDecksSheetTitle),
             SizedBox(height: LayoutTokens.gr2),
-            VariantCardPanel(),
+            const VariantCardPanel(),
           ],
         ),
       ),
@@ -126,6 +130,7 @@ class VariantCardPanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final variantFlags = ref.watch(
       gameProvider.select(
         (g) => (
@@ -172,7 +177,7 @@ class VariantCardPanel extends ConsumerWidget {
             ),
             SizedBox(width: LayoutTokens.gr2),
             Text(
-              'Loading variant decks…',
+              l10n.variantLoading,
               style: TextStyle(
                 color: colors.textSecondary,
                 fontSize: LayoutTokens.gr3,
@@ -184,7 +189,7 @@ class VariantCardPanel extends ConsumerWidget {
       error: (_, __) => Padding(
           padding: SpacingTokens.horizontalMd.add(SpacingTokens.verticalXs),
           child: Text(
-            'Could not load decks (internet required)',
+            l10n.variantLoadFailed,
             style: TextStyle(
               color: colors.textSecondary,
               fontSize: LayoutTokens.gr2,
@@ -209,6 +214,7 @@ class _VariantContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final children = <Widget>[];
 
     if (game.planechaseEnabled) {
@@ -216,7 +222,7 @@ class _VariantContent extends StatelessWidget {
       if (planar.isNotEmpty) {
         children.add(
           _VariantTile(
-            title: 'Planechase',
+            title: l10n.variantPlanechase,
             icon: Icons.public,
             iconWidget: null,
             card: planar[game.currentPlanarIndex % planar.length],
@@ -232,7 +238,7 @@ class _VariantContent extends StatelessWidget {
       if (scheme.isNotEmpty) {
         children.add(
           _VariantTile(
-            title: 'Archenemy',
+            title: l10n.variantArchenemy,
             icon: Icons.shield,
             iconWidget: null,
             card: scheme[game.currentSchemeIndex % scheme.length],
@@ -248,7 +254,7 @@ class _VariantContent extends StatelessWidget {
       if (bounty.isNotEmpty) {
         children.add(
           _VariantTile(
-            title: 'Bounty',
+            title: l10n.variantBounty,
             iconWidget: GameIcon.bounty(size: 20, color: colors.primaryAccent),
             card: bounty[game.currentBountyIndex % bounty.length],
             deckSize: bounty.length,
@@ -401,7 +407,7 @@ class _VariantTile extends StatelessWidget {
                 IconButton(
                   icon: Icon(Icons.skip_next),
                   onPressed: onAdvance,
-                  tooltip: 'Next card',
+                  tooltip: AppLocalizations.of(context).variantNextCard,
                   color: colors.primaryAccent,
                   style: IconButton.styleFrom(
                     backgroundColor: colors.primaryAccent.withValues(alpha: 0.2),

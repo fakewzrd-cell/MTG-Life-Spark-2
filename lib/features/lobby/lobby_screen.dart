@@ -6,28 +6,29 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-import '../../ui/theme/app_color_tokens.dart';
-import '../../core/network/session_providers.dart';
 import '../../core/game/game_format.dart';
 import '../../core/game/lobby_state.dart';
 import '../../core/models/match_record.dart';
 import '../../core/models/player_slot.dart';
 import '../../core/network/local_ip.dart';
 import '../../core/network/session_join_uri.dart';
+import '../../core/network/session_providers.dart';
 import '../../core/network/ws_host_service.dart';
 import '../../core/persistence/providers.dart';
+import '../../l10n/app_localizations.dart';
 import '../../shared/utils/app_router.dart';
 import '../../shared/widgets/session_leave_dialog.dart';
-import 'deck_picker_sheet.dart';
-import 'lobby_slot_widgets.dart';
-import '../game/widgets/game_modal_chrome.dart';
-import '../../ui/tokens/font_tokens.dart';
-import '../../ui/tokens/layout_tokens.dart';
-import '../../ui/tokens/radius_tokens.dart';
-import '../../ui/tokens/typography_tokens.dart';
 import '../../ui/components/ui_app_bar.dart';
 import '../../ui/components/ui_button.dart';
+import '../../ui/theme/app_color_tokens.dart';
+import '../../ui/tokens/font_tokens.dart';
+import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/opacity_tokens.dart';
+import '../../ui/tokens/radius_tokens.dart';
+import '../../ui/tokens/typography_tokens.dart';
+import '../game/widgets/game_modal_chrome.dart';
+import 'deck_picker_sheet.dart';
+import 'lobby_slot_widgets.dart';
 
 enum _QrHostLoadState { loading, ready, unavailable, error }
 
@@ -60,9 +61,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
       setState(() {
         _qrLoadState = _QrHostLoadState.unavailable;
         _qrData = null;
-        _qrErrorMessage =
-            'Hosting needs the mobile app (iOS or Android) on the same Wi‑Fi. '
-            'The browser can join games by scanning a QR code, but cannot host.';
+        _qrErrorMessage = AppLocalizations.of(context).hostNeedsMobileApp;
       });
       return;
     }
@@ -77,20 +76,17 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
     if (!mounted) return;
     if (!started) {
       final hasProfile = ref.read(profileRepositoryProvider).hasProfile;
+      final l10n = AppLocalizations.of(context);
       setState(() {
         if (kIsWeb) {
           _qrLoadState = _QrHostLoadState.unavailable;
-          _qrErrorMessage =
-              'Hosting needs the mobile app (iOS or Android) on the same Wi‑Fi. '
-              'The browser can join games by scanning a QR code, but cannot host.';
+          _qrErrorMessage = l10n.hostNeedsMobileApp;
         } else if (!hasProfile) {
           _qrLoadState = _QrHostLoadState.error;
-          _qrErrorMessage =
-              'Create your profile first (Home → set username), then tap Retry.';
+          _qrErrorMessage = l10n.hostCreateProfileFirst;
         } else {
           _qrLoadState = _QrHostLoadState.error;
-          _qrErrorMessage =
-              'Could not start the host server on this device. Tap Retry.';
+          _qrErrorMessage = l10n.hostCouldNotStartServer;
         }
       });
       return;
@@ -106,7 +102,8 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
       if (host is! WsHostService) {
         setState(() {
           _qrLoadState = _QrHostLoadState.error;
-          _qrErrorMessage = 'Host session did not start. Tap Retry.';
+          _qrErrorMessage =
+              AppLocalizations.of(context).hostSessionDidNotStart;
         });
         return;
       }
@@ -139,8 +136,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
       if (attempt == maxAttempts - 1) {
         setState(() {
           _qrLoadState = _QrHostLoadState.unavailable;
-          _qrErrorMessage =
-              'Connect this device to Wi‑Fi (same network as guests), then tap Retry.';
+          _qrErrorMessage = AppLocalizations.of(context).hostNeedWifiRetry;
         });
         return;
       }
@@ -178,6 +174,7 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
 
     final lobby = ref.watch(lobbyProvider);
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return PopScope(
       canPop: false,
@@ -187,10 +184,10 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
       child: Scaffold(
         backgroundColor: colors.backgroundPrimary,
         appBar: UiAppBar(
-          title: 'Host Lobby',
+          title: l10n.hostLobbyTitle,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
-            tooltip: 'Leave lobby',
+            tooltip: l10n.hostLeaveLobbyTooltip,
             onPressed: () => unawaited(_leaveHostFlow()),
           ),
         ),
@@ -223,10 +220,10 @@ class _LobbyScreenState extends ConsumerState<LobbyScreen> {
           _StartGameButton(
             canStart: lobby.canStart,
             hint: lobby.players.isEmpty
-                ? 'Need at least 1 player'
+                ? l10n.hostNeedOnePlayer
                 : lobby.players.any((p) => !p.isReady)
-                    ? 'Everyone must be ready'
-                    : 'Start Game',
+                    ? l10n.hostEveryoneMustBeReady
+                    : l10n.hostStartGame,
           ),
               ],
             );
@@ -278,6 +275,7 @@ class _MatchLabelSectionState extends ConsumerState<_MatchLabelSection> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     final compact = MediaQuery.sizeOf(context).width < 360;
     final recentLabels =
         ref.watch(matchRepositoryProvider).recentLabels(limit: 6);
@@ -305,12 +303,12 @@ class _MatchLabelSectionState extends ConsumerState<_MatchLabelSection> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Label',
+            l10n.hostMatchLabel,
             style: TypographyTokens.sectionTitle(colors.textPrimary),
           ),
           SizedBox(height: LayoutTokens.gr1),
           Text(
-            'Optional. Helps you find this game in Recent games.',
+            l10n.hostMatchLabelHelp,
             style: TextStyle(
               color: colors.textSecondary,
               fontSize: FontTokens.caption,
@@ -326,7 +324,7 @@ class _MatchLabelSectionState extends ConsumerState<_MatchLabelSection> {
               fontSize: FontTokens.body,
             ),
             decoration: _lobbyDropdownDecoration(context).copyWith(
-              hintText: 'e.g. Friday EDH',
+              hintText: l10n.hostMatchLabelHint,
               hintStyle: TextStyle(color: colors.textSecondary),
               counterText: '',
             ),
@@ -388,6 +386,7 @@ class _QrHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     final w = MediaQuery.sizeOf(context).width;
     final compact = w < 360;
     final qrSize = compact ? 140.0 : 160.0;
@@ -410,7 +409,7 @@ class _QrHeader extends StatelessWidget {
               SizedBox(width: LayoutTokens.gr1),
               Flexible(
                 child: Text(
-                  'Players: $playerCount / $maxPlayers  •  Scan QR to join',
+                  l10n.hostPlayersScanQr(playerCount, maxPlayers),
                   style: TextStyle(
                     color: colors.textSecondary,
                     fontSize: compact ? FontTokens.caption : FontTokens.hudSm,
@@ -428,9 +427,7 @@ class _QrHeader extends StatelessWidget {
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr2),
                 child: Text(
-                  errorMessage ??
-                      'Hosting needs the mobile app or a local dev build on your '
-                      'computer (same Wi‑Fi). Browser hosting is not supported.',
+                  errorMessage ?? l10n.hostNeedsMobileOrDev,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: colors.textSecondary,
@@ -447,7 +444,7 @@ class _QrHeader extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr2),
                 child: Center(
                   child: Text(
-                    errorMessage ?? 'Could not show join QR code.',
+                    errorMessage ?? l10n.hostCouldNotShowQr,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: colors.textSecondary,
@@ -499,7 +496,10 @@ class _QrHeader extends StatelessWidget {
               loadState == _QrHostLoadState.error) ...[
             Padding(
               padding: EdgeInsets.only(top: LayoutTokens.gr2),
-              child: TextButton(onPressed: onRetry, child: const Text('Retry')),
+              child: TextButton(
+                onPressed: onRetry,
+                child: Text(l10n.hostRetry),
+              ),
             ),
           ],
         ],
@@ -517,6 +517,7 @@ class _PlayerSlotCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     final isLocalHost = ref.watch(
       profileRepositoryProvider.select((r) => r.getProfile()?.playerId),
     );
@@ -567,8 +568,8 @@ class _PlayerSlotCard extends ConsumerWidget {
                     Text(
                       resolvedCommanderName ??
                           (isCommanderLobby
-                              ? 'No commander selected'
-                              : 'No deck selected'),
+                              ? l10n.hostNoCommanderSelected
+                              : l10n.hostNoDeckSelected),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -594,8 +595,8 @@ class _PlayerSlotCard extends ConsumerWidget {
                       SizedBox(height: LayoutTokens.gr0),
                       Text(
                         linkedDeck != null
-                            ? 'Tracking: ${linkedDeck.displayName}'
-                            : 'Deck (saved list changed)',
+                            ? l10n.hostTrackingDeck(linkedDeck.displayName)
+                            : l10n.hostDeckListChanged,
                         style: TextStyle(
                           color: colors.primaryAccent,
                           fontSize: FontTokens.hudXs,
@@ -640,10 +641,11 @@ class _SlotCommanderControls extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final gap = LayoutTokens.gr1;
+    final l10n = AppLocalizations.of(context);
 
     if (!isCommanderLobby) {
       return LobbyActionButton(
-        label: 'Deck',
+        label: l10n.hostSelectDeck,
         highlighted: slot.selectedDeckId != null,
         filled: true,
         onPressed: () => showDeckPickerSheet(context, ref, slot.playerId),
@@ -654,7 +656,7 @@ class _SlotCommanderControls extends ConsumerWidget {
       children: [
         Expanded(
           child: LobbyActionButton(
-            label: 'Deck',
+            label: l10n.hostSelectDeck,
             highlighted: slot.selectedDeckId != null,
             filled: false,
             onPressed:
@@ -664,7 +666,7 @@ class _SlotCommanderControls extends ConsumerWidget {
         SizedBox(width: gap),
         Expanded(
           child: LobbyActionButton(
-            label: 'Commander',
+            label: l10n.hostSelectCommander,
             highlighted: slot.commanderName != null,
             filled: true,
             onPressed:
@@ -687,8 +689,9 @@ class _SlotReadyButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     return IconButton(
-      tooltip: slot.isReady ? 'Mark not ready' : 'Mark ready',
+      tooltip: slot.isReady ? l10n.hostMarkNotReady : l10n.hostMarkReady,
       style: IconButton.styleFrom(
         minimumSize: const Size(
           LayoutTokens.minTapTarget,
@@ -719,6 +722,7 @@ class _EmptySlotCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     return Container(
       margin: EdgeInsets.only(bottom: LayoutTokens.gr2),
       padding: EdgeInsets.symmetric(vertical: LayoutTokens.gr4),
@@ -729,7 +733,7 @@ class _EmptySlotCard extends StatelessWidget {
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr2),
         child: Text(
-          '$remaining open slot${remaining == 1 ? '' : 's'} — share your device to let friends join',
+          l10n.hostOpenSlots(remaining),
           style: TextStyle(
             color: colors.textSecondary,
             fontSize: MediaQuery.sizeOf(context).width < 360
@@ -753,6 +757,7 @@ class _ConfigSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     final notifier = ref.read(lobbyProvider.notifier);
 
     final compact = MediaQuery.sizeOf(context).width < 360;
@@ -767,12 +772,12 @@ class _ConfigSection extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Game Settings',
+            l10n.hostGameSettings,
             style: TypographyTokens.sectionTitle(colors.textPrimary),
           ),
           SizedBox(height: LayoutTokens.gr3),
           _ConfigDropdownRow(
-            label: 'Format',
+            label: l10n.hostFormat,
             child: _FormatDropdown(
               value: config.format,
               onChanged: (f) => notifier.updateConfig(
@@ -785,7 +790,7 @@ class _ConfigSection extends ConsumerWidget {
           ),
           SizedBox(height: LayoutTokens.gr3),
           _ConfigDropdownRow(
-            label: 'Starting Life',
+            label: l10n.hostStartingLife,
             child: _StartingLifeDropdown(
               value: config.startingLife,
               onChanged:
@@ -797,7 +802,7 @@ class _ConfigSection extends ConsumerWidget {
           SizedBox(height: LayoutTokens.gr4),
           // Gameplay settings
           Text(
-            'Gameplay',
+            l10n.hostGameplay,
             style: TextStyle(
               color: colors.textPrimary,
               fontWeight: FontWeight.w600,
@@ -917,6 +922,7 @@ class _StartingLifeDropdown extends StatelessWidget {
     required ValueChanged<int> onChanged,
   }) {
     final controller = TextEditingController(text: current.toString());
+    final l10n = AppLocalizations.of(context);
     showDialog<void>(
       context: context,
       builder: (dialogContext) {
@@ -929,15 +935,15 @@ class _StartingLifeDropdown extends StatelessWidget {
         }
 
         return GameFormDialog(
-          title: 'Custom starting life',
+          title: l10n.hostCustomStartingLifeTitle,
           submitLabel: 'OK',
           onSubmit: submit,
           content: TextField(
             controller: controller,
             keyboardType: TextInputType.number,
             autofocus: true,
-            decoration: const InputDecoration(
-              hintText: 'Enter life total (1–999)',
+            decoration: InputDecoration(
+              hintText: l10n.hostCustomStartingLifeHint,
             ),
             onSubmitted: (_) => submit(),
           ),
@@ -949,15 +955,16 @@ class _StartingLifeDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     final items = <DropdownMenuItem<int>>[
       ..._presets.map(
         (v) => DropdownMenuItem(value: v, child: Text('$v')),
       ),
       if (!_presets.contains(value))
         DropdownMenuItem(value: value, child: Text('$value')),
-      const DropdownMenuItem(
+      DropdownMenuItem(
         value: _customMenuValue,
-        child: Text('Custom…'),
+        child: Text(l10n.hostCustomEllipsis),
       ),
     ];
 
@@ -992,22 +999,21 @@ class _TurnTimeLimitDropdown extends StatelessWidget {
 
   static const _presets = <int?>[null, 30, 60];
 
-  static String _label(int? seconds) => switch (seconds) {
-    null => 'Off',
-    30 => '30 seconds',
-    60 => '60 seconds',
-    final int s => '$s seconds',
+  static String _label(AppLocalizations l10n, int? seconds) => switch (seconds) {
+    null => l10n.hostTurnLimitOff,
+    final int s => l10n.hostTurnLimitSeconds(s),
   };
 
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     final items = <DropdownMenuItem<int?>>[
       ..._presets.map(
-        (v) => DropdownMenuItem(value: v, child: Text(_label(v))),
+        (v) => DropdownMenuItem(value: v, child: Text(_label(l10n, v))),
       ),
       if (value != null && !_presets.contains(value))
-        DropdownMenuItem(value: value, child: Text(_label(value))),
+        DropdownMenuItem(value: value, child: Text(_label(l10n, value))),
     ];
 
     return DropdownButtonFormField<int?>(
@@ -1037,40 +1043,41 @@ class _GameplayToggles extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _GameplaySwitchTile(
-          title: 'Teams',
-          subtitle: 'Assign team colors on the table',
+          title: l10n.hostToggleTeams,
+          subtitle: l10n.hostToggleTeamsSubtitle,
           value: config.teamsEnabled,
           onChanged: (v) =>
               notifier.updateConfig(config.copyWith(teamsEnabled: v)),
         ),
         _GameplaySwitchTile(
-          title: 'Planechase',
-          subtitle: 'Internet required for planar deck',
+          title: l10n.hostTogglePlanechase,
+          subtitle: l10n.hostTogglePlanechaseSubtitle,
           value: config.planechaseEnabled,
           onChanged: (v) =>
               notifier.updateConfig(config.copyWith(planechaseEnabled: v)),
         ),
         _GameplaySwitchTile(
-          title: 'Archenemy',
-          subtitle: 'Internet required for scheme deck',
+          title: l10n.hostToggleArchenemy,
+          subtitle: l10n.hostToggleArchenemySubtitle,
           value: config.archenemyEnabled,
           onChanged: (v) =>
               notifier.updateConfig(config.copyWith(archenemyEnabled: v)),
         ),
         _GameplaySwitchTile(
-          title: 'Bounty',
-          subtitle: 'Internet required for bounty deck',
+          title: l10n.hostToggleBounty,
+          subtitle: l10n.hostToggleBountySubtitle,
           value: config.bountyEnabled,
           onChanged: (v) =>
               notifier.updateConfig(config.copyWith(bountyEnabled: v)),
         ),
         _GameplaySwitchTile(
-          title: 'Auto-KO',
-          subtitle: 'From life, poison, or commander damage',
+          title: l10n.hostToggleAutoKo,
+          subtitle: l10n.hostToggleAutoKoSubtitle,
           value: _autoKoAll,
           onChanged: (v) => notifier.updateConfig(config.copyWith(
                 autoKoFromLife: v,
@@ -1079,22 +1086,22 @@ class _GameplayToggles extends StatelessWidget {
               )),
         ),
         _GameplaySwitchTile(
-          title: 'Commander damage life loss',
-          subtitle: 'Commander damage also reduces life',
+          title: l10n.hostToggleCommanderDmgLife,
+          subtitle: l10n.hostToggleCommanderDmgLifeSubtitle,
           value: config.commanderDamageReducesLife,
           onChanged: (v) => notifier.updateConfig(
               config.copyWith(commanderDamageReducesLife: v)),
         ),
         _GameplaySwitchTile(
-          title: 'Phase tracker',
-          subtitle: 'Show turn phases with Back and Next',
+          title: l10n.hostTogglePhaseTracker,
+          subtitle: l10n.hostTogglePhaseTrackerSubtitle,
           value: config.phasesEnabled,
           onChanged: (v) =>
               notifier.updateConfig(config.copyWith(phasesEnabled: v)),
         ),
         _GameplaySwitchTile(
-          title: 'Turn timer',
-          subtitle: 'Show elapsed time each turn',
+          title: l10n.hostToggleTurnTimer,
+          subtitle: l10n.hostToggleTurnTimerSubtitle,
           value: config.trackTurnDuration,
           onChanged:
               (v) => notifier.updateConfig(
@@ -1113,7 +1120,7 @@ class _GameplayToggles extends StatelessWidget {
               bottom: LayoutTokens.gr2,
             ),
             child: _ConfigDropdownRow(
-              label: 'Turn limit',
+              label: l10n.hostTurnLimit,
               child: _TurnTimeLimitDropdown(
                 value: config.turnTimeLimitSeconds,
                 onChanged:
@@ -1201,8 +1208,9 @@ class _StartGameButtonState extends ConsumerState<_StartGameButton> {
   @override
   Widget build(BuildContext context) {
     final canStart = widget.canStart && !_isStarting;
+    final l10n = AppLocalizations.of(context);
     return UiButton(
-      label: widget.canStart ? 'Start Game' : widget.hint,
+      label: widget.canStart ? l10n.hostStartGame : widget.hint,
       enabled: widget.canStart,
       loading: _isStarting,
       onPressed: canStart

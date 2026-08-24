@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/game/player_game_state.dart';
+import '../../l10n/app_localizations.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
@@ -27,6 +28,7 @@ class PlayerFeedbackRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: EdgeInsets.only(bottom: LayoutTokens.gr1),
       child: Row(
@@ -57,7 +59,7 @@ class PlayerFeedbackRow extends StatelessWidget {
               size: 20,
               color: isLiked ? colors.success : colors.textSecondary,
             ),
-            tooltip: isLiked ? 'Clear like' : 'Like',
+            tooltip: isLiked ? l10n.feedbackClearLike : l10n.feedbackLike,
             onPressed: onLike,
             style: IconButton.styleFrom(
               backgroundColor: isLiked
@@ -75,7 +77,8 @@ class PlayerFeedbackRow extends StatelessWidget {
               size: 20,
               color: isDisliked ? colors.primaryAccent : colors.textSecondary,
             ),
-            tooltip: isDisliked ? 'Clear dislike' : 'Dislike',
+            tooltip:
+                isDisliked ? l10n.feedbackClearDislike : l10n.feedbackDislike,
             onPressed: onDislike,
             style: IconButton.styleFrom(
               backgroundColor: isDisliked
@@ -113,6 +116,7 @@ class PlayerFeedbackVoteDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -163,7 +167,7 @@ class PlayerFeedbackVoteDropdown extends StatelessWidget {
             DropdownMenuItem<String?>(
               value: null,
               child: Text(
-                '— None —',
+                l10n.feedbackNoneOption,
                 style: TextStyle(
                   color: colors.textSecondary,
                   fontSize: FontTokens.hudSm,
@@ -236,6 +240,7 @@ class PlayerFeedbackFields extends StatelessWidget {
     if (opponents.isEmpty) return const SizedBox.shrink();
 
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -262,8 +267,8 @@ class PlayerFeedbackFields extends StatelessWidget {
         ),
         SizedBox(height: voteSpacing),
         PlayerFeedbackVoteDropdown(
-          label: 'Spark of the game',
-          hint: 'Optional — pick one player',
+          label: l10n.feedbackSparkOfTheGame,
+          hint: l10n.feedbackSparkHint,
           players: opponents,
           selectedId: starPlayerId,
           onChanged: onStarChanged,

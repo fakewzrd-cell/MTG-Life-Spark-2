@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../shared/utils/game_haptics.dart';
 
 import '../../../core/game/game_phase.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
@@ -74,16 +75,16 @@ class _PhasePickerSheetState extends State<PhasePickerSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     const itemExtent = 48.0;
 
     return GameSheetBody(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const GameSheetHeader(
-            title: 'Select phase',
-            subtitle:
-                'Scroll and tap a phase, or use Set phase for the highlighted step.',
+          GameSheetHeader(
+            title: l10n.phasePickerTitle,
+            subtitle: l10n.phasePickerSubtitle,
           ),
           SizedBox(height: LayoutTokens.gr2),
           SizedBox(
@@ -158,7 +159,7 @@ class _PhasePickerSheetState extends State<PhasePickerSheet> {
                 child: OutlinedButton(
                   onPressed: () => Navigator.pop(context),
                   style: GameUiTokens.sheetCancelButton(context.gameColors),
-                  child: Text('Cancel'),
+                  child: Text(l10n.commonCancel),
                 ),
               ),
               SizedBox(width: LayoutTokens.gr2),
@@ -168,7 +169,9 @@ class _PhasePickerSheetState extends State<PhasePickerSheet> {
                   onPressed: () => _select(_phases[_highlightIndex]),
                   style: GameUiTokens.sheetPrimaryButton(widget.accentColor),
                   child: Text(
-                    'Set ${_phases[_highlightIndex].displayName}',
+                    l10n.phasePickerSetPhase(
+                      _phases[_highlightIndex].displayName,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

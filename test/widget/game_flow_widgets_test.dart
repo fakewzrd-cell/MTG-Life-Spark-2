@@ -8,12 +8,15 @@ import 'package:mgt_life_spark/features/game/widgets/game_bottom_bar.dart';
 import 'package:mgt_life_spark/features/game_lobby/game_lobby_screen.dart';
 import 'package:mgt_life_spark/shared/theme/app_theme.dart';
 import '../support/game_widget_harness.dart';
+import '../support/test_l10n.dart';
 
 void main() {
   testWidgets('game lobby shows Host Game and Join Game', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark(),
+        localizationsDelegates: testLocalizationDelegates,
+        supportedLocales: testSupportedLocales,
         home: const GameLobbyScreen(),
       ),
     );

@@ -1,0 +1,1486 @@
+{
+  "@@locale": "en",
+  "appTitle": "Life Spark",
+  "@appTitle": {
+    "description": "App display name"
+  },
+  "navProfile": "Profile",
+  "navLobby": "Lobby",
+  "navDecks": "Decks",
+  "navSettings": "Settings",
+  "settingsTitle": "Settings",
+  "settingsSectionGameplay": "Gameplay",
+  "settingsDefaultFormat": "Default Format",
+  "settingsDefaultFormatSubtitle": "{format} · used when you host",
+  "@settingsDefaultFormatSubtitle": {
+    "placeholders": {
+      "format": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsDefaultStartingLife": "Default Starting Life",
+  "settingsDefaultStartingLifeSubtitle": "{life} life · used when you host",
+  "@settingsDefaultStartingLifeSubtitle": {
+    "placeholders": {
+      "life": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsSectionMisc": "Misc",
+  "settingsKeepDisplayAwake": "Keep display awake",
+  "settingsKeepDisplayAwakeSubtitle": "Prevent screen from sleeping during a game",
+  "settingsHideSystemBars": "Hide navigation and status bars",
+  "settingsHideSystemBarsSubtitle": "Fullscreen mode during gameplay",
+  "settingsSectionAppearance": "Appearance",
+  "settingsDarkAppearance": "Dark appearance",
+  "settingsDarkAppearanceSubtitle": "Light mode uses soft backgrounds — try Fog or Slate",
+  "settingsLanguage": "Language",
+  "settingsLanguageSystem": "System default",
+  "settingsLanguageSubtitle": "{language}",
+  "@settingsLanguageSubtitle": {
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "languageEnglish": "English",
+  "languageSpanish": "Español",
+  "languagePortugueseBrazil": "Português (Brasil)",
+  "languageFrench": "Français",
+  "languageGerman": "Deutsch",
+  "languageJapanese": "日本語",
+  "settingsSectionFeel": "Feel",
+  "settingsHapticFeedback": "Haptic Feedback",
+  "settingsHapticFeedbackSubtitle": "Vibrate on life changes and rank ups",
+  "settingsShakeToUndo": "Shake to Undo",
+  "settingsShakeToUndoSubtitle": "Shake phone to undo last life change",
+  "settingsSectionData": "Data",
+  "settingsCacheCommanderImages": "Cache Commander Images",
+  "settingsCacheCommanderImagesSubtitle": "Store Scryfall images locally for offline use",
+  "settingsClearImageCache": "Clear Image Cache",
+  "settingsClearImageCacheSubtitle": "Free up storage from cached card images",
+  "settingsSaveBackup": "Save backup",
+  "settingsSaveBackupSubtitle": "Write profile, decks, settings, recent games, and feedback to a file",
+  "settingsRestoreBackup": "Restore backup",
+  "settingsRestoreBackupSubtitle": "Replace all local data from a .lifespark file",
+  "settingsSectionHelp": "Help",
+  "settingsFeedback": "Feedback",
+  "settingsFeedbackSubtitle": "Send us your thoughts and suggestions",
+  "settingsViewHubGuide": "View hub guide",
+  "settingsViewHubGuideSubtitle": "How Play, Stack, Lookup, and Table work in a match",
+  "settingsViewTutorialAgain": "View Tutorial Again",
+  "settingsViewTutorialAgainSubtitle": "Re-launch the onboarding walkthrough",
+  "settingsBeta": "Beta",
+  "commonCancel": "Cancel",
+  "commonSave": "Save",
+  "commonAdd": "Add",
+  "commonRemove": "Remove",
+  "commonClose": "Close",
+  "commonTryAgain": "Try again",
+  "backupSaved": "Backup saved.",
+  "backupSaveFailed": "Could not save backup.",
+  "backupRestoreTitle": "Restore {username}?",
+  "@backupRestoreTitle": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestoreMessage": "This replaces your profile, decks, settings, recent games, sparks, and behaviour on this device with the selected backup.",
+  "backupRestoreConfirm": "Restore",
+  "backupRestored": "Restored backup for {username}.",
+  "@backupRestored": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestoreFailed": "Could not restore backup. Check the file and try again.",
+  "cacheCleared": "Image cache cleared.",
+  "cacheClearFailed": "Could not clear image cache.",
+  "decksTitle": "Decks",
+  "decksAddDeck": "Add deck",
+  "profileTitle": "Profile",
+  "profileRecentGames": "Recent games",
+  "profileDeckPerformance": "Deck performance",
+  "lobbyTitle": "Lobby",
+  "lobbyHostGame": "Host Game",
+  "lobbyHostGameSubtitle": "Create a session — others join you",
+  "lobbyJoinGame": "Join Game",
+  "lobbyJoinGameSubtitle": "Scan for a nearby host",
+  "hostLobbyTitle": "Host Lobby",
+  "hostLeaveLobbyTooltip": "Leave lobby",
+  "hostPlayersScanQr": "Players: {count} / {max}  •  Scan QR to join",
+  "@hostPlayersScanQr": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "hostNeedWifiRetry": "Connect this device to Wi‑Fi (same network as guests), then tap Retry.",
+  "hostNeedsMobileApp": "Hosting needs the mobile app (iOS or Android) on the same Wi‑Fi. The browser can join games by scanning a QR code, but cannot host.",
+  "hostNeedsMobileOrDev": "Hosting needs the mobile app or a local dev build on your machine.",
+  "hostCreateProfileFirst": "Create your profile first (Home → set username), then tap Retry.",
+  "hostCouldNotStartServer": "Could not start the host server on this device. Tap Retry.",
+  "hostSessionDidNotStart": "Host session did not start. Tap Retry.",
+  "hostCouldNotShowQr": "Could not show join QR code.",
+  "hostRetry": "Retry",
+  "hostNeedOnePlayer": "Need at least 1 player",
+  "hostEveryoneMustBeReady": "Everyone must be ready",
+  "hostStartGame": "Start Game",
+  "hostOpenSlots": "{count} open slot(s) — share your device to let friends join",
+  "@hostOpenSlots": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "hostMatchLabel": "Label",
+  "hostMatchLabelHelp": "Optional. Helps you find this game in Recent games.",
+  "hostMatchLabelHint": "e.g. Friday EDH",
+  "hostGameSettings": "Game Settings",
+  "hostFormat": "Format",
+  "hostStartingLife": "Starting Life",
+  "hostCustomStartingLifeTitle": "Custom starting life",
+  "hostCustomStartingLifeHint": "Enter life total (1–999)",
+  "hostCustomEllipsis": "Custom…",
+  "hostGameplay": "Gameplay",
+  "hostToggleTeams": "Teams",
+  "hostToggleTeamsSubtitle": "Assign team colors on the table",
+  "hostTogglePlanechaseSubtitle": "Internet required for planar deck",
+  "hostToggleArchenemySubtitle": "Internet required for scheme deck",
+  "hostToggleBountySubtitle": "Internet required for bounty deck",
+  "hostToggleAutoKo": "Auto-KO",
+  "hostToggleAutoKoSubtitle": "From life, poison, or commander damage",
+  "hostToggleCommanderDmgLife": "Commander damage life loss",
+  "hostToggleCommanderDmgLifeSubtitle": "Commander damage also reduces life",
+  "hostTogglePhaseTracker": "Phase tracker",
+  "hostTogglePhaseTrackerSubtitle": "Show turn phases with Back and Next",
+  "hostToggleTurnTimer": "Turn timer",
+  "hostToggleTurnTimerSubtitle": "Show elapsed time each turn",
+  "hostTurnLimit": "Turn limit",
+  "hostTurnLimitOff": "Off",
+  "hostTurnLimitSeconds": "{seconds} seconds",
+  "@hostTurnLimitSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "hostNoCommanderSelected": "No commander selected",
+  "hostNoDeckSelected": "No deck selected",
+  "hostTrackingDeck": "Tracking: {name}",
+  "@hostTrackingDeck": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "hostDeckListChanged": "Deck (saved list changed)",
+  "hostSelectDeck": "Deck",
+  "hostSelectCommander": "Commander",
+  "hostMarkReady": "Mark ready",
+  "hostMarkNotReady": "Mark not ready",
+  "lobbyReady": "Ready",
+  "lobbyWaiting": "Waiting",
+  "deckPickerTitle": "Deck for this match",
+  "deckPickerManualOnly": "Manual commander only",
+  "deckPickerManualOnlySubtitle": "Keep commanders as-is; do not attribute to a saved deck",
+  "deckPickerEmptyForFormat": "No {format} decks saved yet. Create one from the Decks tab.",
+  "@deckPickerEmptyForFormat": {
+    "placeholders": {
+      "format": {
+        "type": "String"
+      }
+    }
+  },
+  "deckPickerOpenDecks": "Open Decks",
+  "joinTitle": "Join a Game",
+  "joinLeaveTooltip": "Leave",
+  "joinPointCamera": "Point the camera at the host's QR code",
+  "joinCameraRequiredSnack": "Camera permission is required to scan the host QR code.",
+  "joinCameraDeniedBody": "Camera access is needed to scan the host QR code.\\nIf you already allowed it in Settings, tap Try again.",
+  "joinOpenSettings": "Open Settings",
+  "joinInvalidQr": "Not a valid Life Spark QR code.",
+  "joinMissingToken": "This QR code is missing a join token. Ask the host to refresh their QR.",
+  "joinCouldNotStartSession": "Could not start join session. Finish profile setup and try again.",
+  "joinConnectTimeout": "Timed out connecting to the host. Make sure you are on the same Wi‑Fi and the host lobby is still open, then try again.",
+  "joinHostRejected": "Host rejected connection (version mismatch).",
+  "joinDisconnected": "Disconnected from host.",
+  "joinConnectionError": "Connection error.",
+  "joinHostEndedSession": "The host ended the session.",
+  "joinConnecting": "Connecting to host…",
+  "joinWaitingForHost": "Waiting for host to start…",
+  "joinSelectDeck": "Select deck",
+  "joinSelectCommander": "Select commander",
+  "joinReady": "Ready",
+  "joinMarkReady": "Mark ready",
+  "welcomeTagline": "Your MTG companion.",
+  "welcomeReadyToPlay": "Ready to play",
+  "welcomeSkip": "Skip",
+  "onboardingSlide1Title": "Welcome to Life Spark",
+  "onboardingSlide1Body": "Your Commander battlefield companion — life, counters, politics, and the stack, synced at the table.",
+  "onboardingSlide2Title": "Host or Join",
+  "onboardingSlide2Body": "One player hosts a game — others scan a QR code on the same Wi‑Fi network. No internet account needed. Works for 4 to 6 players at the same table.",
+  "onboardingSlide3Title": "Track Your Life",
+  "onboardingSlide3Body": "Tap +/- to change life by 1. Hold +/- for ±5. Drag left or right to adjust quickly. Double-tap the life total to set an exact number. Undo is on the bottom bar (or shake, if enabled).",
+  "onboardingSlide4Title": "Phase Bar & Turns",
+  "onboardingSlide4Body": "Use the phase bar to step through the turn, or leave Phase tracker off in the lobby. Timeout pauses the whole game.",
+  "onboardingSlide5Title": "Commander & Counters",
+  "onboardingSlide5Body": "Commander damage opens as a threat list — how much each opponent has dealt you toward 21. Track poison (10), energy, experience, and rad. Use Proliferate to add 1 to all at once.",
+  "onboardingSlide6Title": "Alliances & Politics",
+  "onboardingSlide6Body": "Propose secret alliances with other players. They expire automatically or break when you attack each other. Track the Monarch and Initiative with a single tap.",
+  "onboardingNext": "Next",
+  "onboardingReadyToPlay": "Ready to play",
+  "onboardingSkip": "Skip",
+  "profileSetupTitle": "Create your profile",
+  "profileSetupSubtitle": "Choose a name and picture your table will recognize.",
+  "profileSetupUsername": "Username",
+  "profileSetupUsernameRequired": "Enter a username",
+  "profileSetupUsernameTooShort": "Must be at least 2 characters",
+  "profileSetupChoosePicture": "Choose profile picture",
+  "profileSetupChangePicture": "Change picture",
+  "profileSetupContinue": "Continue",
+  "sessionLeaveTitle": "Leave active game?",
+  "sessionLeaveMessage": "You have a lobby or game session running. Leaving will disconnect other players at the table.",
+  "sessionLeaveConfirm": "Leave",
+  "sessionLeaveStay": "Stay",
+  "gameLeaveTitle": "Leave game?",
+  "gameLeaveMessageActive": "You will leave the game and return home. Match stats only save when the table finishes the game.",
+  "gameLeaveMessageAfterConcede": "You will leave the live game and return home. Your concede result will be saved before disconnecting.",
+  "gameTabPlay": "Play",
+  "gameTabStack": "Stack",
+  "gameTabLookupSemantics": "Look up card rules",
+  "gameBarHome": "Home",
+  "gameBarUndo": "Undo",
+  "gameBarTimeout": "Timeout",
+  "gameBarEnd": "End",
+  "gameBarTable": "Table",
+  "gameEndTurn": "End turn",
+  "gameWaitingForPlayer": "Waiting for {name}…",
+  "@gameWaitingForPlayer": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "gamePhaseBack": "Back",
+  "gamePhaseNext": "Next",
+  "gameChoosePhase": "Choose phase",
+  "gameYourTurn": "Your turn",
+  "gameYourTurnTapContinue": "Tap to continue",
+  "gameYourTurnSemantics": "Your turn. Double tap to dismiss.",
+  "gameNowPlaying": "NOW PLAYING",
+  "gameActiveTurn": "ACTIVE TURN",
+  "gamePlayersTurn": "{name}'s turn",
+  "@gamePlayersTurn": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "gameCurrentTurn": "Current turn",
+  "timeoutStartTitle": "Start Timeout",
+  "timeout15Seconds": "15 seconds",
+  "timeout30Seconds": "30 seconds",
+  "timeout1Minute": "1 minute",
+  "timeoutBanner": "TIMEOUT",
+  "timeoutPaused": "Game paused — no life changes",
+  "timeoutEnd": "End timeout",
+  "timeoutMinimized": "Timeout — {time}",
+  "@timeoutMinimized": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "timeoutMinimizeTooltip": "Minimize timer",
+  "reconnectToTable": "Reconnecting to table…",
+  "reconnectStillTrying": "Still trying to reach the table…",
+  "reconnectPeerOne": "{name} is reconnecting…",
+  "@reconnectPeerOne": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "reconnectPeerMany": "{count} players reconnecting…",
+  "@reconnectPeerMany": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "forfeitTitle": "Forfeit?",
+  "forfeitBodyMulti": "You will leave the game. Optionally rate opponents before you go.",
+  "forfeitBodySolo": "Your practice game will end. Optionally note how it went.",
+  "forfeitRateOpponents": "Rate opponents",
+  "forfeitConfirm": "Forfeit",
+  "forfeitYouForfeited": "You forfeited",
+  "forfeitStaySpectateBody": "Other players can keep playing. Stay on this device to spectate until the table finishes. Returning to your profile hub now saves your concede result and disconnects from the live game.",
+  "forfeitStaySpectate": "Stay & spectate",
+  "forfeitReturnToProfile": "Return to profile",
+  "gamePlayerLeftTitle": "Player left",
+  "gamePlayerLeftMessage": "{username} left the game.",
+  "@gamePlayerLeftMessage": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "gameSessionEndedTitle": "Session ended",
+  "gameSessionEndedMessage": "The host ended the game.",
+  "gamePeerOfflineTitle": "{username} still offline",
+  "@gamePeerOfflineTitle": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "gamePeerOfflineBody": "Keep waiting for them to reconnect, or remove them from the table?",
+  "gameKeepWaiting": "Keep waiting",
+  "gameRemoveFromTable": "Remove from table",
+  "gameSlotLoadFailedTitle": "Could not load your player slot",
+  "gameSlotLoadFailedBody": "The game may be out of sync. Return to the lobby and rejoin.",
+  "gameReturnToLobby": "Return to lobby",
+  "profileSetupPrompt": "Set up your profile to continue.",
+  "profileCreateCta": "Create profile",
+  "profileNewPlayer": "New player",
+  "profilePlayingSince": "Playing since {date}",
+  "@profilePlayingSince": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "profileOptions": "Profile options",
+  "profileDoneEditing": "Done editing",
+  "profileDone": "Done",
+  "profileEditName": "Edit name",
+  "profileEditNameTooltip": "Edit name",
+  "profileChangePicture": "Change profile picture",
+  "profileStatRecord": "Record",
+  "profileStatSparks": "Sparks",
+  "profileStatGames": "Games",
+  "profileEmptyRecentGames": "Play your first game to unlock stats and history.",
+  "profileEmptyDeckPerf": "Add a deck to track commander performance here.",
+  "profileFilterAllGames": "All games",
+  "profileFilterRecent14": "Recent (14 days)",
+  "profileFilterThisWeek": "This week",
+  "profileFilterThisMonth": "This month",
+  "profileNoMatchesFilter": "No matches for this filter.",
+  "profileOpenLobbySemantics": "Open lobby to host or join a game",
+  "profileShowMore": "Show more",
+  "profileStandings": "Standings",
+  "profileNoPlayerDetails": "No player details saved for this match.",
+  "profileResultConcede": "Concede",
+  "profileResultLoss": "Loss",
+  "decksEmptyTitle": "Build your deck library",
+  "decksEmptyBody": "Save a deck with a name, format, and cover card. When you host or join a game, pick the right list in the lobby.",
+  "decksSearchHint": "Search decks…",
+  "decksNoSearchMatches": "No decks match “{query}”.",
+  "@decksNoSearchMatches": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "decksStyleNotSet": "Style not set",
+  "decksNoCoverCard": "No cover card",
+  "lookupTitle": "Card lookup",
+  "lookupHint": "Search any MTG card…",
+  "lookupHelp": "Oracle text and official rulings from Scryfall.",
+  "lookupEmptyPrompt": "Type a card name to look up rules.",
+  "lookupNoResults": "No cards found for “{query}”.",
+  "@lookupNoResults": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "lookupNetworkError": "Could not reach Scryfall. Check your connection.",
+  "lookupSearch": "Search",
+  "lookupOracleText": "Oracle text",
+  "lookupNoOracle": "No oracle text available for this card.",
+  "lookupRulings": "Rulings",
+  "lookupNoRulings": "No official rulings listed for this card.",
+  "endGameSavingResults": "Saving match results…",
+  "endGameSaveFailedTitle": "Could not save match results.",
+  "endGameSaveFailedBody": "Your stats may not have updated. Try again.",
+  "endGameRetry": "Retry",
+  "endGameContinueWithoutSaving": "Continue without saving",
+  "endGameFinalStandings": "Final Standings",
+  "endGameOverNoWinner": "Game Over — No Winner",
+  "endGamePracticeEnded": "Practice ended",
+  "endGameYouWin": "You Win!",
+  "endGameWinner": "Winner",
+  "endGameRankUp": "RANK UP!",
+  "endGameRankTransition": "Rank {oldLevel} → {newLevel}",
+  "@endGameRankTransition": {
+    "placeholders": {
+      "oldLevel": {
+        "type": "int"
+      },
+      "newLevel": {
+        "type": "int"
+      }
+    }
+  },
+  "endGameXpGained": "+{xp} XP",
+  "@endGameXpGained": {
+    "placeholders": {
+      "xp": {
+        "type": "int"
+      }
+    }
+  },
+  "endGameWinBonusIncluded": "Win bonus included",
+  "endGameParticipationXp": "Participation XP",
+  "endGameRankLevel": "Rank {level}",
+  "@endGameRankLevel": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "endGameFeedbackThanks": "Thanks! Your feedback has been recorded.",
+  "endGameRateOpponents": "Rate Your Opponents",
+  "endGameSubmitFeedback": "Submit Feedback",
+  "endGameYouSuffix": "(you)",
+  "endGameElimReasonLife": "Life depleted",
+  "endGameElimReasonPoison": "10 poison",
+  "endGameElimReasonCommanderDmg": "Commander dmg",
+  "endGameElimReasonConcede": "Conceded",
+  "endGameElimReasonDisconnect": "Left game",
+  "endGameElimReasonDefault": "Eliminated",
+  "endGameBackToHome": "Back to Home",
+  "feedbackTitle": "Feedback",
+  "feedbackHeadline": "Help us improve",
+  "feedbackBody": "Found a bug? Have a feature idea? We read every message.",
+  "feedbackMessageLabel": "Your message",
+  "feedbackMessageHint": "Tell us what you think...",
+  "feedbackSend": "Send Feedback",
+  "feedbackOrDivider": "or",
+  "feedbackRatePlayStore": "Rate on Play Store",
+  "feedbackMailSubject": "Life Spark Feedback",
+  "feedbackOpeningMail": "Opening your mail app…",
+  "feedbackNoMailAppCopied": "No mail app — message copied. Paste into an email to {email}",
+  "@feedbackNoMailAppCopied": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "feedbackClipboardFallback": "To: {email}\\nSubject: Life Spark Feedback\\n\\n{message}",
+  "@feedbackClipboardFallback": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      },
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "stackSortOrderOnStack": "Order on stack",
+  "stackSortByPlayer": "By player",
+  "stackAddSpellOrAbility": "Add spell or ability",
+  "stackHowItWorksTooltip": "How the stack works",
+  "stackFilterResolvedCountered": "Resolved / countered",
+  "stackApnapHint": "Who added what (active player first)",
+  "stackClearAll": "Clear all",
+  "stackClearConfirmTitle": "Clear stack?",
+  "stackClearConfirmBody": "Remove every spell and ability on the stack. This cannot be undone.",
+  "stackActivePlayerLabel": "{username} · Active player",
+  "@stackActivePlayerLabel": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "stackTurnOrderLabel": "{username} · Turn order: {position}",
+  "@stackTurnOrderLabel": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      },
+      "position": {
+        "type": "int"
+      }
+    }
+  },
+  "stackPutOnStack": "Put on stack",
+  "stackInResponseToEllipsis": "In response to…",
+  "stackEmptyTitle": "Nothing on the stack",
+  "stackEmptyBullet1": "Put spells and abilities here before they resolve.",
+  "stackEmptyBullet2": "The last one added resolves first.",
+  "stackAddSpell": "Add spell",
+  "stackStatusResolved": "Resolved",
+  "stackStatusCountered": "Countered",
+  "stackStatusFizzled": "Fizzled",
+  "stackYouSuffix": "(you)",
+  "stackUndoFizzle": "Undo fizzle",
+  "stackFizzle": "Fizzle",
+  "stackUndoFizzleSubtitle": "Put this spell back on the stack as active",
+  "stackFizzleSubtitle": "Target illegal or spell left the stack (rules counter)",
+  "stackMarkCountered": "Mark countered",
+  "stackRename": "Rename",
+  "stackOnStack": "On stack",
+  "stackResolvesNext": "Resolves next",
+  "stackResolvesAfterAbove": "Resolves after items above",
+  "stackTargetNoLongerOnStack": "Target is no longer on the stack",
+  "stackCardRulesTooltip": "Card rules",
+  "stackInResponseToNamed": "In response to {name}",
+  "@stackInResponseToNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "stackResolve": "Resolve",
+  "stackRespond": "Respond",
+  "stackFizzledButton": "Fizzled",
+  "stackHelpTitle": "How the stack works",
+  "stackHelpBullet1": "When someone casts a spell or uses an ability, it goes on the stack — a waiting line before it happens.",
+  "stackHelpBullet2": "The last thing added resolves first (like a stack of plates). That is why the top entry says Resolves next.",
+  "stackHelpBullet3": "When you add a spell, search Scryfall and pick the card from the list so we store the correct name and rules text.",
+  "stackHelpBullet4": "To answer something, tap Respond or use In response to… — your spell goes on top and resolves before the one under it.",
+  "stackHelpBullet5": "When an effect finishes, tap Resolve — the card stays on the stack and turns green. To answer it, tap Respond. If a counterspell worked, Mark countered (use the Countered filter to view). If a spell lost its target, tap Fizzle — it stays greyed; tap Fizzled again to undo.",
+  "stackHelpBullet6": "At the table you still say “pass” out loud for priority; this screen helps everyone remember what is waiting and in what order.",
+  "stackHelpExample": "Example: You cast a pump spell on your creature. Your opponent casts Lightning Bolt in response. Bolt resolves first, then your pump spell (if its target is still legal).",
+  "stackHelpReadMore": "Read more on Magic.com",
+  "stackHelpCouldNotOpenLink": "Could not open link",
+  "stackPickerIntro": "Search Scryfall so we store the correct card name and rules text.",
+  "stackPickerCardNameLabel": "Card name",
+  "stackPickerCardNameHint": "e.g. Lightning Bolt",
+  "stackPickerClearSearch": "Clear search",
+  "stackPickerAdd": "Add",
+  "stackPickerNoCards": "No cards found. Try a different spelling.",
+  "stackPickerNetworkError": "Could not reach Scryfall. Check your internet connection.",
+  "stackPickerNeedSelection": "Pick a card from the list, or type a name Scryfall recognizes.",
+  "stackPickerTypeToSearch": "Type to search cards",
+  "allianceAPlayer": "A player",
+  "allianceYourAllyFallback": "your ally",
+  "allianceOfferDeclined": "Secret alliance offer declined",
+  "allianceEnded": "Secret alliance ended",
+  "allianceProposeTitle": "Secret alliance",
+  "allianceProposeSubtitle": "Invite {username} — only they will know.",
+  "@allianceProposeSubtitle": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "allianceDurationSection": "Duration",
+  "allianceDurationEndOfTurn": "Until end of turn",
+  "allianceDurationEndOfRound": "Until end of round",
+  "allianceDurationUntilBroken": "Until broken",
+  "allianceWhenToDeliver": "When to deliver",
+  "allianceDeliverNow": "Deliver now",
+  "allianceDeliverInSeconds": "Deliver in {seconds}s",
+  "@allianceDeliverInSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "allianceDeliverEndOfYourTurn": "Deliver at end of your turn",
+  "allianceDeliverNextRound": "Deliver next round",
+  "allianceSecondsShort": "{seconds}s",
+  "@allianceSecondsShort": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "allianceSend": "Send",
+  "allianceWhisperSent": "Whisper sent to {username}",
+  "@allianceWhisperSent": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "allianceWhisperScheduled": "Whisper scheduled for {username}",
+  "@allianceWhisperScheduled": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "allianceInviteTitle": "Secret offer",
+  "allianceInviteBody": "{username} proposes a secret alliance.\\n\\nDuration: {duration}\\n\\nOnly you can see this.",
+  "@allianceInviteBody": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "allianceAccept": "Accept",
+  "allianceDecline": "Decline",
+  "allianceFormedTitle": "Alliance formed",
+  "allianceFormedBody": "You and {username} are now secretly allied ({duration}).\\n\\nThe table does not know — unless you reveal or betray.",
+  "@allianceFormedBody": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "allianceFormedBodyNoDuration": "You and {username} are now secretly allied.\\n\\nThe table does not know — unless you reveal or betray.",
+  "@allianceFormedBodyNoDuration": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "allianceUnderstood": "Understood",
+  "allianceRevealedTitle": "Alliance revealed",
+  "allianceRevealedBody": "{playerA} and {playerB} have revealed their secret alliance to the table.",
+  "@allianceRevealedBody": {
+    "placeholders": {
+      "playerA": {
+        "type": "String"
+      },
+      "playerB": {
+        "type": "String"
+      }
+    }
+  },
+  "allianceOk": "OK",
+  "allianceBetrayalTitle": "Betrayal!",
+  "allianceBetrayalBody": "The secret alliance between {playerA} and {playerB} has been broken by betrayal.",
+  "@allianceBetrayalBody": {
+    "placeholders": {
+      "playerA": {
+        "type": "String"
+      },
+      "playerB": {
+        "type": "String"
+      }
+    }
+  },
+  "allianceBadgeAllied": "Allied",
+  "allianceBadgeSecretAlly": "Secret ally",
+  "allianceWhisperPending": "Whisper pending → {username}",
+  "@allianceWhisperPending": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "allianceAwaiting": "Awaiting {username}",
+  "@allianceAwaiting": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdDmgSheetTitle": "Commander damage",
+  "cmdDmgSheetSubtitle": "Threats to you first. Open Dealt to log damage you dealt.",
+  "cmdDmgBarA11y": "Commander damage life {remaining} of {ko} remaining, {taken} taken on worst track, tap to manage",
+  "@cmdDmgBarA11y": {
+    "placeholders": {
+      "remaining": {
+        "type": "String"
+      },
+      "ko": {
+        "type": "String"
+      },
+      "taken": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdDmgLeft": "left",
+  "cmdDmgHideDealt": "Hide dealt",
+  "cmdDmgDealtTotal": "Dealt {total}",
+  "@cmdDmgDealtTotal": {
+    "placeholders": {
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdDmgDefaultCommander": "Commander",
+  "cmdDmgDefaultPartner": "Partner",
+  "cmdDmgDefaultPartnerCommander": "Partner commander",
+  "cmdDmgYouDealtTitle": "You → {name}",
+  "@cmdDmgYouDealtTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdDmgYouDealtSubtitle": "Damage you dealt",
+  "cmdDmgLethalTooltip": "Lethal commander damage!",
+  "cmdDmgIncreaseA11y": "Increase commander damage",
+  "cmdDmgDecreaseA11y": "Decrease commander damage",
+  "cmdBarCastCommander": "Cast commander",
+  "cmdBarEliminated": "Eliminated",
+  "cmdBarNoTaxYet": "No tax yet",
+  "cmdBarRemoveLastCast": "Remove last commander cast",
+  "cmdBarCommanderTax": "Commander tax",
+  "cmdBarTapToRemoveLastCast": "Tap to remove last cast",
+  "cmdBarTaxPlus": "Tax +{tax}",
+  "@cmdBarTaxPlus": {
+    "placeholders": {
+      "tax": {
+        "type": "int"
+      }
+    }
+  },
+  "counterResetConfirmTitle": "Reset to 0?",
+  "counterResetConfirmBody": "Set this counter to zero.",
+  "counterResetConfirmAction": "Reset",
+  "counterResetToZero": "Reset to 0",
+  "counterDone": "Done",
+  "firstPlayerRollTitle": "Roll for First Player",
+  "firstPlayerRollSubtitle": "Highest roll goes first. Tap the die to roll!",
+  "firstPlayerRollDieA11y": "Roll die",
+  "firstPlayerRollingA11y": "Rolling",
+  "firstPlayerRolledA11y": "Rolled {value}",
+  "@firstPlayerRolledA11y": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "firstPlayerNotRolledA11y": "Not rolled",
+  "firstPlayerYouRolled": "You rolled {value}!",
+  "@firstPlayerYouRolled": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "firstPlayerYouRolledA11y": "You rolled {value}",
+  "@firstPlayerYouRolledA11y": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "firstPlayerRolling": "Rolling…",
+  "firstPlayerTapToRoll": "Tap to roll",
+  "firstPlayerHostProgressA11y": "{rolled} of {total} players have rolled",
+  "@firstPlayerHostProgressA11y": {
+    "placeholders": {
+      "rolled": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "firstPlayerWaitingOthersA11y": "Waiting for other players to roll",
+  "firstPlayerRollToContinueA11y": "Roll die to continue",
+  "firstPlayerHostProgress": "{rolled} / {total} players have rolled",
+  "@firstPlayerHostProgress": {
+    "placeholders": {
+      "rolled": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "firstPlayerWaitingOthers": "Waiting for others to roll…",
+  "firstPlayerTapDieAbove": "Tap the die above to roll",
+  "firstPlayerYouSuffix": "{username} (you)",
+  "@firstPlayerYouSuffix": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "firstPlayerTurnOrderTitle": "Turn Order",
+  "firstPlayerTurnOrderSubtitle": "Highest roll leads — play proceeds in this order.",
+  "firstPlayerStartGame": "Start game",
+  "firstPlayerOrdinal1": "1st",
+  "firstPlayerOrdinal2": "2nd",
+  "firstPlayerOrdinal3": "3rd",
+  "firstPlayerOrdinal4": "4th",
+  "firstPlayerOrdinal5": "5th",
+  "firstPlayerOrdinal6": "6th",
+  "firstPlayerSlotA11y": "{place}, {name}, {rollDetail}",
+  "@firstPlayerSlotA11y": {
+    "placeholders": {
+      "place": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      },
+      "rollDetail": {
+        "type": "String"
+      }
+    }
+  },
+  "firstPlayerSlotYou": "{username}, you",
+  "@firstPlayerSlotYou": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "firstPlayerRollUnavailable": "roll unavailable",
+  "firstPlayerRolledDetail": "rolled {value}",
+  "@firstPlayerRolledDetail": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "firstPlayerGoesFirst": "goes first",
+  "historyTitle": "History",
+  "historySubtitle": "Life, counters, and other table actions.",
+  "historyEmptyTitle": "No actions yet",
+  "historyEmptyBody": "Life changes, counters, and other table actions will show up here as the game goes on.",
+  "historyTurn": "Turn {turn}",
+  "@historyTurn": {
+    "placeholders": {
+      "turn": {
+        "type": "String"
+      }
+    }
+  },
+  "overviewElimReasonLife": "Life loss",
+  "overviewElimReasonPoison": "Poison",
+  "overviewElimReasonCommanderDmg": "Commander dmg",
+  "overviewElimReasonConcede": "Conceded",
+  "overviewElimReasonDisconnect": "Disconnected",
+  "overviewRound": "Round {round}",
+  "@overviewRound": {
+    "placeholders": {
+      "round": {
+        "type": "int"
+      }
+    }
+  },
+  "overviewClose": "Close overview",
+  "overviewTools": "Tools",
+  "overviewHistory": "History",
+  "overviewPlayers": "Players",
+  "overviewHoldDragReorder": "Hold & drag to reorder turns",
+  "overviewDecreaseLife": "Decrease life",
+  "overviewIncreaseLife": "Increase life",
+  "overviewCommanderTaxPlus": "Commander tax plus {tax}",
+  "@overviewCommanderTaxPlus": {
+    "placeholders": {
+      "tax": {
+        "type": "int"
+      }
+    }
+  },
+  "overviewTaxPlus": "Tax +{tax}",
+  "@overviewTaxPlus": {
+    "placeholders": {
+      "tax": {
+        "type": "int"
+      }
+    }
+  },
+  "overviewMonarchA11y": "Monarch",
+  "overviewInitiativeA11y": "Initiative",
+  "overviewNowPlaying": "NOW PLAYING",
+  "overviewSendWhisper": "Send whisper",
+  "overviewAssignTeamColor": "Assign team color",
+  "overviewProposeSecretAlliance": "Propose secret alliance",
+  "overviewRevealAlliance": "Reveal alliance to table",
+  "overviewBreakAlliance": "Break secret alliance",
+  "overviewAssignTeamTitle": "Assign team",
+  "overviewTeamNone": "None",
+  "overviewTeamN": "Team {index}",
+  "@overviewTeamN": {
+    "placeholders": {
+      "index": {
+        "type": "String"
+      }
+    }
+  },
+  "dialsStripLimitSnack": "Your strip holds up to {max} counters. Remove one to add another.",
+  "@dialsStripLimitSnack": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "dialsLabelPoison": "Poison",
+  "dialsLabelEnergy": "Energy",
+  "dialsLabelExp": "Exp",
+  "dialsLabelRad": "Rad",
+  "dialsLabelBlood": "Blood",
+  "dialsLabelClue": "Clue",
+  "dialsLabelMap": "Map",
+  "dialsLabelTreasure": "Treasure",
+  "dialsLabelDevotion": "Devotion",
+  "dialsLabelCreatures": "Creatures",
+  "dialsLabelEnchant": "Enchant",
+  "dialsLabelArtifacts": "Artifacts",
+  "dialsLabelGy": "GY",
+  "dialsLabelExile": "Exile",
+  "dialsAddCounterTitle": "Add counter",
+  "dialsAddCounterBody": "Pick trackers for your strip (max {max}). Tap the X on a counter to remove it from the strip.",
+  "@dialsAddCounterBody": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "dialsSectionCommon": "Common",
+  "dialsSectionTokensZones": "Tokens & zones",
+  "dialsAllBuiltInsOnStrip": "Every built-in counter is already on your strip. Remove one to free a slot.",
+  "dialsAddCounterTooltip": "Add counter",
+  "dialsRemoveFromStrip": "Remove from strip",
+  "hubGuideTitle": "Quick tour",
+  "hubGuideSkip": "Skip",
+  "hubGuideNext": "Next",
+  "hubGuideGotIt": "Got it",
+  "hubGuideSlidePlayTitle": "Play",
+  "hubGuideSlidePlayBody": "Track life and counters here. End turn sits under the phase bar — or leave Phase tracker off in the lobby for a large End turn control.",
+  "hubGuideSlideStackTitle": "Stack & Lookup",
+  "hubGuideSlideStackBody": "Stack is for Hold Priority and resolving effects. Lookup opens Scryfall without leaving your seat — oracle text and rulings.",
+  "hubGuideSlideTableTitle": "Table overview",
+  "hubGuideSlideTableBody": "Open Table for the whole pod. Tools has dice and coin flips that everyone sees; History is in the header. End turn stays pinned; Forfeit sits below it.",
+  "hubGuideSlideCommanderTitle": "Your turn & commander",
+  "hubGuideSlideCommanderBody": "When the seat becomes yours, tap the Your turn cue to dismiss it. The heart tracks commander damage toward 21.",
+  "lifeA11yEliminatedAt": "Eliminated at {life} life",
+  "@lifeA11yEliminatedAt": {
+    "placeholders": {
+      "life": {
+        "type": "String"
+      }
+    }
+  },
+  "lifeA11yLifeTotal": "{life} life total",
+  "@lifeA11yLifeTotal": {
+    "placeholders": {
+      "life": {
+        "type": "String"
+      }
+    }
+  },
+  "lifeA11yDecrease": "Decrease life",
+  "lifeA11yIncrease": "Increase life",
+  "lifeSetTotalTitle": "Set Life Total",
+  "glanceOpenTableA11y": "Open table overview, turn order",
+  "glanceYou": "You",
+  "phasePickerTitle": "Select phase",
+  "phasePickerSubtitle": "Scroll and tap a phase, or use Set phase for the highlighted step.",
+  "phasePickerSetPhase": "Set {phase}",
+  "@phasePickerSetPhase": {
+    "placeholders": {
+      "phase": {
+        "type": "String"
+      }
+    }
+  },
+  "whisperPresetTeamUp": "Team up?",
+  "whisperPresetDontAttack": "Don't attack me",
+  "whisperPresetHaveRemoval": "I have removal",
+  "whisperPresetAllGood": "All good",
+  "whisperSentSnack": "Whisper sent to {username}",
+  "@whisperSentSnack": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "whisperSendFailed": "Could not send — wait a moment or check your connection.",
+  "whisperSheetTitle": "Whisper to {username}",
+  "@whisperSheetTitle": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "whisperSheetSubtitle": "Only they see this — it fades away. Not saved to match history.",
+  "whisperCustomLabel": "Custom message",
+  "whisperCustomHint": "Short note…",
+  "whisperSend": "Send whisper",
+  "whisperOverlayA11y": "Whisper from {username}: {text}",
+  "@whisperOverlayA11y": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      },
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "whisperOverlayHeader": "Whisper from {username}",
+  "@whisperOverlayHeader": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "politicsTapToAssignA11y": "Table politics. Tap to assign.",
+  "politicsStatusEmpty": "No monarch · No initiative · —",
+  "politicsDay": "Day",
+  "politicsNight": "Night",
+  "politicsAssignSheetTitle": "Assign table politics",
+  "politicsMonarch": "Monarch",
+  "politicsInitiative": "Initiative",
+  "politicsAssignMonarch": "Assign Monarch",
+  "politicsAssignInitiative": "Assign Initiative",
+  "politicsNone": "None",
+  "politicsDayNight": "Day/Night",
+  "tableToolsTitle": "Tools",
+  "tableToolsSubtitle": "Everyone at the table sees the result.",
+  "tableToolsD6": "d6",
+  "tableToolsD20": "d20",
+  "tableToolsCoin": "Coin",
+  "tableToolsResultHint": "Result pops up for the whole table",
+  "tableToolsRollD6": "Roll d6",
+  "tableToolsRollD20": "Roll d20",
+  "tableToolsFlipCoin": "Flip coin",
+  "tableToolHeads": "Heads",
+  "tableToolTails": "Tails",
+  "tableToolRolledHeadline": "{username} rolled a {result}",
+  "@tableToolRolledHeadline": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      },
+      "result": {
+        "type": "String"
+      }
+    }
+  },
+  "tableToolFlippedHeadline": "{username} flipped {result}",
+  "@tableToolFlippedHeadline": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      },
+      "result": {
+        "type": "String"
+      }
+    }
+  },
+  "tableToolTapToDismiss": "Tap to dismiss",
+  "tableToolDismissA11y": "{headline}. Tap to dismiss.",
+  "@tableToolDismissA11y": {
+    "placeholders": {
+      "headline": {
+        "type": "String"
+      }
+    }
+  },
+  "tableToolPlayerFallback": "Player",
+  "variantDeckSingular": "Variant deck",
+  "variantDeckPlural": "Variant decks",
+  "variantDeckA11y": "{label}, tap to view",
+  "@variantDeckA11y": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "variantDecksSheetTitle": "Variant decks",
+  "variantLoading": "Loading variant decks…",
+  "variantLoadFailed": "Could not load decks (internet required)",
+  "variantPlanechase": "Planechase",
+  "variantArchenemy": "Archenemy",
+  "variantBounty": "Bounty",
+  "variantNextCard": "Next card",
+  "commanderSelectNoCommanders": "No commanders found for \"{query}\"",
+  "@commanderSelectNoCommanders": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "commanderSelectNoCards": "No cards found for \"{query}\"",
+  "@commanderSelectNoCards": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "commanderSelectSearchFailed": "Unable to search. Check your internet connection and try again.",
+  "commanderSelectEditCommanders": "Edit commanders",
+  "commanderSelectEditCover": "Edit cover card",
+  "commanderSelectStep2Commander": "Step 2 of 2 — commander",
+  "commanderSelectStep2Cover": "Step 2 of 2 — cover card",
+  "commanderSelectPartnerTitle": "Select Partner",
+  "commanderSelectCommanderTitle": "Select Commander",
+  "commanderSelectCoverHint": "Pick any card for deck art — not your full deck list.",
+  "commanderSelectSearchPartnerHint": "Search for partner commander…",
+  "commanderSelectSearchCommanderHint": "Search for a commander…",
+  "commanderSelectSearchCardHint": "Search for a card…",
+  "commanderSelectConfirm": "Confirm",
+  "commanderSelectScryfallCommanderHelp": "Type a commander name to search the Scryfall database.",
+  "commanderSelectScryfallCardHelp": "Type a card name to search the Scryfall database.",
+  "commanderSelectLabelCommander": "Commander",
+  "commanderSelectLabelPartner": "Partner",
+  "commanderSelectOptional": "optional",
+  "deckOptionsDeleteTitle": "Delete deck?",
+  "deckOptionsDeleteBody": "Remove “{name}” from your library? Match history stays, but this deck will no longer appear in the lobby picker.",
+  "@deckOptionsDeleteBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deckOptionsDeleteConfirm": "Delete",
+  "deckOptionsStyleNotSet": "Style not set",
+  "deckOptionsEditCommanders": "Edit commanders",
+  "deckOptionsEditCover": "Edit cover card",
+  "deckOptionsNoGamesYet": "No games yet",
+  "deckOptionsWinRate": "{rate}% win rate",
+  "@deckOptionsWinRate": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
+  "deckOptionsUnpin": "Unpin from top",
+  "deckOptionsPin": "Pin to top",
+  "deckOptionsChangeFormat": "Change format",
+  "deckOptionsChangeStyle": "Change style",
+  "deckOptionsStyleRequired": "Required — not set",
+  "deckOptionsRename": "Rename",
+  "deckOptionsDuplicate": "Duplicate",
+  "deckOptionsDelete": "Delete deck",
+  "deckOptionsRenameTitle": "Rename deck",
+  "deckOptionsNameLabel": "Deck name",
+  "deckOptionsNameHint": "e.g. Raffine Tempo",
+  "newDeckChooseStyleError": "Choose a deck style to continue",
+  "newDeckTitle": "New deck",
+  "newDeckSubtitle": "Step 1 of 2 — details",
+  "newDeckIntro": "Name your deck, pick a format and playstyle. Next you’ll choose your commander or cover card.",
+  "newDeckNameLabel": "Deck name",
+  "newDeckNameHint": "e.g. Raffine Tempo",
+  "newDeckNext": "Next",
+  "formatPickerTitle": "Format",
+  "formatPickerSearchHint": "Search formats…",
+  "formatPickerFieldLabel": "Format",
+  "formatPickerMultiplayerLife": "Multiplayer · {life} starting life",
+  "@formatPickerMultiplayerLife": {
+    "placeholders": {
+      "life": {
+        "type": "String"
+      }
+    }
+  },
+  "formatPickerConstructedLife": "Constructed · {life} starting life",
+  "@formatPickerConstructedLife": {
+    "placeholders": {
+      "life": {
+        "type": "String"
+      }
+    }
+  },
+  "stylePickerTitle": "Deck style",
+  "stylePickerSearchHint": "Search styles…",
+  "stylePickerChoose": "Choose deck style",
+  "stylePickerFieldLabel": "Deck style",
+  "profileOptionsTitle": "Profile",
+  "profileOptionsEdit": "Edit profile",
+  "profileOptionsEditSubtitle": "Change your name or avatar",
+  "profileOptionsBackup": "Back up profile",
+  "profileOptionsBackupSubtitle": "Save profile, decks, games, and feedback on this phone",
+  "profilePicTitle": "Profile picture",
+  "profilePicNoCards": "No cards found for \"{query}\"",
+  "@profilePicNoCards": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "profilePicSearchFailed": "Unable to search. Check your internet connection and try again.",
+  "profilePicPhotoFailed": "Could not use that photo. Try another image.",
+  "profilePicCommander": "Commander",
+  "profilePicDefault": "Default",
+  "profilePicRemove": "Remove",
+  "profilePicUpload": "Upload photo",
+  "profilePicTake": "Take photo",
+  "profilePicOrSearch": "Or search MTG card art",
+  "profilePicSearchHint": "Search MTG cards for profile picture…",
+  "profilePicHelp": "Upload a photo, take one, or search for a card—its art becomes your profile picture.",
+  "ranksInfoTitle": "Ranks & levels",
+  "ranksInfoBody": "Level is your exact progress. Rank is the title for your current level band. Metal tiers group those ranks.",
+  "ranksInfoLevelRange": "Lv {min}–{max}",
+  "@ranksInfoLevelRange": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "statsPlayerBehaviour": "Player behaviour",
+  "statsMostPlayed": "Most played",
+  "statsNoDeckStatsYet": "No deck stats yet.",
+  "statsToughRecord": "Tough record",
+  "statsNoLossesOnDeck": "No losses on a saved deck yet.",
+  "statsPlayerStats": "Player stats",
+  "statsSingularUnit": "stat",
+  "statsPluralUnit": "stats",
+  "statsLeaningGood": "leaning good",
+  "statsLeaningSalty": "leaning salty",
+  "statsLeaningNeutral": "neutral",
+  "statsBehaviourA11y": "Behaviour spectrum, {leaning}",
+  "@statsBehaviourA11y": {
+    "placeholders": {
+      "leaning": {
+        "type": "String"
+      }
+    }
+  },
+  "statsRecord": "Record",
+  "statsWinRate": "Win rate",
+  "statsRecordFooter": "{wins}W–{losses}L  ·  {games} games",
+  "@statsRecordFooter": {
+    "placeholders": {
+      "wins": {
+        "type": "int"
+      },
+      "losses": {
+        "type": "int"
+      },
+      "games": {
+        "type": "int"
+      }
+    }
+  },
+  "statsWinStreak": "Win streak",
+  "statsWinToStartStreak": "Win to start a streak",
+  "statsPersonalBest": "Personal best",
+  "statsBestStreak": "Best: {best}",
+  "@statsBestStreak": {
+    "placeholders": {
+      "best": {
+        "type": "int"
+      }
+    }
+  },
+  "statsNoActiveStreak": "No active streak",
+  "statsCurrent": "Current",
+  "statsLevelShort": "Lv {level}",
+  "@statsLevelShort": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "statsLevelProgress": "Level progress",
+  "statsLevelProgressA11y": "Level progress. View all ranks.",
+  "statsGood": "Good",
+  "statsNeutral": "Neutral",
+  "statsSalty": "Salty",
+  "profileBackupSaveFailed": "Could not save backup.",
+  "profileUsernameLabel": "Username",
+  "profileUsernameHint": "e.g. The Archduke",
+  "profileUsernameRequired": "Enter a username",
+  "profileUsernameTooShort": "Must be at least 2 characters",
+  "profileSetupUsernameHint": "e.g. The Archduke",
+  "carouselFilterTooltip": "Filter: {label}",
+  "@carouselFilterTooltip": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "carouselRecentMatchA11y": "Recent match, {result}, {format}",
+  "@carouselRecentMatchA11y": {
+    "placeholders": {
+      "result": {
+        "type": "String"
+      },
+      "format": {
+        "type": "String"
+      }
+    }
+  },
+  "carouselCloseReturnsSummary": "Close button returns to summary",
+  "carouselShowMoreDetails": "Show more for full match details, or tap the card",
+  "decksClearSearchTooltip": "Clear",
+  "settingsDefaultFormatSheetTitle": "Default format",
+  "settingsDefaultStartingLifeSheetTitle": "Default starting life",
+  "settingsAboutVersionBeta": "Life Spark v{version} · Beta",
+  "@settingsAboutVersionBeta": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsAboutByAuthor": "by Federick Vidot",
+  "settingsAboutCardDataPoweredBy": "Card data powered by",
+  "settingsAboutScryfall": "Scryfall",
+  "settingsAboutDisclaimer": "Life Spark is unofficial Fan Content permitted under the Fan Content Policy. Not approved/endorsed by Wizards. Portions of the materials used are property of Wizards of the Coast. ©Wizards of the Coast LLC.",
+  "feedbackLike": "Like",
+  "feedbackClearLike": "Clear like",
+  "feedbackDislike": "Dislike",
+  "feedbackClearDislike": "Clear dislike",
+  "feedbackSparkOfTheGame": "Spark of the game",
+  "feedbackSparkHint": "Optional — pick one player",
+  "feedbackNoneOption": "— None —",
+  "tierBadgeLabel": "{rank} · Lv {level}",
+  "@tierBadgeLabel": {
+    "placeholders": {
+      "rank": {
+        "type": "String"
+      },
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "tierBadgeA11y": "Rank {label}. View all ranks.",
+  "@tierBadgeA11y": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "tierBronze": "Bronze",
+  "tierSilver": "Silver",
+  "tierGold": "Gold",
+  "tierPlatinum": "Platinum",
+  "tierDiamond": "Diamond",
+  "rankApprentice": "Apprentice",
+  "rankNeophyte": "Neophyte",
+  "rankAdept": "Adept",
+  "rankEvoker": "Evoker",
+  "rankThaumaturge": "Thaumaturge",
+  "rankEnchanter": "Enchanter",
+  "rankSummoner": "Summoner",
+  "rankArcanist": "Arcanist",
+  "rankMagus": "Magus",
+  "rankWarWizard": "War Wizard",
+  "rankHighMagus": "High Magus",
+  "rankSpellbinder": "Spellbinder",
+  "rankArchmage": "Archmage",
+  "rankHighArchmage": "High Archmage",
+  "rankPlanewright": "Planewright",
+  "rankGrandArchmage": "Grand Archmage",
+  "rankVoidcaller": "Voidcaller",
+  "rankArchwizard": "Archwizard",
+  "rankSpireLegend": "Spire Legend",
+  "rankAscendantArchon": "Ascendant Archon",
+  "deckTileWinRateAbbr": "WR",
+  "deckTileWinsAbbr": "W",
+  "deckTileLossesAbbr": "L",
+  "deckTileGamesAbbr": "GP",
+  "brandLifeSpark": "Life Spark",
+  "hostTogglePlanechase": "Planechase",
+  "hostToggleArchenemy": "Archenemy",
+  "hostToggleBounty": "Bounty",
+  "lookupClearTooltip": "Clear",
+  "phaseNavCurrentA11y": "Current phase, {phase}",
+  "@phaseNavCurrentA11y": {
+    "placeholders": {
+      "phase": {
+        "type": "String"
+      }
+    }
+  },
+  "cmdDmgThreatHelp": "Damage each commander has dealt you — {ko} eliminates.",
+  "@cmdDmgThreatHelp": {
+    "placeholders": {
+      "ko": {
+        "type": "int"
+      }
+    }
+  },
+  "cmdDmgEmptyPod": "Opponents will appear here when others join the pod.",
+  "statusOut": "OUT",
+  "infoBarAlly": "Ally · {name}",
+  "@infoBarAlly": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "infoBarAllySecret": "secret",
+  "gamePlayerDataUnavailable": "Player data unavailable",
+  "startupErrorTitle": "Startup Error",
+  "startupStackTrace": "Stack trace:",
+  "paletteViolet": "Violet",
+  "paletteCrimson": "Crimson",
+  "paletteSlate": "Slate",
+  "paletteForest": "Forest",
+  "paletteObsidian": "Obsidian",
+  "paletteFog": "Fog",
+  "networkCannotReachHost": "Cannot reach host: {error}",
+  "@networkCannotReachHost": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  }
+}

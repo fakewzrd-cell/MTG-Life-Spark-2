@@ -1,19 +1,22 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mgt_life_spark/l10n/app_localizations_en.dart';
 import 'package:mgt_life_spark/shared/utils/wizard_rank_titles.dart';
 
 void main() {
+  final l10n = AppLocalizationsEn();
+
   group('wizardRankTitle', () {
     test('maps level bands to titles', () {
-      expect(wizardRankTitle(1), 'Apprentice');
-      expect(wizardRankTitle(5), 'Apprentice');
-      expect(wizardRankTitle(6), 'Neophyte');
-      expect(wizardRankTitle(26), 'Enchanter');
-      expect(wizardRankTitle(100), 'Ascendant Archon');
+      expect(wizardRankTitle(l10n, 1), 'Apprentice');
+      expect(wizardRankTitle(l10n, 5), 'Apprentice');
+      expect(wizardRankTitle(l10n, 6), 'Neophyte');
+      expect(wizardRankTitle(l10n, 26), 'Enchanter');
+      expect(wizardRankTitle(l10n, 100), 'Ascendant Archon');
     });
 
     test('clamps out-of-range levels', () {
-      expect(wizardRankTitle(0), 'Apprentice');
-      expect(wizardRankTitle(101), 'Ascendant Archon');
+      expect(wizardRankTitle(l10n, 0), 'Apprentice');
+      expect(wizardRankTitle(l10n, 101), 'Ascendant Archon');
     });
   });
 
@@ -60,9 +63,11 @@ void main() {
     });
 
     test('wizardRankTitle matches band table', () {
-      for (final band in kWizardRankBands) {
-        expect(wizardRankTitle(band.minLevel), band.title);
-        expect(wizardRankTitle(band.maxLevel), band.title);
+      for (var i = 0; i < kWizardRankBands.length; i++) {
+        final band = kWizardRankBands[i];
+        expect(wizardRankTitle(l10n, band.minLevel), band.title);
+        expect(wizardRankTitle(l10n, band.maxLevel), band.title);
+        expect(wizardRankTitleForBandIndex(l10n, i), band.title);
       }
     });
   });

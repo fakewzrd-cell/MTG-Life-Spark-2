@@ -1,8 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-import '../../ui/theme/app_color_tokens.dart';
 import '../../core/models/player_slot.dart';
+import '../../l10n/app_localizations.dart';
+import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/opacity_tokens.dart';
@@ -145,6 +146,7 @@ class LobbyReadyBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     final tone = isReady ? colors.primaryAccent : colors.textSecondary;
     return Container(
       padding: EdgeInsets.symmetric(
@@ -156,7 +158,7 @@ class LobbyReadyBadge extends StatelessWidget {
         borderRadius: RadiusTokens.radiusXs,
       ),
       child: Text(
-        isReady ? 'Ready' : 'Waiting',
+        isReady ? l10n.lobbyReady : l10n.lobbyWaiting,
         style: TextStyle(
           color: tone,
           fontSize: FontTokens.sm,

@@ -15,9 +15,12 @@ import 'core/persistence/deck_repository.dart';
 import 'core/persistence/feedback_repository.dart';
 import 'core/persistence/match_repository.dart';
 import 'core/persistence/profile_repository.dart';
+import 'core/persistence/providers.dart';
 import 'core/debug/web_logo_splash.dart';
 import 'core/network/session_connection_guard.dart';
+import 'l10n/app_localizations.dart';
 import 'shared/theme/theme_provider.dart';
+import 'shared/utils/app_locale.dart';
 import 'shared/utils/app_router.dart';
 import 'shared/widgets/branded_splash.dart';
 import 'shared/utils/commander_image_resolver.dart';
@@ -134,6 +137,8 @@ class _ErrorApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
         backgroundColor: ColorTokens.backgroundPrimary,
         body: SafeArea(
@@ -143,7 +148,7 @@ class _ErrorApp extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Startup Error',
+                  AppLocalizations.of(context).startupErrorTitle,
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -160,7 +165,7 @@ class _ErrorApp extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'Stack trace:',
+                  AppLocalizations.of(context).startupStackTrace,
                   style: TextStyle(
                     color: ColorTokens.textSecondary,
                     fontSize: 12,
@@ -325,12 +330,19 @@ class MgtLifeSparkApp extends ConsumerWidget {
     final lightTheme = ref.watch(appLightThemeProvider);
     final darkTheme = ref.watch(appDarkThemeProvider);
     final themeMode = ref.watch(themeModeProvider);
+    ref.watch(settingsRevisionProvider);
+    final locale = localeFromPreference(
+      ref.watch(settingsRepositoryProvider).settings.localeCode,
+    );
 
     return MaterialApp.router(
-      title: 'Life Spark',
+      onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: themeMode,
+      locale: locale,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
       builder: (context, child) => SessionConnectionGuard(

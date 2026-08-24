@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../shared/constants/app_icons.dart';
+import '../../l10n/app_localizations.dart';
 import '../theme/app_color_tokens.dart';
 import '../tokens/font_tokens.dart';
 import '../tokens/layout_tokens.dart';
@@ -47,27 +48,27 @@ class AppBottomNavBar extends StatelessWidget {
   final ValueChanged<int> onDestinationSelected;
   final List<AppNavDestination> destinations;
 
-  static const shellDestinations = [
-    AppNavDestination(
-      icon: Icons.person_outline_rounded,
-      selectedIcon: Icons.person_rounded,
-      label: 'Profile',
-    ),
-    AppNavDestination(
-      icon: Icons.groups_outlined,
-      selectedIcon: Icons.groups_rounded,
-      label: 'Lobby',
-    ),
-    AppNavDestination(
-      iconAsset: AppIcons.playTabCards,
-      label: 'Decks',
-    ),
-    AppNavDestination(
-      icon: Icons.settings_outlined,
-      selectedIcon: Icons.settings_rounded,
-      label: 'Settings',
-    ),
-  ];
+  static List<AppNavDestination> shellDestinations(AppLocalizations l10n) => [
+        AppNavDestination(
+          icon: Icons.person_outline_rounded,
+          selectedIcon: Icons.person_rounded,
+          label: l10n.navProfile,
+        ),
+        AppNavDestination(
+          icon: Icons.groups_outlined,
+          selectedIcon: Icons.groups_rounded,
+          label: l10n.navLobby,
+        ),
+        AppNavDestination(
+          iconAsset: AppIcons.playTabCards,
+          label: l10n.navDecks,
+        ),
+        AppNavDestination(
+          icon: Icons.settings_outlined,
+          selectedIcon: Icons.settings_rounded,
+          label: l10n.navSettings,
+        ),
+      ];
 
   static const double barHeight = LayoutTokens.bottomNavHeight;
 
@@ -164,18 +165,25 @@ class _DockNavItem extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 3),
-                Text(
-                  destination.label,
-                  style: TextStyle(
-                    fontSize: FontTokens.label,
-                    fontWeight: FontWeight.lerp(
-                      FontWeight.w500,
-                      FontWeight.w700,
-                      t,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: Text(
+                    destination.label,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: FontTokens.label,
+                      fontWeight: FontWeight.lerp(
+                        FontWeight.w500,
+                        FontWeight.w700,
+                        t,
+                      ),
+                      letterSpacing: 0.15,
+                      color: fg.withValues(alpha: labelOpacity),
+                      height: 1.0,
                     ),
-                    letterSpacing: 0.15,
-                    color: fg.withValues(alpha: labelOpacity),
-                    height: 1.0,
                   ),
                 ),
               ],

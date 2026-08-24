@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/game/game_format.dart';
+import '../../l10n/app_localizations.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
@@ -21,11 +22,12 @@ Future<GameFormat?> showGameFormatPickerSheet(
   );
 }
 
-String _formatPickerSubtitle(GameFormat format) {
+String _formatPickerSubtitle(AppLocalizations l10n, GameFormat format) {
+  final life = '${format.defaultStartingLife}';
   if (format.isCommanderStyle) {
-    return 'Multiplayer · ${format.defaultStartingLife} starting life';
+    return l10n.formatPickerMultiplayerLife(life);
   }
-  return 'Constructed · ${format.defaultStartingLife} starting life';
+  return l10n.formatPickerConstructedLife(life);
 }
 
 class _GameFormatPickerSheet extends StatefulWidget {
@@ -65,14 +67,15 @@ class _GameFormatPickerSheetState extends State<_GameFormatPickerSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return DeckPickerSheetScaffold(
-      title: 'Format',
+      title: l10n.formatPickerTitle,
       searchField: TextField(
         controller: _searchCtrl,
         scrollPadding: const EdgeInsets.only(bottom: 120),
         decoration: InputDecoration(
-          hintText: 'Search formats…',
+          hintText: l10n.formatPickerSearchHint,
           prefixIcon: const Icon(Icons.search_rounded),
           hintStyle: TextStyle(color: colors.textSecondary),
         ),
@@ -88,7 +91,7 @@ class _GameFormatPickerSheetState extends State<_GameFormatPickerSheet> {
           selected: isSelected,
           onTap: () => _pick(format),
           title: format.displayName,
-          subtitle: _formatPickerSubtitle(format),
+          subtitle: _formatPickerSubtitle(l10n, format),
           subtitleMaxLines: 2,
         );
       },
@@ -190,13 +193,14 @@ class GameFormatPickerField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return InkWell(
       onTap: onPick,
       borderRadius: RadiusTokens.radiusSm,
       child: InputDecorator(
         decoration: InputDecoration(
-          labelText: 'Format',
+          labelText: l10n.formatPickerFieldLabel,
           labelStyle: TextStyle(color: colors.textSecondary),
           suffixIcon: Icon(
             Icons.unfold_more_rounded,

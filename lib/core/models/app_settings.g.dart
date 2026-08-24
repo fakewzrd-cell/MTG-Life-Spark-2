@@ -31,13 +31,14 @@ class AppSettingsAdapter extends TypeAdapter<AppSettings> {
       lifeGestureHintDismissed:
           fields[11] == null ? false : fields[11] as bool,
       hubGuideCompleted: fields[12] == null ? false : fields[12] as bool,
+      localeCode: fields[13] == null ? 'system' : fields[13] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, AppSettings obj) {
     writer
-      ..writeByte(13)
+      ..writeByte(14)
       ..writeByte(0)
       ..write(obj.hapticEnabled)
       ..writeByte(1)
@@ -63,7 +64,9 @@ class AppSettingsAdapter extends TypeAdapter<AppSettings> {
       ..writeByte(11)
       ..write(obj.lifeGestureHintDismissed)
       ..writeByte(12)
-      ..write(obj.hubGuideCompleted);
+      ..write(obj.hubGuideCompleted)
+      ..writeByte(13)
+      ..write(obj.localeCode);
   }
 
   @override

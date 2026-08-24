@@ -201,6 +201,7 @@ Map<String, dynamic> settingsToJson(AppSettings s) => {
       'colorSchemeId': s.colorSchemeId,
       'lifeGestureHintDismissed': s.lifeGestureHintDismissed,
       'hubGuideCompleted': s.hubGuideCompleted,
+      'localeCode': s.localeCode,
     };
 
 AppSettings settingsFromJson(Map<String, dynamic> json) => AppSettings(
@@ -218,6 +219,7 @@ AppSettings settingsFromJson(Map<String, dynamic> json) => AppSettings(
       lifeGestureHintDismissed:
           json['lifeGestureHintDismissed'] as bool? ?? false,
       hubGuideCompleted: json['hubGuideCompleted'] as bool? ?? false,
+      localeCode: (json['localeCode'] as String?) ?? 'system',
     );
 
 Map<String, dynamic> deckToJson(PlayerDeck d) => {

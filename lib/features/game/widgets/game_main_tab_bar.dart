@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/constants/app_icons.dart';
 import '../../../shared/utils/game_haptics.dart';
 import '../../../ui/tokens/layout_tokens.dart';
@@ -27,18 +28,26 @@ class GameMainTabBarStrip extends StatelessWidget {
   final ValueChanged<int> onSelected;
   final Color? accentColor;
 
-  static const _segments = <_GameMainTabSpec>[
-    _GameMainTabSpec(index: 0, label: 'Play', iconAsset: kGamePlayTabIconAsset),
-    _GameMainTabSpec(index: 1, label: 'Stack', icon: Icons.layers_rounded),
-  ];
-
   static const double iconSize = 22;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final dividerColor = colors.textSecondary.withValues(alpha: 0.12);
     final resolvedAccent = accentColor ?? colors.primaryAccent;
+    final segments = <_GameMainTabSpec>[
+      _GameMainTabSpec(
+        index: 0,
+        label: l10n.gameTabPlay,
+        iconAsset: kGamePlayTabIconAsset,
+      ),
+      _GameMainTabSpec(
+        index: 1,
+        label: l10n.gameTabStack,
+        icon: Icons.layers_rounded,
+      ),
+    ];
 
     Widget tab(_GameMainTabSpec segment) => Expanded(
           child: _GameMainTab(
@@ -63,9 +72,9 @@ class GameMainTabBarStrip extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          tab(_segments[0]), // Play
+          tab(segments[0]), // Play
           divider(),
-          tab(_segments[1]), // Stack
+          tab(segments[1]), // Stack
           divider(),
           const Expanded(child: _CardLookupTabAction()),
         ],
@@ -81,11 +90,12 @@ class _CardLookupTabAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final fg = colors.textSecondary.withValues(alpha: OpacityTokens.mutedTextMin);
 
     return Semantics(
       button: true,
-      label: 'Look up card rules',
+      label: l10n.gameTabLookupSemantics,
       child: Material(
         color: Colors.transparent,
         child: InkWell(

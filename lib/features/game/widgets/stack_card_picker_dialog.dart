@@ -1,19 +1,18 @@
-import '../../../ui/tokens/opacity_tokens.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-
-import '../../../ui/theme/app_color_tokens.dart';
-
-import '../../../core/debug/app_log.dart';
-import '../../../ui/tokens/font_tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/debug/app_log.dart';
 import '../../../core/game/scryfall_service.dart';
-import 'game_colors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/mana/mana_symbol_assets.dart';
+import '../../../ui/theme/app_color_tokens.dart';
+import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
+import '../../../ui/tokens/opacity_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
+import 'game_colors.dart';
 import 'game_modal_chrome.dart';
 
 /// Pick a card from Scryfall so the stack entry stores the official name and rules.
@@ -79,6 +78,7 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
   }
 
   Future<void> _search(String query) async {
+    final l10n = AppLocalizations.of(context);
     if (query.trim().isEmpty) {
       setState(() {
         _results = [];
@@ -101,7 +101,7 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
         _results = results.take(20).toList();
         _loading = false;
         if (results.isEmpty) {
-          _error = 'No cards found. Try a different spelling.';
+          _error = l10n.stackPickerNoCards;
         }
       });
     } catch (e, st) {
@@ -110,7 +110,7 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
       setState(() {
         _results = [];
         _loading = false;
-        _error = 'Could not reach Scryfall. Check your internet connection.';
+        _error = l10n.stackPickerNetworkError;
       });
     }
   }
@@ -123,6 +123,7 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
   }
 
   Future<void> _confirm() async {
+    final l10n = AppLocalizations.of(context);
     final service = ref.read(scryfallServiceProvider);
     ScryfallCard? card = _selected;
 
@@ -136,8 +137,7 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
       setState(() => _confirming = false);
       if (card == null) {
         setState(() {
-          _error =
-              'Pick a card from the list, or type a name Scryfall recognizes.';
+          _error = l10n.stackPickerNeedSelection;
         });
         return;
       }
@@ -152,6 +152,7 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final colors = context.gameColors;
     final canAdd = !_confirming &&
         (_selected != null || _searchController.text.trim().isNotEmpty);
@@ -173,7 +174,7 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Search Scryfall so we store the correct card name and rules text.',
+              l10n.stackPickerIntro,
               style: GameModalChrome.dialogBodyStyle(context),
             ),
             SizedBox(height: LayoutTokens.gr2),
@@ -181,12 +182,12 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
               controller: _searchController,
               autofocus: true,
               decoration: InputDecoration(
-                labelText: 'Card name',
-                hintText: 'e.g. Lightning Bolt',
+                labelText: l10n.stackPickerCardNameLabel,
+                hintText: l10n.stackPickerCardNameHint,
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Icons.clear),
-                        tooltip: 'Clear search',
+                        tooltip: l10n.stackPickerClearSearch,
                         onPressed: () {
                           _searchController.clear();
                           setState(() {
@@ -228,7 +229,7 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
                     color: colors.textPrimary,
                   ),
                 )
-              : Text('Add'),
+              : Text(l10n.stackPickerAdd),
         ),
       ],
     );
@@ -256,6 +257,7 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
   }
 
   Widget _buildResults() {
+    final l10n = AppLocalizations.of(context);
     final colors = AppColorTokens.of(context);
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
@@ -263,7 +265,7 @@ class _StackCardPickerDialogState extends ConsumerState<_StackCardPickerDialog> 
     if (_results.isEmpty) {
       return Center(
         child: Text(
-          'Type to search cards',
+          l10n.stackPickerTypeToSearch,
           style: TextStyle(
             color: colors.textSecondary.withValues(alpha: OpacityTokens.strong),
             fontSize: FontTokens.hudSm,

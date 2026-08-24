@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../core/game/gameplay_dial_ids.dart';
 import '../../../core/game/player_game_state.dart';
+import '../../../l10n/app_localizations.dart';
 import 'game_colors.dart';
 import '../../../ui/theme/app_color_tokens.dart';
 import 'game_modal_chrome.dart';
@@ -177,36 +178,40 @@ class GameplayDialsStripWidget extends StatelessWidget {
   PlayerGameState get player => getPlayer();
 
   static void _showStripLimitSnack(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     showUiSnackBar(
       context,
-      'Your strip holds up to ${GameplayDialIds.maxStripDials} counters. '
-      'Remove one to add another.',
+      l10n.dialsStripLimitSnack(GameplayDialIds.maxStripDials),
     );
   }
 
-  static String _labelFor(PlayerGameState p, String field) {
+  static String _labelFor(
+    AppLocalizations l10n,
+    PlayerGameState p,
+    String field,
+  ) {
     switch (field) {
       case 'poison':
-        return 'Poison';
+        return l10n.dialsLabelPoison;
       case 'energy':
-        return 'Energy';
+        return l10n.dialsLabelEnergy;
       case 'experience':
-        return 'Exp';
+        return l10n.dialsLabelExp;
       case 'rad':
-        return 'Rad';
+        return l10n.dialsLabelRad;
       default:
         return p.customDialLabels[field] ??
             switch (field) {
-              GameplayDialIds.blood => 'Blood',
-              GameplayDialIds.clue => 'Clue',
-              GameplayDialIds.map => 'Map',
-              GameplayDialIds.treasure => 'Treasure',
-              GameplayDialIds.devotion => 'Devotion',
-              GameplayDialIds.creatures => 'Creatures',
-              GameplayDialIds.enchantments => 'Enchant',
-              GameplayDialIds.artifacts => 'Artifacts',
-              GameplayDialIds.graveyardCreatures => 'GY',
-              GameplayDialIds.exile => 'Exile',
+              GameplayDialIds.blood => l10n.dialsLabelBlood,
+              GameplayDialIds.clue => l10n.dialsLabelClue,
+              GameplayDialIds.map => l10n.dialsLabelMap,
+              GameplayDialIds.treasure => l10n.dialsLabelTreasure,
+              GameplayDialIds.devotion => l10n.dialsLabelDevotion,
+              GameplayDialIds.creatures => l10n.dialsLabelCreatures,
+              GameplayDialIds.enchantments => l10n.dialsLabelEnchant,
+              GameplayDialIds.artifacts => l10n.dialsLabelArtifacts,
+              GameplayDialIds.graveyardCreatures => l10n.dialsLabelGy,
+              GameplayDialIds.exile => l10n.dialsLabelExile,
               _ => field,
             };
     }
@@ -374,6 +379,8 @@ class GameplayDialsStripWidget extends StatelessWidget {
                   Builder(
                     builder: (context) {
                       final field = fields[i];
+                      final l10n = AppLocalizations.of(context);
+                      final label = _labelFor(l10n, livePlayer, field);
                       return SizedBox(
                         width: pillW,
                         height: metrics.tileStackHeight,
@@ -390,7 +397,7 @@ class GameplayDialsStripWidget extends StatelessWidget {
                                 width: pillW,
                                 isEliminated: isEliminated,
                                 tooltip:
-                                    '${_labelFor(livePlayer, field)} — tap to adjust, X to remove',
+                                    '$label — tap to adjust, X to remove',
                                 headerLeading: _leadingGlyph(
                                   field,
                                   metrics.leadingSize,
@@ -402,7 +409,7 @@ class GameplayDialsStripWidget extends StatelessWidget {
                                         : () => _showAdjust(
                                           context,
                                           field,
-                                          '${_labelFor(livePlayer, field)} counters',
+                                          '$label counters',
                                           _valueOf(livePlayer, field),
                                         ),
                                 onHeaderLongPress:
@@ -589,7 +596,11 @@ class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
               ),
             ),
             title: Text(
-              GameplayDialsStripWidget._labelFor(widget.player, id),
+              GameplayDialsStripWidget._labelFor(
+                AppLocalizations.of(context),
+                widget.player,
+                id,
+              ),
               style: TextStyle(
                 color: colors.textPrimary,
                 fontWeight: FontWeight.w600,
@@ -605,6 +616,7 @@ class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final bottomPad = MediaQuery.paddingOf(context).bottom;
     final addableBuiltIn =
         [
@@ -641,15 +653,14 @@ class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
               LayoutTokens.gr1,
             ),
             child: Text(
-              'Add counter',
+              l10n.dialsAddCounterTitle,
               style: GameModalChrome.sheetTitleStyle(context),
             ),
           ),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr3),
             child: Text(
-              'Pick trackers for your strip (max ${GameplayDialIds.maxStripDials}). '
-              'Tap the X on a counter to remove it from the strip.',
+              l10n.dialsAddCounterBody(GameplayDialIds.maxStripDials),
               style: TextStyle(
                 fontSize: FontTokens.hudSm,
                 height: 1.35,
@@ -676,18 +687,17 @@ class _AddCounterChooserSheetState extends State<_AddCounterChooserSheet> {
                       bottom: bottomPad + LayoutTokens.gr2 + fadePad,
                     ),
                     children: [
-                      _section(colors, 'Common', widget.coreOrdered),
+                      _section(colors, l10n.dialsSectionCommon, widget.coreOrdered),
                       _section(
                         colors,
-                        'Tokens & zones',
+                        l10n.dialsSectionTokensZones,
                         [...GameplayDialIds.presets],
                       ),
                       if (addableBuiltIn == 0)
                         Padding(
                           padding: EdgeInsets.all(LayoutTokens.gr3),
                           child: Text(
-                            'Every built-in counter is already on your strip. '
-                            'Remove one to free a slot.',
+                            l10n.dialsAllBuiltInsOnStrip,
                             style: TextStyle(
                               fontSize: 12,
                               color: colors.textSecondary.withValues(
@@ -770,8 +780,9 @@ class _AddCounterPillTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     return Tooltip(
-      message: 'Add counter',
+      message: l10n.dialsAddCounterTooltip,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -805,11 +816,12 @@ class _DialStripRemoveButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     return Semantics(
       button: true,
-      label: 'Remove from strip',
+      label: l10n.dialsRemoveFromStrip,
       child: Tooltip(
-        message: 'Remove from strip',
+        message: l10n.dialsRemoveFromStrip,
         child: SizedBox(
           width: LayoutTokens.minTapTarget,
           height: LayoutTokens.minTapTarget,

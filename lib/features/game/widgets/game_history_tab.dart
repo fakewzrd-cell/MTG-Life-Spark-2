@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/game/game_log_entry.dart';
 import '../../../core/game/game_providers.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
@@ -29,13 +30,14 @@ Future<void> showGameHistorySheet(BuildContext context) {
               final localId = ref.watch(
                 gameProvider.select((g) => g.localPlayerId),
               );
+              final l10n = AppLocalizations.of(context);
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const GameSheetHeader(
-                    title: 'History',
-                    subtitle: 'Life, counters, and other table actions.',
+                  GameSheetHeader(
+                    title: l10n.historyTitle,
+                    subtitle: l10n.historySubtitle,
                   ),
                   SizedBox(height: LayoutTokens.gr2),
                   LimitedBox(
@@ -69,6 +71,7 @@ class GameHistoryList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     if (entries.isEmpty) {
       return Padding(
         padding: EdgeInsets.symmetric(vertical: LayoutTokens.gr4),
@@ -82,7 +85,7 @@ class GameHistoryList extends StatelessWidget {
             ),
             SizedBox(height: LayoutTokens.gr2),
             Text(
-              'No actions yet',
+              l10n.historyEmptyTitle,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.textPrimary,
@@ -92,8 +95,7 @@ class GameHistoryList extends StatelessWidget {
             ),
             SizedBox(height: LayoutTokens.gr1),
             Text(
-              'Life changes, counters, and other table actions '
-              'will show up here as the game goes on.',
+              l10n.historyEmptyBody,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: colors.textSecondary
@@ -126,7 +128,7 @@ class GameHistoryList extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Turn $turn',
+                l10n.historyTurn('$turn'),
                 style: TextStyle(
                   color: colors.primaryAccent,
                   fontWeight: FontWeight.w800,

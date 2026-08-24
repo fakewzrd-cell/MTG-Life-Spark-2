@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../ui/components/ui_app_bar.dart';
 import '../../ui/components/ui_button.dart';
 import '../../ui/components/ui_snack_bar.dart';
@@ -29,13 +30,13 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   }
 
   Future<void> _copyFeedbackFallback(String msg) async {
-    final text =
-        'To: $_kFeedbackEmail\nSubject: Life Spark Feedback\n\n$msg';
+    final l10n = AppLocalizations.of(context);
+    final text = l10n.feedbackClipboardFallback(_kFeedbackEmail, msg);
     await Clipboard.setData(ClipboardData(text: text));
     if (!mounted) return;
     showUiSnackBar(
       context,
-      'No mail app — message copied. Paste into an email to $_kFeedbackEmail',
+      l10n.feedbackNoMailAppCopied(_kFeedbackEmail),
     );
   }
 
@@ -43,9 +44,10 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     final msg = _messageController.text.trim();
     if (msg.isEmpty) return;
 
+    final l10n = AppLocalizations.of(context);
     setState(() => _sending = true);
 
-    final subject = Uri.encodeComponent('Life Spark Feedback');
+    final subject = Uri.encodeComponent(l10n.feedbackMailSubject);
     final body = Uri.encodeComponent(msg);
     final uri = Uri.parse(
       'mailto:$_kFeedbackEmail?subject=$subject&body=$body',
@@ -56,7 +58,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
         final launched = await launchUrl(uri);
         if (!mounted) return;
         if (launched) {
-          showUiSnackBar(context, 'Opening your mail app…');
+          showUiSnackBar(context, l10n.feedbackOpeningMail);
         } else {
           await _copyFeedbackFallback(msg);
         }
@@ -82,8 +84,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: const UiAppBar(title: 'Feedback'),
+      appBar: UiAppBar(title: l10n.feedbackTitle),
       backgroundColor: colors.backgroundPrimary,
       body: ListView(
         padding: LayoutTokens.shellListPadding(context, top: LayoutTokens.gr4),
@@ -91,7 +94,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           const Center(child: Text('🛡️', style: TextStyle(fontSize: 48))),
           SizedBox(height: LayoutTokens.gr4),
           Text(
-            'Help us improve',
+            l10n.feedbackHeadline,
             style: Theme.of(context).textTheme.headlineLarge?.copyWith(
               fontSize: MediaQuery.sizeOf(context).width < 360 ? 22 : 26,
               fontWeight: FontWeight.w800,
@@ -100,21 +103,21 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           ),
           SizedBox(height: LayoutTokens.gr1),
           Text(
-            'Found a bug? Have a feature idea? We read every message.',
+            l10n.feedbackBody,
             style: Theme.of(context).textTheme.bodyMedium,
             textAlign: TextAlign.center,
           ),
           SizedBox(height: LayoutTokens.gr5),
           UiTextField(
             controller: _messageController,
-            labelText: 'Your message',
-            hintText: 'Tell us what you think...',
+            labelText: l10n.feedbackMessageLabel,
+            hintText: l10n.feedbackMessageHint,
             maxLines: 6,
             maxLength: 500,
           ),
           SizedBox(height: LayoutTokens.gr4),
           UiButton(
-            label: 'Send Feedback',
+            label: l10n.feedbackSend,
             icon: _sending ? null : Icon(Icons.send_outlined, size: 20),
             loading: _sending,
             onPressed: _sendFeedback,
@@ -126,7 +129,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr2),
                 child: Text(
-                  'or',
+                  l10n.feedbackOrDivider,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ),
@@ -135,7 +138,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           ),
           SizedBox(height: LayoutTokens.gr4),
           UiButton(
-            label: 'Rate on Play Store',
+            label: l10n.feedbackRatePlayStore,
             variant: UiButtonVariant.secondary,
             icon: Icon(Icons.star_outline, size: 20),
             onPressed: _openPlayStore,

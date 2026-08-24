@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../ui/tokens/color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
@@ -45,9 +46,10 @@ class TierBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     // Color always follows [level] so a stale [tier] string cannot desync chrome.
     final color = wizardTierColorForLevel(level);
-    final label = '${wizardRankTitle(level)} · Lv $level';
+    final label = l10n.tierBadgeLabel(wizardRankTitle(l10n, level), level);
     final child = Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -87,7 +89,7 @@ class TierBadge extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: 'Rank $label. View all ranks.',
+      label: l10n.tierBadgeA11y(label),
       child: Material(
         color: Colors.transparent,
         child: InkWell(

@@ -11,6 +11,7 @@ import 'package:mgt_life_spark/shared/theme/app_theme.dart';
 import 'package:mgt_life_spark/ui/theme/app_color_tokens.dart';
 
 import 'support/test_deck_repository.dart';
+import 'support/test_l10n.dart';
 import 'support/test_settings_repository.dart';
 
 PlayerDeck _testDeck({String name = 'Test Deck'}) => PlayerDeck(
@@ -30,6 +31,9 @@ void main() {
         ],
         child: MaterialApp(
           theme: AppTheme.dark(),
+          localizationsDelegates: testLocalizationDelegates,
+          supportedLocales: testSupportedLocales,
+          locale: const Locale('en'),
           home: const DecksManageScreen(),
         ),
       ),
@@ -49,6 +53,9 @@ void main() {
         ],
         child: MaterialApp(
           theme: AppTheme.dark(),
+          localizationsDelegates: testLocalizationDelegates,
+          supportedLocales: testSupportedLocales,
+          locale: const Locale('en'),
           home: Builder(
             builder: (context) => Scaffold(
               body: Center(
@@ -84,6 +91,9 @@ void main() {
         ],
         child: MaterialApp(
           theme: AppTheme.dark(),
+          localizationsDelegates: testLocalizationDelegates,
+          supportedLocales: testSupportedLocales,
+          locale: const Locale('en'),
           home: const SettingsScreen(),
         ),
       ),
@@ -112,6 +122,9 @@ void main() {
         ],
         child: MaterialApp(
           theme: AppTheme.dark(),
+          localizationsDelegates: testLocalizationDelegates,
+          supportedLocales: testSupportedLocales,
+          locale: const Locale('en'),
           home: const SettingsScreen(),
         ),
       ),
@@ -120,5 +133,11 @@ void main() {
 
     expect(find.text('Default Format'), findsOneWidget);
     expect(find.text('Keep display awake'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Language'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Language'), findsOneWidget);
   });
 }

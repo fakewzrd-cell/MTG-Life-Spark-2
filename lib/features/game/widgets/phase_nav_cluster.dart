@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/game/game_phase.dart';
 import '../../../core/game/game_state.dart';
+import '../../../l10n/app_localizations.dart';
 import 'game_colors.dart';
 import '../../../shared/utils/game_haptics.dart';
 import '../../../ui/tokens/font_tokens.dart';
@@ -84,6 +85,7 @@ class PhaseNavClusterStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final dividerColor = colors.textSecondary.withValues(alpha: 0.14);
 
     return SizedBox(
@@ -103,7 +105,7 @@ class PhaseNavClusterStrip extends StatelessWidget {
             SizedBox(
               width: _sideMinWidth,
               child: _PhaseNavSideButton(
-                label: 'Back',
+                label: l10n.gamePhaseBack,
                 icon: Icons.chevron_left_rounded,
                 iconFirst: true,
                 enabled: !game.timeoutActive,
@@ -116,7 +118,7 @@ class PhaseNavClusterStrip extends StatelessWidget {
             SizedBox(
               width: _sideMinWidth,
               child: _PhaseNavSideButton(
-                label: 'Next',
+                label: l10n.gamePhaseNext,
                 icon: Icons.chevron_right_rounded,
                 iconFirst: false,
                 enabled: !game.timeoutActive,
@@ -156,6 +158,7 @@ class _PhaseNavEndTurnButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final bg = enabled
         ? accentColor
         : colors.backgroundSecondary.withValues(alpha: 0.35);
@@ -166,7 +169,7 @@ class _PhaseNavEndTurnButton extends StatelessWidget {
     return Semantics(
       button: true,
       enabled: enabled,
-      label: 'End turn',
+      label: l10n.gameEndTurn,
       child: Material(
         color: bg,
         child: InkWell(
@@ -178,7 +181,7 @@ class _PhaseNavEndTurnButton extends StatelessWidget {
               : null,
           child: Center(
             child: Text(
-              'End turn',
+              l10n.gameEndTurn,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
@@ -279,6 +282,7 @@ class _PhaseNavCenter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final phaseColor =
         game.isLocalPlayersTurn ? accentColor : colors.textSecondary;
 
@@ -322,7 +326,7 @@ class _PhaseNavCenter extends StatelessWidget {
     if (!_canPick) {
       return Semantics(
         header: true,
-        label: 'Current phase, ${game.currentPhase.displayName}',
+        label: l10n.phaseNavCurrentA11y(game.currentPhase.displayName),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: LayoutTokens.gr1),
           child: LayoutBuilder(
@@ -336,7 +340,7 @@ class _PhaseNavCenter extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: 'Choose phase, ${game.currentPhase.displayName}',
+      label: '${l10n.gameChoosePhase}, ${game.currentPhase.displayName}',
       child: Material(
         color: colors.backgroundPrimary.withValues(alpha: 0.08),
         child: InkWell(
@@ -354,7 +358,7 @@ class _PhaseNavCenter extends StatelessWidget {
             child: LayoutBuilder(
               builder: (context, constraints) => Center(
                 child: Tooltip(
-                  message: 'Choose phase',
+                  message: l10n.gameChoosePhase,
                   child: buildLabel(constraints),
                 ),
               ),

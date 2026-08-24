@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../shared/utils/app_router.dart';
 import '../../ui/components/ui_app_bar.dart';
 import '../../ui/theme/app_color_tokens.dart';
@@ -16,9 +17,10 @@ class GameLobbyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: colors.backgroundPrimary,
-      appBar: const UiAppBar(title: 'Lobby'),
+      appBar: UiAppBar(title: l10n.lobbyTitle),
       body: SafeArea(
         top: false,
         bottom: false,
@@ -34,8 +36,8 @@ class GameLobbyScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: _BigActionButton(
-                  label: 'Host Game',
-                  subtitle: 'Create a session — others join you',
+                  label: l10n.lobbyHostGame,
+                  subtitle: l10n.lobbyHostGameSubtitle,
                   icon: Icons.groups_rounded,
                   onTap: () => context.push(AppRoutes.lobbyHost),
                 ),
@@ -43,8 +45,8 @@ class GameLobbyScreen extends StatelessWidget {
               SizedBox(height: LayoutTokens.shellSectionGap),
               Expanded(
                 child: _BigActionButton(
-                  label: 'Join Game',
-                  subtitle: 'Scan for a nearby host',
+                  label: l10n.lobbyJoinGame,
+                  subtitle: l10n.lobbyJoinGameSubtitle,
                   icon: Icons.qr_code_scanner_rounded,
                   mirrored: true,
                   onTap: () => context.push(AppRoutes.lobbyJoin),

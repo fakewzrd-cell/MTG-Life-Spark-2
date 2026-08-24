@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../../ui/tokens/font_tokens.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'game_colors.dart';
-import '../../../ui/tokens/layout_tokens.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../ui/components/ui_snack_bar.dart';
+import '../../../ui/tokens/font_tokens.dart';
+import '../../../ui/tokens/layout_tokens.dart';
+import 'game_colors.dart';
 import 'game_modal_chrome.dart';
 
 const _kStackArticleUrl =
@@ -24,35 +25,24 @@ class StackHelpSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final colors = context.gameColors;
     return GameSheetBody(
       scrollable: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const GameSheetHeader(title: 'How the stack works'),
+          GameSheetHeader(title: l10n.stackHelpTitle),
           SizedBox(height: LayoutTokens.gr3),
-          const _Bullet(
-            'When someone casts a spell or uses an ability, it goes on the **stack** — a waiting line before it happens.',
-          ),
-          const _Bullet(
-            'The **last thing added resolves first** (like a stack of plates). That is why the top entry says **Resolves next**.',
-          ),
-          const _Bullet(
-            'When you add a spell, **search Scryfall** and pick the card from the list so we store the correct name and rules text.',
-          ),
-          const _Bullet(
-            'To answer something, tap **Respond** or use **In response to…** — your spell goes on top and resolves before the one under it.',
-          ),
-          const _Bullet(
-            'When an effect finishes, tap **Resolve** — the card stays on the stack and turns green. To answer it, tap **Respond**. If a counterspell worked, **Mark countered** (use the Countered filter to view). If a spell lost its target, tap **Fizzle** — it stays greyed; tap **Fizzled** again to undo.',
-          ),
-          const _Bullet(
-            'At the table you still say “pass” out loud for priority; this screen helps everyone remember **what** is waiting and **in what order**.',
-          ),
+          _Bullet(l10n.stackHelpBullet1),
+          _Bullet(l10n.stackHelpBullet2),
+          _Bullet(l10n.stackHelpBullet3),
+          _Bullet(l10n.stackHelpBullet4),
+          _Bullet(l10n.stackHelpBullet5),
+          _Bullet(l10n.stackHelpBullet6),
           SizedBox(height: LayoutTokens.gr3),
           Text(
-            'Example: You cast a pump spell on your creature. Your opponent casts Lightning Bolt in response. Bolt resolves first, then your pump spell (if its target is still legal).',
+            l10n.stackHelpExample,
             style: TextStyle(
               fontSize: FontTokens.hudSm,
               color: colors.textSecondary.withValues(alpha: 0.95),
@@ -63,7 +53,7 @@ class StackHelpSheet extends StatelessWidget {
           FilledButton.icon(
             onPressed: () => _openArticle(context),
             icon: Icon(Icons.open_in_new_rounded, size: 18),
-            label: Text('Read more on Magic.com'),
+            label: Text(l10n.stackHelpReadMore),
           ),
         ],
       ),
@@ -74,7 +64,11 @@ class StackHelpSheet extends StatelessWidget {
     final uri = Uri.parse(_kStackArticleUrl);
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (context.mounted) {
-        showUiSnackBar(context, 'Could not open link', isError: true);
+        showUiSnackBar(
+          context,
+          AppLocalizations.of(context).stackHelpCouldNotOpenLink,
+          isError: true,
+        );
       }
     }
   }
@@ -103,7 +97,7 @@ class _Bullet extends StatelessWidget {
           ),
           Expanded(
             child: Text(
-              text.replaceAll('**', ''),
+              text,
               style: TextStyle(
                 fontSize: FontTokens.hudSm,
                 color: colors.textPrimary.withValues(alpha: 0.92),

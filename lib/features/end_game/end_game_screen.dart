@@ -16,6 +16,7 @@ import '../../shared/widgets/game_icon.dart';
 import '../../core/persistence/providers.dart';
 import '../../core/debug/app_log.dart';
 import '../../core/models/game_feedback.dart';
+import '../../l10n/app_localizations.dart';
 import '../../shared/utils/app_router.dart';
 import '../../shared/utils/wizard_rank_titles.dart';
 import '../../shared/widgets/block_system_app_exit.dart';
@@ -133,6 +134,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     final game = ref.watch(gameProvider);
     final winner = game.winnerPlayerId != null
         ? game.playerById(game.winnerPlayerId!)
@@ -151,7 +153,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
                     CircularProgressIndicator(color: colors.primaryAccent),
                     SizedBox(height: LayoutTokens.gr3),
                     Text(
-                      'Saving match results…',
+                      l10n.endGameSavingResults,
                       style: TextStyle(color: colors.textSecondary),
                     ),
                   ],
@@ -167,7 +169,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
                           Icon(Icons.error_outline, color: colors.primaryAccent, size: 48),
                           SizedBox(height: LayoutTokens.gr3),
                           Text(
-                            'Could not save match results.',
+                            l10n.endGameSaveFailedTitle,
                             textAlign: TextAlign.center,
                             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               color: colors.textPrimary,
@@ -176,18 +178,18 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
                           ),
                           SizedBox(height: LayoutTokens.gr2),
                           Text(
-                            'Your stats may not have updated. Try again.',
+                            l10n.endGameSaveFailedBody,
                             textAlign: TextAlign.center,
                             style: TextStyle(color: colors.textSecondary),
                           ),
                           SizedBox(height: LayoutTokens.gr4),
                           UiButton(
-                            label: 'Retry',
+                            label: l10n.endGameRetry,
                             onPressed: _saveMatch,
                           ),
                           SizedBox(height: LayoutTokens.gr2),
                           UiButton(
-                            label: 'Continue without saving',
+                            label: l10n.endGameContinueWithoutSaving,
                             variant: UiButtonVariant.secondary,
                             onPressed: () => _leaveToHome(context),
                           ),
@@ -204,7 +206,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
                     _WinnerBanner(
                       winner: winner,
                       isLocalWinner: isWinner,
-                      noWinnerHeadline: _noWinnerHeadline(game),
+                      noWinnerHeadline: _noWinnerHeadline(game, l10n),
                     ),
 
                     SizedBox(height: LayoutTokens.gr4),
@@ -231,7 +233,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Final Standings',
+                            l10n.endGameFinalStandings,
                             style: TypographyTokens.sectionTitle(
                               colors.textSecondary,
                             ).copyWith(
@@ -334,14 +336,14 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
   }
 }
 
-String _noWinnerHeadline(GameState game) {
-  if (game.winnerPlayerId != null) return 'Game Over — No Winner';
+String _noWinnerHeadline(GameState game, AppLocalizations l10n) {
+  if (game.winnerPlayerId != null) return l10n.endGameOverNoWinner;
   final local = game.localPlayer;
   if (game.players.length == 1 &&
       local?.eliminationReason == 'concede') {
-    return 'Practice ended';
+    return l10n.endGamePracticeEnded;
   }
-  return 'Game Over — No Winner';
+  return l10n.endGameOverNoWinner;
 }
 
 // ── Winner Banner ────────────────────────────────────────────────────────────
@@ -360,6 +362,7 @@ class _WinnerBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     if (winner == null) {
       return Padding(
         padding: EdgeInsets.all(LayoutTokens.shellPageInset),
@@ -380,7 +383,7 @@ class _WinnerBanner extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            isLocalWinner ? 'You Win!' : 'Winner',
+            isLocalWinner ? l10n.endGameYouWin : l10n.endGameWinner,
             style: TypographyTokens.headline(context).copyWith(
               color: colors.emphasis,
             ),
@@ -463,6 +466,9 @@ class _LevelUpCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
+    final oldRank = wizardRankTitle(l10n, result.oldLevel);
+    final newRank = wizardRankTitle(l10n, result.newLevel);
     return Container(
       margin: EdgeInsets.fromLTRB(
         LayoutTokens.shellPageInset,
@@ -495,7 +501,7 @@ class _LevelUpCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'RANK UP!',
+                l10n.endGameRankUp,
                 style: TextStyle(
                   color: colors.emphasis,
                   fontSize: FontTokens.bodyLg,
@@ -504,16 +510,15 @@ class _LevelUpCard extends StatelessWidget {
                 ),
               ),
               Text(
-                'Rank ${result.oldLevel} → ${result.newLevel}',
+                l10n.endGameRankTransition(result.oldLevel, result.newLevel),
                 style: TextStyle(
                   color: colors.textPrimary,
                   fontSize: FontTokens.sm,
                 ),
               ),
-              if (wizardRankTitle(result.oldLevel) !=
-                  wizardRankTitle(result.newLevel))
+              if (oldRank != newRank)
                 Text(
-                  '${wizardRankTitle(result.oldLevel)} → ${wizardRankTitle(result.newLevel)}',
+                  '$oldRank → $newRank',
                   style: TextStyle(
                     color: colors.textSecondary,
                     fontSize: FontTokens.sm,
@@ -538,6 +543,7 @@ class _XpCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     return Container(
       margin: EdgeInsets.fromLTRB(
         LayoutTokens.shellPageInset,
@@ -558,7 +564,7 @@ class _XpCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '+${result.xpGained} XP',
+                l10n.endGameXpGained(result.xpGained),
                 style: TextStyle(
                   color: colors.emphasis,
                   fontSize: FontTokens.bodyLg,
@@ -566,7 +572,9 @@ class _XpCard extends StatelessWidget {
                 ),
               ),
               Text(
-                isWinner ? 'Win bonus included' : 'Participation XP',
+                isWinner
+                    ? l10n.endGameWinBonusIncluded
+                    : l10n.endGameParticipationXp,
                 style: TextStyle(
                     color: colors.textSecondary, fontSize: FontTokens.hudXs),
               ),
@@ -577,7 +585,7 @@ class _XpCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                'Rank ${result.newLevel}',
+                l10n.endGameRankLevel(result.newLevel),
                 style: TextStyle(
                   color: colors.textPrimary,
                   fontSize: FontTokens.body,
@@ -585,7 +593,7 @@ class _XpCard extends StatelessWidget {
                 ),
               ),
               Text(
-                wizardRankTitle(result.newLevel),
+                wizardRankTitle(l10n, result.newLevel),
                 style: TextStyle(
                     color: colors.textSecondary,
                     fontSize: FontTokens.hudXs,
@@ -627,6 +635,7 @@ class _FeedbackCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     final others = game.players
         .where((p) => p.playerId != game.localPlayerId)
         .toList();
@@ -645,7 +654,7 @@ class _FeedbackCard extends StatelessWidget {
             SizedBox(width: LayoutTokens.gr2),
             Expanded(
               child: Text(
-                'Thanks! Your feedback has been recorded.',
+                l10n.endGameFeedbackThanks,
                 style: TextStyle(
                   color: colors.textPrimary,
                   fontSize: FontTokens.hudSm,
@@ -669,7 +678,7 @@ class _FeedbackCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Rate Your Opponents',
+            l10n.endGameRateOpponents,
             style: TypographyTokens.sectionTitle(colors.textPrimary),
           ),
           PlayerFeedbackFields(
@@ -684,7 +693,7 @@ class _FeedbackCard extends StatelessWidget {
           ),
           SizedBox(height: LayoutTokens.gr3),
           UiButton(
-            label: 'Submit Feedback',
+            label: l10n.endGameSubmitFeedback,
             onPressed: onSubmit,
           ),
         ],
@@ -709,6 +718,7 @@ class _FinalPlayerRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     return Container(
       margin: EdgeInsets.only(bottom: LayoutTokens.gr1),
       padding: EdgeInsets.symmetric(
@@ -757,7 +767,7 @@ class _FinalPlayerRow extends StatelessWidget {
                 ),
                 if (isLocal)
                   Text(
-                    ' (you)',
+                    ' ${l10n.endGameYouSuffix}',
                     style: TextStyle(
                       color: colors.textSecondary,
                       fontSize: FontTokens.xs,
@@ -781,7 +791,7 @@ class _FinalPlayerRow extends StatelessWidget {
           SizedBox(width: LayoutTokens.gr1),
           Text(
             p.isEliminated
-                ? _reasonLabel(p.eliminationReason)
+                ? _reasonLabel(l10n, p.eliminationReason)
                 : '${p.life} ❤',
             style: TextStyle(
               color: p.isEliminated ? colors.primaryAccent : colors.textPrimary,
@@ -794,20 +804,20 @@ class _FinalPlayerRow extends StatelessWidget {
     );
   }
 
-  String _reasonLabel(String? r) {
+  String _reasonLabel(AppLocalizations l10n, String? r) {
     switch (r) {
       case 'life':
-        return 'Life depleted';
+        return l10n.endGameElimReasonLife;
       case 'poison':
-        return '10 poison';
+        return l10n.endGameElimReasonPoison;
       case 'commanderDamage':
-        return 'Commander dmg';
+        return l10n.endGameElimReasonCommanderDmg;
       case 'concede':
-        return 'Conceded';
+        return l10n.endGameElimReasonConcede;
       case 'disconnect':
-        return 'Left game';
+        return l10n.endGameElimReasonDisconnect;
       default:
-        return 'Eliminated';
+        return l10n.endGameElimReasonDefault;
     }
   }
 }
@@ -823,10 +833,11 @@ class _ActionButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: LayoutTokens.ctaHorizontal),
       child: UiButton(
-        label: 'Back to Home',
+        label: l10n.endGameBackToHome,
         variant: UiButtonVariant.secondary,
         icon: const Icon(Icons.home_outlined, size: 20),
         onPressed: onHome,

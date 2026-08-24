@@ -17,6 +17,7 @@ import '../../../core/network/session_providers.dart';
 import '../../../core/persistence/providers.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../core/services/shake_detector.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/utils/app_router.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
@@ -167,6 +168,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final localPresent = ref.watch(
       gameProvider.select((g) => g.localPlayer != null),
     );
@@ -198,7 +200,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 ),
                 const SizedBox(height: LayoutTokens.gr4),
                 Text(
-                  'Could not load your player slot',
+                  l10n.gameSlotLoadFailedTitle,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: colors.textPrimary,
@@ -208,7 +210,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 ),
                 const SizedBox(height: LayoutTokens.gr2),
                 Text(
-                  'The game may be out of sync. Return to the lobby and rejoin.',
+                  l10n.gameSlotLoadFailedBody,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: colors.textSecondary,
@@ -218,7 +220,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 const SizedBox(height: LayoutTokens.gr6),
                 FilledButton(
                   onPressed: () => context.go(AppRoutes.lobby),
-                  child: const Text('Return to lobby'),
+                  child: Text(l10n.gameReturnToLobby),
                 ),
               ],
             ),
@@ -303,10 +305,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         ref.read(gameProvider.notifier).clearPlayerLeftUiEvent();
         // Match already ending → game-over listener owns navigation to EndGame.
         if (event.gameEnded) return;
+        final l10n = AppLocalizations.of(context);
         await showGameConfirmDialog(
           context: context,
-          title: 'Player left',
-          message: '${event.username} left the game.',
+          title: l10n.gamePlayerLeftTitle,
+          message: l10n.gamePlayerLeftMessage(event.username),
           confirmLabel: 'OK',
         );
       });
@@ -317,10 +320,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!context.mounted) return;
         ref.read(gameProvider.notifier).clearHostEndedSessionUiEvent();
+        final l10n = AppLocalizations.of(context);
         await showGameConfirmDialog(
           context: context,
-          title: 'Session ended',
-          message: 'The host ended the game.',
+          title: l10n.gameSessionEndedTitle,
+          message: l10n.gameSessionEndedMessage,
           confirmLabel: 'OK',
         );
         if (!context.mounted) return;
@@ -340,15 +344,16 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             .toList();
         if (pending.isEmpty) return;
         final peer = pending.first;
+        final l10n = AppLocalizations.of(context);
         final keep = await showGameChoiceDialog(
           context: context,
-          title: '${peer.username} still offline',
+          title: l10n.gamePeerOfflineTitle(peer.username),
           content: Text(
-            'Keep waiting for them to reconnect, or remove them from the table?',
+            l10n.gamePeerOfflineBody,
             style: GameModalChrome.dialogBodyStyle(context),
           ),
-          primaryLabel: 'Keep waiting',
-          secondaryLabel: 'Remove from table',
+          primaryLabel: l10n.gameKeepWaiting,
+          secondaryLabel: l10n.gameRemoveFromTable,
           primaryDestructive: false,
           barrierDismissible: false,
           // Title X should not remove the player.
@@ -439,6 +444,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               GameLifeAnnouncer(enabled: !gameOver && !timeoutActive),
               Consumer(
                 builder: (context, ref, _) {
+                  final l10n = AppLocalizations.of(context);
                   final link = ref.watch(sessionLinkStatusProvider);
                   final peerIssues = ref.watch(peerLinkIssuesProvider);
                   final showOwnLink = link == SessionLinkStatus.reconnecting ||
@@ -451,11 +457,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   }
                   final label = showOwnLink
                       ? (link == SessionLinkStatus.lost
-                          ? 'Still trying to reach the table…'
-                          : 'Reconnecting to table…')
+                          ? l10n.reconnectStillTrying
+                          : l10n.reconnectToTable)
                       : (peerNames.length == 1
-                          ? '${peerNames.first} is reconnecting…'
-                          : '${peerNames.length} players reconnecting…');
+                          ? l10n.reconnectPeerOne(peerNames.first)
+                          : l10n.reconnectPeerMany(peerNames.length));
                   return Semantics(
                     container: true,
                     explicitChildNodes: true,
@@ -505,7 +511,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                                         tapTargetSize:
                                             MaterialTapTargetSize.shrinkWrap,
                                       ),
-                                      child: const Text('Try again'),
+                                      child: Text(l10n.commonTryAgain),
                                     ),
                                   ],
                                 ],
@@ -585,7 +591,7 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
         child: Padding(
           padding: const EdgeInsets.all(LayoutTokens.gr4),
           child: Text(
-            'Player data unavailable',
+            AppLocalizations.of(context).gamePlayerDataUnavailable,
             style: TextStyle(color: colors.textSecondary),
           ),
         ),
@@ -633,11 +639,12 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
       local.commanderColorIdentity,
     );
     final activePlayer = game.playerById(game.activePlayerId);
+    final l10n = AppLocalizations.of(context);
     final turnLabel = game.isLocalPlayersTurn
-        ? 'Your turn'
+        ? l10n.gameYourTurn
         : activePlayer == null
-            ? 'Current turn'
-            : "${activePlayer.username}'s turn";
+            ? l10n.gameCurrentTurn
+            : l10n.gamePlayersTurn(activePlayer.username);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

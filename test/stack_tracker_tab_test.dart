@@ -10,6 +10,8 @@ import 'package:mgt_life_spark/features/game/widgets/stack_tracker_tab.dart';
 import 'package:mgt_life_spark/shared/theme/app_theme.dart';
 // AppTheme.dark() includes AppColorTokens for ManaCostPips on stack tiles.
 
+import 'support/test_l10n.dart';
+
 GameState _gameWithLocalPlayer() {
   const localId = 'local';
   return GameState(
@@ -75,6 +77,8 @@ void main() {
         ],
         child: MaterialApp(
           theme: AppTheme.dark(),
+          localizationsDelegates: testLocalizationDelegates,
+          supportedLocales: testSupportedLocales,
           home: Scaffold(
             body: Consumer(
               builder: (context, ref, _) {
@@ -122,6 +126,8 @@ void main() {
         ],
         child: MaterialApp(
           theme: AppTheme.dark(),
+          localizationsDelegates: testLocalizationDelegates,
+          supportedLocales: testSupportedLocales,
           home: Scaffold(
             body: Consumer(
               builder: (context, ref, _) {
@@ -157,6 +163,8 @@ void main() {
         ],
         child: MaterialApp(
           theme: AppTheme.dark(),
+          localizationsDelegates: testLocalizationDelegates,
+          supportedLocales: testSupportedLocales,
           home: Scaffold(
             body: Consumer(
               builder: (context, ref, _) {

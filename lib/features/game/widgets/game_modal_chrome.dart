@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/motion_tokens.dart';
@@ -57,9 +58,10 @@ class GameDialogCloseButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final closeLabel = AppLocalizations.of(context).commonClose;
     return Semantics(
       button: true,
-      label: 'Close',
+      label: closeLabel,
       child: Material(
         color: colors.backgroundSecondary.withValues(alpha: 0.92),
         shape: const CircleBorder(),
@@ -71,7 +73,7 @@ class GameDialogCloseButton extends StatelessWidget {
             size: 20,
             color: colors.textSecondary.withValues(alpha: 0.9),
           ),
-          tooltip: 'Close',
+          tooltip: closeLabel,
           padding: EdgeInsets.zero,
           visualDensity: VisualDensity.compact,
           constraints: const BoxConstraints(

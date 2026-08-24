@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../core/game/game_state_notifier.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
@@ -16,29 +17,29 @@ class _GameTimeoutPickerSheet extends StatelessWidget {
   final GameStateNotifier notifier;
   const _GameTimeoutPickerSheet({required this.notifier});
 
-  static const _options = <(String, int)>[
-    ('15 seconds', 15),
-    ('30 seconds', 30),
-    ('1 minute', 60),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final options = <(String, int)>[
+      (l10n.timeout15Seconds, 15),
+      (l10n.timeout30Seconds, 30),
+      (l10n.timeout1Minute, 60),
+    ];
     return GameSheetBody(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const GameSheetHeader(title: 'Start Timeout'),
+          GameSheetHeader(title: l10n.timeoutStartTitle),
           SizedBox(height: LayoutTokens.gr3),
-          for (var i = 0; i < _options.length; i++) ...[
+          for (var i = 0; i < options.length; i++) ...[
             if (i > 0) SizedBox(height: LayoutTokens.gr1),
             _GameTimeoutOption(
-              label: _options[i].$1,
+              label: options[i].$1,
               icon: Icons.timer,
               onTap: () {
                 Navigator.pop(context);
-                notifier.startTimeout(durationSeconds: _options[i].$2);
+                notifier.startTimeout(durationSeconds: options[i].$2);
               },
             ),
           ],
@@ -128,6 +129,7 @@ class _GameTimeoutOverlayState extends State<GameTimeoutOverlay> {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     if (_minimized) {
       return Stack(
         children: [
@@ -214,7 +216,7 @@ class _GameTimeoutOverlayState extends State<GameTimeoutOverlay> {
                                 horizontal: LayoutTokens.gr2,
                               ),
                             ),
-                            child: const Text('End'),
+                            child: Text(l10n.gameBarEnd),
                           ),
                         ],
                       ),
@@ -253,7 +255,7 @@ class _GameTimeoutOverlayState extends State<GameTimeoutOverlay> {
                         Icons.close,
                         color: colors.textSecondary,
                       ),
-                      tooltip: 'Minimize timer',
+                      tooltip: l10n.timeoutMinimizeTooltip,
                       onPressed: () => setState(() => _minimized = true),
                       style: IconButton.styleFrom(
                         backgroundColor: colors.backgroundSecondary,
@@ -267,7 +269,7 @@ class _GameTimeoutOverlayState extends State<GameTimeoutOverlay> {
                       Icon(Icons.timer, size: 56, color: colors.emphasis),
                       SizedBox(height: LayoutTokens.gr3),
                       Text(
-                        'TIMEOUT',
+                        l10n.timeoutBanner,
                         style: TextStyle(
                           color: colors.emphasis,
                           fontSize: 28,
@@ -289,7 +291,7 @@ class _GameTimeoutOverlayState extends State<GameTimeoutOverlay> {
                       ),
                       SizedBox(height: LayoutTokens.gr2),
                       Text(
-                        'Game paused — no life changes',
+                        l10n.timeoutPaused,
                         style: TextStyle(
                           color: colors.textSecondary,
                           fontSize: FontTokens.body,
@@ -311,7 +313,7 @@ class _GameTimeoutOverlayState extends State<GameTimeoutOverlay> {
                               vertical: LayoutTokens.gr2,
                             ),
                           ),
-                          child: const Text('End timeout'),
+                          child: Text(l10n.timeoutEnd),
                         ),
                       ),
                     ],
@@ -372,6 +374,7 @@ class _GameTimeoutBannerState extends State<GameTimeoutBanner> {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     return Container(
       width: double.infinity,
       margin: EdgeInsets.zero,
@@ -389,7 +392,7 @@ class _GameTimeoutBannerState extends State<GameTimeoutBanner> {
           SizedBox(width: LayoutTokens.gr1),
           Expanded(
             child: Text(
-              'Timeout — $_timeStr',
+              l10n.timeoutMinimized(_timeStr),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
@@ -442,14 +445,15 @@ class _GameTurnDurationBannerState extends State<GameTurnDurationBanner> {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final elapsed = DateTime.now().difference(widget.turnStartTime).inSeconds;
     final hasLimit = widget.limitSeconds != null;
     final remaining =
         hasLimit ? (widget.limitSeconds! - elapsed).clamp(0, 9999) : null;
 
     final prefix = widget.isActiveTurn
-        ? 'Your turn'
-        : "${widget.activePlayerName}'s turn";
+        ? l10n.gameYourTurn
+        : l10n.gamePlayersTurn(widget.activePlayerName);
     String label;
     if (hasLimit && remaining != null) {
       final m = remaining ~/ 60;

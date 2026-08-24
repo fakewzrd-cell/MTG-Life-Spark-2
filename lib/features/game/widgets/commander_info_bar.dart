@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/game/player_game_state.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/utils/game_haptics.dart';
 import 'game_colors.dart';
 import '../../../ui/tokens/font_tokens.dart';
@@ -120,7 +121,7 @@ class CommanderInfoBar extends StatelessWidget {
                 if (roundNumber != null) ...[
                   SizedBox(height: LayoutTokens.gr0),
                   Text(
-                    'Round $roundNumber',
+                    AppLocalizations.of(context).overviewRound(roundNumber!),
                     style: TextStyle(
                       color: colors.textSecondary,
                       fontSize: FontTokens.hudXs,
@@ -132,7 +133,10 @@ class CommanderInfoBar extends StatelessWidget {
                 if (player.allyPlayerId != null) ...[
                   SizedBox(height: LayoutTokens.gr0),
                   Text(
-                    'Ally · ${allyUsername ?? 'secret'}',
+                    AppLocalizations.of(context).infoBarAlly(
+                      allyUsername ??
+                          AppLocalizations.of(context).infoBarAllySecret,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -181,12 +185,13 @@ class _CastableCommanderAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     return Semantics(
       button: true,
       enabled: enabled,
-      label: enabled ? 'Cast commander' : 'Eliminated',
+      label: enabled ? l10n.cmdBarCastCommander : l10n.cmdBarEliminated,
       child: Tooltip(
-        message: enabled ? 'Cast commander' : 'Eliminated',
+        message: enabled ? l10n.cmdBarCastCommander : l10n.cmdBarEliminated,
         child: Material(
           color: Colors.transparent,
           child: InkWell(
@@ -266,10 +271,11 @@ class _CommanderTaxBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final fs = compact ? 11.0 : 12.0;
     if (castCount == 0) {
       return Text(
-        'No tax yet',
+        l10n.cmdBarNoTaxYet,
         style: TextStyle(color: colors.textSecondary, fontSize: fs),
       );
     }
@@ -282,9 +288,13 @@ class _CommanderTaxBadge extends StatelessWidget {
         Semantics(
           button: canUncast,
           enabled: canUncast,
-          label: canUncast ? 'Remove last commander cast' : 'Commander tax',
+          label: canUncast
+              ? l10n.cmdBarRemoveLastCast
+              : l10n.cmdBarCommanderTax,
           child: Tooltip(
-            message: canUncast ? 'Tap to remove last cast' : 'Tax +$tax',
+            message: canUncast
+                ? l10n.cmdBarTapToRemoveLastCast
+                : l10n.cmdBarTaxPlus(tax),
             child: Material(
               color: Colors.transparent,
               child: InkWell(
@@ -305,7 +315,7 @@ class _CommanderTaxBadge extends StatelessWidget {
                     borderRadius: RadiusTokens.radiusControlMd,
                   ),
                   child: Text(
-                    'Tax +$tax',
+                    l10n.cmdBarTaxPlus(tax),
                     style: TextStyle(
                       color: colors.textSecondary,
                       fontSize: fs,

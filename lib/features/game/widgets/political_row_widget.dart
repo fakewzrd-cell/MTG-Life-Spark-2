@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/game/game_providers.dart';
 import '../../../core/game/game_state.dart';
 import '../../../core/game/player_game_state.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/utils/game_haptics.dart';
 import '../../../shared/widgets/game_icon.dart';
 import '../../../ui/tokens/color_tokens.dart';
@@ -42,14 +43,15 @@ class TablePoliticsStatusLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
-    final segments = _statusSegments(game);
+    final l10n = AppLocalizations.of(context);
+    final segments = _statusSegments(game, l10n);
     final hasActive = game.monarchPlayerId != null ||
         game.initiativePlayerId != null ||
         game.dayNight != DayNightState.none;
 
     return Semantics(
       button: true,
-      label: 'Table politics. Tap to assign.',
+      label: l10n.politicsTapToAssignA11y,
       child: Material(
         color: colors.backgroundSecondary.withValues(alpha: OpacityTokens.soft),
         borderRadius: RadiusTokens.radiusControlSm,
@@ -75,7 +77,7 @@ class TablePoliticsStatusLine extends StatelessWidget {
                 Expanded(
                   child: segments.isEmpty
                       ? Text(
-                          'No monarch · No initiative · —',
+                          l10n.politicsStatusEmpty,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -118,7 +120,7 @@ class TablePoliticsStatusLine extends StatelessWidget {
     );
   }
 
-  List<Widget> _statusSegments(GameState game) {
+  List<Widget> _statusSegments(GameState game, AppLocalizations l10n) {
     final segments = <Widget>[];
 
     final monarch = game.monarchPlayerId != null
@@ -152,7 +154,7 @@ class TablePoliticsStatusLine extends StatelessWidget {
           iconBuilder: (c) => isDay
               ? GameIcon.day(size: 13, color: c)
               : GameIcon.night(size: 13, color: c),
-          label: isDay ? 'Day' : 'Night',
+          label: isDay ? l10n.politicsDay : l10n.politicsNight,
         ),
       );
     }
@@ -199,12 +201,13 @@ class _TablePoliticsSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final game = ref.watch(gameProvider);
+    final l10n = AppLocalizations.of(context);
     return GameSheetBody(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const GameSheetHeader(title: 'Assign table politics'),
+          GameSheetHeader(title: l10n.politicsAssignSheetTitle),
           SizedBox(height: LayoutTokens.gr4),
           PoliticalRowWidget(game: game),
         ],
@@ -225,6 +228,7 @@ class PoliticalRowWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(gameProvider.notifier);
+    final l10n = AppLocalizations.of(context);
 
     return IntrinsicHeight(
       child: Row(
@@ -232,7 +236,7 @@ class PoliticalRowWidget extends ConsumerWidget {
         children: [
           Expanded(
             child: _PoliticalBadge(
-              label: 'Monarch',
+              label: l10n.politicsMonarch,
               headerIcon: GameIcon.monarch(
                 size: 16,
                 color: politicsIconTone(context),
@@ -243,7 +247,7 @@ class PoliticalRowWidget extends ConsumerWidget {
               onTap: () => _showAssignPicker(
                 context,
                 ref,
-                'Assign Monarch',
+                l10n.politicsAssignMonarch,
                 game.monarchPlayerId,
                 (pid) => notifier.setMonarch(pid),
               ),
@@ -252,7 +256,7 @@ class PoliticalRowWidget extends ConsumerWidget {
           SizedBox(width: LayoutTokens.gr1),
           Expanded(
             child: _PoliticalBadge(
-              label: 'Initiative',
+              label: l10n.politicsInitiative,
               headerIcon: GameIcon.initiative(
                 size: 16,
                 color: politicsIconTone(context),
@@ -263,7 +267,7 @@ class PoliticalRowWidget extends ConsumerWidget {
               onTap: () => _showAssignPicker(
                 context,
                 ref,
-                'Assign Initiative',
+                l10n.politicsAssignInitiative,
                 game.initiativePlayerId,
                 (pid) => notifier.setInitiative(pid),
               ),
@@ -339,6 +343,7 @@ class _PoliticalBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final holder = holderId != null
         ? players.where((p) => p.playerId == holderId).firstOrNull
         : null;
@@ -361,7 +366,7 @@ class _PoliticalBadge extends StatelessWidget {
                 hasHolder ? colors.backgroundPrimary : colors.textSecondary,
             value: holder != null
                 ? overviewShortPlayerName(holder.username)
-                : 'None',
+                : l10n.politicsNone,
           ),
         ),
       ],
@@ -383,10 +388,11 @@ class _DayNightToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final (valueLabel, color) = switch (dayNight) {
-      DayNightState.none => ('None', colors.textSecondary),
-      DayNightState.day => ('Day', colors.emphasis),
-      DayNightState.night => ('Night', colors.primaryAccent),
+      DayNightState.none => (l10n.politicsNone, colors.textSecondary),
+      DayNightState.day => (l10n.politicsDay, colors.emphasis),
+      DayNightState.night => (l10n.politicsNight, colors.primaryAccent),
     };
     final isActive = dayNight != DayNightState.none;
 
@@ -403,7 +409,7 @@ class _DayNightToggle extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _PoliticsColumnHeader(icon: headerIcon, label: 'Day/Night'),
+        _PoliticsColumnHeader(icon: headerIcon, label: l10n.politicsDayNight),
         SizedBox(height: LayoutTokens.gr1),
         Expanded(
           child: _OverviewFilledMarkerButton(
@@ -536,6 +542,7 @@ class _PlayerPickerSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     return GameSheetBody(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -550,7 +557,7 @@ class _PlayerPickerSheet extends StatelessWidget {
               borderRadius: BorderRadius.circular(RadiusTokens.sm),
             ),
             title: Text(
-              'None',
+              l10n.politicsNone,
               style: TextStyle(color: colors.textSecondary),
             ),
             onTap: () => onSelected(null),

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/game/game_providers.dart';
 import '../../../core/game/game_session_events.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
@@ -63,6 +64,7 @@ class _PlayerWhisperOverlayState extends ConsumerState<PlayerWhisperOverlay> {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final w = widget.whisper;
 
     return Positioned(
@@ -71,7 +73,7 @@ class _PlayerWhisperOverlayState extends ConsumerState<PlayerWhisperOverlay> {
       bottom: LayoutTokens.gr4 + MediaQuery.paddingOf(context).bottom,
       child: Semantics(
         liveRegion: true,
-        label: 'Whisper from ${w.fromUsername}: ${w.text}',
+        label: l10n.whisperOverlayA11y(w.fromUsername, w.text),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
@@ -114,7 +116,7 @@ class _PlayerWhisperOverlayState extends ConsumerState<PlayerWhisperOverlay> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            'Whisper from ${w.fromUsername}',
+                            l10n.whisperOverlayHeader(w.fromUsername),
                             style: TextStyle(
                               color: colors.textSecondary,
                               fontSize: FontTokens.sm,

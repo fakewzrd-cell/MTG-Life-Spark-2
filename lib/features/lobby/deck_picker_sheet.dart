@@ -6,6 +6,7 @@ import '../../core/game/game_format.dart';
 import '../../core/game/lobby_state.dart';
 import '../../core/persistence/providers.dart';
 import '../../features/game/widgets/game_modal_chrome.dart';
+import '../../l10n/app_localizations.dart';
 import '../../shared/utils/app_router.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
@@ -31,13 +32,14 @@ Future<void> showDeckPickerSheet(
     isScrollControlled: true,
     builder: (ctx) {
       final colors = AppColorTokens.of(ctx);
+      final l10n = AppLocalizations.of(ctx);
       return GameSheetBody(
         scrollable: true,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            const GameSheetHeader(title: 'Deck for this match'),
+            GameSheetHeader(title: l10n.deckPickerTitle),
             SizedBox(height: LayoutTokens.gr2),
             if (isCommanderLobby)
               ListTile(
@@ -45,11 +47,11 @@ Future<void> showDeckPickerSheet(
                 leading:
                     Icon(Icons.person_outline, color: colors.textSecondary),
                 title: Text(
-                  'Manual commander only',
+                  l10n.deckPickerManualOnly,
                   style: TextStyle(color: colors.textPrimary),
                 ),
                 subtitle: Text(
-                  'Keep commanders as-is; do not attribute to a saved deck',
+                  l10n.deckPickerManualOnlySubtitle,
                   style: TextStyle(
                     color: colors.textSecondary,
                     fontSize: FontTokens.caption,
@@ -72,8 +74,9 @@ Future<void> showDeckPickerSheet(
                       needsStyle > 0
                           ? '$needsStyle deck${needsStyle == 1 ? '' : 's'} '
                               'need a style set in the Decks tab before lobby use.'
-                          : 'No ${lobbyFormat.displayName} decks saved yet. '
-                              'Create one from the Decks tab.',
+                          : l10n.deckPickerEmptyForFormat(
+                              lobbyFormat.displayName,
+                            ),
                       style: TextStyle(
                         color: colors.textSecondary,
                         fontSize: FontTokens.hudSm,
@@ -85,7 +88,7 @@ Future<void> showDeckPickerSheet(
                         Navigator.pop(ctx);
                         ctx.go(AppRoutes.decks);
                       },
-                      child: const Text('Open Decks'),
+                      child: Text(l10n.deckPickerOpenDecks),
                     ),
                   ],
                 ),

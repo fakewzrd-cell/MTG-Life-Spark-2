@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/models/player_identity.dart';
 import '../../core/models/player_profile.dart';
 import '../../core/persistence/providers.dart';
+import '../../l10n/app_localizations.dart';
 import '../../shared/utils/app_router.dart';
 import '../../shared/widgets/block_system_app_exit.dart';
 import '../../shared/widgets/brand_logo.dart';
@@ -37,6 +38,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return BlockSystemAppExit(
       child: Scaffold(
@@ -58,7 +60,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                     ),
                     SizedBox(height: LayoutTokens.gr4),
                     Text(
-                      'Your MTG companion.',
+                      l10n.welcomeTagline,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                             color: colors.textSecondary,
                           ),
@@ -79,7 +81,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   UiButton(
-                    label: 'Ready to play',
+                    label: l10n.welcomeReadyToPlay,
                     enabled: !_skipping,
                     onPressed: _skipping
                         ? null
@@ -87,7 +89,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                   ),
                   SizedBox(height: LayoutTokens.gr2),
                   UiButton(
-                    label: 'Skip',
+                    label: l10n.welcomeSkip,
                     variant: UiButtonVariant.secondary,
                     loading: _skipping,
                     enabled: !_skipping,

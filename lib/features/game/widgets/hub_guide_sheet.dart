@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/persistence/providers.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/constants/app_icons.dart';
 import '../../../shared/widgets/game_icon.dart';
 import '../../../ui/components/ui_button.dart';
@@ -37,39 +38,30 @@ class _HubGuideDialogState extends ConsumerState<_HubGuideDialog> {
   final _controller = PageController();
   int _currentPage = 0;
 
-  static final _slides = <_HubGuideSlide>[
-    _HubGuideSlide(
-      icon: Icons.style_outlined,
-      iconAsset: AppIcons.playTabCards,
-      title: 'Play',
-      body:
-          'Track life and counters here. End turn sits under the phase bar — '
-          'or leave Phase tracker off in the lobby for a large End turn control.',
-    ),
-    _HubGuideSlide(
-      icon: Icons.layers_rounded,
-      title: 'Stack & Lookup',
-      body:
-          'Stack is for Hold Priority and resolving effects. Lookup opens '
-          'Scryfall without leaving your seat — oracle text and rulings.',
-    ),
-    _HubGuideSlide(
-      icon: Icons.grid_view_rounded,
-      title: 'Table overview',
-      body:
-          'Open Table for the whole pod. Tools has dice and coin flips that '
-          'everyone sees; History is in the header. End turn stays pinned; '
-          'Forfeit sits below it.',
-    ),
-    _HubGuideSlide(
-      icon: Icons.favorite_rounded,
-      useCommanderDamageIcon: true,
-      title: 'Your turn & commander',
-      body:
-          'When the seat becomes yours, tap the Your turn cue to dismiss it. '
-          'The heart tracks commander damage toward 21.',
-    ),
-  ];
+  List<_HubGuideSlide> _slidesFor(AppLocalizations l10n) => [
+        _HubGuideSlide(
+          icon: Icons.style_outlined,
+          iconAsset: AppIcons.playTabCards,
+          title: l10n.hubGuideSlidePlayTitle,
+          body: l10n.hubGuideSlidePlayBody,
+        ),
+        _HubGuideSlide(
+          icon: Icons.layers_rounded,
+          title: l10n.hubGuideSlideStackTitle,
+          body: l10n.hubGuideSlideStackBody,
+        ),
+        _HubGuideSlide(
+          icon: Icons.grid_view_rounded,
+          title: l10n.hubGuideSlideTableTitle,
+          body: l10n.hubGuideSlideTableBody,
+        ),
+        _HubGuideSlide(
+          icon: Icons.favorite_rounded,
+          useCommanderDamageIcon: true,
+          title: l10n.hubGuideSlideCommanderTitle,
+          body: l10n.hubGuideSlideCommanderBody,
+        ),
+      ];
 
   @override
   void dispose() {
@@ -83,8 +75,8 @@ class _HubGuideDialogState extends ConsumerState<_HubGuideDialog> {
     if (mounted) Navigator.of(context).pop();
   }
 
-  void _next() {
-    if (_currentPage < _slides.length - 1) {
+  void _next(int slideCount) {
+    if (_currentPage < slideCount - 1) {
       _controller.nextPage(
         duration: MotionTokens.slow,
         curve: Curves.easeInOut,
@@ -97,7 +89,9 @@ class _HubGuideDialogState extends ConsumerState<_HubGuideDialog> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     final accent = colors.primaryAccent;
+    final slides = _slidesFor(l10n);
 
     final topInset = MediaQuery.paddingOf(context).top;
     final overlay = AppSystemUi.overlayStyle(context).copyWith(
@@ -124,7 +118,7 @@ class _HubGuideDialogState extends ConsumerState<_HubGuideDialog> {
                 children: [
                   Expanded(
                     child: Text(
-                      'Quick tour',
+                      l10n.hubGuideTitle,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.w700,
                             color: colors.textPrimary,
@@ -134,7 +128,7 @@ class _HubGuideDialogState extends ConsumerState<_HubGuideDialog> {
                   TextButton(
                     onPressed: _finish,
                     child: Text(
-                      'Skip',
+                      l10n.hubGuideSkip,
                       style: TextStyle(
                         color: colors.textSecondary,
                         fontWeight: FontWeight.w600,
@@ -148,9 +142,9 @@ class _HubGuideDialogState extends ConsumerState<_HubGuideDialog> {
               child: PageView.builder(
                 controller: _controller,
                 onPageChanged: (i) => setState(() => _currentPage = i),
-                itemCount: _slides.length,
+                itemCount: slides.length,
                 itemBuilder: (context, i) => _HubGuideSlideView(
-                  slide: _slides[i],
+                  slide: slides[i],
                   accent: accent,
                 ),
               ),
@@ -162,7 +156,7 @@ class _HubGuideDialogState extends ConsumerState<_HubGuideDialog> {
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(_slides.length, (i) {
+                    children: List.generate(slides.length, (i) {
                       final selected = _currentPage == i;
                       return AnimatedContainer(
                         duration: MotionTokens.standard,
@@ -185,10 +179,10 @@ class _HubGuideDialogState extends ConsumerState<_HubGuideDialog> {
                       horizontal: LayoutTokens.ctaHorizontal,
                     ),
                     child: UiButton(
-                      label: _currentPage == _slides.length - 1
-                          ? 'Got it'
-                          : 'Next',
-                      onPressed: _next,
+                      label: _currentPage == slides.length - 1
+                          ? l10n.hubGuideGotIt
+                          : l10n.hubGuideNext,
+                      onPressed: () => _next(slides.length),
                     ),
                   ),
                   SizedBox(height: LayoutTokens.gr4),

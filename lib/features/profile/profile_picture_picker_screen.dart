@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../core/game/scryfall_service.dart';
 import '../../core/persistence/providers.dart';
+import '../../l10n/app_localizations.dart';
 import '../../shared/utils/app_router.dart';
 import '../../shared/utils/profile_avatar_storage.dart';
 import '../../ui/components/ui_app_bar.dart';
@@ -93,18 +94,18 @@ class _ProfilePicturePickerScreenState
       final service = ref.read(scryfallServiceProvider);
       final results = await service.searchCards(query);
       if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
       setState(() {
         _results = results;
         _loading = false;
-        if (results.isEmpty) _error = 'No cards found for "$query"';
+        if (results.isEmpty) _error = l10n.profilePicNoCards(query);
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _results = [];
         _loading = false;
-        _error =
-            'Unable to search. Check your internet connection and try again.';
+        _error = AppLocalizations.of(context).profilePicSearchFailed;
       });
     }
   }
@@ -163,7 +164,7 @@ class _ProfilePicturePickerScreenState
       if (!mounted) return;
       showUiSnackBar(
         context,
-        'Could not use that photo. Try another image.',
+        AppLocalizations.of(context).profilePicPhotoFailed,
         isError: true,
       );
     } finally {
@@ -208,6 +209,7 @@ class _ProfilePicturePickerScreenState
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     final profile = ref.watch(profileRepositoryProvider).getProfile();
     final commanderUrl = profile?.selectedCommanderImageUrl;
     final canUseCommander = commanderUrl != null && commanderUrl.isNotEmpty;
@@ -217,7 +219,7 @@ class _ProfilePicturePickerScreenState
       onPopInvokedWithResult: (didPop, _) => _onSystemPop(didPop),
       child: Scaffold(
         appBar: UiAppBar(
-          title: 'Profile picture',
+          title: l10n.profilePicTitle,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: _returnToProfile,
@@ -227,7 +229,7 @@ class _ProfilePicturePickerScreenState
               TextButton(
                 onPressed: _pickingPhoto ? null : _useCommanderPortrait,
                 child: Text(
-                  'Commander',
+                  l10n.profilePicCommander,
                   style: TextStyle(
                     color: colors.primaryAccent,
                     fontWeight: FontWeight.w700,
@@ -237,7 +239,9 @@ class _ProfilePicturePickerScreenState
             TextButton(
               onPressed: _pickingPhoto ? null : _clearImage,
               child: Text(
-                widget.selectionMode ? 'Default' : 'Remove',
+                widget.selectionMode
+                    ? l10n.profilePicDefault
+                    : l10n.profilePicRemove,
                 style: TextStyle(
                   color: colors.error,
                   fontWeight: FontWeight.w700,
@@ -264,7 +268,7 @@ class _ProfilePicturePickerScreenState
                           ? null
                           : () => _pickFrom(ImageSource.gallery),
                       icon: const Icon(Icons.photo_library_outlined, size: 18),
-                      label: const Text('Upload photo'),
+                      label: Text(l10n.profilePicUpload),
                     ),
                   ),
                   SizedBox(width: LayoutTokens.gr2),
@@ -274,7 +278,7 @@ class _ProfilePicturePickerScreenState
                           ? null
                           : () => _pickFrom(ImageSource.camera),
                       icon: const Icon(Icons.photo_camera_outlined, size: 18),
-                      label: const Text('Take photo'),
+                      label: Text(l10n.profilePicTake),
                     ),
                   ),
                 ],
@@ -293,7 +297,7 @@ class _ProfilePicturePickerScreenState
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Or search MTG card art',
+                  l10n.profilePicOrSearch,
                   style: TextStyle(
                     color: colors.textSecondary,
                     fontSize: FontTokens.caption,
@@ -311,7 +315,7 @@ class _ProfilePicturePickerScreenState
                 onTapOutside: (_) =>
                     FocusManager.instance.primaryFocus?.unfocus(),
                 decoration: InputDecoration(
-                  hintText: 'Search MTG cards for profile picture…',
+                  hintText: l10n.profilePicSearchHint,
                   prefixIcon: Icon(
                     Icons.search,
                     color: colors.textSecondary,
@@ -345,6 +349,7 @@ class _ProfilePicturePickerScreenState
 
   Widget _buildResults(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     if (_loading) {
       return Center(
         child: CircularProgressIndicator(color: colors.primaryAccent),
@@ -367,7 +372,7 @@ class _ProfilePicturePickerScreenState
         child: Padding(
           padding: EdgeInsets.all(LayoutTokens.gr4),
           child: Text(
-            'Upload a photo, take one, or search for a card—its art becomes your profile picture.',
+            l10n.profilePicHelp,
             style: TextStyle(color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),

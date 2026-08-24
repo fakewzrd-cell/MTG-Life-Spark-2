@@ -7,6 +7,7 @@ import 'package:intl/intl.dart' show DateFormat, NumberFormat;
 import '../../core/debug/app_log.dart';
 import '../../core/models/player_profile.dart';
 import '../../core/persistence/providers.dart';
+import '../../l10n/app_localizations.dart';
 import '../../shared/utils/app_router.dart';
 import '../../shared/widgets/profile_avatar_image.dart';
 import '../../shared/widgets/profile_default_banner.dart';
@@ -80,12 +81,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       final saved = await ref.read(backupServiceProvider).exportToFile();
       if (!mounted) return;
       if (saved) {
-        showUiSnackBar(context, 'Backup saved.');
+        showUiSnackBar(context, AppLocalizations.of(context).backupSaved);
       }
     } catch (e, st) {
       appLog('Profile: export backup failed', error: e, stackTrace: st);
       if (!mounted) return;
-      showUiSnackBar(context, 'Could not save backup.', isError: true);
+      showUiSnackBar(
+        context,
+        AppLocalizations.of(context).profileBackupSaveFailed,
+        isError: true,
+      );
     }
   }
 
@@ -105,13 +110,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Set up your profile to continue.',
+                  AppLocalizations.of(context).profileSetupPrompt,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 SizedBox(height: LayoutTokens.gr4),
                 UiButton(
-                  label: 'Create profile',
+                  label: AppLocalizations.of(context).profileCreateCta,
                   onPressed: () => context.go(AppRoutes.profileSetup),
                 ),
               ],
@@ -289,11 +294,12 @@ class _ProfileHeroCaption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final since = firstPlayed;
     return Text(
       since == null
-          ? 'New player'
-          : 'Playing since ${DateFormat.yMMM().format(since)}',
+          ? l10n.profileNewPlayer
+          : l10n.profilePlayingSince(DateFormat.yMMM().format(since)),
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       style: TextStyle(
@@ -321,9 +327,10 @@ class _ProfileHeroActionPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     return Semantics(
       button: true,
-      label: editing ? 'Done editing' : 'Profile options',
+      label: editing ? l10n.profileDoneEditing : l10n.profileOptions,
       child: ConstrainedBox(
         constraints: const BoxConstraints(
           minWidth: LayoutTokens.minTapTarget,
@@ -352,7 +359,7 @@ class _ProfileHeroActionPill extends StatelessWidget {
                   child: ExcludeSemantics(
                     child: editing
                         ? Text(
-                            'Done',
+                            l10n.profileDone,
                             style: TextStyle(
                               fontSize: FontTokens.label,
                               fontWeight: FontWeight.w600,
@@ -440,7 +447,8 @@ class _ProfileHeroIdentityAndStats extends StatelessWidget {
                         SizedBox(width: LayoutTokens.gr1),
                         IconButton(
                           onPressed: onEditName,
-                          tooltip: 'Edit name',
+                          tooltip:
+                              AppLocalizations.of(context).profileEditNameTooltip,
                           visualDensity: VisualDensity.compact,
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(
@@ -524,9 +532,10 @@ class _EditUsernameDialogState extends State<_EditUsernameDialog> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     return GameFormDialog(
-      title: 'Edit name',
-      submitLabel: 'Save',
+      title: l10n.profileEditName,
+      submitLabel: l10n.commonSave,
       enabled: _canSave,
       onSubmit: _canSave ? _submit : null,
       content: Form(
@@ -542,13 +551,15 @@ class _EditUsernameDialogState extends State<_EditUsernameDialog> {
           },
           style: TextStyle(color: colors.textPrimary),
           decoration: InputDecoration(
-            labelText: 'Username',
-            hintText: 'e.g. The Archduke',
+            labelText: l10n.profileUsernameLabel,
+            hintText: l10n.profileUsernameHint,
             hintStyle: TextStyle(color: colors.textSecondary),
           ),
           validator: (v) {
-            if (v == null || v.trim().isEmpty) return 'Enter a username';
-            if (v.trim().length < 2) return 'Must be at least 2 characters';
+            if (v == null || v.trim().isEmpty) {
+              return l10n.profileUsernameRequired;
+            }
+            if (v.trim().length < 2) return l10n.profileUsernameTooShort;
             return null;
           },
         ),
@@ -643,7 +654,7 @@ class _ProfileHeroAvatar extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: 'Change profile picture',
+      label: AppLocalizations.of(context).profileChangePicture,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -665,6 +676,7 @@ class _ProfileFloatingStatsPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
+    final l10n = AppLocalizations.of(context);
     final wins = profile.totalWins;
     final losses = profile.totalLosses;
     final games = profile.totalGamesPlayed > 0
@@ -687,7 +699,7 @@ class _ProfileFloatingStatsPill extends StatelessWidget {
               Expanded(
                 child: _StatColumn(
                   value: '$wins–$losses',
-                  shortLabel: 'Record',
+                  shortLabel: l10n.profileStatRecord,
                   emphasized: true,
                   accentColor: colors.primaryAccent,
                 ),
@@ -696,14 +708,14 @@ class _ProfileFloatingStatsPill extends StatelessWidget {
               Expanded(
                 child: _StatColumn(
                   value: _formatProfileStat(profile.honorsStarReceived),
-                  shortLabel: 'Sparks',
+                  shortLabel: l10n.profileStatSparks,
                 ),
               ),
               _StatDivider(colors: colors),
               Expanded(
                 child: _StatColumn(
                   value: _formatProfileStat(games),
-                  shortLabel: 'Games',
+                  shortLabel: l10n.profileStatGames,
                 ),
               ),
             ],

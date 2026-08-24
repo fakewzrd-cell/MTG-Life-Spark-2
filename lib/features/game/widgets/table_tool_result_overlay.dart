@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/game/game_providers.dart';
 import '../../../core/game/game_session_events.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
@@ -63,7 +64,9 @@ class _TableToolResultOverlayState extends ConsumerState<TableToolResultOverlay>
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     final a = widget.announcement;
+    final headline = a.localizedHeadline(l10n);
     final resultStyle = TextStyle(
       color: colors.onAccent,
       fontSize: a.kind == TableToolKind.coin
@@ -76,7 +79,7 @@ class _TableToolResultOverlayState extends ConsumerState<TableToolResultOverlay>
     return Positioned.fill(
       child: Semantics(
         button: true,
-        label: '${a.headline}. Tap to dismiss.',
+        label: l10n.tableToolDismissA11y(headline),
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: _dismiss,
@@ -101,7 +104,7 @@ class _TableToolResultOverlayState extends ConsumerState<TableToolResultOverlay>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          a.toolLabel.toUpperCase(),
+                          a.localizedToolLabel(l10n).toUpperCase(),
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: colors.onAccent.withValues(alpha: 0.85),
@@ -112,13 +115,13 @@ class _TableToolResultOverlayState extends ConsumerState<TableToolResultOverlay>
                         ),
                         SizedBox(height: LayoutTokens.gr2),
                         Text(
-                          a.resultLabel,
+                          a.localizedResultLabel(l10n),
                           textAlign: TextAlign.center,
                           style: resultStyle,
                         ),
                         SizedBox(height: LayoutTokens.gr3),
                         Text(
-                          a.headline,
+                          headline,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: colors.onAccent,
@@ -129,7 +132,7 @@ class _TableToolResultOverlayState extends ConsumerState<TableToolResultOverlay>
                         ),
                         SizedBox(height: LayoutTokens.gr2),
                         Text(
-                          'Tap to dismiss',
+                          l10n.tableToolTapToDismiss,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: colors.onAccent.withValues(alpha: 0.85),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/game/game_providers.dart';
 import '../../../core/game/player_game_state.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../ui/components/ui_snack_bar.dart';
 import '../../../ui/components/ui_text_field.dart';
 import '../../../ui/tokens/font_tokens.dart';
@@ -12,12 +13,12 @@ import 'game_colors.dart';
 import 'game_modal_chrome.dart';
 
 /// Preset whispers — one tap to send.
-const kWhisperChipLabels = [
-  'Team up?',
-  "Don't attack me",
-  'I have removal',
-  'All good',
-];
+List<String> whisperChipLabels(AppLocalizations l10n) => [
+      l10n.whisperPresetTeamUp,
+      l10n.whisperPresetDontAttack,
+      l10n.whisperPresetHaveRemoval,
+      l10n.whisperPresetAllGood,
+    ];
 
 const _kWhisperMaxLength = 80;
 
@@ -53,6 +54,7 @@ class _PlayerWhisperSheetState extends ConsumerState<_PlayerWhisperSheet> {
   }
 
   void _send(String text) {
+    final l10n = AppLocalizations.of(context);
     final ok = ref.read(gameProvider.notifier).sendPlayerWhisper(
           widget.target.playerId,
           text,
@@ -60,11 +62,11 @@ class _PlayerWhisperSheetState extends ConsumerState<_PlayerWhisperSheet> {
     if (!context.mounted) return;
     if (ok) {
       Navigator.pop(context);
-      showUiSnackBar(context, 'Whisper sent to ${widget.target.username}');
+      showUiSnackBar(context, l10n.whisperSentSnack(widget.target.username));
     } else {
       showUiSnackBar(
         context,
-        'Could not send — wait a moment or check your connection.',
+        l10n.whisperSendFailed,
         isError: true,
       );
     }
@@ -73,6 +75,8 @@ class _PlayerWhisperSheetState extends ConsumerState<_PlayerWhisperSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
+    final presets = whisperChipLabels(l10n);
     return Padding(
       padding: EdgeInsets.only(
         left: GameModalChrome.horizontalInset(context),
@@ -85,12 +89,12 @@ class _PlayerWhisperSheetState extends ConsumerState<_PlayerWhisperSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Whisper to ${widget.target.username}',
+            l10n.whisperSheetTitle(widget.target.username),
             style: GameModalChrome.sheetTitleStyle(context),
           ),
           SizedBox(height: LayoutTokens.gr1),
           Text(
-            'Only they see this — it fades away. Not saved to match history.',
+            l10n.whisperSheetSubtitle,
             style: GameModalChrome.dialogBodyStyle(context),
           ),
           SizedBox(height: LayoutTokens.gr3),
@@ -98,7 +102,7 @@ class _PlayerWhisperSheetState extends ConsumerState<_PlayerWhisperSheet> {
             spacing: LayoutTokens.gr1,
             runSpacing: LayoutTokens.gr1,
             children: [
-              for (final label in kWhisperChipLabels)
+              for (final label in presets)
                 ActionChip(
                   label: Text(
                     label,
@@ -120,8 +124,8 @@ class _PlayerWhisperSheetState extends ConsumerState<_PlayerWhisperSheet> {
           SizedBox(height: LayoutTokens.gr3),
           UiTextField(
             controller: _customController,
-            labelText: 'Custom message',
-            hintText: 'Short note…',
+            labelText: l10n.whisperCustomLabel,
+            hintText: l10n.whisperCustomHint,
             maxLength: _kWhisperMaxLength,
             onSubmitted: (v) {
               if (v.trim().isNotEmpty) _send(v);
@@ -139,7 +143,7 @@ class _PlayerWhisperSheetState extends ConsumerState<_PlayerWhisperSheet> {
               foregroundColor: colors.onAccent,
               minimumSize: Size.fromHeight(LayoutTokens.minTapTarget),
             ),
-            child: const Text('Send whisper'),
+            child: Text(l10n.whisperSend),
           ),
         ],
       ),

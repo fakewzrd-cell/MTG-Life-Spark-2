@@ -6,6 +6,7 @@ import '../../../ui/tokens/motion_tokens.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/game/commander_identity_colors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/utils/game_haptics.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
@@ -170,6 +171,7 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     return LayoutBuilder(
       builder: (context, constraints) {
         return Container(
@@ -221,8 +223,8 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
 
                     return Semantics(
                       label: widget.isEliminated
-                          ? 'Eliminated at ${widget.life} life'
-                          : '${widget.life} life total',
+                          ? l10n.lifeA11yEliminatedAt('${widget.life}')
+                          : l10n.lifeA11yLifeTotal('${widget.life}'),
                       value: '${widget.life}',
                       child: Stack(
                         clipBehavior: Clip.none,
@@ -236,7 +238,7 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
                               _LifeEdgeStepStrip(
                                 width: tapEdge,
                                 icon: Icons.remove_rounded,
-                                semanticsLabel: 'Decrease life',
+                                semanticsLabel: l10n.lifeA11yDecrease,
                                 onTap: () => _change(-1),
                                 onLongPressStart: () => _startHold(-1),
                                 onLongPressEnd: _stopHold,
@@ -285,7 +287,7 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
                               _LifeEdgeStepStrip(
                                 width: tapEdge,
                                 icon: Icons.add_rounded,
-                                semanticsLabel: 'Increase life',
+                                semanticsLabel: l10n.lifeA11yIncrease,
                                 onTap: () => _change(1),
                                 onLongPressStart: () => _startHold(1),
                                 onLongPressEnd: _stopHold,
@@ -451,6 +453,7 @@ class _LifeInputDialogState extends State<_LifeInputDialog> {
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     return AlertDialog(
       backgroundColor: colors.surface,
       shape: RoundedRectangleBorder(
@@ -459,7 +462,7 @@ class _LifeInputDialogState extends State<_LifeInputDialog> {
       ),
       title: GameDialogTitleRow(
         titleWidget: Text(
-          _input.isEmpty ? 'Set Life Total' : _input,
+          _input.isEmpty ? l10n.lifeSetTotalTitle : _input,
           style: TextStyle(
             color:
                 _input.isEmpty ? colors.textSecondary : colors.textPrimary,

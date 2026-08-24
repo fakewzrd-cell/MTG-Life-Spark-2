@@ -11,6 +11,7 @@ import '../../core/models/match_record.dart';
 import '../../core/models/player_deck.dart';
 import '../../core/models/player_profile.dart';
 import '../../core/persistence/providers.dart';
+import '../../l10n/app_localizations.dart';
 import '../../shared/widgets/game_icon.dart';
 import '../../shared/utils/app_router.dart';
 import '../../shared/utils/commander_image_resolver.dart';
@@ -23,12 +24,6 @@ import '../../ui/tokens/motion_tokens.dart';
 import '../../ui/tokens/opacity_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import '../../ui/tokens/typography_tokens.dart';
-
-const String kProfileUntilFirstGameMessage =
-    'Play your first game to unlock stats and history.';
-
-const String _kProfileAddDeckMessage =
-    'Add a deck to track commander performance here.';
 
 /// Interior padding for 240×360 carousel cards ([LayoutTokens.gr2]).
 /// Inner art radius = [RadiusTokens.carouselCard] − padding (nested radius rule).
@@ -553,11 +548,11 @@ enum _RecentGamesTimeFilter {
 }
 
 extension _RecentGamesTimeFilterLabel on _RecentGamesTimeFilter {
-  String get menuLabel => switch (this) {
-    _RecentGamesTimeFilter.all => 'All games',
-    _RecentGamesTimeFilter.recent => 'Recent (14 days)',
-    _RecentGamesTimeFilter.thisWeek => 'This week',
-    _RecentGamesTimeFilter.thisMonth => 'This month',
+  String menuLabel(AppLocalizations l10n) => switch (this) {
+    _RecentGamesTimeFilter.all => l10n.profileFilterAllGames,
+    _RecentGamesTimeFilter.recent => l10n.profileFilterRecent14,
+    _RecentGamesTimeFilter.thisWeek => l10n.profileFilterThisWeek,
+    _RecentGamesTimeFilter.thisMonth => l10n.profileFilterThisMonth,
   };
 }
 
@@ -596,10 +591,10 @@ Color _recentMatchResultColor(MatchRecord m, AppColorTokens colors) {
   return colors.error;
 }
 
-String _recentMatchResultLabel(MatchRecord m) {
+String _recentMatchResultLabel(MatchRecord m, AppLocalizations l10n) {
   if (m.result == 'win') return 'Win';
-  if (m.result == 'concede') return 'Concede';
-  return 'Loss';
+  if (m.result == 'concede') return l10n.profileResultConcede;
+  return l10n.profileResultLoss;
 }
 
 String _recentMatchPlayerInitials(String name) {
@@ -772,6 +767,7 @@ class _ProfileRecentGamesModuleState extends State<ProfileRecentGamesModule> {
   @override
   Widget build(BuildContext context) {
     final c = widget.colors;
+    final l10n = AppLocalizations.of(context);
     final filtered = _filterMatchesForRecentGames(widget.matches, _filter);
     final showFilterMenu = widget.matches.isNotEmpty;
 
@@ -779,7 +775,7 @@ class _ProfileRecentGamesModuleState extends State<ProfileRecentGamesModule> {
 
     Widget titleRow() {
       return ProfileSectionHeader(
-        title: 'Recent games',
+        title: l10n.profileRecentGames,
         titleStyle: titleStyle,
         colors: c,
         count: filtered.length,
@@ -787,21 +783,21 @@ class _ProfileRecentGamesModuleState extends State<ProfileRecentGamesModule> {
         pluralUnit: 'games',
         trailing: showFilterMenu
             ? PopupMenuButton<_RecentGamesTimeFilter>(
-                tooltip: 'Filter: ${_filter.menuLabel}',
+                tooltip: l10n.carouselFilterTooltip(_filter.menuLabel(l10n)),
                 padding: EdgeInsets.zero,
                 offset: const Offset(0, 8),
                 onSelected: (v) => setState(() => _filter = v),
                 child: ProfileHeaderCircleButton(
                   icon: Icons.filter_list_rounded,
                   colors: c,
-                  tooltip: 'Filter: ${_filter.menuLabel}',
+                  tooltip: l10n.carouselFilterTooltip(_filter.menuLabel(l10n)),
                 ),
                 itemBuilder: (context) => [
                   for (final f in _RecentGamesTimeFilter.values)
                     CheckedPopupMenuItem<_RecentGamesTimeFilter>(
                       value: f,
                       checked: f == _filter,
-                      child: Text(f.menuLabel),
+                      child: Text(f.menuLabel(l10n)),
                     ),
                 ],
               )
@@ -827,12 +823,12 @@ class _ProfileRecentGamesModuleState extends State<ProfileRecentGamesModule> {
               physics: kProfileHorizontalCarouselPhysics,
               children: [
                 ProfileCarouselAddPromptCard(
-                  message: kProfileUntilFirstGameMessage,
+                  message: l10n.profileEmptyRecentGames,
                   colors: c,
                   width: kProfileCarouselCardWidth,
                   height: cardHeight,
                   onTap: () => context.go(AppRoutes.lobby),
-                  semanticsLabel: 'Open lobby to host or join a game',
+                  semanticsLabel: l10n.profileOpenLobbySemantics,
                 ),
               ],
             ),
@@ -857,7 +853,7 @@ class _ProfileRecentGamesModuleState extends State<ProfileRecentGamesModule> {
               physics: kProfileHorizontalCarouselPhysics,
               children: [
                 ProfileCarouselPlaceholderCard(
-                  message: 'No matches for this filter.',
+                  message: l10n.profileNoMatchesFilter,
                   colors: c,
                   width: kProfileCarouselCardWidth,
                   height: cardHeight,
@@ -1084,7 +1080,8 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
     final secs = m.durationSecondsEffective;
     final participants = m.participantSnapshots;
     final resultColor = _recentMatchResultColor(m, colors);
-    final resultLabel = _recentMatchResultLabel(m);
+    final l10n = AppLocalizations.of(context);
+    final resultLabel = _recentMatchResultLabel(m, l10n);
     final n = _recentMatchPlayerCount(m);
     final playerLine = '$n ${n == 1 ? 'player' : 'players'}';
 
@@ -1225,7 +1222,7 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
                   shadowColor: Colors.transparent,
                 ),
                 child: Text(
-                  'Show more',
+                  l10n.profileShowMore,
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
@@ -1291,7 +1288,7 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Standings',
+              l10n.profileStandings,
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
                     color: overlaySecondary,
                     fontWeight: FontWeight.w700,
@@ -1336,7 +1333,7 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
                     size: 18,
                     color: overlayPrimary,
                   ),
-                  tooltip: 'Close',
+                  tooltip: l10n.commonClose,
                   padding: EdgeInsets.zero,
                   visualDensity: VisualDensity.compact,
                   constraints: const BoxConstraints(
@@ -1380,7 +1377,7 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
               child: SingleChildScrollView(
                 child: standingsBlock ??
                     Text(
-                      'No player details saved for this match.',
+                      l10n.profileNoPlayerDetails,
                       style: metaStripStyle,
                     ),
               ),
@@ -1459,11 +1456,11 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
       child: Semantics(
         container: true,
         expanded: _expanded,
-        label: 'Recent match, $resultLabel, ${m.format}',
+        label: l10n.carouselRecentMatchA11y(resultLabel, m.format),
         value: '$playerLine. $dateStr $timeStr.',
         hint: _expanded
-            ? 'Close button returns to summary'
-            : 'Show more for full match details, or tap the card',
+            ? l10n.carouselCloseReturnsSummary
+            : l10n.carouselShowMoreDetails,
         child: card,
       ),
     );
@@ -1507,6 +1504,7 @@ class _ProfileDeckPerformanceSectionState
           ..sort((a, b) => b.gamesPlayed.compareTo(a.gamesPlayed));
 
     final colors = widget.colors;
+    final l10n = AppLocalizations.of(context);
 
     final deckTitleStyle = TypographyTokens.sectionTitle(colors.textPrimary);
     final showPlaceholder =
@@ -1514,14 +1512,14 @@ class _ProfileDeckPerformanceSectionState
     final needsAddPrompt = repoDecks.isEmpty;
     final placeholderMessage =
         needsAddPrompt
-            ? _kProfileAddDeckMessage
-            : kProfileUntilFirstGameMessage;
+            ? l10n.profileEmptyDeckPerf
+            : l10n.profileEmptyRecentGames;
 
     void openDecks() => context.go(AppRoutes.decks);
 
     Widget titleRow() {
       return ProfileSectionHeader(
-        title: 'Deck performance',
+        title: l10n.profileDeckPerformance,
         titleStyle: deckTitleStyle,
         colors: colors,
         count: repoDecks.length,
@@ -1532,7 +1530,7 @@ class _ProfileDeckPerformanceSectionState
             ? ProfileHeaderCircleButton(
                 icon: Icons.add_rounded,
                 colors: colors,
-                tooltip: 'Add deck',
+                tooltip: l10n.decksAddDeck,
                 onPressed: openDecks,
               )
             : null,
@@ -1550,7 +1548,7 @@ class _ProfileDeckPerformanceSectionState
               width: kProfileCarouselCardWidth,
               height: cardHeight,
               onTap: openDecks,
-              semanticsLabel: 'Add deck',
+              semanticsLabel: l10n.decksAddDeck,
             ),
           );
         } else {

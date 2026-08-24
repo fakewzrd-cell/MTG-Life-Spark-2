@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/game/session_exit_helpers.dart';
 import '../../core/network/session_providers.dart';
+import '../../l10n/app_localizations.dart';
 import '../../ui/components/shell_destructive_dialog.dart';
 import '../utils/app_router.dart';
 
@@ -20,17 +21,16 @@ class HomeNavBar {
     BuildContext context,
     WidgetRef ref,
   ) async {
+    final l10n = AppLocalizations.of(context);
     final concededEarly = localConcededWhileTableActive(ref);
     final quit = await showShellDestructiveConfirm(
       context: context,
-      title: 'Leave game?',
+      title: l10n.gameLeaveTitle,
       message: concededEarly
-          ? 'You will leave the live game and return home. Your concede '
-              'result will be saved before disconnecting.'
-          : 'You will leave the game and return home. Match stats only '
-              'save when the table finishes the game.',
-      confirmLabel: 'Leave',
-      cancelLabel: 'Stay',
+          ? l10n.gameLeaveMessageAfterConcede
+          : l10n.gameLeaveMessageActive,
+      confirmLabel: l10n.sessionLeaveConfirm,
+      cancelLabel: l10n.sessionLeaveStay,
     );
     if (!quit || !context.mounted) return;
     if (concededEarly) {

@@ -65,6 +65,8 @@ dependencies:
   file_saver: ^0.4.0
   image_picker: ^1.2.3
   path_provider: ^2.1.6
+  flutter_localizations:
+    sdk: flutter
 
 
 dev_dependencies:
@@ -83,6 +85,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true
 
   assets:
     - assets/images/

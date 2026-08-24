@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/game/game_providers.dart';
 import '../../../core/game/game_session_events.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/utils/game_haptics.dart';
 import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
@@ -48,30 +49,31 @@ class _TableToolsSheetState extends ConsumerState<_TableToolsSheet> {
     setState(() => _kind = kind);
   }
 
-  String get _actionLabel => switch (_kind) {
-        _ToolKind.d6 => 'Roll d6',
-        _ToolKind.d20 => 'Roll d20',
-        _ToolKind.coin => 'Flip coin',
+  String _actionLabel(AppLocalizations l10n) => switch (_kind) {
+        _ToolKind.d6 => l10n.tableToolsRollD6,
+        _ToolKind.d20 => l10n.tableToolsRollD20,
+        _ToolKind.coin => l10n.tableToolsFlipCoin,
       };
 
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
+    final l10n = AppLocalizations.of(context);
     return GameSheetBody(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const GameSheetHeader(
-            title: 'Tools',
-            subtitle: 'Everyone at the table sees the result.',
+          GameSheetHeader(
+            title: l10n.tableToolsTitle,
+            subtitle: l10n.tableToolsSubtitle,
           ),
           SizedBox(height: LayoutTokens.gr3),
           Row(
             children: [
               Expanded(
                 child: _ToolChip(
-                  label: 'd6',
+                  label: l10n.tableToolsD6,
                   selected: _kind == _ToolKind.d6,
                   onTap: () => _select(_ToolKind.d6),
                 ),
@@ -79,7 +81,7 @@ class _TableToolsSheetState extends ConsumerState<_TableToolsSheet> {
               SizedBox(width: LayoutTokens.gr1),
               Expanded(
                 child: _ToolChip(
-                  label: 'd20',
+                  label: l10n.tableToolsD20,
                   selected: _kind == _ToolKind.d20,
                   onTap: () => _select(_ToolKind.d20),
                 ),
@@ -87,7 +89,7 @@ class _TableToolsSheetState extends ConsumerState<_TableToolsSheet> {
               SizedBox(width: LayoutTokens.gr1),
               Expanded(
                 child: _ToolChip(
-                  label: 'Coin',
+                  label: l10n.tableToolsCoin,
                   selected: _kind == _ToolKind.coin,
                   onTap: () => _select(_ToolKind.coin),
                 ),
@@ -99,7 +101,7 @@ class _TableToolsSheetState extends ConsumerState<_TableToolsSheet> {
             height: 72,
             child: Center(
               child: Text(
-                'Result pops up for the whole table',
+                l10n.tableToolsResultHint,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: colors.textSecondary,
@@ -123,7 +125,7 @@ class _TableToolsSheetState extends ConsumerState<_TableToolsSheet> {
                 ),
               ),
               child: Text(
-                _actionLabel,
+                _actionLabel(l10n),
                 style: TextStyle(
                   fontSize: FontTokens.title,
                   fontWeight: FontWeight.w700,
