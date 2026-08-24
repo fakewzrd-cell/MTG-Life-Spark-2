@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/persistence/providers.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../shared/utils/app_router.dart';
+import '../../shared/widgets/block_system_app_exit.dart';
 import '../../shared/widgets/brand_logo.dart';
 import '../../shared/widgets/game_icon.dart';
 import '../../ui/tokens/layout_tokens.dart';
@@ -92,7 +93,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
-    return Scaffold(
+    return BlockSystemAppExit(
+      child: Scaffold(
       body: SafeArea(
         child: Column(
           children: [
@@ -146,6 +148,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 }

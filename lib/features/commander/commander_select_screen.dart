@@ -14,6 +14,7 @@ import '../../core/game/scryfall_service.dart';
 import '../../core/models/player_deck.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/mana/mana_symbol_assets.dart';
+import '../../shared/widgets/block_system_app_exit.dart';
 import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
@@ -306,7 +307,8 @@ class _CommanderSelectScreenState
   @override
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
-    return Scaffold(
+    return BlockSystemAppExit(
+      child: Scaffold(
       backgroundColor: colors.backgroundPrimary,
       appBar: UiAppBar(
         title: _pickingPartner ? 'Select Partner' : _title,
@@ -400,6 +402,7 @@ class _CommanderSelectScreenState
             ),
         ],
       ),
+    ),
     );
   }
 

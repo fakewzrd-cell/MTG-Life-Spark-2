@@ -6,6 +6,7 @@ import '../../core/models/player_identity.dart';
 import '../../core/models/player_profile.dart';
 import '../../core/persistence/providers.dart';
 import '../../shared/utils/app_router.dart';
+import '../../shared/widgets/block_system_app_exit.dart';
 import '../../shared/widgets/brand_logo.dart';
 import '../../ui/components/ui_button.dart';
 import '../../ui/theme/app_color_tokens.dart';
@@ -37,7 +38,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   Widget build(BuildContext context) {
     final colors = AppColorTokens.of(context);
 
-    return Scaffold(
+    return BlockSystemAppExit(
+      child: Scaffold(
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -97,6 +99,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 }

@@ -41,7 +41,8 @@ void main() {
     expect(find.text('Edit profile'), findsOneWidget);
     expect(find.text('Back up profile'), findsOneWidget);
     expect(find.text('Change your name or avatar'), findsOneWidget);
-    expect(find.text('Save a backup file on this phone'), findsOneWidget);
+    expect(find.text('Save profile, decks, games, and feedback on this phone'),
+        findsOneWidget);
   });
 
   testWidgets('choosing Edit profile returns editProfile', (tester) async {

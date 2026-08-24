@@ -18,6 +18,7 @@ import '../../core/debug/app_log.dart';
 import '../../core/models/game_feedback.dart';
 import '../../shared/utils/app_router.dart';
 import '../../shared/utils/wizard_rank_titles.dart';
+import '../../shared/widgets/block_system_app_exit.dart';
 import '../../shared/widgets/player_feedback_widgets.dart';
 import '../../ui/components/ui_button.dart';
 import '../../ui/tokens/layout_tokens.dart';
@@ -138,7 +139,8 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
         : null;
     final isWinner = winner?.playerId == game.localPlayerId;
 
-    return Scaffold(
+    return BlockSystemAppExit(
+      child: Scaffold(
       backgroundColor: colors.backgroundPrimary,
       body: SafeArea(
         child: _saving
@@ -305,6 +307,7 @@ class _EndGameScreenState extends ConsumerState<EndGameScreen> {
                 ),
               ),
       ),
+    ),
     );
   }
 

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/network/session_providers.dart';
 import '../../ui/components/app_bottom_nav_bar.dart';
 import '../../ui/theme/app_system_ui.dart';
+import 'block_system_app_exit.dart';
 import 'session_leave_dialog.dart';
 
 /// Shell scaffold with a floating dock-style bottom nav.
@@ -43,17 +44,19 @@ class MainShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return AppSystemUiScope(
-      matchBottomNav: true,
-      child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        extendBody: true,
-        body: navigationShell,
-        bottomNavigationBar: AppBottomNavBar(
-          selectedIndex: navigationShell.currentIndex,
-          onDestinationSelected: (index) =>
-              _onDestinationSelected(context, ref, index),
-          destinations: AppBottomNavBar.shellDestinations,
+    return BlockSystemAppExit(
+      child: AppSystemUiScope(
+        matchBottomNav: true,
+        child: Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          extendBody: true,
+          body: navigationShell,
+          bottomNavigationBar: AppBottomNavBar(
+            selectedIndex: navigationShell.currentIndex,
+            onDestinationSelected: (index) =>
+                _onDestinationSelected(context, ref, index),
+            destinations: AppBottomNavBar.shellDestinations,
+          ),
         ),
       ),
     );

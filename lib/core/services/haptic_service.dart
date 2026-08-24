@@ -10,8 +10,14 @@ class HapticService {
 
   final Ref _ref;
 
-  bool get _enabled =>
-      _ref.read(settingsRepositoryProvider).settings.hapticEnabled;
+  bool get _enabled {
+    try {
+      return _ref.read(settingsRepositoryProvider).settings.hapticEnabled;
+    } catch (_) {
+      // Hive not open yet / widget tests without settings box.
+      return false;
+    }
+  }
 
   /// Light tap — use for counter increments, life +1.
   Future<void> light() async {
