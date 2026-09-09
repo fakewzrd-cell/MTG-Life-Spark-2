@@ -11,7 +11,12 @@ void showUiSnackBar(
   final colors = AppColorTokens.of(context);
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
-      content: Text(message),
+      content: Text(
+        message,
+        style: TextStyle(
+          color: isError ? colors.onError : colors.textPrimary,
+        ),
+      ),
       backgroundColor: isError ? colors.error : colors.surfaceElevated,
     ),
   );

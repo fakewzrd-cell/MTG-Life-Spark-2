@@ -82,9 +82,7 @@ void main() {
             child: SizedBox(
               width: 320,
               child: PhaseNavCluster(
-                game: _minimalGame().copyWith(
-                  currentPhase: GamePhase.combat,
-                ),
+                game: _minimalGame().copyWith(currentPhase: GamePhase.combat),
                 accentColor: Colors.purple,
                 onBack: () {},
                 onNext: () {},
@@ -126,11 +124,69 @@ void main() {
     );
 
     final button = tester.widget<Material>(
-      find.ancestor(
-        of: find.text('End turn'),
-        matching: find.byType(Material),
-      ).first,
+      find
+          .ancestor(of: find.text('End turn'), matching: find.byType(Material))
+          .first,
     );
     expect(button, isNotNull);
+  });
+
+  test('host can skip another seat; tap End turn is local-only', () {
+    final localTurn = _minimalGame();
+    expect(localTurn.canTapEndTurn, isTrue);
+    expect(localTurn.canHostSkipTurn, isFalse);
+
+    final hostWaiting = _minimalGame(localTurn: false);
+    expect(hostWaiting.canTapEndTurn, isFalse);
+    expect(hostWaiting.canHostSkipTurn, isTrue);
+
+    final guestWaiting = hostWaiting.copyWith(isHost: false);
+    expect(guestWaiting.canTapEndTurn, isFalse);
+    expect(guestWaiting.canHostSkipTurn, isFalse);
+
+    final hostTimeout = hostWaiting.copyWith(timeoutActive: true);
+    expect(hostTimeout.canTapEndTurn, isFalse);
+    expect(hostTimeout.canHostSkipTurn, isFalse);
+  });
+
+  testWidgets('inactive End turn ignores tap; host long-press skips', (
+    tester,
+  ) async {
+    var taps = 0;
+    var skips = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark(),
+        localizationsDelegates: testLocalizationDelegates,
+        supportedLocales: testSupportedLocales,
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 420,
+              child: PhaseNavCluster(
+                game: _minimalGame(localTurn: false),
+                accentColor: Colors.purple,
+                onEndTurn: () => taps++,
+                endTurnEnabled: false,
+                onEndTurnLongPress: () => skips++,
+                endTurnSkipName: 'Bob',
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.textContaining('Hold to skip Bob'), findsOneWidget);
+
+    await tester.tap(find.text('End turn'));
+    await tester.pump();
+    expect(taps, 0);
+    expect(skips, 0);
+
+    await tester.longPress(find.text('End turn'));
+    await tester.pump();
+    expect(taps, 0);
+    expect(skips, 1);
   });
 }

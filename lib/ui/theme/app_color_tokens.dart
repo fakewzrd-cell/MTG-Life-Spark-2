@@ -39,6 +39,9 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
   final Color error;
   final Color emphasis;
 
+  /// Foreground that meets AA on [emphasis] fills (timeout CTAs, etc.).
+  Color get onEmphasis => ColorTokens.onColor(emphasis);
+
   static AppColorTokens of(BuildContext context) {
     return Theme.of(context).extension<AppColorTokens>()!;
   }
@@ -77,11 +80,13 @@ class AppColorTokens extends ThemeExtension<AppColorTokens> {
       textMuted: palette.lightTextMuted,
       primaryAccent: palette.lightPrimaryAccent,
       onAccent: ColorTokens.onColor(palette.lightPrimaryAccent),
-      onError: ColorTokens.onDanger,
-      success: ColorTokens.success,
-      warning: ColorTokens.warning,
-      error: ColorTokens.danger,
-      emphasis: palette.emphasis,
+      onError: ColorTokens.onColor(ColorTokens.lightDanger),
+      success: ColorTokens.lightSuccess,
+      warning: ColorTokens.lightWarning,
+      error: ColorTokens.lightDanger,
+      // Dark [palette.emphasis] is a pale highlight for dark surfaces (Fog is
+      // nearly white). Light mode needs the dark accent so HUD icons read.
+      emphasis: palette.lightPrimaryAccent,
     );
   }
 

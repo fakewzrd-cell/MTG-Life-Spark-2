@@ -662,6 +662,11 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String gameHoldToSkipPlayer(String name) {
+    return 'Appui long pour passer $name…';
+  }
+
+  @override
   String get gamePhaseBack => 'Retour';
 
   @override
@@ -1402,12 +1407,12 @@ class AppLocalizationsFr extends AppLocalizations {
       'Menaces envers vous d’abord. Ouvrez Infligés pour noter vos dégâts.';
 
   @override
-  String cmdDmgBarA11y(String remaining, String ko, String taken) {
-    return 'Dégâts Commander : $remaining sur $ko restants, $taken sur le pire track, toucher pour gérer';
+  String cmdDmgBarA11y(String taken, String ko) {
+    return 'Dégâts Commander $taken sur $ko, toucher pour gérer';
   }
 
   @override
-  String get cmdDmgLeft => 'restants';
+  String get cmdDmgShortLabel => 'CMD';
 
   @override
   String get cmdDmgHideDealt => 'Masquer infligés';

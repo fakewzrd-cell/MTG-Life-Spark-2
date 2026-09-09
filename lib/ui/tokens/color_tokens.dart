@@ -66,6 +66,11 @@ class ColorTokens {
   static const Color danger = Color(0xFFF87171);
   static const Color onDanger = Color(0xFF0B0B0F);
 
+  /// Darker semantic fills/icons for light surfaces (the dark values wash out).
+  static const Color lightSuccess = Color(0xFF15803D);
+  static const Color lightWarning = Color(0xFFB45309);
+  static const Color lightDanger = Color(0xFFB91C1C);
+
   /// Picks the more legible neutral foreground for an arbitrary opaque fill.
   static Color onColor(Color background) {
     final luminance = background.computeLuminance();

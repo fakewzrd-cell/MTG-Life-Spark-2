@@ -11,6 +11,9 @@ import '../../ui/tokens/layout_tokens.dart';
 /// Completes only after the intro finishes **and** [ready] is true (bootstrap
 /// done). On web, the HTML shell plays the clip once — Flutter stays black so
 /// we never flash a second static logo or Beta label.
+///
+/// Native launch is solid black. The player mounts hidden, starts playback,
+/// then fades in so the mark is never shown frozen before it moves.
 class BrandedSplash extends StatefulWidget {
   const BrandedSplash({
     super.key,
@@ -57,6 +60,12 @@ class BrandedSplash extends StatefulWidget {
   /// Fade-in for [tagline] — timed to the LIFE SPARK wordmark in the clip.
   static const taglineFade = Duration(milliseconds: 320);
 
+  /// Fade the clip in from black once playback has started (no freeze-frame).
+  static const introFade = Duration(milliseconds: 160);
+
+  /// If the decoder never reports playback, leave black rather than hang forever.
+  static const videoStartTimeout = Duration(milliseconds: 2000);
+
   /// Source-media time when "LIFE SPARK" appears in [logoAnimationAsset] (~1.25s).
   static const taglineAtSource = Duration(milliseconds: 1250);
 
@@ -86,6 +95,7 @@ class _BrandedSplashState extends State<BrandedSplash> {
   var _introFinished = false;
   var _taglineVisible = false;
   var _videoReady = false;
+  var _introOpaque = false;
 
   bool get _playVideo =>
       widget.useVideoIntro ?? BrandedSplash.defaultUseVideoIntro;
@@ -134,10 +144,17 @@ class _BrandedSplashState extends State<BrandedSplash> {
       await controller.seekTo(Duration.zero);
       if (!mounted) return;
       controller.addListener(_onVideoTick);
+      // Mount the player first (opacity 0) so Android has a surface, then play.
       setState(() => _videoReady = true);
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!mounted || _video != controller) return;
         await controller.play();
+        if (!mounted) return;
+        _revealIntroIfPlaying();
+      });
+      Future<void>.delayed(BrandedSplash.videoStartTimeout, () {
+        if (!mounted || _introFinished || _introOpaque) return;
+        _markIntroFinished();
       });
     } catch (_) {
       if (!mounted) return;
@@ -155,6 +172,16 @@ class _BrandedSplashState extends State<BrandedSplash> {
     if (c == null) return;
     c.removeListener(_onVideoTick);
     await c.dispose();
+  }
+
+  void _revealIntroIfPlaying() {
+    final c = _video;
+    if (_introOpaque || c == null) return;
+    final value = c.value;
+    if (!value.isInitialized) return;
+    if (!value.isPlaying && value.position <= Duration.zero) return;
+    _introOpaque = true;
+    if (mounted) setState(() {});
   }
 
   void _showTagline() {
@@ -181,7 +208,9 @@ class _BrandedSplashState extends State<BrandedSplash> {
 
   void _onVideoTick() {
     final c = _video;
-    if (c == null || !c.value.isInitialized || _introFinished) return;
+    if (c == null || !c.value.isInitialized) return;
+    _revealIntroIfPlaying();
+    if (_introFinished) return;
     final value = c.value;
     final duration = value.duration;
     if (duration <= Duration.zero) return;
@@ -301,19 +330,28 @@ class _BrandedSplashState extends State<BrandedSplash> {
     }
 
     final video = _video;
-    if (!_videoReady || video == null || !video.value.isInitialized) {
-      return const SizedBox.shrink();
+    final showPlayer =
+        _videoReady && video != null && video.value.isInitialized;
+
+    Widget child = const SizedBox.shrink();
+    if (showPlayer) {
+      child = ClipRect(
+        child: FittedBox(
+          fit: BoxFit.contain,
+          child: SizedBox(
+            width: video.value.size.width,
+            height: video.value.size.height,
+            child: VideoPlayer(video),
+          ),
+        ),
+      );
     }
 
-    return ClipRect(
-      child: FittedBox(
-        fit: BoxFit.contain,
-        child: SizedBox(
-          width: video.value.size.width,
-          height: video.value.size.height,
-          child: VideoPlayer(video),
-        ),
-      ),
+    return AnimatedOpacity(
+      opacity: _introOpaque && showPlayer ? 1 : 0,
+      duration: BrandedSplash.introFade,
+      curve: Curves.easeOut,
+      child: child,
     );
   }
 }

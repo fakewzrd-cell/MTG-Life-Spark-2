@@ -112,12 +112,15 @@ void main() {
     await _pumpSettleBrief(tester);
 
     expect(find.text('Show more'), findsOneWidget);
+    expect(find.textContaining('1 vs 1'), findsOneWidget);
+    expect(find.textContaining('2 players'), findsNothing);
     await tester.tap(find.text('Show more'));
     await _pumpSettleBrief(tester);
 
     expect(find.text('Standings'), findsOneWidget);
     expect(find.textContaining('1:12:15'), findsOneWidget);
-    expect(find.textContaining('2 players'), findsWidgets);
+    expect(find.textContaining('1 vs 1'), findsOneWidget);
+    expect(find.textContaining('2 players'), findsNothing);
     expect(find.textContaining('Friday EDH'), findsOneWidget);
 
     // Life is its own widget — must remain findable even with long titles.
@@ -169,6 +172,7 @@ void main() {
     await _pumpSettleBrief(tester);
 
     expect(find.text('Standings'), findsOneWidget);
+    expect(find.textContaining('Free for all · 5 players'), findsOneWidget);
     expect(find.text('40'), findsOneWidget);
     // Last place may need a scroll; drag the standings scroller.
     final lastLife = find.text('-8');

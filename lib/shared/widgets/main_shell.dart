@@ -9,6 +9,24 @@ import '../../ui/theme/app_system_ui.dart';
 import 'block_system_app_exit.dart';
 import 'session_leave_dialog.dart';
 
+/// Pops Host/Join back to the lobby hub, then switches shell tabs next frame.
+///
+/// [StatefulNavigationShell.goBranch] is `GoRouter.go`. Two `go()` calls in
+/// the same turn keep only the last location, which left `/lobby/host` on the
+/// lobby branch after confirming leave and opening Profile.
+void resetLobbyBranchThenGoTab({
+  required BuildContext context,
+  required StatefulNavigationShell navigationShell,
+  required int destinationIndex,
+  int lobbyBranchIndex = 1,
+}) {
+  navigationShell.goBranch(lobbyBranchIndex, initialLocation: true);
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (!context.mounted) return;
+    navigationShell.goBranch(destinationIndex);
+  });
+}
+
 /// Shell scaffold with a floating dock-style bottom nav.
 class MainShell extends ConsumerWidget {
   const MainShell({
@@ -34,10 +52,18 @@ class MainShell extends ConsumerWidget {
       // Host/Join sit on nested lobby routes. Ending the session must also
       // reset that branch — otherwise returning to Lobby restores a dead
       // Host screen with no active seat/QR session.
-      navigationShell.goBranch(
-        _lobbyBranchIndex,
-        initialLocation: true,
+      //
+      // goBranch() is GoRouter.go(). Two go() calls in the same turn keep
+      // only the last one, so resetting lobby then immediately going to
+      // Profile left /lobby/host on the stack. Apply the reset this frame
+      // and switch tabs on the next.
+      resetLobbyBranchThenGoTab(
+        context: context,
+        navigationShell: navigationShell,
+        destinationIndex: index,
+        lobbyBranchIndex: _lobbyBranchIndex,
       );
+      return;
     }
 
     navigationShell.goBranch(index);

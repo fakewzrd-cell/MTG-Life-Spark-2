@@ -72,13 +72,15 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
     super.initState();
     _deltaAnim = AnimationController(
       vsync: this,
-      duration: MotionTokens.fast,
+      duration: MotionTokens.lifeDelta,
     );
-    _deltaFade = CurvedAnimation(parent: _deltaAnim, curve: Curves.easeOut);
+    // Stay fully visible for the first half, then fade/float out.
+    const holdThenMove = Interval(0.5, 1.0, curve: Curves.easeOut);
+    _deltaFade = CurvedAnimation(parent: _deltaAnim, curve: holdThenMove);
     _deltaSlide = Tween<Offset>(
       begin: Offset.zero,
       end: const Offset(0, -1.5),
-    ).animate(CurvedAnimation(parent: _deltaAnim, curve: Curves.easeOut));
+    ).animate(CurvedAnimation(parent: _deltaAnim, curve: holdThenMove));
   }
 
   @override
@@ -101,7 +103,10 @@ class _LifeCounterWidgetState extends State<LifeCounterWidget>
   void _change(int delta) {
     if (widget.isEliminated) return;
     widget.onLifeChange(delta);
-    setState(() => _lastDelta = delta);
+    final coalesce = _lastDelta != null &&
+        _deltaAnim.status != AnimationStatus.dismissed &&
+        _deltaAnim.value < 1.0;
+    setState(() => _lastDelta = coalesce ? _lastDelta! + delta : delta);
     _deltaAnim.forward(from: 0);
     _pulseHaptic();
   }

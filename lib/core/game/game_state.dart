@@ -20,6 +20,7 @@ class GameState {
   // Timeout
   final bool timeoutActive;
   final DateTime? timeoutStartTime;
+
   /// Timed pause while someone rules-checks or resolves. Null = no auto-end.
   final int? timeoutDurationSeconds;
 
@@ -33,6 +34,7 @@ class GameState {
   final List<AllianceProposal> pendingProposals;
   final List<AllianceProposal> scheduledProposals;
   final bool alliancesEnabled;
+
   /// Lobby toggle — when false, Table hides team assign / team chrome.
   final bool teamsEnabled;
 
@@ -193,22 +195,27 @@ class GameState {
       currentPhase: currentPhase ?? this.currentPhase,
       roundNumber: roundNumber ?? this.roundNumber,
       priorityHeld: priorityHeld ?? this.priorityHeld,
-      priorityHolderId: identical(priorityHolderId, _sentinel)
-          ? this.priorityHolderId
-          : priorityHolderId as String?,
+      priorityHolderId:
+          identical(priorityHolderId, _sentinel)
+              ? this.priorityHolderId
+              : priorityHolderId as String?,
       timeoutActive: timeoutActive ?? this.timeoutActive,
-      timeoutStartTime: identical(timeoutStartTime, _sentinel)
-          ? this.timeoutStartTime
-          : timeoutStartTime as DateTime?,
-      timeoutDurationSeconds: identical(timeoutDurationSeconds, _sentinel)
-          ? this.timeoutDurationSeconds
-          : timeoutDurationSeconds as int?,
-      monarchPlayerId: identical(monarchPlayerId, _sentinel)
-          ? this.monarchPlayerId
-          : monarchPlayerId as String?,
-      initiativePlayerId: identical(initiativePlayerId, _sentinel)
-          ? this.initiativePlayerId
-          : initiativePlayerId as String?,
+      timeoutStartTime:
+          identical(timeoutStartTime, _sentinel)
+              ? this.timeoutStartTime
+              : timeoutStartTime as DateTime?,
+      timeoutDurationSeconds:
+          identical(timeoutDurationSeconds, _sentinel)
+              ? this.timeoutDurationSeconds
+              : timeoutDurationSeconds as int?,
+      monarchPlayerId:
+          identical(monarchPlayerId, _sentinel)
+              ? this.monarchPlayerId
+              : monarchPlayerId as String?,
+      initiativePlayerId:
+          identical(initiativePlayerId, _sentinel)
+              ? this.initiativePlayerId
+              : initiativePlayerId as String?,
       dayNight: dayNight ?? this.dayNight,
       alliances: alliances ?? this.alliances,
       pendingProposals: pendingProposals ?? this.pendingProposals,
@@ -216,33 +223,36 @@ class GameState {
       alliancesEnabled: alliancesEnabled ?? this.alliancesEnabled,
       teamsEnabled: teamsEnabled ?? this.teamsEnabled,
       gameOver: gameOver ?? this.gameOver,
-      winnerPlayerId: identical(winnerPlayerId, _sentinel)
-          ? this.winnerPlayerId
-          : winnerPlayerId as String?,
+      winnerPlayerId:
+          identical(winnerPlayerId, _sentinel)
+              ? this.winnerPlayerId
+              : winnerPlayerId as String?,
       isHost: isHost ?? this.isHost,
       localPlayerId: localPlayerId ?? this.localPlayerId,
       teamAssignments: teamAssignments ?? this.teamAssignments,
-      gameStartTime: identical(gameStartTime, _sentinel)
-          ? this.gameStartTime
-          : gameStartTime as DateTime?,
+      gameStartTime:
+          identical(gameStartTime, _sentinel)
+              ? this.gameStartTime
+              : gameStartTime as DateTime?,
       awaitingFirstPlayerRoll:
           awaitingFirstPlayerRoll ?? this.awaitingFirstPlayerRoll,
       firstPlayerRolls: firstPlayerRolls ?? this.firstPlayerRolls,
-      showTurnOrderReveal:
-          showTurnOrderReveal ?? this.showTurnOrderReveal,
+      showTurnOrderReveal: showTurnOrderReveal ?? this.showTurnOrderReveal,
       autoKoFromLife: autoKoFromLife ?? this.autoKoFromLife,
       autoKoFromPoison: autoKoFromPoison ?? this.autoKoFromPoison,
       autoKoFromCommanderDamage:
           autoKoFromCommanderDamage ?? this.autoKoFromCommanderDamage,
       commanderDamageReducesLife:
           commanderDamageReducesLife ?? this.commanderDamageReducesLife,
-      turnTimeLimitSeconds: identical(turnTimeLimitSeconds, _sentinel)
-          ? this.turnTimeLimitSeconds
-          : turnTimeLimitSeconds as int?,
+      turnTimeLimitSeconds:
+          identical(turnTimeLimitSeconds, _sentinel)
+              ? this.turnTimeLimitSeconds
+              : turnTimeLimitSeconds as int?,
       trackTurnDuration: trackTurnDuration ?? this.trackTurnDuration,
-      turnStartTime: identical(turnStartTime, _sentinel)
-          ? this.turnStartTime
-          : turnStartTime as DateTime?,
+      turnStartTime:
+          identical(turnStartTime, _sentinel)
+              ? this.turnStartTime
+              : turnStartTime as DateTime?,
       phasesEnabled: phasesEnabled ?? this.phasesEnabled,
       planechaseEnabled: planechaseEnabled ?? this.planechaseEnabled,
       archenemyEnabled: archenemyEnabled ?? this.archenemyEnabled,
@@ -253,9 +263,10 @@ class GameState {
       sessionTurnCounter: sessionTurnCounter ?? this.sessionTurnCounter,
       sessionActionLog: sessionActionLog ?? this.sessionActionLog,
       stackItems: stackItems ?? this.stackItems,
-      stackApnapAnchorPlayerId: identical(stackApnapAnchorPlayerId, _sentinel)
-          ? this.stackApnapAnchorPlayerId
-          : stackApnapAnchorPlayerId as String?,
+      stackApnapAnchorPlayerId:
+          identical(stackApnapAnchorPlayerId, _sentinel)
+              ? this.stackApnapAnchorPlayerId
+              : stackApnapAnchorPlayerId as String?,
     );
   }
 
@@ -267,6 +278,12 @@ class GameState {
   }
 
   bool get isLocalPlayersTurn => activePlayerId == localPlayerId;
+
+  /// Tap End turn — your seat only. Timeout pauses the table.
+  bool get canTapEndTurn => !timeoutActive && isLocalPlayersTurn;
+
+  /// Host may skip another seat's turn with a long-press (not a tap).
+  bool get canHostSkipTurn => !timeoutActive && isHost && !isLocalPlayersTurn;
 
   /// Players sorted by [turnOrder], with any missing IDs appended.
   List<PlayerGameState> get playersInTurnOrder {
@@ -388,50 +405,47 @@ class GameState {
   // ── Snapshot serialisation ──────────────────────────────────────────────
 
   Map<String, dynamic> toSnapshotJson() => {
-        'players': players.map((p) => p.toJson()).toList(),
-        'turnOrder': turnOrder,
-        'activePlayerIndex': activePlayerIndex,
-        'currentPhase': currentPhase.name,
-        'roundNumber': roundNumber,
-        'priorityHeld': priorityHeld,
-        'priorityHolderId': priorityHolderId,
-        'monarchPlayerId': monarchPlayerId,
-        'initiativePlayerId': initiativePlayerId,
-        'dayNight': dayNight.name,
-        'alliances': alliances.map((a) => a.toJson()).toList(),
-        'pendingProposals':
-            pendingProposals.map((p) => p.toJson()).toList(),
-        'scheduledProposals':
-            scheduledProposals.map((p) => p.toJson()).toList(),
-        'alliancesEnabled': alliancesEnabled,
-        'teamsEnabled': teamsEnabled,
-        'gameOver': gameOver,
-        'winnerPlayerId': winnerPlayerId,
-        'teamAssignments': teamAssignments.map((k, v) => MapEntry(k, v)),
-        'gameStartTime': gameStartTime?.toIso8601String(),
-        'awaitingFirstPlayerRoll': awaitingFirstPlayerRoll,
-        'firstPlayerRolls': firstPlayerRolls,
-        'autoKoFromLife': autoKoFromLife,
-        'autoKoFromPoison': autoKoFromPoison,
-        'autoKoFromCommanderDamage': autoKoFromCommanderDamage,
-        'commanderDamageReducesLife': commanderDamageReducesLife,
-        'turnTimeLimitSeconds': turnTimeLimitSeconds,
-        'trackTurnDuration': trackTurnDuration,
-        'turnStartTime': turnStartTime?.toIso8601String(),
-        'phasesEnabled': phasesEnabled,
-        'planechaseEnabled': planechaseEnabled,
-        'archenemyEnabled': archenemyEnabled,
-        'bountyEnabled': bountyEnabled,
-        'currentPlanarIndex': currentPlanarIndex,
-        'currentSchemeIndex': currentSchemeIndex,
-        'currentBountyIndex': currentBountyIndex,
-        'sessionTurnCounter': sessionTurnCounter,
-        'sessionActionLog':
-            sessionActionLog.map((e) => e.toJson()).toList(),
-        'stackItems': stackItems.map((e) => e.toJson()).toList(),
-        if (stackApnapAnchorPlayerId != null)
-          'stackApnapAnchorPlayerId': stackApnapAnchorPlayerId,
-      };
+    'players': players.map((p) => p.toJson()).toList(),
+    'turnOrder': turnOrder,
+    'activePlayerIndex': activePlayerIndex,
+    'currentPhase': currentPhase.name,
+    'roundNumber': roundNumber,
+    'priorityHeld': priorityHeld,
+    'priorityHolderId': priorityHolderId,
+    'monarchPlayerId': monarchPlayerId,
+    'initiativePlayerId': initiativePlayerId,
+    'dayNight': dayNight.name,
+    'alliances': alliances.map((a) => a.toJson()).toList(),
+    'pendingProposals': pendingProposals.map((p) => p.toJson()).toList(),
+    'scheduledProposals': scheduledProposals.map((p) => p.toJson()).toList(),
+    'alliancesEnabled': alliancesEnabled,
+    'teamsEnabled': teamsEnabled,
+    'gameOver': gameOver,
+    'winnerPlayerId': winnerPlayerId,
+    'teamAssignments': teamAssignments.map((k, v) => MapEntry(k, v)),
+    'gameStartTime': gameStartTime?.toIso8601String(),
+    'awaitingFirstPlayerRoll': awaitingFirstPlayerRoll,
+    'firstPlayerRolls': firstPlayerRolls,
+    'autoKoFromLife': autoKoFromLife,
+    'autoKoFromPoison': autoKoFromPoison,
+    'autoKoFromCommanderDamage': autoKoFromCommanderDamage,
+    'commanderDamageReducesLife': commanderDamageReducesLife,
+    'turnTimeLimitSeconds': turnTimeLimitSeconds,
+    'trackTurnDuration': trackTurnDuration,
+    'turnStartTime': turnStartTime?.toIso8601String(),
+    'phasesEnabled': phasesEnabled,
+    'planechaseEnabled': planechaseEnabled,
+    'archenemyEnabled': archenemyEnabled,
+    'bountyEnabled': bountyEnabled,
+    'currentPlanarIndex': currentPlanarIndex,
+    'currentSchemeIndex': currentSchemeIndex,
+    'currentBountyIndex': currentBountyIndex,
+    'sessionTurnCounter': sessionTurnCounter,
+    'sessionActionLog': sessionActionLog.map((e) => e.toJson()).toList(),
+    'stackItems': stackItems.map((e) => e.toJson()).toList(),
+    if (stackApnapAnchorPlayerId != null)
+      'stackApnapAnchorPlayerId': stackApnapAnchorPlayerId,
+  };
 
   factory GameState.fromSnapshotJson(
     Map<String, dynamic> json, {
@@ -439,9 +453,10 @@ class GameState {
     required String localPlayerId,
   }) {
     return GameState(
-      players: (json['players'] as List<dynamic>)
-          .map((e) => PlayerGameState.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      players:
+          (json['players'] as List<dynamic>)
+              .map((e) => PlayerGameState.fromJson(e as Map<String, dynamic>))
+              .toList(),
       turnOrder: List<String>.from(json['turnOrder'] as List),
       activePlayerIndex: (json['activePlayerIndex'] as num).toInt(),
       currentPhase: GamePhase.normalize(json['currentPhase'] as String?),
@@ -454,15 +469,18 @@ class GameState {
         (d) => d.name == json['dayNight'],
         orElse: () => DayNightState.none,
       ),
-      alliances: (json['alliances'] as List<dynamic>?)
+      alliances:
+          (json['alliances'] as List<dynamic>?)
               ?.map((e) => Alliance.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
-      pendingProposals: (json['pendingProposals'] as List<dynamic>?)
+      pendingProposals:
+          (json['pendingProposals'] as List<dynamic>?)
               ?.map((e) => AllianceProposal.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
-      scheduledProposals: (json['scheduledProposals'] as List<dynamic>?)
+      scheduledProposals:
+          (json['scheduledProposals'] as List<dynamic>?)
               ?.map((e) => AllianceProposal.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
@@ -472,16 +490,21 @@ class GameState {
       winnerPlayerId: json['winnerPlayerId'] as String?,
       isHost: isHost,
       localPlayerId: localPlayerId,
-      teamAssignments: (json['teamAssignments'] as Map<String, dynamic>?)
-              ?.map((k, v) => MapEntry(k, (v as num).toInt())) ??
+      teamAssignments:
+          (json['teamAssignments'] as Map<String, dynamic>?)?.map(
+            (k, v) => MapEntry(k, (v as num).toInt()),
+          ) ??
           {},
-      gameStartTime: json['gameStartTime'] != null
-          ? DateTime.tryParse(json['gameStartTime'] as String)
-          : null,
+      gameStartTime:
+          json['gameStartTime'] != null
+              ? DateTime.tryParse(json['gameStartTime'] as String)
+              : null,
       awaitingFirstPlayerRoll:
           json['awaitingFirstPlayerRoll'] as bool? ?? false,
-      firstPlayerRolls: (json['firstPlayerRolls'] as Map<String, dynamic>?)
-              ?.map((k, v) => MapEntry(k, (v as num).toInt())) ??
+      firstPlayerRolls:
+          (json['firstPlayerRolls'] as Map<String, dynamic>?)?.map(
+            (k, v) => MapEntry(k, (v as num).toInt()),
+          ) ??
           {},
       autoKoFromLife: json['autoKoFromLife'] as bool? ?? true,
       autoKoFromPoison: json['autoKoFromPoison'] as bool? ?? true,
@@ -489,12 +512,12 @@ class GameState {
           json['autoKoFromCommanderDamage'] as bool? ?? true,
       commanderDamageReducesLife:
           json['commanderDamageReducesLife'] as bool? ?? true,
-      turnTimeLimitSeconds:
-          (json['turnTimeLimitSeconds'] as num?)?.toInt(),
+      turnTimeLimitSeconds: (json['turnTimeLimitSeconds'] as num?)?.toInt(),
       trackTurnDuration: json['trackTurnDuration'] as bool? ?? false,
-      turnStartTime: json['turnStartTime'] != null
-          ? DateTime.tryParse(json['turnStartTime'] as String)
-          : null,
+      turnStartTime:
+          json['turnStartTime'] != null
+              ? DateTime.tryParse(json['turnStartTime'] as String)
+              : null,
       phasesEnabled: json['phasesEnabled'] as bool? ?? false,
       planechaseEnabled: json['planechaseEnabled'] as bool? ?? false,
       archenemyEnabled: json['archenemyEnabled'] as bool? ?? false,
@@ -503,11 +526,13 @@ class GameState {
       currentSchemeIndex: (json['currentSchemeIndex'] as num?)?.toInt() ?? 0,
       currentBountyIndex: (json['currentBountyIndex'] as num?)?.toInt() ?? 0,
       sessionTurnCounter: (json['sessionTurnCounter'] as num?)?.toInt() ?? 1,
-      sessionActionLog: (json['sessionActionLog'] as List<dynamic>?)
+      sessionActionLog:
+          (json['sessionActionLog'] as List<dynamic>?)
               ?.map((e) => GameLogEntry.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
-      stackItems: (json['stackItems'] as List<dynamic>?)
+      stackItems:
+          (json['stackItems'] as List<dynamic>?)
               ?.map((e) => StackItem.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],

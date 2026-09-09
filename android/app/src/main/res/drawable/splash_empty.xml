@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Black mark for Android 12+ splash. A 1×1 PNG can fall back to the
+     launcher icon; this fills the masked circle so it stays invisible. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="288dp"
+    android:height="288dp"
+    android:viewportWidth="288"
+    android:viewportHeight="288">
+    <path
+        android:fillColor="#000000"
+        android:pathData="M0,0h288v288h-288z"/>
+</vector>

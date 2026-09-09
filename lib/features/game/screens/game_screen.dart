@@ -57,9 +57,11 @@ class GameScreen extends ConsumerStatefulWidget {
 class _GameScreenState extends ConsumerState<GameScreen> {
   bool _showOverview = false;
   bool _showYourTurnPrompt = false;
+
   /// Prevents re-prompting after we decide to show (or skip) the hub guide.
   bool _hubGuideHandled = false;
   bool _hubGuideCheckScheduled = false;
+
   /// Ensures we only navigate to end-game once per match (not on every
   /// post-KO state tick such as log appends).
   bool _navigatedToEndGame = false;
@@ -339,9 +341,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         if (!context.mounted) return;
         if (!ref.read(gameProvider).isHost) return;
         final issues = ref.read(peerLinkIssuesProvider);
-        final pending = issues.values
-            .where((i) => i.awaitingHostDecision)
-            .toList();
+        final pending =
+            issues.values.where((i) => i.awaitingHostDecision).toList();
         if (pending.isEmpty) return;
         final peer = pending.first;
         final l10n = AppLocalizations.of(context);
@@ -361,8 +362,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         );
         if (!context.mounted) return;
         // Peer may have returned while the dialog was open.
-        final still =
-            ref.read(peerLinkIssuesProvider)[peer.playerId];
+        final still = ref.read(peerLinkIssuesProvider)[peer.playerId];
         if (still == null || !still.awaitingHostDecision) return;
         final notifier = ref.read(gameProvider.notifier);
         if (keep == true) {
@@ -373,30 +373,30 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       });
     });
 
-    ref.listen<bool>(
-      gameProvider.select((g) => g.isLocalPlayersTurn),
-      (prev, next) {
-        if (prev == true && next == false) {
-          if (_showYourTurnPrompt) {
-            setState(() => _showYourTurnPrompt = false);
-          }
-          return;
+    ref.listen<bool>(gameProvider.select((g) => g.isLocalPlayersTurn), (
+      prev,
+      next,
+    ) {
+      if (prev == true && next == false) {
+        if (_showYourTurnPrompt) {
+          setState(() => _showYourTurnPrompt = false);
         }
-        if (prev != false || next != true) return;
-        final g = ref.read(gameProvider);
-        if (g.gameOver ||
-            g.awaitingFirstPlayerRoll ||
-            g.showTurnOrderReveal ||
-            g.timeoutActive) {
-          return;
-        }
-        setState(() => _showYourTurnPrompt = true);
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          context.gameHapticMedium();
-        });
-      },
-    );
+        return;
+      }
+      if (prev != false || next != true) return;
+      final g = ref.read(gameProvider);
+      if (g.gameOver ||
+          g.awaitingFirstPlayerRoll ||
+          g.showTurnOrderReveal ||
+          g.timeoutActive) {
+        return;
+      }
+      setState(() => _showYourTurnPrompt = true);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.gameHapticMedium();
+      });
+    });
 
     return PopScope(
       // Never pop the /game route with the phone back button — that was
@@ -428,17 +428,18 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             children: [
               if (_showOverview)
                 Consumer(
-                  builder: (context, ref, _) => GameOverviewView(
-                    game: ref.watch(gameProvider),
-                    onClose: () => setState(() => _showOverview = false),
-                  ),
+                  builder:
+                      (context, ref, _) => GameOverviewView(
+                        game: ref.watch(gameProvider),
+                        onClose: () => setState(() => _showOverview = false),
+                      ),
                 )
               else
                 SafeArea(
                   child: _PersonalView(
                     localPlayerId: localPlayerId,
-                    onToggleOverview: () =>
-                        setState(() => _showOverview = true),
+                    onToggleOverview:
+                        () => setState(() => _showOverview = true),
                   ),
                 ),
               GameLifeAnnouncer(enabled: !gameOver && !timeoutActive),
@@ -447,21 +448,22 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   final l10n = AppLocalizations.of(context);
                   final link = ref.watch(sessionLinkStatusProvider);
                   final peerIssues = ref.watch(peerLinkIssuesProvider);
-                  final showOwnLink = link == SessionLinkStatus.reconnecting ||
+                  final showOwnLink =
+                      link == SessionLinkStatus.reconnecting ||
                       link == SessionLinkStatus.lost;
-                  final peerNames = peerIssues.values
-                      .map((i) => i.username)
-                      .toList();
+                  final peerNames =
+                      peerIssues.values.map((i) => i.username).toList();
                   if (!showOwnLink && peerNames.isEmpty) {
                     return const SizedBox.shrink();
                   }
-                  final label = showOwnLink
-                      ? (link == SessionLinkStatus.lost
-                          ? l10n.reconnectStillTrying
-                          : l10n.reconnectToTable)
-                      : (peerNames.length == 1
-                          ? l10n.reconnectPeerOne(peerNames.first)
-                          : l10n.reconnectPeerMany(peerNames.length));
+                  final label =
+                      showOwnLink
+                          ? (link == SessionLinkStatus.lost
+                              ? l10n.reconnectStillTrying
+                              : l10n.reconnectToTable)
+                          : (peerNames.length == 1
+                              ? l10n.reconnectPeerOne(peerNames.first)
+                              : l10n.reconnectPeerMany(peerNames.length));
                   return Semantics(
                     container: true,
                     explicitChildNodes: true,
@@ -478,8 +480,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                             color: colors.warning.withValues(
                               alpha: OpacityTokens.soft,
                             ),
-                            borderRadius:
-                                BorderRadius.circular(LayoutTokens.gr2),
+                            borderRadius: BorderRadius.circular(
+                              LayoutTokens.gr2,
+                            ),
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: LayoutTokens.gr4,
@@ -501,9 +504,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                                   if (showOwnLink) ...[
                                     SizedBox(width: LayoutTokens.gr3),
                                     TextButton(
-                                      onPressed: () => ref
-                                          .read(gameProvider.notifier)
-                                          .retryHostLink(),
+                                      onPressed:
+                                          () =>
+                                              ref
+                                                  .read(gameProvider.notifier)
+                                                  .retryHostLink(),
                                       style: TextButton.styleFrom(
                                         foregroundColor: colors.textPrimary,
                                         padding: EdgeInsets.zero,
@@ -528,8 +533,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 GameTimeoutOverlay(
                   startTime: timeoutStartTime,
                   durationSeconds: timeoutDurationSeconds,
-                  onEndTimeout: () =>
-                      ref.read(gameProvider.notifier).endTimeout(),
+                  onEndTimeout:
+                      () => ref.read(gameProvider.notifier).endTimeout(),
                 ),
               if (_showYourTurnPrompt)
                 YourTurnPromptOverlay(
@@ -606,24 +611,24 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
     final screenWidth = MediaQuery.sizeOf(context).width;
     final isCompact =
         screenHeight < 704 || screenWidth < GameLayoutBreakpoints.compact;
-    final tightVertical =
-        screenHeight < GameLayoutBreakpoints.shortViewport;
+    final tightVertical = screenHeight < GameLayoutBreakpoints.shortViewport;
     final horizontalInset = LayoutTokens.gr3;
     // Match dial strip / HUD inset: full column width (no 400px life band).
-    final lifeBandH = tightVertical
-        ? (isCompact ? 128.0 : 148.0)
-        : (isCompact ? 160.0 : 192.0);
-    final playGapSm =
-        tightVertical ? LayoutTokens.gr1 : LayoutTokens.gr2;
+    final lifeBandH =
+        tightVertical
+            ? (isCompact ? 128.0 : 148.0)
+            : (isCompact ? 160.0 : 192.0);
+    final playGapSm = tightVertical ? LayoutTokens.gr1 : LayoutTokens.gr2;
 
     void adjustLife(int delta) {
       if (delta == 0) return;
       notifier.adjustLife(local.playerId, delta);
     }
 
-    final opponentsWithCommanders = opponents
-        .where((o) => !o.isEliminated || o.commanderName != null)
-        .toList();
+    final opponentsWithCommanders =
+        opponents
+            .where((o) => !o.isEliminated || o.commanderName != null)
+            .toList();
     final lobbyConfig = ref.read(lobbyProvider).config;
     final showCommanderHud = lobbyConfig.format.isCommanderStyle;
     // Always show commander damage in Commander format — even before anyone
@@ -640,9 +645,10 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
     );
     final activePlayer = game.playerById(game.activePlayerId);
     final l10n = AppLocalizations.of(context);
-    final turnLabel = game.isLocalPlayersTurn
-        ? l10n.gameYourTurn
-        : activePlayer == null
+    final turnLabel =
+        game.isLocalPlayersTurn
+            ? l10n.gameYourTurn
+            : activePlayer == null
             ? l10n.gameCurrentTurn
             : l10n.gamePlayersTurn(activePlayer.username);
 
@@ -660,34 +666,40 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
             tightVertical: tightVertical,
             accentColor: chromeAccent,
             turnLabel: turnLabel,
-            isLocalPlayersTurn: showCommanderHud &&
+            isLocalPlayersTurn:
+                showCommanderHud &&
                 game.isLocalPlayersTurn &&
                 !local.isEliminated,
             selectedTabIndex: _mainTabIndex,
             onTabSelected: (index) => setState(() => _mainTabIndex = index),
-            statusStrip: showCommanderHud
-                ? CommanderInfoBar(
-                    player: local,
-                    onCastCommander: () =>
-                        notifier.castCommanderFromZone(local.playerId),
-                    onUncastCommander: () =>
-                        notifier.uncastCommanderFromZone(local.playerId),
-                    embeddedInCard: true,
-                    roundNumber: game.roundNumber,
-                    allyUsername: local.allyPlayerId == null
-                        ? null
-                        : game.playerById(local.allyPlayerId!)?.username,
-                    statusTrailing: showCommanderDamage
-                        ? CommanderDamageBarButton(
-                            totalDamage: local.totalCommanderDamageReceived,
-                            maxTrackDamage: maxCmdDamage,
-                            enabled: !local.isEliminated,
-                            onTap: () =>
-                                showCommanderDamageSheet(context, ref),
-                          )
-                        : null,
-                  )
-                : ActiveTurnBanner(game: game),
+            statusStrip:
+                showCommanderHud
+                    ? CommanderInfoBar(
+                      player: local,
+                      onCastCommander:
+                          () => notifier.castCommanderFromZone(local.playerId),
+                      onUncastCommander:
+                          () =>
+                              notifier.uncastCommanderFromZone(local.playerId),
+                      embeddedInCard: true,
+                      roundNumber: game.roundNumber,
+                      allyUsername:
+                          local.allyPlayerId == null
+                              ? null
+                              : game.playerById(local.allyPlayerId!)?.username,
+                      statusTrailing:
+                          showCommanderDamage
+                              ? CommanderDamageBarButton(
+                                totalDamage: local.totalCommanderDamageReceived,
+                                maxTrackDamage: maxCmdDamage,
+                                enabled: !local.isEliminated,
+                                onTap:
+                                    () =>
+                                        showCommanderDamageSheet(context, ref),
+                              )
+                              : null,
+                    )
+                    : ActiveTurnBanner(game: game),
           ),
         ),
         if (_mainTabIndex == 0 &&
@@ -712,7 +724,8 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
               padding: EdgeInsets.symmetric(horizontal: horizontalInset),
               child: LayoutBuilder(
                 builder: (context, playConstraints) {
-                  final variantsEnabled = game.planechaseEnabled ||
+                  final variantsEnabled =
+                      game.planechaseEnabled ||
                       game.archenemyEnabled ||
                       game.bountyEnabled;
                   final showTurnTimer =
@@ -727,35 +740,41 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
                           playConstraints.maxHeight <
                               GameLayoutBreakpoints.shortViewport);
 
-                  final endTurnEnabled = !game.timeoutActive &&
-                      (game.isLocalPlayersTurn || game.isHost);
-                  final activeName = game.players
-                      .where((p) => p.playerId == game.activePlayerId)
-                      .map((p) => p.username)
-                      .firstOrNull;
-                  final phaseBar = game.phasesEnabled
-                      ? PhaseNavCluster(
-                          game: game,
-                          accentColor: chromeAccent,
-                          onBack: !game.timeoutActive
-                              ? notifier.previousPhase
-                              : null,
-                          onNext: !game.timeoutActive
-                              ? notifier.advancePhase
-                              : null,
-                          onPickPhase: game.timeoutActive
-                              ? null
-                              : notifier.setPhase,
-                          onEndTurn: notifier.endTurn,
-                          endTurnEnabled: endTurnEnabled,
-                        )
-                      : EndTurnBar(
-                          accentColor: colors.primaryAccent,
-                          enabled: endTurnEnabled,
-                          onEndTurn: notifier.endTurn,
-                          waitingForName:
-                              endTurnEnabled ? null : activeName,
-                        );
+                  final endTurnEnabled = game.canTapEndTurn;
+                  final canHostSkip = game.canHostSkipTurn;
+                  final activeName =
+                      game.players
+                          .where((p) => p.playerId == game.activePlayerId)
+                          .map((p) => p.username)
+                          .firstOrNull;
+                  final phaseBar =
+                      game.phasesEnabled
+                          ? PhaseNavCluster(
+                            game: game,
+                            accentColor: chromeAccent,
+                            onBack:
+                                !game.timeoutActive
+                                    ? notifier.previousPhase
+                                    : null,
+                            onNext:
+                                !game.timeoutActive
+                                    ? notifier.advancePhase
+                                    : null,
+                            onPickPhase:
+                                game.timeoutActive ? null : notifier.setPhase,
+                            onEndTurn: notifier.endTurn,
+                            endTurnEnabled: endTurnEnabled,
+                            onEndTurnLongPress:
+                                canHostSkip ? notifier.endTurn : null,
+                            endTurnSkipName: canHostSkip ? activeName : null,
+                          )
+                          : EndTurnBar(
+                            accentColor: colors.primaryAccent,
+                            enabled: endTurnEnabled,
+                            onEndTurn: notifier.endTurn,
+                            waitingForName: endTurnEnabled ? null : activeName,
+                            onHostSkip: canHostSkip ? notifier.endTurn : null,
+                          );
                   final lifeCounter = ConstrainedBox(
                     constraints: BoxConstraints(maxHeight: lifeBandH),
                     child: ScopedLifeCounter(
@@ -766,15 +785,28 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
                   final dialStrip = ScopedGameplayDials(
                     playerId: local.playerId,
                     compactVertical: dialCompact,
-                    onAdjustCounter: (field, delta) =>
-                        notifier.adjustCounter(local.playerId, field, delta),
-                    onSetCounterAbsolute: (field, v) => notifier
-                        .setGameplayDialAbsolute(local.playerId, field, v),
-                    onAddDialToStrip: (field) =>
-                        notifier.addGameplayDialToStrip(
-                            local.playerId, field),
-                    onRemoveDialFromStrip: (field) => notifier
-                        .removeGameplayDialFromStrip(local.playerId, field),
+                    onAdjustCounter:
+                        (field, delta) => notifier.adjustCounter(
+                          local.playerId,
+                          field,
+                          delta,
+                        ),
+                    onSetCounterAbsolute:
+                        (field, v) => notifier.setGameplayDialAbsolute(
+                          local.playerId,
+                          field,
+                          v,
+                        ),
+                    onAddDialToStrip:
+                        (field) => notifier.addGameplayDialToStrip(
+                          local.playerId,
+                          field,
+                        ),
+                    onRemoveDialFromStrip:
+                        (field) => notifier.removeGameplayDialFromStrip(
+                          local.playerId,
+                          field,
+                        ),
                   );
 
                   // Small pinned rows above the life counter: optional variant
@@ -792,9 +824,7 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
                           limitSeconds: game.turnTimeLimitSeconds,
                           isActiveTurn: game.isLocalPlayersTurn,
                           activePlayerName:
-                              game
-                                  .playerById(game.activePlayerId)
-                                  ?.username ??
+                              game.playerById(game.activePlayerId)?.username ??
                               'Player',
                         ),
                       ),
@@ -808,13 +838,15 @@ class _PersonalViewState extends ConsumerState<_PersonalView> {
                   const extraRowEstimate = 44.0;
                   final dialStripH =
                       GameplayDialsStripWidget.estimatedStripHeight(
-                    context,
-                    compactVertical: dialCompact,
-                  );
-                  final turnChromeH = game.phasesEnabled
-                      ? PhaseNavCluster.barHeight
-                      : EndTurnBar.barHeight;
-                  final comfortableMin = extraRowEstimate + // Card lookup always present
+                        context,
+                        compactVertical: dialCompact,
+                      );
+                  final turnChromeH =
+                      game.phasesEnabled
+                          ? PhaseNavCluster.barHeight
+                          : EndTurnBar.barHeight;
+                  final comfortableMin =
+                      extraRowEstimate + // Card lookup always present
                       (variantsEnabled ? extraRowEstimate : 0.0) +
                       (showTurnTimer ? extraRowEstimate : 0.0) +
                       lifeMinFloor +

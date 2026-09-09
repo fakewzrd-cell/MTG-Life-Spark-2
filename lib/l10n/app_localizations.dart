@@ -1271,6 +1271,12 @@ abstract class AppLocalizations {
   /// **'Waiting for {name}…'**
   String gameWaitingForPlayer(String name);
 
+  /// No description provided for @gameHoldToSkipPlayer.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold to skip {name}…'**
+  String gameHoldToSkipPlayer(String name);
+
   /// No description provided for @gamePhaseBack.
   ///
   /// In en, this message translates to:
@@ -2582,14 +2588,14 @@ abstract class AppLocalizations {
   /// No description provided for @cmdDmgBarA11y.
   ///
   /// In en, this message translates to:
-  /// **'Commander damage life {remaining} of {ko} remaining, {taken} taken on worst track, tap to manage'**
-  String cmdDmgBarA11y(String remaining, String ko, String taken);
+  /// **'Commander damage {taken} of {ko}, tap to manage'**
+  String cmdDmgBarA11y(String taken, String ko);
 
-  /// No description provided for @cmdDmgLeft.
+  /// No description provided for @cmdDmgShortLabel.
   ///
   /// In en, this message translates to:
-  /// **'left'**
-  String get cmdDmgLeft;
+  /// **'CMD'**
+  String get cmdDmgShortLabel;
 
   /// No description provided for @cmdDmgHideDealt.
   ///

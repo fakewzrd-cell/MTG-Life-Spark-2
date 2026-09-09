@@ -42,7 +42,7 @@ class AppTheme {
         tertiaryContainer: ColorTokens.darkTertiaryContainer,
         onTertiaryContainer: ColorTokens.darkOnTertiaryContainer,
         error: ColorTokens.danger,
-        onError: Colors.white,
+        onError: ColorTokens.onColor(ColorTokens.danger),
         errorContainer: ColorTokens.darkErrorContainer,
         onErrorContainer: ColorTokens.darkOnErrorContainer,
         surface: ColorTokens.surface,
@@ -352,7 +352,7 @@ class AppTheme {
           }
           return Colors.transparent;
         }),
-        checkColor: WidgetStateProperty.all(Colors.white),
+        checkColor: WidgetStateProperty.all(ColorTokens.onAccent),
         side: BorderSide(color: ColorTokens.borderSubtle, width: 1.5),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
       ),
@@ -370,7 +370,7 @@ class AppTheme {
       // Badge
       badgeTheme: BadgeThemeData(
         backgroundColor: ColorTokens.primaryAccent,
-        textColor: Colors.white,
+        textColor: ColorTokens.onAccent,
         smallSize: 8,
         largeSize: 16,
         textStyle: TextStyle(
@@ -424,8 +424,8 @@ class AppTheme {
         onTertiary: ColorTokens.lightOnTertiary,
         tertiaryContainer: ColorTokens.lightTertiaryContainer,
         onTertiaryContainer: ColorTokens.lightOnTertiaryContainer,
-        error: ColorTokens.danger,
-        onError: Colors.white,
+        error: ColorTokens.lightDanger,
+        onError: ColorTokens.onColor(ColorTokens.lightDanger),
         errorContainer: ColorTokens.lightErrorContainer,
         onErrorContainer: ColorTokens.lightOnErrorContainer,
         surface: ColorTokens.lightSurface,
@@ -489,10 +489,10 @@ class AppTheme {
 
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: ColorTokens.lightSurface,
-        surfaceTintColor: ColorTokens.primaryAccent.withValues(alpha: OpacityTokens.faint),
+        surfaceTintColor: ColorTokens.lightPrimaryAccent.withValues(alpha: OpacityTokens.faint),
         elevation: ElevationTokens.md,
         height: LayoutTokens.bottomNavHeight,
-        indicatorColor: ColorTokens.primaryAccent.withValues(alpha: OpacityTokens.soft),
+        indicatorColor: ColorTokens.lightPrimaryAccent.withValues(alpha: OpacityTokens.soft),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return GoogleFonts.lato(
@@ -526,7 +526,7 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: ColorTokens.lightPrimaryAccent,
-          foregroundColor: ColorTokens.onAccent,
+          foregroundColor: ColorTokens.onColor(ColorTokens.lightPrimaryAccent),
           disabledBackgroundColor: ColorTokens.lightSurfaceElevated,
           disabledForegroundColor: ColorTokens.lightTextMuted,
           elevation: 0,
@@ -590,7 +590,7 @@ class AppTheme {
 
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: ColorTokens.lightPrimaryAccent,
-        foregroundColor: ColorTokens.onAccent,
+        foregroundColor: ColorTokens.onColor(ColorTokens.lightPrimaryAccent),
         elevation: ElevationTokens.lg,
         focusElevation: 6,
         hoverElevation: 6,
@@ -719,7 +719,9 @@ class AppTheme {
           }
           return Colors.transparent;
         }),
-        checkColor: WidgetStateProperty.all(Colors.white),
+        checkColor: WidgetStateProperty.all(
+          ColorTokens.onColor(ColorTokens.lightPrimaryAccent),
+        ),
         side: BorderSide(color: ColorTokens.lightBorderSubtle, width: 1.5),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
       ),
@@ -735,7 +737,7 @@ class AppTheme {
 
       badgeTheme: BadgeThemeData(
         backgroundColor: ColorTokens.lightPrimaryAccent,
-        textColor: Colors.white,
+        textColor: ColorTokens.onColor(ColorTokens.lightPrimaryAccent),
         smallSize: 8,
         largeSize: 16,
         textStyle: TextStyle(

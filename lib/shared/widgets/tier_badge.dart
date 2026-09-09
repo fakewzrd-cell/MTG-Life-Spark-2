@@ -1,30 +1,32 @@
 import 'package:flutter/material.dart';
 
 import '../../l10n/app_localizations.dart';
-import '../../ui/tokens/color_tokens.dart';
+import '../../ui/theme/app_color_tokens.dart';
 import '../../ui/tokens/font_tokens.dart';
 import '../../ui/tokens/layout_tokens.dart';
 import '../../ui/tokens/radius_tokens.dart';
 import '../utils/wizard_rank_titles.dart';
 
-/// Accent color for a metal progression tier.
-Color wizardTierColor(String tier) {
+/// Accent color for a metal progression tier. Light surfaces get darker metals
+/// so labels stay readable (pale silver/gold wash out on Fog/Slate light).
+Color wizardTierColor(String tier, AppColorTokens colors) {
+  final light = colors.backgroundPrimary.computeLuminance() > 0.5;
   switch (tier) {
     case 'Silver':
-      return const Color(0xFFC0C0C0);
+      return light ? const Color(0xFF475569) : const Color(0xFFC0C0C0);
     case 'Gold':
-      return ColorTokens.emphasis;
+      return light ? const Color(0xFFB45309) : const Color(0xFFFBBF24);
     case 'Platinum':
-      return const Color(0xFFE5E4E2);
+      return light ? const Color(0xFF57534E) : const Color(0xFFE5E4E2);
     case 'Diamond':
-      return const Color(0xFFB9F2FF);
+      return light ? const Color(0xFF0369A1) : const Color(0xFF7DD3FC);
     default:
-      return const Color(0xFFCD7F32); // Bronze
+      return light ? const Color(0xFF9A3412) : const Color(0xFFCD7F32);
   }
 }
 
-Color wizardTierColorForLevel(int level) =>
-    wizardTierColor(tierForLevel(level));
+Color wizardTierColorForLevel(int level, AppColorTokens colors) =>
+    wizardTierColor(tierForLevel(level), colors);
 
 class TierBadge extends StatelessWidget {
   final String tier;
@@ -47,8 +49,9 @@ class TierBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final colors = AppColorTokens.of(context);
     // Color always follows [level] so a stale [tier] string cannot desync chrome.
-    final color = wizardTierColorForLevel(level);
+    final color = wizardTierColorForLevel(level, colors);
     final label = l10n.tierBadgeLabel(wizardRankTitle(l10n, level), level);
     final child = Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

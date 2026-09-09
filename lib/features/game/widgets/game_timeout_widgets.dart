@@ -162,8 +162,9 @@ class _GameTimeoutOverlayState extends State<GameTimeoutOverlay> {
                         vertical: LayoutTokens.gr1,
                       ),
                       decoration: BoxDecoration(
-                        color: colors.emphasis.withValues(alpha: OpacityTokens.subtle),
+                        color: colors.surface,
                         borderRadius: RadiusTokens.radiusLg,
+                        border: Border.all(color: colors.borderSubtle),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -207,7 +208,7 @@ class _GameTimeoutOverlayState extends State<GameTimeoutOverlay> {
                             onPressed: widget.onEndTimeout,
                             style: FilledButton.styleFrom(
                               backgroundColor: colors.emphasis,
-                              foregroundColor: colors.backgroundPrimary,
+                              foregroundColor: colors.onEmphasis,
                               minimumSize: const Size(
                                 0,
                                 LayoutTokens.minTapTarget,
@@ -300,11 +301,11 @@ class _GameTimeoutOverlayState extends State<GameTimeoutOverlay> {
                       SizedBox(height: LayoutTokens.gr4),
                       SizedBox(
                         width: double.infinity,
-                        child: FilledButton(
+                          child: FilledButton(
                           onPressed: widget.onEndTimeout,
                           style: FilledButton.styleFrom(
                             backgroundColor: colors.emphasis,
-                            foregroundColor: colors.backgroundPrimary,
+                            foregroundColor: colors.onEmphasis,
                             minimumSize: const Size(
                               0,
                               LayoutTokens.minTapTarget,
@@ -383,8 +384,9 @@ class _GameTimeoutBannerState extends State<GameTimeoutBanner> {
         vertical: LayoutTokens.gr1 + 2,
       ),
       decoration: BoxDecoration(
-        color: colors.emphasis.withValues(alpha: OpacityTokens.subtle),
+        color: colors.surface,
         borderRadius: RadiusTokens.radiusControlSm,
+        border: Border.all(color: colors.borderSubtle),
       ),
       child: Row(
         children: [

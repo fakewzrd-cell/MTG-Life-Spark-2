@@ -121,6 +121,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             },
             icon: Icons.fullscreen,
           ),
+          _SettingTile(
+            title: l10n.settingsLanguage,
+            subtitle: l10n.settingsLanguageSubtitle(
+              languageLabel(l10n, languageCode),
+            ),
+            icon: Icons.language,
+            onTap: () async {
+              final picked = await _pickLanguage(context, languageCode);
+              if (picked != null && mounted) {
+                _settings.localeCode = picked;
+                await _save();
+              }
+            },
+          ),
           SizedBox(height: LayoutTokens.shellSectionGap),
           _SectionHeader(l10n.settingsSectionAppearance),
           _SwitchTile(
@@ -132,19 +146,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               _save();
             },
             icon: Icons.dark_mode_outlined,
-          ),
-          _SettingTile(
-            title: l10n.settingsLanguage,
-            subtitle: l10n.settingsLanguageSubtitle(
-              languageLabel(l10n, languageCode),
-            ),
-            onTap: () async {
-              final picked = await _pickLanguage(context, languageCode);
-              if (picked != null && mounted) {
-                _settings.localeCode = picked;
-                await _save();
-              }
-            },
           ),
           _ColorSchemePicker(
             selected: ref.watch(colorSchemePreferenceProvider),
@@ -638,12 +639,14 @@ class _SettingTile extends StatelessWidget {
   final String subtitle;
   final VoidCallback onTap;
   final bool isDestructive;
+  final IconData? icon;
 
   const _SettingTile({
     required this.title,
     required this.subtitle,
     required this.onTap,
     this.isDestructive = false,
+    this.icon,
   });
 
   @override
@@ -651,6 +654,13 @@ class _SettingTile extends StatelessWidget {
     final colors = AppColorTokens.of(context);
     final color = isDestructive ? colors.error : colors.textSecondary;
     return ListTile(
+      leading: icon != null
+          ? Icon(
+              icon,
+              size: 22,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            )
+          : null,
       title: Text(
         title,
         style: Theme.of(context).textTheme.bodyLarge?.copyWith(

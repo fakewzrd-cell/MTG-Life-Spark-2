@@ -6,6 +6,7 @@ import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
+import '../../../ui/tokens/color_tokens.dart';
 import 'game_colors.dart';
 
 /// Full-width End turn control used when the phase tracker is off.
@@ -16,6 +17,7 @@ class EndTurnBar extends StatelessWidget {
     required this.enabled,
     required this.onEndTurn,
     this.waitingForName,
+    this.onHostSkip,
   });
 
   final Color accentColor;
@@ -23,22 +25,35 @@ class EndTurnBar extends StatelessWidget {
   final VoidCallback onEndTurn;
   final String? waitingForName;
 
+  /// Host: long-press to skip another player's turn. Looks inactive until then.
+  final VoidCallback? onHostSkip;
+
   static const double barHeight = 60;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
     final l10n = AppLocalizations.of(context);
+    final canSkip = onHostSkip != null;
+    final name = waitingForName;
     // Solid theme accent fill so the control stays visible on light surfaces.
-    final bg = enabled
-        ? accentColor
-        : colors.backgroundSecondary.withValues(alpha: OpacityTokens.moderate);
-    final fg = enabled
-        ? (accentColor.computeLuminance() > 0.55 ? Colors.black : Colors.white)
-        : colors.textSecondary.withValues(alpha: OpacityTokens.disabled);
-    final subtitle = !enabled && waitingForName != null && waitingForName!.isNotEmpty
-        ? l10n.gameWaitingForPlayer(waitingForName!)
-        : null;
+    final bg =
+        enabled
+            ? accentColor
+            : colors.backgroundSecondary.withValues(
+              alpha: OpacityTokens.moderate,
+            );
+    final fg =
+        enabled
+            ? ColorTokens.onColor(accentColor)
+            : colors.textSecondary.withValues(alpha: OpacityTokens.disabled);
+    String? subtitle;
+    if (!enabled && name != null && name.isNotEmpty) {
+      subtitle =
+          canSkip
+              ? l10n.gameHoldToSkipPlayer(name)
+              : l10n.gameWaitingForPlayer(name);
+    }
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -52,43 +67,60 @@ class EndTurnBar extends StatelessWidget {
           child: Material(
             color: bg,
             child: InkWell(
-              onTap: enabled
-                  ? () {
-                      context.gameHapticLight();
-                      onEndTurn();
-                    }
-                  : null,
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: LayoutTokens.gr3,
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        l10n.gameEndTurn,
-                        style: TextStyle(
-                          fontSize: FontTokens.title,
-                          fontWeight: FontWeight.w700,
-                          color: fg,
-                          height: 1.1,
-                        ),
-                      ),
-                      if (subtitle != null) ...[
-                        SizedBox(height: LayoutTokens.gr0),
+              onTap:
+                  enabled
+                      ? () {
+                        context.gameHapticLight();
+                        onEndTurn();
+                      }
+                      : null,
+              onLongPress:
+                  canSkip
+                      ? () {
+                        context.gameHapticMedium();
+                        onHostSkip!();
+                      }
+                      : null,
+              child: Semantics(
+                button: true,
+                enabled: enabled || canSkip,
+                label: l10n.gameEndTurn,
+                hint:
+                    canSkip && name != null && name.isNotEmpty
+                        ? l10n.gameHoldToSkipPlayer(name)
+                        : null,
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: LayoutTokens.gr3,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
                         Text(
-                          subtitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          l10n.gameEndTurn,
                           style: TextStyle(
-                            fontSize: FontTokens.hudXs,
-                            fontWeight: FontWeight.w500,
-                            color: fg.withValues(alpha: 0.85),
+                            fontSize: FontTokens.title,
+                            fontWeight: FontWeight.w700,
+                            color: fg,
+                            height: 1.1,
                           ),
                         ),
+                        if (subtitle != null) ...[
+                          SizedBox(height: LayoutTokens.gr0),
+                          Text(
+                            subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: FontTokens.hudXs,
+                              fontWeight: FontWeight.w500,
+                              color: fg.withValues(alpha: 0.85),
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
               ),

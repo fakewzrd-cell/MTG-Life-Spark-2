@@ -9,6 +9,7 @@ import '../../../ui/tokens/font_tokens.dart';
 import '../../../ui/tokens/layout_tokens.dart';
 import '../../../ui/tokens/opacity_tokens.dart';
 import '../../../ui/tokens/radius_tokens.dart';
+import '../../../ui/tokens/color_tokens.dart';
 import 'phase_picker_sheet.dart';
 
 /// Play-tab bar: phase status · Back · Next · End turn.
@@ -22,6 +23,8 @@ class PhaseNavCluster extends StatelessWidget {
     this.onPickPhase,
     this.onEndTurn,
     this.endTurnEnabled = false,
+    this.onEndTurnLongPress,
+    this.endTurnSkipName,
   });
 
   final GameState game;
@@ -31,6 +34,8 @@ class PhaseNavCluster extends StatelessWidget {
   final void Function(GamePhase phase)? onPickPhase;
   final VoidCallback? onEndTurn;
   final bool endTurnEnabled;
+  final VoidCallback? onEndTurnLongPress;
+  final String? endTurnSkipName;
 
   static const double barHeight = 52;
 
@@ -53,6 +58,8 @@ class PhaseNavCluster extends StatelessWidget {
           onPickPhase: onPickPhase,
           onEndTurn: onEndTurn,
           endTurnEnabled: endTurnEnabled,
+          onEndTurnLongPress: onEndTurnLongPress,
+          endTurnSkipName: endTurnSkipName,
         ),
       ),
     );
@@ -69,6 +76,8 @@ class PhaseNavClusterStrip extends StatelessWidget {
     this.onPickPhase,
     this.onEndTurn,
     this.endTurnEnabled = false,
+    this.onEndTurnLongPress,
+    this.endTurnSkipName,
   });
 
   final GameState game;
@@ -78,6 +87,8 @@ class PhaseNavClusterStrip extends StatelessWidget {
   final void Function(GamePhase phase)? onPickPhase;
   final VoidCallback? onEndTurn;
   final bool endTurnEnabled;
+  final VoidCallback? onEndTurnLongPress;
+  final String? endTurnSkipName;
 
   static const double _sideMinWidth = 64;
   static const double _endTurnMinWidth = 104;
@@ -135,6 +146,8 @@ class PhaseNavClusterStrip extends StatelessWidget {
                 // Theme accent (settings color scheme), not commander tint.
                 accentColor: colors.primaryAccent,
                 onPressed: onEndTurn,
+                onLongPress: game.timeoutActive ? null : onEndTurnLongPress,
+                skipName: endTurnSkipName,
               ),
             ),
           ],
@@ -149,47 +162,91 @@ class _PhaseNavEndTurnButton extends StatelessWidget {
     required this.enabled,
     required this.accentColor,
     this.onPressed,
+    this.onLongPress,
+    this.skipName,
   });
 
   final bool enabled;
   final Color accentColor;
   final VoidCallback? onPressed;
+  final VoidCallback? onLongPress;
+  final String? skipName;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.gameColors;
     final l10n = AppLocalizations.of(context);
-    final bg = enabled
-        ? accentColor
-        : colors.backgroundSecondary.withValues(alpha: 0.35);
-    final fg = enabled
-        ? (accentColor.computeLuminance() > 0.55 ? Colors.black : Colors.white)
-        : colors.textSecondary.withValues(alpha: OpacityTokens.disabled);
+    final canSkip = onLongPress != null;
+    final name = skipName;
+    final skipHint =
+        canSkip && name != null && name.isNotEmpty
+            ? l10n.gameHoldToSkipPlayer(name)
+            : null;
+    final bg =
+        enabled
+            ? accentColor
+            : colors.backgroundSecondary.withValues(alpha: 0.35);
+    final fg =
+        enabled
+            ? ColorTokens.onColor(accentColor)
+            : colors.textSecondary.withValues(alpha: OpacityTokens.disabled);
 
     return Semantics(
       button: true,
-      enabled: enabled,
+      enabled: enabled || canSkip,
       label: l10n.gameEndTurn,
+      hint: skipHint,
       child: Material(
         color: bg,
         child: InkWell(
-          onTap: enabled
-              ? () {
-                  context.gameHapticLight();
-                  onPressed?.call();
-                }
-              : null,
+          onTap:
+              enabled
+                  ? () {
+                    context.gameHapticLight();
+                    onPressed?.call();
+                  }
+                  : null,
+          onLongPress:
+              canSkip
+                  ? () {
+                    context.gameHapticMedium();
+                    onLongPress!();
+                  }
+                  : null,
           child: Center(
-            child: Text(
-              l10n.gameEndTurn,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: FontTokens.body,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.02,
-                color: fg,
-                height: 1.1,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: LayoutTokens.gr1),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      l10n.gameEndTurn,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: FontTokens.body,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.02,
+                        color: fg,
+                        height: 1.1,
+                      ),
+                    ),
+                    if (skipHint != null)
+                      Text(
+                        skipHint,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: FontTokens.hudXs,
+                          fontWeight: FontWeight.w500,
+                          color: fg.withValues(alpha: 0.85),
+                          height: 1.1,
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -242,12 +299,13 @@ class _PhaseNavSideButton extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: enabled
-              ? () {
-                  context.gameHapticLight();
-                  onPressed?.call();
-                }
-              : null,
+          onTap:
+              enabled
+                  ? () {
+                    context.gameHapticLight();
+                    onPressed?.call();
+                  }
+                  : null,
           child: Center(
             child: FittedBox(
               fit: BoxFit.scaleDown,
@@ -255,8 +313,16 @@ class _PhaseNavSideButton extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children:
                     iconFirst
-                        ? [iconWidget, SizedBox(width: LayoutTokens.gr0), labelWidget]
-                        : [labelWidget, SizedBox(width: LayoutTokens.gr0), iconWidget],
+                        ? [
+                          iconWidget,
+                          SizedBox(width: LayoutTokens.gr0),
+                          labelWidget,
+                        ]
+                        : [
+                          labelWidget,
+                          SizedBox(width: LayoutTokens.gr0),
+                          iconWidget,
+                        ],
               ),
             ),
           ),
@@ -288,9 +354,8 @@ class _PhaseNavCenter extends StatelessWidget {
 
     Widget buildLabel(BoxConstraints constraints) {
       final narrow = constraints.maxWidth < 108;
-      final phaseText = narrow
-          ? game.currentPhase.shortName
-          : game.currentPhase.displayName;
+      final phaseText =
+          narrow ? game.currentPhase.shortName : game.currentPhase.displayName;
       final fontSize = narrow ? FontTokens.hudXs : FontTokens.hudSm;
 
       return Row(
@@ -330,9 +395,9 @@ class _PhaseNavCenter extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: LayoutTokens.gr1),
           child: LayoutBuilder(
-            builder: (context, constraints) => Center(
-              child: buildLabel(constraints),
-            ),
+            builder:
+                (context, constraints) =>
+                    Center(child: buildLabel(constraints)),
           ),
         ),
       );
@@ -356,12 +421,13 @@ class _PhaseNavCenter extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: LayoutTokens.gr1),
             child: LayoutBuilder(
-              builder: (context, constraints) => Center(
-                child: Tooltip(
-                  message: l10n.gameChoosePhase,
-                  child: buildLabel(constraints),
-                ),
-              ),
+              builder:
+                  (context, constraints) => Center(
+                    child: Tooltip(
+                      message: l10n.gameChoosePhase,
+                      child: buildLabel(constraints),
+                    ),
+                  ),
             ),
           ),
         ),

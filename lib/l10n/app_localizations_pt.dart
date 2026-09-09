@@ -657,6 +657,11 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String gameHoldToSkipPlayer(String name) {
+    return 'Segure para pular $name…';
+  }
+
+  @override
   String get gamePhaseBack => 'Voltar';
 
   @override
@@ -1400,12 +1405,12 @@ class AppLocalizationsPt extends AppLocalizations {
       'Ameaças a você primeiro. Abra Causado para registrar o dano que você causou.';
 
   @override
-  String cmdDmgBarA11y(String remaining, String ko, String taken) {
-    return 'Dano de Commander: $remaining de $ko restantes, $taken no pior track, toque para gerenciar';
+  String cmdDmgBarA11y(String taken, String ko) {
+    return 'Dano de Commander $taken de $ko, toque para gerenciar';
   }
 
   @override
-  String get cmdDmgLeft => 'restantes';
+  String get cmdDmgShortLabel => 'CMD';
 
   @override
   String get cmdDmgHideDealt => 'Ocultar causado';
@@ -3617,6 +3622,11 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   }
 
   @override
+  String gameHoldToSkipPlayer(String name) {
+    return 'Segure para pular $name…';
+  }
+
+  @override
   String get gamePhaseBack => 'Voltar';
 
   @override
@@ -4360,12 +4370,12 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
       'Ameaças a você primeiro. Abra Causado para registrar o dano que você causou.';
 
   @override
-  String cmdDmgBarA11y(String remaining, String ko, String taken) {
-    return 'Dano de Commander: $remaining de $ko restantes, $taken no pior track, toque para gerenciar';
+  String cmdDmgBarA11y(String taken, String ko) {
+    return 'Dano de Commander $taken de $ko, toque para gerenciar';
   }
 
   @override
-  String get cmdDmgLeft => 'restantes';
+  String get cmdDmgShortLabel => 'CMD';
 
   @override
   String get cmdDmgHideDealt => 'Ocultar causado';

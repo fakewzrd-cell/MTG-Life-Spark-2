@@ -56,14 +56,6 @@ class _CardLookupSheetState extends ConsumerState<_CardLookupSheet> {
   bool get _showingDetail => _selected != null;
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _searchFocus.requestFocus();
-    });
-  }
-
-  @override
   void dispose() {
     _debounce?.cancel();
     _searchController.dispose();
@@ -136,9 +128,6 @@ class _CardLookupSheetState extends ConsumerState<_CardLookupSheet> {
       _selected = null;
       _rulings = const [];
       _loadingDetail = false;
-    });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _searchFocus.requestFocus();
     });
   }
 

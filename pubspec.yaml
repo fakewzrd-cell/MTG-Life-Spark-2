@@ -1,7 +1,7 @@
 name: mgt_life_spark
 description: Life Spark — your MTG companion for multiplayer tables.
 publish_to: none
-version: 1.0.25+31
+version: 1.0.26+32
 
 environment:
   sdk: '>=3.7.0 <4.0.0'
@@ -116,14 +116,17 @@ flutter_launcher_icons:
   # Keep mark inside OEM adaptive safe zone (~66% center).
   adaptive_icon_foreground_inset: 28
 
-# Branded launch screen (Android/iOS) — matches [BrandedSplash] black.
-# Regenerate after updating assets/images/splash_logo.png:
+# Branded launch screen (Android/iOS) — solid black so the logo video can
+# start in motion without a static mark sitting on screen first.
+# Android 12+ icon is a black vector (`drawable/splash_empty`) so the OS
+# never falls back to the launcher mark. After regenerate, restore that
+# override in values-v31 / values-night-v31 styles.
 #   dart run flutter_native_splash:create
 flutter_native_splash:
   color: "#000000"
-  image: assets/images/splash_logo.png
   android_12:
     color: "#000000"
-    image: assets/images/splash_logo.png
+    icon_background_color: "#000000"
+    image: assets/images/splash_blank.png
   ios: true
   web: false

@@ -49,7 +49,11 @@ class GameOverviewView extends ConsumerStatefulWidget {
   final GameState game;
   final VoidCallback onClose;
 
-  const GameOverviewView({super.key, required this.game, required this.onClose});
+  const GameOverviewView({
+    super.key,
+    required this.game,
+    required this.onClose,
+  });
 
   @override
   ConsumerState<GameOverviewView> createState() => _GameOverviewViewState();
@@ -63,15 +67,18 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollActiveIntoView());
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _scrollActiveIntoView(),
+    );
   }
 
   @override
   void didUpdateWidget(covariant GameOverviewView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.game.activePlayerId != game.activePlayerId) {
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => _scrollActiveIntoView());
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _scrollActiveIntoView(),
+      );
     }
   }
 
@@ -119,8 +126,9 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
       game.playersInTurnOrder.map(_keyedRow).toList();
 
   void _onHostReorder(int oldIndex, int newIndex) {
-    final order =
-        game.playersInTurnOrder.map((p) => p.playerId).toList(growable: true);
+    final order = game.playersInTurnOrder
+        .map((p) => p.playerId)
+        .toList(growable: true);
     if (oldIndex < 0 || oldIndex >= order.length) return;
     if (newIndex < 0 || newIndex >= order.length) return;
     final id = order.removeAt(oldIndex);
@@ -142,77 +150,96 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
       colors,
       identity,
     );
-    final endTurnEnabled =
-        !game.timeoutActive && (game.isLocalPlayersTurn || game.isHost);
-    final waitingForName = endTurnEnabled
-        ? null
-        : (activePlayer?.username);
+    final endTurnEnabled = game.canTapEndTurn;
+    final waitingForName = endTurnEnabled ? null : (activePlayer?.username);
 
     // Keep status / nav bar styling aligned with the rest of the app so Table
     // does not flash a white system bar (SliverAppBar default overlay).
-    final overlay = AppSystemUi.overlayStyle(context).copyWith(
-      statusBarColor: Colors.transparent,
-    );
+    final overlay = AppSystemUi.overlayStyle(
+      context,
+    ).copyWith(statusBarColor: Colors.transparent);
 
     // Transparent top chrome so the identity gradient reads edge-to-edge;
     // [SliverAppBar] (primary) still owns status-bar inset without a dark band.
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: overlay,
       child: Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: gradientColors,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: gradientColors,
+          ),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: CustomScrollView(
-              // Keep pod-sized rosters built so the active card key exists for
-              // ensureVisible (especially with host reorder / long lists).
-              cacheExtent: 2400,
-              slivers: [
-                SliverAppBar(
-                  pinned: true,
-                  primary: true,
-                  systemOverlayStyle: overlay,
-                  backgroundColor: Colors.transparent,
-                  surfaceTintColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  forceMaterialTransparency: true,
-                  elevation: 0,
-                  scrolledUnderElevation: 0,
-                  foregroundColor: colors.textPrimary,
-                  toolbarHeight: LayoutTokens.minTapTarget,
-                  leadingWidth: pageInset + LayoutTokens.minTapTarget,
-                  centerTitle: true,
-                  title: Text(
-                    l10n.overviewRound(game.roundNumber),
-                    style: TextStyle(
-                      color: colors.textPrimary,
-                      fontSize: FontTokens.title,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.2,
-                      height: 1,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: CustomScrollView(
+                // Keep pod-sized rosters built so the active card key exists for
+                // ensureVisible (especially with host reorder / long lists).
+                cacheExtent: 2400,
+                slivers: [
+                  SliverAppBar(
+                    pinned: true,
+                    primary: true,
+                    systemOverlayStyle: overlay,
+                    backgroundColor: Colors.transparent,
+                    surfaceTintColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    forceMaterialTransparency: true,
+                    elevation: 0,
+                    scrolledUnderElevation: 0,
+                    foregroundColor: colors.textPrimary,
+                    toolbarHeight: LayoutTokens.minTapTarget,
+                    leadingWidth: pageInset + LayoutTokens.minTapTarget,
+                    centerTitle: true,
+                    title: Text(
+                      l10n.overviewRound(game.roundNumber),
+                      style: TextStyle(
+                        color: colors.textPrimary,
+                        fontSize: FontTokens.title,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.2,
+                        height: 1,
+                      ),
                     ),
-                  ),
-                  leading: SizedBox(
-                    width: pageInset + LayoutTokens.minTapTarget,
-                    child: Padding(
-                      padding: EdgeInsets.only(left: pageInset),
-                      child: Align(
+                    leading: SizedBox(
+                      width: pageInset + LayoutTokens.minTapTarget,
+                      child: Padding(
+                        padding: EdgeInsets.only(left: pageInset),
+                        child: Align(
+                          alignment: Alignment.center,
+                          child: Semantics(
+                            button: true,
+                            label: l10n.overviewClose,
+                            child: IconButton(
+                              tooltip: l10n.overviewClose,
+                              onPressed: widget.onClose,
+                              icon: Icon(
+                                Icons.close_rounded,
+                                color: colors.textPrimary,
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: LayoutTokens.minTapTarget,
+                                minHeight: LayoutTokens.minTapTarget,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    actions: [
+                      Align(
                         alignment: Alignment.center,
                         child: Semantics(
                           button: true,
-                          label: l10n.overviewClose,
+                          label: l10n.overviewTools,
                           child: IconButton(
-                            tooltip: l10n.overviewClose,
-                            onPressed: widget.onClose,
+                            tooltip: l10n.overviewTools,
+                            onPressed: () => showTableToolsSheet(context),
                             icon: Icon(
-                              Icons.close_rounded,
+                              Icons.casino_outlined,
                               color: colors.textPrimary,
                             ),
                             constraints: const BoxConstraints(
@@ -222,223 +249,207 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                  actions: [
-                    Align(
-                      alignment: Alignment.center,
-                      child: Semantics(
-                        button: true,
-                        label: l10n.overviewTools,
-                        child: IconButton(
-                          tooltip: l10n.overviewTools,
-                          onPressed: () => showTableToolsSheet(context),
-                          icon: Icon(
-                            Icons.casino_outlined,
-                            color: colors.textPrimary,
-                          ),
-                          constraints: const BoxConstraints(
-                            minWidth: LayoutTokens.minTapTarget,
-                            minHeight: LayoutTokens.minTapTarget,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.only(right: pageInset),
-                      child: Align(
-                        alignment: Alignment.center,
-                        child: Semantics(
-                          button: true,
-                          label: l10n.overviewHistory,
-                          child: IconButton(
-                            tooltip: l10n.overviewHistory,
-                            onPressed: () => showGameHistorySheet(context),
-                            icon: Icon(
-                              Icons.history_rounded,
-                              color: colors.textPrimary,
-                            ),
-                            constraints: const BoxConstraints(
-                              minWidth: LayoutTokens.minTapTarget,
-                              minHeight: LayoutTokens.minTapTarget,
+                      Padding(
+                        padding: EdgeInsets.only(right: pageInset),
+                        child: Align(
+                          alignment: Alignment.center,
+                          child: Semantics(
+                            button: true,
+                            label: l10n.overviewHistory,
+                            child: IconButton(
+                              tooltip: l10n.overviewHistory,
+                              onPressed: () => showGameHistorySheet(context),
+                              icon: Icon(
+                                Icons.history_rounded,
+                                color: colors.textPrimary,
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: LayoutTokens.minTapTarget,
+                                minHeight: LayoutTokens.minTapTarget,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      pageInset,
-                      LayoutTokens.gr2,
-                      pageInset,
-                      0,
-                    ),
-                    child: TablePoliticsStatusLine(game: game),
+                    ],
                   ),
-                ),
 
-                if (game.timeoutActive)
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(
                         pageInset,
-                        0,
-                        pageInset,
                         LayoutTokens.gr2,
+                        pageInset,
+                        0,
                       ),
-                      child: GameTimeoutBanner(
-                        startTime: game.timeoutStartTime,
-                        durationSeconds: game.timeoutDurationSeconds,
-                      ),
+                      child: TablePoliticsStatusLine(game: game),
                     ),
                   ),
 
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      pageInset,
-                      LayoutTokens.gr2,
-                      pageInset,
-                      LayoutTokens.gr1,
+                  if (game.timeoutActive)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          pageInset,
+                          0,
+                          pageInset,
+                          LayoutTokens.gr2,
+                        ),
+                        child: GameTimeoutBanner(
+                          startTime: game.timeoutStartTime,
+                          durationSeconds: game.timeoutDurationSeconds,
+                        ),
+                      ),
                     ),
-                    child: Row(
-                      children: [
-                        Text(
-                          l10n.overviewPlayers,
-                          style: TextStyle(
-                            color: colors.textPrimary,
-                            fontSize: FontTokens.caption,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.4,
-                          ),
-                        ),
-                        SizedBox(width: LayoutTokens.gr1),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: LayoutTokens.gr1,
-                            vertical: LayoutTokens.gr0 - 1,
-                          ),
-                          decoration: BoxDecoration(
-                            color: colors.backgroundSecondary.withValues(
-                              alpha: OpacityTokens.soft,
-                            ),
-                            borderRadius: RadiusTokens.radiusControlSm,
-                          ),
-                          child: Text(
-                            '$aliveCount',
+
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        pageInset,
+                        LayoutTokens.gr2,
+                        pageInset,
+                        LayoutTokens.gr1,
+                      ),
+                      child: Row(
+                        children: [
+                          Text(
+                            l10n.overviewPlayers,
                             style: TextStyle(
-                              color: colors.textSecondary,
-                              fontSize: FontTokens.hudXs,
+                              color: colors.textPrimary,
+                              fontSize: FontTokens.caption,
                               fontWeight: FontWeight.w700,
+                              letterSpacing: 0.4,
                             ),
                           ),
-                        ),
-                        if (_canHostReorder(game)) ...[
-                          SizedBox(width: LayoutTokens.gr2),
-                          Expanded(
+                          SizedBox(width: LayoutTokens.gr1),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: LayoutTokens.gr1,
+                              vertical: LayoutTokens.gr0 - 1,
+                            ),
+                            decoration: BoxDecoration(
+                              color: colors.backgroundSecondary.withValues(
+                                alpha: OpacityTokens.soft,
+                              ),
+                              borderRadius: RadiusTokens.radiusControlSm,
+                            ),
                             child: Text(
-                              l10n.overviewHoldDragReorder,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                              '$aliveCount',
                               style: TextStyle(
                                 color: colors.textSecondary,
                                 fontSize: FontTokens.hudXs,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ),
+                          if (_canHostReorder(game)) ...[
+                            SizedBox(width: LayoutTokens.gr2),
+                            Expanded(
+                              child: Text(
+                                l10n.overviewHoldDragReorder,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: colors.textSecondary,
+                                  fontSize: FontTokens.hudXs,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
-                ),
 
-                SliverPadding(
-                  padding: EdgeInsets.fromLTRB(
-                    pageInset,
-                    0,
-                    pageInset,
-                    LayoutTokens.gr3,
-                  ),
-                  sliver: _canHostReorder(game)
-                      ? SliverReorderableList(
-                          itemCount: game.playersInTurnOrder.length,
-                          onReorder: _onHostReorder,
-                          itemBuilder: (context, index) {
-                            final p = game.playersInTurnOrder[index];
-                            return ReorderableDelayedDragStartListener(
-                              key: ValueKey(p.playerId),
-                              index: index,
-                              child: _keyedRow(p),
-                            );
-                          },
-                        )
-                      : SliverList(
-                          delegate: SliverChildListDelegate(
-                            _buildPlayerListChildren(),
-                          ),
-                        ),
-                ),
-              ],
-            ),
-          ),
-          SafeArea(
-            top: false,
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(
-                pageInset,
-                LayoutTokens.gr2,
-                pageInset,
-                LayoutTokens.gr2,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  EndTurnBar(
-                    accentColor: colors.primaryAccent,
-                    enabled: endTurnEnabled,
-                    onEndTurn: () => notifier.endTurn(),
-                    waitingForName: waitingForName,
-                  ),
-                  if (game.localPlayer != null &&
-                      !game.localPlayer!.isEliminated &&
-                      !game.gameOver) ...[
-                    SizedBox(height: LayoutTokens.gr1),
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: colors.surface.withValues(alpha: 0.94),
-                        borderRadius: RadiusTokens.radiusControlSm,
-                      ),
-                      child: ClipRRect(
-                        borderRadius: RadiusTokens.radiusControlSm,
-                        child: SizedBox(
-                          height: EndTurnBar.barHeight,
-                          child: Material(
-                            color: colors.error.withValues(
-                              alpha: OpacityTokens.soft,
-                            ),
-                            child: InkWell(
-                              onTap: () {
-                                context.gameHapticLight();
-                                showGameForfeitFlow(
-                                  context,
-                                  ref,
-                                  game.localPlayerId,
+                  SliverPadding(
+                    padding: EdgeInsets.fromLTRB(
+                      pageInset,
+                      0,
+                      pageInset,
+                      LayoutTokens.gr3,
+                    ),
+                    sliver:
+                        _canHostReorder(game)
+                            ? SliverReorderableList(
+                              itemCount: game.playersInTurnOrder.length,
+                              onReorder: _onHostReorder,
+                              itemBuilder: (context, index) {
+                                final p = game.playersInTurnOrder[index];
+                                return ReorderableDelayedDragStartListener(
+                                  key: ValueKey(p.playerId),
+                                  index: index,
+                                  child: _keyedRow(p),
                                 );
                               },
-                              child: Center(
-                                child: Text(
-                                  AppLocalizations.of(context).forfeitConfirm,
-                                  style: TextStyle(
-                                    fontSize: FontTokens.title,
-                                    fontWeight: FontWeight.w700,
-                                    color: colors.error,
-                                    height: 1.1,
+                            )
+                            : SliverList(
+                              delegate: SliverChildListDelegate(
+                                _buildPlayerListChildren(),
+                              ),
+                            ),
+                  ),
+                ],
+              ),
+            ),
+            SafeArea(
+              top: false,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  pageInset,
+                  LayoutTokens.gr2,
+                  pageInset,
+                  LayoutTokens.gr2,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    EndTurnBar(
+                      accentColor: colors.primaryAccent,
+                      enabled: endTurnEnabled,
+                      onEndTurn: () => notifier.endTurn(),
+                      waitingForName: waitingForName,
+                      onHostSkip:
+                          game.canHostSkipTurn
+                              ? () => notifier.endTurn()
+                              : null,
+                    ),
+                    if (game.localPlayer != null &&
+                        !game.localPlayer!.isEliminated &&
+                        !game.gameOver) ...[
+                      SizedBox(height: LayoutTokens.gr1),
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: colors.surface.withValues(alpha: 0.94),
+                          borderRadius: RadiusTokens.radiusControlSm,
+                        ),
+                        child: ClipRRect(
+                          borderRadius: RadiusTokens.radiusControlSm,
+                          child: SizedBox(
+                            height: EndTurnBar.barHeight,
+                            child: Material(
+                              color: colors.error.withValues(
+                                alpha: OpacityTokens.soft,
+                              ),
+                              child: InkWell(
+                                onTap: () {
+                                  context.gameHapticLight();
+                                  showGameForfeitFlow(
+                                    context,
+                                    ref,
+                                    game.localPlayerId,
+                                  );
+                                },
+                                child: Center(
+                                  child: Text(
+                                    AppLocalizations.of(context).forfeitConfirm,
+                                    style: TextStyle(
+                                      fontSize: FontTokens.title,
+                                      fontWeight: FontWeight.w700,
+                                      color: colors.error,
+                                      height: 1.1,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -446,14 +457,13 @@ class _GameOverviewViewState extends ConsumerState<GameOverviewView> {
                           ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
@@ -471,8 +481,10 @@ class _EliminatedPlayerRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.gameColors;
     final isLocal = p.playerId == game.localPlayerId;
-    final reasonLabel =
-        eliminationReasonShortLabel(AppLocalizations.of(context), p.eliminationReason);
+    final reasonLabel = eliminationReasonShortLabel(
+      AppLocalizations.of(context),
+      p.eliminationReason,
+    );
 
     return Container(
       margin: EdgeInsets.only(bottom: LayoutTokens.gr1),
@@ -500,43 +512,46 @@ class _EliminatedPlayerRow extends StatelessWidget {
           ),
           SizedBox(width: LayoutTokens.gr1 + 2),
           Expanded(
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(
-                    text: p.username,
-                    style: TextStyle(
-                      color: colors.textSecondary,
-                      fontWeight: FontWeight.w600,
-                      fontSize: FontTokens.hudSm,
-                      decoration: TextDecoration.lineThrough,
-                      decorationColor: colors.textSecondary.withValues(
-                        alpha: 0.6,
-                      ),
-                    ),
-                  ),
-                  if (isLocal)
+            child: Tooltip(
+              message: p.username,
+              child: Text.rich(
+                TextSpan(
+                  children: [
                     TextSpan(
-                      text: ' · you',
+                      text: p.username,
                       style: TextStyle(
                         color: colors.textSecondary,
-                        fontWeight: FontWeight.w500,
-                        fontSize: FontTokens.hudXs,
+                        fontWeight: FontWeight.w600,
+                        fontSize: FontTokens.hudSm,
+                        decoration: TextDecoration.lineThrough,
+                        decorationColor: colors.textSecondary.withValues(
+                          alpha: 0.6,
+                        ),
                       ),
                     ),
-                  if (reasonLabel != null)
-                    TextSpan(
-                      text: '  ·  $reasonLabel',
-                      style: TextStyle(
-                        color: colors.textSecondary.withValues(alpha: 0.75),
-                        fontWeight: FontWeight.w500,
-                        fontSize: FontTokens.hudXs,
+                    if (isLocal)
+                      TextSpan(
+                        text: ' · you',
+                        style: TextStyle(
+                          color: colors.textSecondary,
+                          fontWeight: FontWeight.w500,
+                          fontSize: FontTokens.hudXs,
+                        ),
                       ),
-                    ),
-                ],
+                    if (reasonLabel != null)
+                      TextSpan(
+                        text: '  ·  $reasonLabel',
+                        style: TextStyle(
+                          color: colors.textSecondary.withValues(alpha: 0.75),
+                          fontWeight: FontWeight.w500,
+                          fontSize: FontTokens.hudXs,
+                        ),
+                      ),
+                  ],
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
           ),
           SizedBox(width: LayoutTokens.gr1),
@@ -590,56 +605,60 @@ class _GameOverviewLifeBadge extends StatelessWidget {
         vertical: LayoutTokens.gr0 + 2,
       ),
       decoration: BoxDecoration(
-        color: isActive && !eliminated
-            ? accent.withValues(alpha: OpacityTokens.subtle)
-            : colors.backgroundSecondary.withValues(alpha: OpacityTokens.half),
+        color:
+            isActive && !eliminated
+                ? accent.withValues(alpha: OpacityTokens.subtle)
+                : colors.backgroundSecondary.withValues(
+                  alpha: OpacityTokens.half,
+                ),
         borderRadius: RadiusTokens.radiusControlSm,
       ),
       alignment: Alignment.center,
-      child: eliminated
-          ? Text(
-              AppLocalizations.of(context).statusOut,
-              style: TextStyle(
-                color: _textColor(colors),
-                fontWeight: FontWeight.w700,
-                fontSize: FontTokens.hudSm,
-                height: 1,
-              ),
-            )
-          : showHeart
-              ? Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.favorite_rounded,
-                      size: 18,
-                      color: _textColor(colors).withValues(
-                        alpha: OpacityTokens.nearOpaque,
-                      ),
-                    ),
-                    SizedBox(width: LayoutTokens.gr0),
-                    Text(
-                      '$life',
-                      style: TextStyle(
-                        color: _textColor(colors),
-                        fontWeight: FontWeight.w700,
-                        fontSize: FontTokens.body,
-                        height: 1,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                    ),
-                  ],
-                )
-              : Text(
-                  '$life',
-                  style: TextStyle(
-                    color: _textColor(colors),
-                    fontWeight: FontWeight.w700,
-                    fontSize: FontTokens.body,
-                    height: 1,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
+      child:
+          eliminated
+              ? Text(
+                AppLocalizations.of(context).statusOut,
+                style: TextStyle(
+                  color: _textColor(colors),
+                  fontWeight: FontWeight.w700,
+                  fontSize: FontTokens.hudSm,
+                  height: 1,
                 ),
+              )
+              : showHeart
+              ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.favorite_rounded,
+                    size: 18,
+                    color: _textColor(
+                      colors,
+                    ).withValues(alpha: OpacityTokens.nearOpaque),
+                  ),
+                  SizedBox(width: LayoutTokens.gr0),
+                  Text(
+                    '$life',
+                    style: TextStyle(
+                      color: _textColor(colors),
+                      fontWeight: FontWeight.w700,
+                      fontSize: FontTokens.body,
+                      height: 1,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ],
+              )
+              : Text(
+                '$life',
+                style: TextStyle(
+                  color: _textColor(colors),
+                  fontWeight: FontWeight.w700,
+                  fontSize: FontTokens.body,
+                  height: 1,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
     );
   }
 }
@@ -673,9 +692,12 @@ class _GameOverviewLifeStepper extends StatelessWidget {
     final colors = context.gameColors;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: isActive
-            ? accent.withValues(alpha: OpacityTokens.subtle)
-            : colors.backgroundSecondary.withValues(alpha: OpacityTokens.half),
+        color:
+            isActive
+                ? accent.withValues(alpha: OpacityTokens.subtle)
+                : colors.backgroundSecondary.withValues(
+                  alpha: OpacityTokens.half,
+                ),
         borderRadius: RadiusTokens.radiusControlSm,
       ),
       child: Row(
@@ -685,72 +707,77 @@ class _GameOverviewLifeStepper extends StatelessWidget {
             icon: Icons.remove_rounded,
             enabled: enabled,
             semanticLabel: AppLocalizations.of(context).overviewDecreaseLife,
-            onTap: enabled
-                ? () {
-                    context.gameHapticLight();
-                    onDelta(-1);
-                  }
-                : null,
-            onHoldStep: enabled
-                ? () {
-                    context.gameHapticLight();
-                    onDelta(-5);
-                  }
-                : null,
+            onTap:
+                enabled
+                    ? () {
+                      context.gameHapticLight();
+                      onDelta(-1);
+                    }
+                    : null,
+            onHoldStep:
+                enabled
+                    ? () {
+                      context.gameHapticLight();
+                      onDelta(-5);
+                    }
+                    : null,
           ),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: LayoutTokens.gr0),
-            child: showHeart
-                ? Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.favorite_rounded,
-                        size: 16,
-                        color: _textColor(colors).withValues(
-                          alpha: OpacityTokens.nearOpaque,
+            child:
+                showHeart
+                    ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.favorite_rounded,
+                          size: 16,
+                          color: _textColor(
+                            colors,
+                          ).withValues(alpha: OpacityTokens.nearOpaque),
                         ),
-                      ),
-                      SizedBox(width: LayoutTokens.gr0),
-                      Text(
-                        '$life',
-                        style: TextStyle(
-                          color: _textColor(colors),
-                          fontWeight: FontWeight.w700,
-                          fontSize: FontTokens.body,
-                          height: 1,
-                          fontFeatures: const [FontFeature.tabularFigures()],
+                        SizedBox(width: LayoutTokens.gr0),
+                        Text(
+                          '$life',
+                          style: TextStyle(
+                            color: _textColor(colors),
+                            fontWeight: FontWeight.w700,
+                            fontSize: FontTokens.body,
+                            height: 1,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
                         ),
+                      ],
+                    )
+                    : Text(
+                      '$life',
+                      style: TextStyle(
+                        color: _textColor(colors),
+                        fontWeight: FontWeight.w700,
+                        fontSize: FontTokens.body,
+                        height: 1,
+                        fontFeatures: const [FontFeature.tabularFigures()],
                       ),
-                    ],
-                  )
-                : Text(
-                    '$life',
-                    style: TextStyle(
-                      color: _textColor(colors),
-                      fontWeight: FontWeight.w700,
-                      fontSize: FontTokens.body,
-                      height: 1,
-                      fontFeatures: const [FontFeature.tabularFigures()],
                     ),
-                  ),
           ),
           _LifeStepButton(
             icon: Icons.add_rounded,
             enabled: enabled,
             semanticLabel: AppLocalizations.of(context).overviewIncreaseLife,
-            onTap: enabled
-                ? () {
-                    context.gameHapticLight();
-                    onDelta(1);
-                  }
-                : null,
-            onHoldStep: enabled
-                ? () {
-                    context.gameHapticLight();
-                    onDelta(5);
-                  }
-                : null,
+            onTap:
+                enabled
+                    ? () {
+                      context.gameHapticLight();
+                      onDelta(1);
+                    }
+                    : null,
+            onHoldStep:
+                enabled
+                    ? () {
+                      context.gameHapticLight();
+                      onDelta(5);
+                    }
+                    : null,
           ),
         ],
       ),
@@ -771,6 +798,7 @@ class _LifeStepButton extends StatefulWidget {
   final bool enabled;
   final String semanticLabel;
   final VoidCallback? onTap;
+
   /// Fired after hold threshold, then repeatedly — typically ±5.
   final VoidCallback? onHoldStep;
 
@@ -820,12 +848,14 @@ class _LifeStepButtonState extends State<_LifeStepButton> {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: widget.onTap,
-        onLongPressStart: widget.enabled && widget.onHoldStep != null
-            ? (_) => _startHold()
-            : null,
-        onLongPressEnd: widget.enabled && widget.onHoldStep != null
-            ? (_) => _stopHold()
-            : null,
+        onLongPressStart:
+            widget.enabled && widget.onHoldStep != null
+                ? (_) => _startHold()
+                : null,
+        onLongPressEnd:
+            widget.enabled && widget.onHoldStep != null
+                ? (_) => _stopHold()
+                : null,
         onLongPressCancel:
             widget.enabled && widget.onHoldStep != null ? _stopHold : null,
         child: SizedBox(
@@ -834,9 +864,10 @@ class _LifeStepButtonState extends State<_LifeStepButton> {
           child: Icon(
             widget.icon,
             size: 20,
-            color: widget.enabled
-                ? colors.textPrimary
-                : colors.textSecondary.withValues(alpha: 0.4),
+            color:
+                widget.enabled
+                    ? colors.textPrimary
+                    : colors.textSecondary.withValues(alpha: 0.4),
           ),
         ),
       ),
@@ -857,9 +888,9 @@ class _GameOverviewCommanderTaxChip extends StatelessWidget {
       label: l10n.overviewCommanderTaxPlus(tax),
       child: Container(
         constraints: const BoxConstraints(
-        minHeight: LayoutTokens.minTapTarget,
-        minWidth: LayoutTokens.minTapTarget,
-      ),
+          minHeight: LayoutTokens.minTapTarget,
+          minWidth: LayoutTokens.minTapTarget,
+        ),
         padding: EdgeInsets.symmetric(
           horizontal: LayoutTokens.gr1,
           vertical: LayoutTokens.gr0,
@@ -948,9 +979,8 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
     final colors = context.gameColors;
     final isActive = p.playerId == game.activePlayerId;
     final isLocal = p.playerId == game.localPlayerId;
-    final teamIdx = game.teamsEnabled
-        ? (game.teamAssignments[p.playerId] ?? 0)
-        : 0;
+    final teamIdx =
+        game.teamsEnabled ? (game.teamAssignments[p.playerId] ?? 0) : 0;
     final local = game.localPlayer;
     final notifier = ref.read(gameProvider.notifier);
     final pendingLabel = pendingAllianceLabel(
@@ -963,17 +993,17 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
 
     final borderColor = teamIdx > 0 ? teamColor(teamIdx) : p.playerColor;
 
-    final myAlliance =
-        local != null ? game.allianceFor(local.playerId) : null;
-    final hasAllianceMenu = game.alliancesEnabled &&
+    final myAlliance = local != null ? game.allianceFor(local.playerId) : null;
+    final hasAllianceMenu =
+        game.alliancesEnabled &&
         ((!isLocal &&
                 myAlliance == null &&
                 game.allianceFor(p.playerId) == null) ||
             (myAlliance != null &&
                 (isLocal || myAlliance.involves(p.playerId))));
-    final canAssignTeam =
-        game.teamsEnabled && (isLocal || game.isHost);
-    final canWhisper = !isLocal &&
+    final canAssignTeam = game.teamsEnabled && (isLocal || game.isHost);
+    final canWhisper =
+        !isLocal &&
         !game.gameOver &&
         game.players.where((pl) => !pl.isEliminated).length >= 2;
     final showMenu =
@@ -988,23 +1018,24 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
       curve: Curves.easeOutCubic,
       margin: EdgeInsets.only(bottom: LayoutTokens.gr2),
       decoration: BoxDecoration(
-        gradient: showAsActive
-            ? LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  borderColor.withValues(alpha: 0.24),
-                  colors.surface,
-                ],
-              )
-            : null,
-        color: p.isEliminated
-            ? colors.backgroundSecondary.withValues(alpha: OpacityTokens.half)
-            : showAsActive
+        gradient:
+            showAsActive
+                ? LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [borderColor.withValues(alpha: 0.24), colors.surface],
+                )
+                : null,
+        color:
+            p.isEliminated
+                ? colors.backgroundSecondary.withValues(
+                  alpha: OpacityTokens.half,
+                )
+                : showAsActive
                 ? null
                 : isLocal
-                    ? colors.surface.withValues(alpha: OpacityTokens.nearOpaque)
-                    : colors.surface,
+                ? colors.surface.withValues(alpha: OpacityTokens.nearOpaque)
+                : colors.surface,
         borderRadius:
             showAsActive ? RadiusTokens.radiusMd : RadiusTokens.radiusSm,
       ),
@@ -1019,10 +1050,7 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                 left: 0,
                 top: 0,
                 bottom: 0,
-                child: Container(
-                  width: 4,
-                  color: borderColor,
-                ),
+                child: Container(width: 4, color: borderColor),
               ),
             Padding(
               padding: EdgeInsets.fromLTRB(
@@ -1073,36 +1101,41 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                         Row(
                           children: [
                             Expanded(
-                              child: Text.rich(
-                                TextSpan(
-                                  children: [
-                                    TextSpan(
-                                      text: p.username,
-                                      style: TextStyle(
-                                        color: p.isEliminated
-                                            ? colors.textSecondary
-                                            : colors.textPrimary,
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: showAsActive
-                                            ? FontTokens.title
-                                            : FontTokens.hudSm,
-                                        height: 1.2,
-                                      ),
-                                    ),
-                                    if (isLocal)
+                              child: Tooltip(
+                                message: p.username,
+                                child: Text.rich(
+                                  TextSpan(
+                                    children: [
                                       TextSpan(
-                                        text: ' · you',
+                                        text: p.username,
                                         style: TextStyle(
-                                          color: colors.textSecondary,
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: FontTokens.hudXs,
+                                          color:
+                                              p.isEliminated
+                                                  ? colors.textSecondary
+                                                  : colors.textPrimary,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize:
+                                              showAsActive
+                                                  ? FontTokens.title
+                                                  : FontTokens.hudSm,
                                           height: 1.2,
                                         ),
                                       ),
-                                  ],
+                                      if (isLocal)
+                                        TextSpan(
+                                          text: ' · you',
+                                          style: TextStyle(
+                                            color: colors.textSecondary,
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: FontTokens.hudXs,
+                                            height: 1.2,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             if (!showAsActive && (isMonarch || hasInit)) ...[
@@ -1170,8 +1203,8 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                           accent: borderColor,
                           enabled: true,
                           showHeart: showAsActive,
-                          onDelta: (delta) =>
-                              notifier.adjustLife(p.playerId, delta),
+                          onDelta:
+                              (delta) => notifier.adjustLife(p.playerId, delta),
                         ),
                       if (showMenu) ...[
                         SizedBox(width: LayoutTokens.gr0),
@@ -1245,8 +1278,9 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
                                 ),
                               );
                             }
-                            final menuAlliance =
-                                game.allianceFor(local.playerId);
+                            final menuAlliance = game.allianceFor(
+                              local.playerId,
+                            );
                             if (game.alliancesEnabled &&
                                 menuAlliance != null &&
                                 (isLocal ||
@@ -1286,9 +1320,10 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
 
     return Semantics(
       container: true,
-      label: showAsActive
-          ? '${AppLocalizations.of(context).gameNowPlaying}: ${p.username}'
-          : null,
+      label:
+          showAsActive
+              ? '${AppLocalizations.of(context).gameNowPlaying}: ${p.username}'
+              : null,
       child: card,
     );
   }
@@ -1307,72 +1342,75 @@ class _GameOverviewPlayerCard extends ConsumerWidget {
         final sheetL10n = AppLocalizations.of(ctx);
         return GameSheetBody(
           child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            GameSheetHeader(title: sheetL10n.overviewAssignTeamTitle),
-            SizedBox(height: LayoutTokens.gr2),
-            ...[0, 1, 2, 3, 4].map((idx) {
-              final label = idx == 0
-                  ? sheetL10n.overviewTeamNone
-                  : sheetL10n.overviewTeamN('$idx');
-              final color =
-                  idx == 0 ? colors.textSecondary : teamColor(idx);
-              final isSelected = currentTeam == idx;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Material(
-                  color: isSelected
-                      ? (idx == 0
-                          ? colors.textSecondary.withValues(alpha: 0.15)
-                          : color.withValues(alpha: 0.15))
-                      : Colors.transparent,
-                  borderRadius: RadiusTokens.radiusControlSm,
-                  child: InkWell(
-                    onTap: () {
-                      notifier.assignTeam(playerId, idx);
-                      Navigator.of(ctx).pop();
-                    },
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              GameSheetHeader(title: sheetL10n.overviewAssignTeamTitle),
+              SizedBox(height: LayoutTokens.gr2),
+              ...[0, 1, 2, 3, 4].map((idx) {
+                final label =
+                    idx == 0
+                        ? sheetL10n.overviewTeamNone
+                        : sheetL10n.overviewTeamN('$idx');
+                final color = idx == 0 ? colors.textSecondary : teamColor(idx);
+                final isSelected = currentTeam == idx;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Material(
+                    color:
+                        isSelected
+                            ? (idx == 0
+                                ? colors.textSecondary.withValues(alpha: 0.15)
+                                : color.withValues(alpha: 0.15))
+                            : Colors.transparent,
                     borderRadius: RadiusTokens.radiusControlSm,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      child: Row(
-                        children: [
-                          if (idx > 0)
-                            Container(
-                              width: 12,
-                              height: 12,
-                              decoration: BoxDecoration(
-                                color: color,
-                                shape: BoxShape.circle,
+                    child: InkWell(
+                      onTap: () {
+                        notifier.assignTeam(playerId, idx);
+                        Navigator.of(ctx).pop();
+                      },
+                      borderRadius: RadiusTokens.radiusControlSm,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        child: Row(
+                          children: [
+                            if (idx > 0)
+                              Container(
+                                width: 12,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: color,
+                                  shape: BoxShape.circle,
+                                ),
+                              )
+                            else
+                              const SizedBox(width: 12),
+                            if (idx > 0) const SizedBox(width: 10),
+                            Text(
+                              label,
+                              style: TextStyle(
+                                color:
+                                    idx == 0
+                                        ? colors.textSecondary
+                                        : colors.textPrimary,
+                                fontSize: FontTokens.hudSm,
+                                fontWeight:
+                                    isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
                               ),
-                            )
-                          else
-                            const SizedBox(width: 12),
-                          if (idx > 0) const SizedBox(width: 10),
-                          Text(
-                            label,
-                            style: TextStyle(
-                              color: idx == 0
-                                  ? colors.textSecondary
-                                  : colors.textPrimary,
-                              fontSize: FontTokens.hudSm,
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              );
-            }),
-          ],
+                );
+              }),
+            ],
           ),
         );
       },

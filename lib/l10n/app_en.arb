@@ -277,6 +277,14 @@
       }
     }
   },
+  "gameHoldToSkipPlayer": "Hold to skip {name}…",
+  "@gameHoldToSkipPlayer": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "gamePhaseBack": "Back",
   "gamePhaseNext": "Next",
   "gameChoosePhase": "Choose phase",
@@ -719,21 +727,18 @@
   },
   "cmdDmgSheetTitle": "Commander damage",
   "cmdDmgSheetSubtitle": "Threats to you first. Open Dealt to log damage you dealt.",
-  "cmdDmgBarA11y": "Commander damage life {remaining} of {ko} remaining, {taken} taken on worst track, tap to manage",
+  "cmdDmgBarA11y": "Commander damage {taken} of {ko}, tap to manage",
   "@cmdDmgBarA11y": {
     "placeholders": {
-      "remaining": {
+      "taken": {
         "type": "String"
       },
       "ko": {
         "type": "String"
-      },
-      "taken": {
-        "type": "String"
       }
     }
   },
-  "cmdDmgLeft": "left",
+  "cmdDmgShortLabel": "CMD",
   "cmdDmgHideDealt": "Hide dealt",
   "cmdDmgDealtTotal": "Dealt {total}",
   "@cmdDmgDealtTotal": {

@@ -62,7 +62,7 @@ class _RanksInfoSheet extends StatelessWidget {
                         tierBand.minLevel,
                         tierBand.maxLevel,
                       ),
-                      color: wizardTierColor(tierBand.tier),
+                      color: wizardTierColor(tierBand.tier, colors),
                       colors: colors,
                     ),
                     for (final rank in kWizardRankBands.where(
@@ -83,7 +83,7 @@ class _RanksInfoSheet extends StatelessWidget {
                             level >= rank.minLevel &&
                             level <= rank.maxLevel,
                         colors: colors,
-                        accent: wizardTierColor(tierBand.tier),
+                        accent: wizardTierColor(tierBand.tier, colors),
                       ),
                     SizedBox(height: LayoutTokens.gr3),
                   ],

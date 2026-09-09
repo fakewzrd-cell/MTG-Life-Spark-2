@@ -209,11 +209,7 @@ class CommanderDamageBarButton extends StatelessWidget {
     return Semantics(
       button: true,
       enabled: enabled,
-      label: l10n.cmdDmgBarA11y(
-        '$remaining',
-        '$ko',
-        '$maxTrackDamage',
-      ),
+      label: l10n.cmdDmgBarA11y('$maxTrackDamage', '$ko'),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -251,23 +247,25 @@ class CommanderDamageBarButton extends StatelessWidget {
                   ),
                 SizedBox(height: LayoutTokens.gr0),
                 Text(
-                  '$remaining',
+                  '$maxTrackDamage/$ko',
                   style: TextStyle(
                     color: enabled ? accent : colors.textSecondary,
                     fontWeight: FontWeight.w700,
-                    fontSize: remaining >= ko ? 18 : 16,
+                    fontSize: 15,
                     height: 1,
+                    fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
                 Text(
-                  l10n.cmdDmgLeft,
+                  l10n.cmdDmgShortLabel,
                   style: TextStyle(
                     color: enabled
                         ? accent.withValues(alpha: 0.9)
                         : colors.textSecondary,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     fontSize: 10,
                     height: 1.1,
+                    letterSpacing: 0.4,
                   ),
                 ),
               ],

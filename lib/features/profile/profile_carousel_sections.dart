@@ -910,17 +910,28 @@ String _formatDurationSeconds(int seconds) {
 }
 
 /// Readable match structure for Recent Games (uses [MatchRecord.matchTypeLabel]).
-String _recentMatchStructureLine(MatchRecord m) {
-  final raw = m.matchTypeLabel;
-  final label = raw
+String _recentMatchStructureLabel(MatchRecord m) {
+  return m.matchTypeLabel
       .replaceAll('1vs1', '1 vs 1')
       .replaceAll('2vs2', '2 vs 2');
-  final n =
-      m.participantSnapshots.isNotEmpty
-          ? m.participantSnapshots.length
-          : m.playerCount;
-  if (n >= 2) return '$label · $n players';
-  return label;
+}
+
+/// True when the structure name already implies table size (don't append a count).
+bool _structureLabelEncodesCount(String label) {
+  return label == '1 vs 1' || label == '2 vs 2' || label == 'Solo';
+}
+
+String _recentMatchPlayerCountLabel(int n) {
+  return n == 1 ? '1 player' : '$n players';
+}
+
+/// Format plus count only when the format doesn't already say how many sat.
+String _recentMatchStructureLine(MatchRecord m) {
+  final label = _recentMatchStructureLabel(m);
+  if (_structureLabelEncodesCount(label)) return label;
+  final n = _recentMatchPlayerCount(m);
+  if (n < 1) return label;
+  return '$label · ${_recentMatchPlayerCountLabel(n)}';
 }
 
 int _recentMatchPlayerCount(MatchRecord m) {
@@ -1083,8 +1094,7 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
     final resultColor = _recentMatchResultColor(m, colors);
     final l10n = AppLocalizations.of(context);
     final resultLabel = _recentMatchResultLabel(m, l10n);
-    final n = _recentMatchPlayerCount(m);
-    final playerLine = '$n ${n == 1 ? 'player' : 'players'}';
+    final structureLine = _recentMatchStructureLine(m);
 
     final structureStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
       color: colors.textSecondary,
@@ -1125,8 +1135,6 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
         maxLines: 1,
       ),
     );
-
-    final structureLine = _recentMatchStructureLine(m);
 
     final innerPad = _kCarouselCardPaddingPx;
     final expandedInnerH = math.max(0.0, widget.height - 2 * innerPad);
@@ -1193,7 +1201,7 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
             ],
             SizedBox(height: LayoutTokens.gr1),
             Text(
-              '$playerLine · $dateStr · $timeStr',
+              '$structureLine · $dateStr · $timeStr',
               style: overlayMetaStyle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -1275,7 +1283,7 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
             height: 1.3,
           );
 
-      final metaBits = <String>[durationLabel, playerLine];
+      final metaBits = <String>[durationLabel];
       final metaExtras = <String>[
         if (matchLabel != null) matchLabel,
         if (deckName != null) deckName,
@@ -1458,7 +1466,7 @@ class _ProfileRecentMatchCardState extends ConsumerState<_ProfileRecentMatchCard
         container: true,
         expanded: _expanded,
         label: l10n.carouselRecentMatchA11y(resultLabel, m.format),
-        value: '$playerLine. $dateStr $timeStr.',
+        value: '$structureLine. $dateStr $timeStr.',
         hint: _expanded
             ? l10n.carouselCloseReturnsSummary
             : l10n.carouselShowMoreDetails,

@@ -478,22 +478,8 @@ class _QrHeader extends StatelessWidget {
             )
           else
             SizedBox(height: qrSize),
-          if (loadState == _QrHostLoadState.ready && qrData != null) ...[
-            Padding(
-              padding: EdgeInsets.only(top: LayoutTokens.gr1),
-              child: Text(
-                qrData!.replaceFirst('lifespark://', ''),
-                style: TextStyle(
-                  color: colors.textSecondary,
-                  fontSize: compact ? 9 : 10,
-                ),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ] else if (loadState == _QrHostLoadState.unavailable ||
-              loadState == _QrHostLoadState.error) ...[
+          if (loadState == _QrHostLoadState.unavailable ||
+              loadState == _QrHostLoadState.error)
             Padding(
               padding: EdgeInsets.only(top: LayoutTokens.gr2),
               child: TextButton(
@@ -501,7 +487,6 @@ class _QrHeader extends StatelessWidget {
                 child: Text(l10n.hostRetry),
               ),
             ),
-          ],
         ],
       ),
     );

@@ -631,6 +631,11 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String gameHoldToSkipPlayer(String name) {
+    return '長押しで $name をスキップ…';
+  }
+
+  @override
   String get gamePhaseBack => '戻る';
 
   @override
@@ -1352,12 +1357,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get cmdDmgSheetSubtitle => 'あなたへの脅威を先に。与えたダメージは「与えた」で記録。';
 
   @override
-  String cmdDmgBarA11y(String remaining, String ko, String taken) {
-    return '統率者ダメージ 残り $remaining / $ko、最悪トラックで $taken、タップで管理';
+  String cmdDmgBarA11y(String taken, String ko) {
+    return '統率者ダメージ $taken / $ko、タップで管理';
   }
 
   @override
-  String get cmdDmgLeft => '残り';
+  String get cmdDmgShortLabel => 'CMD';
 
   @override
   String get cmdDmgHideDealt => '与えたを隠す';

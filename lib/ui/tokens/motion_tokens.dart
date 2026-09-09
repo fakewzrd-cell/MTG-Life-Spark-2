@@ -22,6 +22,9 @@ class MotionTokens {
   /// Celebration / hero animation (500 ms).
   static const Duration hero = Duration(milliseconds: 500);
 
+  /// Life-change floating total — hold, then fade (1600 ms).
+  static const Duration lifeDelta = Duration(milliseconds: 1600);
+
   /// XP / progress bar emphasis (1100 ms).
   static const Duration emphasis = Duration(milliseconds: 1100);
 
